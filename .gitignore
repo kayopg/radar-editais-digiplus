@@ -1,0 +1,12 @@
+# Saída bruta da varredura: ~320 KB por dia, não precisa versionar.
+# O que o site consome é docs/dados.json, e esse vai para o git.
+dados/
+
+# Notas internas e a versão antiga da página (viviam no artifact).
+CLAUDE.md
+varredura-*.md
+radar-digiplus.html
+
+# Ferramentas locais
+.claude/
+node_modules/

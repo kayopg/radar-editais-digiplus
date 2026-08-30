@@ -1,0 +1,62 @@
+# Radar de Editais — Digiplus
+
+Monitoramento diário de licitações públicas abertas no [PNCP](https://pncp.gov.br) com itens
+de linha branca, climatização, cocção, lavanderia e eletroportáteis — filtradas para
+**fornecimento puro**, sem exigência de instalação, montagem ou manutenção.
+
+**Página:** https://kayopg.github.io/radar-editais-digiplus/
+
+Estados atendidos: PR, RS, SP, MG, GO, MT, MS, SC.
+
+## Como funciona
+
+O GitHub Actions roda a varredura de segunda a sexta às 7h (horário de Brasília), grava
+`docs/dados.json` e commita. A página busca esse JSON toda vez que alguém abre — não é
+preciso republicar nada, e o link nunca muda.
+
+```
+varredura.mjs  →  dados/ultima.json  →  publicar.mjs  →  docs/dados.json  →  docs/index.html
+```
+
+| Arquivo | O que faz |
+|---|---|
+| `varredura.mjs` | 32 termos × 8 UFs × 2 páginas no PNCP, lê os itens de cada processo e aplica os cinco filtros. ~12 min. |
+| `publicar.mjs` | Converte a saída bruta no `docs/dados.json` que a página consome. |
+| `delta.mjs` | Compara duas versões do `dados.json` e imprime o que entrou, o que saiu e o que fecha em 48 h. |
+| `docs/index.html` | A página. Sem dependência externa, sem build. |
+
+Rodar na mão:
+
+```bash
+node varredura.mjs && node publicar.mjs
+```
+
+Para conferir antes de publicar, sirva a pasta `docs/` (`python -m http.server 8765 --directory docs`)
+— abrir o `index.html` direto pelo `file://` não funciona, porque o `fetch` do JSON é bloqueado.
+
+## Os cinco filtros
+
+Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varredura.mjs`:
+
+1. **Só material** — descarta itens de serviço (`materialOuServico !== 'M'`) e descrições com
+   instalação, montagem, manutenção, mão de obra. Um edital só entra se **nenhum** item de
+   interesse for serviço.
+2. **Veto por objeto** — derruba o edital inteiro quando o objeto é de veículo, trator,
+   alimento, material de limpeza e afins. Veículos casam com a busca porque têm
+   ar-condicionado de fábrica.
+3. **Veto por item** — lista de falsos positivos reais, ampliada conforme aparecem novos:
+   ventilador pulmonar, conector "split bolt", cooler de PC, diária de hotel "com
+   ar-condicionado e frigobar", tubo de cobre, fórmula infantil.
+4. **Piso de preço unitário** por categoria — equipamento de verdade custa. Itens com valor
+   **zero** são mantidos: é orçamento sigiloso, e a página mostra "sigiloso", nunca "R$ 0".
+5. **Duplicatas** — o mesmo edital sai duas vezes (publicação direta e via portal
+   intermediário). Agrupa por município + UF + dia de encerramento + quantidade + valor.
+
+## Ressalvas
+
+- Sobram cerca de **4% de falsos positivos** mesmo depois dos cinco filtros. Confira o edital
+  antes de cotar.
+- Os valores são **estimativas do órgão**, não referência de mercado.
+- Vários editais vêm com valor zerado por **orçamento sigiloso** — não é erro.
+- A lista **não é exaustiva**. A busca do PNCP indexa o texto completo do edital, então é
+  ampla, mas não perfeita.

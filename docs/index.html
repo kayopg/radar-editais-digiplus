@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Licitações públicas abertas de eletrodomésticos, climatização, cocção, lavanderia e eletroportáteis — apenas fornecimento puro.">
+<meta name="color-scheme" content="dark light">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+<title>Radar de Editais Digiplus</title>
+<style>
+/* Paleta Digiplus — escuro é o padrão; o botão no topo troca e a escolha fica salva */
+:root, :root[data-theme="dark"]{
+  --bg:#0b1522; --panel:#132234; --ink:#e7edf6; --ink2:#98a8be; --ink3:#6c7d95;
+  --line:#20334a; --line2:#172740;
+  --accent:#4fa3e3; --accent-soft:#132b45; --accent-ink:#7bbcee;
+  --gold:#e0ae5f; --gold-soft:#2b2416;
+  --hot:#ff8b73; --hot-soft:#3a1c17;
+  --warn:#e0b062; --warn-soft:#2e2513;
+  --ok:#6fd39f; --ok-soft:#12291e;
+  --shadow:0 1px 2px rgba(0,0,0,.35),0 4px 14px rgba(0,0,0,.3);
+  color-scheme:dark;
+}
+/* modo claro: aplicado no body para não brigar com o data-theme do host */
+body.claro{
+  --bg:#f4f7fa; --panel:#fff; --ink:#16243a; --ink2:#55637a; --ink3:#8a97ab;
+  --line:#dce5ef; --line2:#eef3f9;
+  --accent:#006cb5; --accent-soft:#e3effa; --accent-ink:#005897;
+  --gold:#b8842a; --gold-soft:#faf2e0;
+  --hot:#c0392b; --hot-soft:#fceeec;
+  --warn:#9a6212; --warn-soft:#fdf4e3;
+  --ok:#1c6b45; --ok-soft:#e8f5ee;
+  --shadow:0 1px 2px rgba(22,36,58,.05),0 4px 12px rgba(22,36,58,.06);
+  color-scheme:light;
+}
+.themebtn{
+  position:absolute;top:0;right:0;display:flex;align-items:center;gap:6px;
+  background:var(--panel);border:1px solid var(--line);color:var(--ink2);
+  border-radius:99px;padding:7px 13px;font:inherit;font-size:12.5px;font-weight:600;
+  cursor:pointer;box-shadow:var(--shadow);transition:.12s
+}
+.themebtn:hover{border-color:var(--accent);color:var(--ink)}
+header{position:relative;padding-right:130px}
+@media(max-width:560px){header{padding-right:0}.themebtn{position:static;margin-bottom:14px}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:30px 18px 70px}
+.eyebrow{font-size:12px;font-weight:650;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+h1{font-size:clamp(25px,4vw,35px);line-height:1.15;margin:0 0 10px;letter-spacing:-.02em;font-weight:700;color:var(--ink)}
+h1 .plus{color:var(--accent)}
+.rule{height:3px;width:74px;background:linear-gradient(90deg,var(--accent) 0 58%,var(--gold) 58% 100%);border-radius:2px;margin:0 0 14px}
+.sub{color:var(--ink2);max-width:72ch;margin:0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:11px;margin:24px 0}
+.kpi{background:var(--panel);border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:10px;padding:13px 15px;box-shadow:var(--shadow)}
+.kpi .n{font-size:25px;font-weight:680;letter-spacing:-.02em;line-height:1.1;color:var(--accent-ink)}
+.kpi .l{font-size:12px;color:var(--ink2);margin-top:3px}
+.kpi.hot{border-top-color:var(--hot)}
+.kpi.hot .n{color:var(--hot)}
+.kpi.gold{border-top-color:var(--gold)}
+.kpi.gold .n{color:var(--gold)}
+.controls{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px;margin-bottom:18px;box-shadow:var(--shadow)}
+.crow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.crow+.crow{margin-top:10px;padding-top:10px;border-top:1px solid var(--line2)}
+.clabel{font-size:11px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin-right:2px;min-width:64px}
+input[type=search]{flex:1 1 200px;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:14px}
+input[type=search]:focus{outline:2px solid var(--accent);outline-offset:-1px}
+.chip{border:1px solid var(--line);background:var(--panel);color:var(--ink2);padding:5px 11px;border-radius:99px;font-size:12.5px;cursor:pointer;font-family:inherit;transition:.12s}
+.chip:hover{border-color:var(--accent);color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.clear{margin-left:auto;font-size:12px;color:var(--accent);background:none;border:0;cursor:pointer;font-family:inherit;padding:5px}
+.count{font-size:13px;color:var(--ink2);padding:4px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;box-shadow:var(--shadow);overflow:hidden}
+.card.urg{border-left:3px solid var(--hot)}
+.chead{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;padding:14px 16px;cursor:pointer}
+.chead:hover{background:var(--line2)}
+.cmain{flex:1 1 300px;min-width:0}
+.mun{font-weight:660;font-size:15.5px;letter-spacing:-.01em}
+.uf{display:inline-block;font-size:11px;font-weight:700;padding:1px 6px;border-radius:4px;background:var(--accent-soft);color:var(--accent);margin-left:7px;vertical-align:2px}
+.org{font-size:12.5px;color:var(--ink3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cside{text-align:right;flex:0 0 auto}
+.val{font-weight:660;font-size:15px;white-space:nowrap}
+.qt{font-size:12px;color:var(--ink3);margin-top:2px}
+.dl{margin-top:6px;font-size:12px;font-weight:650;padding:3px 9px;border-radius:99px;display:inline-block;white-space:nowrap}
+.dl.d0{background:var(--hot-soft);color:var(--hot)}
+.dl.d1{background:var(--warn-soft);color:var(--warn)}
+.dl.d2{background:var(--ok-soft);color:var(--ok)}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.tag{font-size:11.5px;padding:2px 8px;border-radius:5px;background:var(--line2);color:var(--ink2);border:1px solid var(--line)}
+.body{display:none;border-top:1px solid var(--line);padding:13px 16px 15px;background:var(--line2)}
+.card.open .body{display:block}
+.card.open .chead{background:var(--line2)}
+.blabel{font-size:11px;font-weight:650;letter-spacing:.07em;text-transform:uppercase;color:var(--ink3);margin-bottom:7px}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:420px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3);font-weight:650;padding:0 8px 6px 0;border-bottom:1px solid var(--line)}
+td{padding:7px 8px 7px 0;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink2)}
+tr:last-child td{border-bottom:0}
+td.d{color:var(--ink)}
+td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.scroller{overflow-x:auto}
+.links{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px}
+.btn{font-size:12.5px;font-weight:600;text-decoration:none;padding:7px 13px;border-radius:8px;background:var(--accent);color:#fff;border:1px solid var(--accent)}
+.btn.alt{background:transparent;color:var(--accent)}
+.note{font-size:12px;color:var(--ink3);margin-top:9px;font-style:italic}
+.method{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px;margin-top:30px;box-shadow:var(--shadow)}
+.method h2{font-size:16px;margin:0 0 12px;letter-spacing:-.01em}
+.method p,.method ul{font-size:13.5px;color:var(--ink2);margin:0 0 10px}
+.method ul{padding-left:20px}.method li{margin-bottom:5px}
+.method code{background:var(--line2);padding:1px 5px;border-radius:4px;font-size:12.5px}
+.empty{text-align:center;padding:46px 20px;color:var(--ink3)}
+@media(max-width:640px){.cside{text-align:left;flex:1 1 100%}.clabel{min-width:100%}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<header>
+  <button class="themebtn" id="theme" type="button" aria-label="Alternar tema"><span id="themeIcon">☀</span> <span id="themeTxt">Modo claro</span></button>
+  <div class="eyebrow">PNCP · <span id="listaUf">carregando</span> · varredura de <span id="dataVarredura">—</span></div>
+  <h1>Radar de Editais <span class="plus">Digiplus</span></h1>
+  <div class="rule"></div>
+  <p class="sub">Licitações abertas com itens de linha branca, climatização, cocção, lavanderia e eletroportáteis — apenas <strong>fornecimento puro</strong>, sem exigência de instalação, montagem ou manutenção.</p>
+</header>
+
+<div class="controls">
+  <div class="crow"><input type="search" id="q" placeholder="Buscar município, órgão ou produto…" autocomplete="off"><button class="clear" id="clear">limpar filtros</button></div>
+  <div class="crow"><span class="clabel">Estado</span><div id="uf" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
+  <div class="crow"><span class="clabel">Categoria</span><div id="cat" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
+  <div class="crow"><span class="clabel">Prazo</span><div id="pz" style="display:flex;flex-wrap:wrap;gap:6px"></div><span class="count" id="count" style="margin-left:auto"></span></div>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><div class="n" id="k1">—</div><div class="l">editais abertos</div></div>
+  <div class="kpi gold"><div class="n" id="k2">—</div><div class="l">valor estimado</div></div>
+  <div class="kpi hot"><div class="n" id="k3">—</div><div class="l">fecham em 24 h</div></div>
+  <div class="kpi"><div class="n" id="k4">—</div><div class="l">em até 7 dias</div></div>
+  <div class="kpi"><div class="n" id="k5">—</div><div class="l">municípios</div></div>
+</div>
+
+<div id="list"><div class="empty">Carregando editais…</div></div>
+
+<div class="method">
+  <h2>Como esta lista foi montada</h2>
+  <p><strong>Fonte:</strong> API pública do PNCP, onde toda contratação da Lei 14.133/2021 é publicada por obrigação legal. Gratuita, sem login, sem intermediário.</p>
+  <p><strong>Funil:</strong> <span id="nTermos">32</span> termos de busca × <span id="nEstados">8</span> estados → <span id="nCandidatos">—</span> processos candidatos → leitura item a item de cada um → descarte de tudo que exige instalação/montagem/manutenção (usando o campo <code>Material × Serviço</code> do próprio PNCP) → remoção de duplicatas (mesmo edital publicado em portais diferentes) → corte de falsos positivos → a lista acima.</p>
+  <p><strong>Falsos positivos cortados:</strong> vans, caminhões e tratores com ar-condicionado de fábrica, leilões de veículo sucateado, diárias de hotel &ldquo;com ar-condicionado e frigobar&rdquo;, ventilador pulmonar, conector &ldquo;split bolt&rdquo;, cooler de PC, torre de micro-ondas em MDF, tubo de cobre para instalação, filtro e placa eletrônica de ar-condicionado, fórmula infantil (casa com &ldquo;liquidificador&rdquo; no descritivo), projeto executivo de climatização, sabão em pó, e itens com preço unitário incompatível com o equipamento real.</p>
+  <p><strong>Ressalvas:</strong> os valores são estimativas do órgão, não referência de mercado — vários vêm zerados porque o orçamento é sigiloso. Sobram cerca de 4% de falsos positivos residuais. Confira o edital antes de cotar.</p>
+  <p><strong>Filtros:</strong> estado, categoria e prazo aceitam várias opções ao mesmo tempo. Nenhuma opção marcada significa "todas".</p>
+</div>
+</div>
+
+<script>
+var CAT={RF:"Refrigeração",CL:"Climatização",CC:"Cocção",PR:"Preparo",EP:"Eletroportáteis",LV:"Lavanderia",BB:"Bebedouro",CX:"Coifa/Exaustão",OT:"Outros"};
+// [mun, uf, orgao, edital, fecha, qtd, valor, path, itens[[cat,qtd,vunit,desc]]]
+// [mun, uf, orgao, edital, fecha, qtd, valor, path, itens[[cat,qtd,vunit,desc]]]
+var D=[];
+var pronto=false;
+
+// tema: escuro por padrão, escolha guardada no navegador de quem acessa
+(function(){
+  var saved=null;
+  try{ saved=localStorage.getItem("radar-tema"); }catch(e){}
+  var modo = saved==="light" ? "light" : "dark";
+  function aplica(m){
+    var claro = m==="light";
+    document.body.classList.toggle("claro", claro);
+    var i=document.getElementById("themeIcon"), t=document.getElementById("themeTxt");
+    if(i) i.textContent = claro ? "☾" : "☀";
+    if(t) t.textContent = claro ? "Modo escuro" : "Modo claro";
+  }
+  aplica(modo);
+  var b=document.getElementById("theme");
+  if(b) b.addEventListener("click",function(){
+    modo = modo==="dark" ? "light" : "dark";
+    aplica(modo);
+    try{ localStorage.setItem("radar-tema",modo); }catch(e){}
+  });
+})();
+
+var NOW=new Date();
+var fUF=[], fCAT=[], fPZ=null, fQ="";
+
+function brl(n){
+  if(!n) return "sigiloso";
+  if(n>=1e6) return "R$ "+(n/1e6).toFixed(1).replace(".",",")+" mi";
+  if(n>=1e3) return "R$ "+Math.round(n/1e3)+" mil";
+  return "R$ "+n;
+}
+function dias(iso){ return Math.floor((new Date(iso)-NOW)/864e5); }
+function prazo(iso){
+  var d=dias(iso), dt=new Date(iso);
+  var s=("0"+dt.getDate()).slice(-2)+"/"+("0"+(dt.getMonth()+1)).slice(-2);
+  var hm=iso.slice(11,16);
+  var t=(hm&&hm!=="00:00")?s+" às "+hm:s;
+  if(d<=0) return {c:"d0",t:"fecha hoje · "+t};
+  if(d===1) return {c:"d0",t:"fecha amanhã · "+t};
+  if(d<=7) return {c:"d1",t:"em "+d+" dias · "+t};
+  return {c:"d2",t:"em "+d+" dias · "+t};
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+
+function pass(r){
+  if(fUF.length && fUF.indexOf(r[1])<0) return false;
+  if(fCAT.length && !r[8].some(function(i){return fCAT.indexOf(i[0])>=0;})) return false;
+  if(fPZ!==null){ var d=dias(r[4]); if(d>fPZ) return false; }
+  if(fQ){
+    var h=(r[0]+" "+r[2]+" "+r[3]+" "+r[8].map(function(i){return i[3];}).join(" ")).toLowerCase();
+    if(h.indexOf(fQ)<0) return false;
+  }
+  return true;
+}
+
+function render(){
+  if(!pronto) return;
+  var rows=D.filter(pass);
+  document.getElementById("count").textContent=rows.length+" de "+D.length+" editais";
+  document.getElementById("k1").textContent=rows.length;
+  // sem resultado o total eh zero, e brl(0) diz "sigiloso" (certo para item, errado aqui)
+  document.getElementById("k2").textContent=rows.length?brl(rows.reduce(function(a,r){return a+r[6];},0)):"—";
+  document.getElementById("k3").textContent=rows.filter(function(r){return dias(r[4])<=1;}).length;
+  document.getElementById("k4").textContent=rows.filter(function(r){return dias(r[4])<=7;}).length;
+  document.getElementById("k5").textContent=(function(){var s={};rows.forEach(function(r){s[r[0]+r[1]]=1;});return Object.keys(s).length;})();
+  var el=document.getElementById("list");
+  if(!rows.length){ el.innerHTML='<div class="empty">Nenhum edital com esses filtros.</div>'; return; }
+  el.innerHTML=rows.map(function(r){
+    var p=prazo(r[4]);
+    var tg={}; r[8].forEach(function(i){ tg[i[0]]=(tg[i[0]]||0)+i[1]; });
+    var tagh=Object.keys(tg).map(function(c){ return '<span class="tag">'+CAT[c]+" · "+tg[c]+"</span>"; }).join("");
+    var itens=r[8].map(function(i){
+      return "<tr><td class='d'>"+esc(i[3])+"</td><td class='n'>"+i[1]+"</td><td class='n'>"+(i[2]?"R$ "+i[2].toLocaleString("pt-BR"):"—")+"</td></tr>";
+    }).join("");
+    var pp=r[7].split("/");
+    return '<div class="card'+(dias(r[4])<=1?" urg":"")+'">'
+      +'<div class="chead" onclick="this.parentNode.classList.toggle(\'open\')">'
+      +'<div class="cmain"><div class="mun">'+esc(r[0])+'<span class="uf">'+r[1]+'</span></div>'
+      +'<div class="org">'+esc(r[2])+" · "+esc(r[3])+'</div>'
+      +'<div class="tags">'+tagh+'</div></div>'
+      +'<div class="cside"><div class="val">'+brl(r[6])+'</div>'
+      +'<div class="qt">'+r[5].toLocaleString("pt-BR")+' un</div>'
+      +'<div class="dl '+p.c+'">'+p.t+'</div></div></div>'
+      +'<div class="body"><div class="blabel">Itens solicitados</div>'
+      +'<div class="scroller"><table><thead><tr><th>Descritivo</th><th class="n">Qtd</th><th class="n">Valor unit. ref.</th></tr></thead><tbody>'+itens+'</tbody></table></div>'
+      +'<div class="links">'
+      +'<a class="btn" target="_blank" rel="noopener" href="https://pncp.gov.br/app/editais/'+r[7]+'">Abrir no PNCP</a>'
+      +'<a class="btn alt" target="_blank" rel="noopener" href="https://pncp.gov.br/pncp-api/v1/orgaos/'+pp[0]+"/compras/"+pp[1]+"/"+pp[2]+'/arquivos/1">Baixar edital (PDF)</a>'
+      +'</div></div></div>';
+  }).join("");
+}
+
+
+function multi(host,items,arr){
+  var e=document.getElementById(host);
+  e.innerHTML=items.map(function(i){return '<button class="chip" aria-pressed="false" data-v="'+i.v+'">'+i.l+"</button>";}).join("");
+  e.addEventListener("click",function(ev){
+    var b=ev.target.closest(".chip"); if(!b) return;
+    var v=b.dataset.v, k=arr.indexOf(v);
+    if(k>=0){ arr.splice(k,1); b.setAttribute("aria-pressed","false"); }
+    else { arr.push(v); b.setAttribute("aria-pressed","true"); }
+    render();
+  });
+}
+multi("cat",Object.keys(CAT).map(function(k){return {l:CAT[k],v:k};}),fCAT);
+
+var pe=document.getElementById("pz");
+pe.innerHTML=[{l:"Fecham hoje",v:0},{l:"Até 7 dias",v:7},{l:"Até 15 dias",v:15},{l:"Até 30 dias",v:30}]
+  .map(function(i){return '<button class="chip" aria-pressed="false" data-v="'+i.v+'">'+i.l+"</button>";}).join("");
+pe.addEventListener("click",function(ev){
+  var b=ev.target.closest(".chip"); if(!b) return;
+  var on=b.getAttribute("aria-pressed")==="true";
+  Array.prototype.forEach.call(pe.querySelectorAll(".chip"),function(x){x.setAttribute("aria-pressed","false");});
+  if(on){ fPZ=null; } else { b.setAttribute("aria-pressed","true"); fPZ=Number(b.dataset.v); }
+  render();
+});
+
+document.getElementById("q").addEventListener("input",function(e){ fQ=e.target.value.trim().toLowerCase(); render(); });
+document.getElementById("clear").addEventListener("click",function(){
+  fUF.length=0; fCAT.length=0; fPZ=null; fQ="";
+  document.getElementById("q").value="";
+  Array.prototype.forEach.call(document.querySelectorAll(".chip"),function(x){x.setAttribute("aria-pressed","false");});
+  render();
+});
+
+// ------------------------------------------------------------------ dados
+// Os editais moram em dados.json, atualizado todo dia pelo GitHub Actions.
+// A página não precisa ser republicada: basta o JSON mudar.
+function aviso(html){ document.getElementById("list").innerHTML='<div class="empty">'+html+"</div>"; }
+
+fetch("dados.json?v=" + Date.now(), {cache:"no-store"})
+  .then(function(r){
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  })
+  .then(function(j){
+    D = j.editais || [];
+    var m = j.meta || {};
+
+    var ufs = m.ufs || [];
+    document.getElementById("listaUf").textContent = ufs.join(" ");
+    multi("uf", ufs.map(function(u){ return {l:u, v:u}; }), fUF);
+
+    if(m.varredura){
+      var p = m.varredura.split("-");
+      document.getElementById("dataVarredura").textContent = p[2]+"/"+p[1]+"/"+p[0];
+    }
+    document.getElementById("nTermos").textContent    = m.termos || 32;
+    document.getElementById("nEstados").textContent   = ufs.length || 8;
+    document.getElementById("nCandidatos").textContent =
+      (m.candidatos || 0).toLocaleString("pt-BR");
+
+    pronto = true;
+    render();
+  })
+  .catch(function(e){
+    aviso("Não consegui carregar os editais (" + e.message + ").<br>" +
+          "Recarregue a página; se continuar, a varredura do dia pode ter falhado.");
+  });
+</script>
+
+
+</body>
+</html>

@@ -1,0 +1,53 @@
+name: Varredura PNCP
+
+on:
+  schedule:
+    # 10:00 UTC = 07:00 em America/Sao_Paulo (o Brasil não tem mais horário de verão).
+    # O GitHub usa sempre UTC; se o fuso mudar, ajuste aqui.
+    - cron: '0 10 * * 1-5'
+  workflow_dispatch:      # permite rodar na mão pelo botão "Run workflow"
+
+# Sem isso o job não consegue commitar o dados.json de volta.
+permissions:
+  contents: write
+
+# Duas execuções ao mesmo tempo dariam conflito no push.
+concurrency:
+  group: varredura
+  cancel-in-progress: false
+
+jobs:
+  varrer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Guardar a versão anterior para o comparativo
+        run: git show HEAD:docs/dados.json > /tmp/anterior.json 2>/dev/null || echo '{}' > /tmp/anterior.json
+
+      - name: Varrer o PNCP
+        run: node varredura.mjs
+
+      - name: Gerar docs/dados.json
+        run: node publicar.mjs
+
+      - name: Resumo do que mudou
+        run: node delta.mjs /tmp/anterior.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publicar se houve mudança
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- docs/dados.json; then
+            echo "Nada mudou hoje — nenhum commit."
+          else
+            git add docs/dados.json
+            git commit -m "Varredura de $(TZ=America/Sao_Paulo date +%d/%m/%Y)"
+            git push
+          fi
