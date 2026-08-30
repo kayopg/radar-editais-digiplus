@@ -1,0 +1,4 @@
+# O Actions roda em Linux e os passos do workflow são shell script. Um CRLF que
+# escape para dentro de um bloco `run:` quebra o job com erro obscuro. Fixando LF
+# em tudo, o Windows para de converter na ida e na volta.
+* text=auto eol=lf

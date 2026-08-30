@@ -26,6 +26,10 @@ const saida = {
     candidatos: st.unicos ?? 0,
     editais: linhas.length,
     porUf: st.porUf ?? {},
+    // usados pelo conferir.mjs para detectar varredura degradada
+    consultas: st.consultas ?? 0,
+    errBusca: st.errBusca ?? 0,
+    errItens: st.errItens ?? 0,
   },
   // documenta o formato para quem abrir o JSON direto
   colunas: ['municipio', 'uf', 'orgao', 'edital', 'encerramento', 'quantidade',

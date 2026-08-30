@@ -14,6 +14,11 @@ O GitHub Actions roda a varredura de segunda a sexta às 7h (horário de Brasíl
 `docs/dados.json` e commita. A página busca esse JSON toda vez que alguém abre — não é
 preciso republicar nada, e o link nunca muda.
 
+Antes de commitar, o `conferir.mjs` checa se o resultado faz sentido: lista vazia,
+encolhimento maior que 40% em relação ao dia anterior, ou mais de 10% das buscas falhando
+derrubam o job. Nesse caso o `dados.json` de ontem continua no ar e o GitHub avisa por
+e-mail — dado velho e inteiro é melhor que dado novo pela metade.
+
 ```
 varredura.mjs  →  dados/ultima.json  →  publicar.mjs  →  docs/dados.json  →  docs/index.html
 ```
@@ -23,6 +28,7 @@ varredura.mjs  →  dados/ultima.json  →  publicar.mjs  →  docs/dados.json  
 | `varredura.mjs` | 32 termos × 8 UFs × 2 páginas no PNCP, lê os itens de cada processo e aplica os cinco filtros. ~12 min. |
 | `publicar.mjs` | Converte a saída bruta no `docs/dados.json` que a página consome. |
 | `delta.mjs` | Compara duas versões do `dados.json` e imprime o que entrou, o que saiu e o que fecha em 48 h. |
+| `conferir.mjs` | Trava de sanidade: derruba o job antes do commit se o resultado do dia parecer degradado. |
 | `docs/index.html` | A página. Sem dependência externa, sem build. |
 
 Rodar na mão:

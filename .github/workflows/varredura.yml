@@ -28,7 +28,7 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Guardar a versão anterior para o comparativo
+      - name: Guardar a versão anterior para comparar
         run: git show HEAD:docs/dados.json > /tmp/anterior.json 2>/dev/null || echo '{}' > /tmp/anterior.json
 
       - name: Varrer o PNCP
@@ -39,6 +39,20 @@ jobs:
 
       - name: Resumo do que mudou
         run: node delta.mjs /tmp/anterior.json >> "$GITHUB_STEP_SUMMARY"
+
+      # Trava de sanidade: lista vazia, encolhimento brusco ou muitas buscas
+      # falhando derrubam o job ANTES do commit. Assim o dados.json de ontem
+      # continua no ar — dado velho e inteiro é melhor que novo pela metade.
+      - name: Conferir se o resultado faz sentido
+        run: |
+          { echo '### Sanidade'; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          set -o pipefail
+          set +e
+          node conferir.mjs /tmp/anterior.json 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
+          st=$?
+          set -e
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit $st
 
       - name: Publicar se houve mudança
         run: |
