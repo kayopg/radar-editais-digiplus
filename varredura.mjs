@@ -25,6 +25,15 @@ const CAT = [
 
 const PISO = { CL:400, LV:400, RF:300, BB:300, CC:250, CX:200, OT:150, PR:100, EP:60 };
 
+// 5.0 — modalidade. Ids conferidos na API em 31/08/2026:
+//   1 Leilao-Eletronico | 4 Concorrencia-Eletronica | 6 Pregao-Eletronico
+//   7 Pregao-Presencial | 8 Dispensa | 12 Credenciamento | 13 Leilao-Presencial
+// Fora da lista some tudo: leilao (que trazia veiculo sucateado), credenciamento
+// e concorrencia. O PNCP nao separa dispensa eletronica de presencial: id 8 e uma so.
+const MOD_OK = new Set([6, 8]);
+const MOD_PRESENCIAL = 7;
+const UF_PRESENCIAL = new Set(['RS', 'SC']);   // pregao presencial so nesses dois
+
 // 5.1 — serviço no item
 const SERV_ITEM = ["instalacao","montagem","manutencao","higienizacao","desinstalacao","recarga de gas","limpeza de ar","mao de obra","servicos de"];
 // 5.1 — serviço no objeto do edital (mais estreito: "manutenção das atividades" é praxe e não é serviço)
@@ -102,8 +111,16 @@ process.stderr.write(`  ${res.size} editais unicos, ${errBusca} erros\n`);
 // ------------------------------------------- 2. veto por objeto + data valida
 const hoje = new Date();
 const cands = [];
-let vObj = 0, vData = 0;
+let vObj = 0, vData = 0, vMod = 0;
+const porModalidade = {};
 for (const o of res.values()) {
+  const mod = Number(o.modalidade_licitacao_id);
+  if (!(MOD_OK.has(mod) || (mod === MOD_PRESENCIAL && UF_PRESENCIAL.has(o.uf)))) {
+    vMod++;
+    const nome = o.modalidade_licitacao_nome || String(mod);
+    porModalidade[nome] = (porModalidade[nome] || 0) + 1;
+    continue;
+  }
   const f = o.data_fim_vigencia;
   const dt = f ? new Date(f) : null;
   if (!dt || isNaN(dt) || dt < hoje || dt.getFullYear() > 2030) { vData++; continue; }
@@ -111,7 +128,10 @@ for (const o of res.values()) {
   if (VETO_OBJ.some(v => txt.includes(v)) || RE_VAN.test(txt)) { vObj++; continue; }
   cands.push(o);
 }
-process.stderr.write(`Candidatos apos veto de objeto/data: ${cands.length} (objeto ${vObj}, data ${vData})\n`);
+process.stderr.write(`Candidatos: ${cands.length} (modalidade ${vMod}, objeto ${vObj}, data ${vData})
+`);
+process.stderr.write(`  por modalidade descartada: ${JSON.stringify(porModalidade)}
+`);
 
 // ---------------------------------------------------------------- 3. itens
 let errItens = 0;
@@ -195,7 +215,7 @@ for (const e of fin) st.porUf[e.uf] = (st.porUf[e.uf] || 0) + 1;
 
 // ---------------------------------------------------------------- 5. saidas
 const hojeISO = new Date().toISOString().slice(0, 10);
-const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vObj, vData, candidatos: cands.length, errItens, ...st };
+const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vMod, porModalidade, vObj, vData, candidatos: cands.length, errItens, ...st };
 const bruta = { st: resumo, editais: fin };
 
 // A saida bruta nao vai para o git (uns 320 KB por dia). O que o site consome

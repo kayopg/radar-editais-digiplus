@@ -25,7 +25,7 @@ varredura.mjs  →  dados/ultima.json  →  publicar.mjs  →  docs/dados.json  
 
 | Arquivo | O que faz |
 |---|---|
-| `varredura.mjs` | 32 termos × 8 UFs × 2 páginas no PNCP, lê os itens de cada processo e aplica os cinco filtros. ~12 min. |
+| `varredura.mjs` | 32 termos × 8 UFs × 2 páginas no PNCP, lê os itens de cada processo e aplica os filtros. ~12 min. |
 | `publicar.mjs` | Converte a saída bruta no `docs/dados.json` que a página consome. |
 | `delta.mjs` | Compara duas versões do `dados.json` e imprime o que entrou, o que saiu e o que fecha em 48 h. |
 | `conferir.mjs` | Trava de sanidade: derruba o job antes do commit se o resultado do dia parecer degradado. |
@@ -40,10 +40,14 @@ node varredura.mjs && node publicar.mjs
 Para conferir antes de publicar, sirva a pasta `docs/` (`python -m http.server 8765 --directory docs`)
 — abrir o `index.html` direto pelo `file://` não funciona, porque o `fetch` do JSON é bloqueado.
 
-## Os cinco filtros
+## Os filtros
 
 Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varredura.mjs`:
 
+0. **Modalidade** — só Pregão Eletrônico e Dispensa em todas as UFs, mais Pregão
+   Presencial em RS e SC. Leilão, credenciamento e concorrência ficam de fora. É o que
+   elimina na origem os leilões de veículo sucateado, que casavam com a busca por causa
+   do "ar-condicionado" no descritivo.
 1. **Só material** — descarta itens de serviço (`materialOuServico !== 'M'`) e descrições com
    instalação, montagem, manutenção, mão de obra. Um edital só entra se **nenhum** item de
    interesse for serviço.
@@ -60,7 +64,7 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
 
 ## Ressalvas
 
-- Sobram cerca de **4% de falsos positivos** mesmo depois dos cinco filtros. Confira o edital
+- Sobram cerca de **4% de falsos positivos** mesmo depois dos filtros. Confira o edital
   antes de cotar.
 - Os valores são **estimativas do órgão**, não referência de mercado.
 - Vários editais vêm com valor zerado por **orçamento sigiloso** — não é erro.
