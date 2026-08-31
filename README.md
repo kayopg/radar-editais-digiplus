@@ -29,7 +29,7 @@ varredura.mjs  →  dados/ultima.json  →  publicar.mjs  →  docs/dados.json  
 | `publicar.mjs` | Converte a saída bruta no `docs/dados.json` que a página consome. |
 | `delta.mjs` | Compara duas versões do `dados.json` e imprime o que entrou, o que saiu e o que fecha em 48 h. |
 | `conferir.mjs` | Trava de sanidade: derruba o job antes do commit se o resultado do dia parecer degradado. |
-| `docs/index.html` | A página. Sem dependência externa, sem build. |
+| `docs/index.html` | A página. Sem dependência externa, sem build. O botão "Baixar edital resumido" gera um PDF de uma página pela impressão do navegador. |
 
 Rodar na mão:
 
@@ -48,6 +48,9 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    Presencial em RS e SC. Leilão, credenciamento e concorrência ficam de fora. É o que
    elimina na origem os leilões de veículo sucateado, que casavam com a busca por causa
    do "ar-condicionado" no descritivo.
+0b. **Tipo de órgão** — só município (prefeitura, câmara, fundo, autarquia — via o campo
+   `esfera_nome` do PNCP), mais instituições de ensino e de saúde de qualquer esfera.
+   Tribunais, agências, saneamento, militares e polícia ficam de fora.
 1. **Só material** — descarta itens de serviço (`materialOuServico !== 'M'`) e descrições com
    instalação, montagem, manutenção, mão de obra. Um edital só entra se **nenhum** item de
    interesse for serviço.
@@ -61,6 +64,9 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    **zero** são mantidos: é orçamento sigiloso, e a página mostra "sigiloso", nunca "R$ 0".
 5. **Duplicatas** — o mesmo edital sai duas vezes (publicação direta e via portal
    intermediário). Agrupa por município + UF + dia de encerramento + quantidade + valor.
+6. **Piso do edital** — descarta edital cujo valor total estimado fique entre R$ 1 e
+   R$ 4.000: compra de troco não vale a viagem. Valor **zero** fica, porque é orçamento
+   sigiloso e pode ser grande.
 
 ## Ressalvas
 

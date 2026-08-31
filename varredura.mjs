@@ -25,6 +25,11 @@ const CAT = [
 
 const PISO = { CL:400, LV:400, RF:300, BB:300, CC:250, CX:200, OT:150, PR:100, EP:60 };
 
+// 5.6 - piso do edital inteiro. Compra de troco (uma chaleira, um liquidificador)
+// nao vale a viagem. Valor ZERO e orcamento sigiloso e fica: nao se sabe o tamanho,
+// e pode ser grande (decisao do usuario em 31/08/2026).
+const PISO_EDITAL = 4000;
+
 // 5.0 — modalidade. Ids conferidos na API em 31/08/2026:
 //   1 Leilao-Eletronico | 4 Concorrencia-Eletronica | 6 Pregao-Eletronico
 //   7 Pregao-Presencial | 8 Dispensa | 12 Credenciamento | 13 Leilao-Presencial
@@ -33,6 +38,28 @@ const PISO = { CL:400, LV:400, RF:300, BB:300, CC:250, CX:200, OT:150, PR:100, E
 const MOD_OK = new Set([6, 8]);
 const MOD_PRESENCIAL = 7;
 const UF_PRESENCIAL = new Set(['RS', 'SC']);   // pregao presencial so nesses dois
+
+// 5.0b — tipo de orgao. Regra: tudo que e do municipio (prefeitura, camara,
+// fundo, autarquia) mais instituicoes de ensino e de saude de qualquer esfera.
+// O campo esfera_nome do PNCP resolve o municipio inteiro sem depender do nome;
+// para estadual/federal a classificacao e por nome do orgao + da unidade.
+const ENSINO = ['universidade','faculdade','instituto federal','centro universitario',
+  'escola','colegio','cefet','educacao','educacional','ensino','campus','fundepar'];
+const SAUDE = ['hospital','saude','santa casa','hemocentro','hemonucleo','maternidade',
+  'pronto socorro','pronto-socorro','odontoclinica','ezequiel dias'];
+// Militar e policia saem mesmo quando o nome casaria com saude (decisao do usuario
+// em 31/08/2026: hospital militar tambem fica de fora).
+const VETO_ORGAO = ['comando do exercito','comando da marinha','comando da aeronautica',
+  'exercito brasileiro','ministerio da defesa','policia militar','policia civil',
+  'policia rodoviaria','corpo de bombeiros','batalhao','quartel','hospital militar'];
+
+function orgaoOk(o) {
+  const txt = norm((o.orgao_nome || '') + ' ' + (o.unidade_nome || ''));
+  if (VETO_ORGAO.some(v => txt.includes(v))) return false;
+  if (norm(o.esfera_nome) === 'municipal') return true;            // prefeitura, camara, autarquia
+  return ENSINO.some(v => txt.includes(v)) || SAUDE.some(v => txt.includes(v));
+}
+
 
 // 5.1 — serviço no item
 const SERV_ITEM = ["instalacao","montagem","manutencao","higienizacao","desinstalacao","recarga de gas","limpeza de ar","mao de obra","servicos de"];
@@ -111,7 +138,7 @@ process.stderr.write(`  ${res.size} editais unicos, ${errBusca} erros\n`);
 // ------------------------------------------- 2. veto por objeto + data valida
 const hoje = new Date();
 const cands = [];
-let vObj = 0, vData = 0, vMod = 0;
+let vObj = 0, vData = 0, vMod = 0, vOrgao = 0;
 const porModalidade = {};
 for (const o of res.values()) {
   const mod = Number(o.modalidade_licitacao_id);
@@ -121,6 +148,8 @@ for (const o of res.values()) {
     porModalidade[nome] = (porModalidade[nome] || 0) + 1;
     continue;
   }
+  if (!orgaoOk(o)) { vOrgao++; continue; }
+
   const f = o.data_fim_vigencia;
   const dt = f ? new Date(f) : null;
   if (!dt || isNaN(dt) || dt < hoje || dt.getFullYear() > 2030) { vData++; continue; }
@@ -128,10 +157,8 @@ for (const o of res.values()) {
   if (VETO_OBJ.some(v => txt.includes(v)) || RE_VAN.test(txt)) { vObj++; continue; }
   cands.push(o);
 }
-process.stderr.write(`Candidatos: ${cands.length} (modalidade ${vMod}, objeto ${vObj}, data ${vData})
-`);
-process.stderr.write(`  por modalidade descartada: ${JSON.stringify(porModalidade)}
-`);
+console.error("Candidatos: " + cands.length + " (modalidade " + vMod + ", orgao " + vOrgao + ", objeto " + vObj + ", data " + vData + ")");
+console.error("  descartes por modalidade: " + JSON.stringify(porModalidade));
 
 // ---------------------------------------------------------------- 3. itens
 let errItens = 0;
@@ -160,6 +187,7 @@ process.stderr.write(`  ${errItens} erros\n`);
 const classifica = d => { for (const [c, ts] of CAT) for (const t of ts) if (d.includes(t)) return c; return null; };
 const temVeto = d => VETO_ITEM.some(v => d.includes(v)) || RE_VAN.test(d);
 
+let vPiso = 0;
 const st = { objServ: 0, itemServ: 0, semItem: 0, ok: 0 };
 const bruto = [];
 for (const o of cands) {
@@ -188,8 +216,12 @@ for (const o of cands) {
 
   const qtd = keep.reduce((s, x) => s + x[1], 0);
   const val = Math.round(keep.reduce((s, x) => s + x[1] * x[2], 0));
+  if (val > 0 && val <= PISO_EDITAL) { vPiso++; continue; }
   bruto.push({
     mun: limpa(o.municipio_nome), uf: o.uf, org: limpa(o.orgao_nome), ed: limpa(o.title),
+    // cabecalho padrao do edital: objeto e o que faltava, e e o campo mais importante
+    obj: limpa(o.description), uni: limpa(o.unidade_nome),
+    mod: limpa(o.modalidade_licitacao_nome), pub: o.data_publicacao_pncp || null,
     fecha: o.data_fim_vigencia, qtd, val,
     path: `${o.orgao_cnpj}/${o.ano}/${o.numero_sequencial}`, it: keep,
   });
@@ -213,9 +245,69 @@ st.final = fin.length;
 st.porUf = {};
 for (const e of fin) st.porUf[e.uf] = (st.porUf[e.uf] || 0) + 1;
 
+
+// ------------------------------------------------ 4b. arquivo oficial do edital
+// O antigo botao apontava sempre para arquivos/1, e isso estava errado duas vezes:
+// o arquivo 1 costuma ser "Pedido de compra" ou "ETP" (em Carlos Barbosa/RS o edital
+// era o arquivo 7), e em alguns orgaos os sequenciais nem comecam em 1.
+//
+// O formato tambem nao da para adivinhar pelo titulo da listagem: 7 de cada 8 titulos
+// sem extensao eram PDF assim mesmo. Quem sabe a verdade e o Content-Disposition, que
+// um HEAD entrega sem baixar o arquivo.
+const ehEdital = a => {
+  const s = norm(a.tipoDocumentoNome || '');
+  return s.includes('edital') || s.includes('aviso de contratacao');
+};
+
+function extDe(nome) {
+  const n = String(nome || '').toLowerCase().split('?')[0].trim();
+  const p = n.lastIndexOf('.');
+  if (p < 0 || p === n.length - 1) return '';
+  const e = n.slice(p + 1);
+  return e.length <= 5 ? e : '';
+}
+
+function nomeDoCd(cd) {
+  const s = String(cd || '');
+  const i = s.indexOf('filename="');
+  if (i < 0) return '';
+  const j = s.indexOf('"', i + 10);
+  return j < 0 ? '' : s.slice(i + 10, j);
+}
+
+function melhorArquivo(lista) {
+  if (!Array.isArray(lista) || !lista.length) return null;
+  return lista.find(a => ehEdital(a) && extDe(a.titulo) === 'pdf')
+      || lista.find(a => ehEdital(a))
+      || lista.find(a => extDe(a.titulo) === 'pdf')
+      || lista[0];
+}
+
+process.stderr.write('Arquivos: ' + fin.length + ' listagens\n');
+let errArq = 0;
+await pool(fin, 6, async (e) => {
+  const [cnpj, ano, seq] = e.path.split('/');
+  const base = `https://pncp.gov.br/pncp-api/v1/orgaos/${cnpj}/compras/${ano}/${seq}/arquivos`;
+  try {
+    const lista = await getJson(`https://pncp.gov.br/api/pncp/v1/orgaos/${cnpj}/compras/${ano}/${seq}/arquivos`);
+    const a = melhorArquivo(lista);
+    if (!a) return;
+    e.arq = a.sequencialDocumento;
+    e.arqExt = extDe(a.titulo);
+    try {
+      const h = await fetch(`${base}/${a.sequencialDocumento}`, { method: 'HEAD' });
+      if (h.ok) {
+        const real = extDe(nomeDoCd(h.headers.get('content-disposition')));
+        if (real) e.arqExt = real;
+      }
+    } catch { /* fica a extensao do titulo, se houver */ }
+  } catch { errArq++; }
+});
+process.stderr.write('  ' + errArq + ' erros\n');
+
 // ---------------------------------------------------------------- 5. saidas
 const hojeISO = new Date().toISOString().slice(0, 10);
-const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vMod, porModalidade, vObj, vData, candidatos: cands.length, errItens, ...st };
+const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vMod, porModalidade, vOrgao, vPiso, vObj, vData, candidatos: cands.length, errItens, ...st };
 const bruta = { st: resumo, editais: fin };
 
 // A saida bruta nao vai para o git (uns 320 KB por dia). O que o site consome

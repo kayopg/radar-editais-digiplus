@@ -15,7 +15,10 @@ const { st, editais } = JSON.parse(fs.readFileSync(entrada, 'utf8'));
 // propósito: era esse o antigo pé na jaca de a lista viver só no HTML.
 const UFS = ['PR', 'RS', 'SP', 'MG', 'GO', 'MT', 'MS', 'SC'];
 
-const linhas = editais.map(e => [e.mun, e.uf, e.org, e.ed, e.fecha, e.qtd, e.val, e.path, e.it]);
+// Colunas 0-8 sao as antigas; 9 em diante vieram com o resumo em PDF (31/08/2026).
+// Acrescente sempre no fim: a pagina le por indice.
+const linhas = editais.map(e => [e.mun, e.uf, e.org, e.ed, e.fecha, e.qtd, e.val, e.path, e.it,
+  e.obj || '', e.uni || '', e.mod || '', e.pub || '', e.arq || 0, e.arqExt || '']);
 
 const saida = {
   meta: {
@@ -33,7 +36,8 @@ const saida = {
   },
   // documenta o formato para quem abrir o JSON direto
   colunas: ['municipio', 'uf', 'orgao', 'edital', 'encerramento', 'quantidade',
-            'valorEstimado', 'path', 'itens'],
+            'valorEstimado', 'path', 'itens', 'objeto', 'unidade', 'modalidade',
+            'publicacao', 'arquivoSeq', 'arquivoExtensao'],
   colunasItem: ['categoria', 'quantidade', 'valorUnitario', 'descricao'],
   editais: linhas,
 };
