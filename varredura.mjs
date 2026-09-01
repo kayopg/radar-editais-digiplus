@@ -55,6 +55,14 @@ const CAT = [
 // Quem decide se o edital vale a viagem e o PISO_EDITAL, nao este.
 const PISO_ITEM = 150;
 
+// 5.4b - produtos que a Digiplus cota mesmo baratos (decisao do usuario em
+// 01/09/2026). Chaleira eletrica de 1,7 L sai por R$ 73 e e produto de linha; o
+// piso de R$ 150 estava derrubando 15 itens assim. Chaleira de aluminio de
+// fogao continua fora, porque nao casa com "eletrica" nem "industrial" — e
+// panela, nao eletrodomestico. Quem decide se o edital vale a viagem continua
+// sendo o PISO_EDITAL, nao este.
+const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira'];
+
 // 5.6 - piso do edital inteiro. Compra de troco (uma chaleira, um liquidificador)
 // nao vale a viagem. Valor ZERO e orcamento sigiloso e fica: nao se sabe o tamanho,
 // e pode ser grande (decisao do usuario em 31/08/2026).
@@ -307,7 +315,7 @@ for (const o of cands) {
     if (cat === 'BL' && VETO_BL_MEDICA.some(v => d.includes(v))) { vBalanca++; continue; }
     if (!itemVivo(it.sit)) { vCancel++; continue; }
     const v = +it.v || 0;
-    if (v > 0 && v < PISO_ITEM) continue;
+    if (v > 0 && v < PISO_ITEM && !SEM_PISO.some(p => d.includes(p))) continue;
     // Posicoes 0-3 sao as antigas; 4 e 5 vieram com o resumo mais completo
     // (01/09/2026) e 6 logo depois. Acrescente sempre no fim: a pagina le por indice.
     //
