@@ -234,6 +234,23 @@
         return api;
       },
 
+      // rotulo a esquerda e valor encostado na direita, na mesma linha
+      parOposto: function (esq, dir, o) {
+        o = o || {};
+        var tam = o.tam || 9;
+        var negE = !!o.negritoEsq, negD = !!o.negritoDir;
+        var alturaLinha = tam * 1.34;
+        garante(alturaLinha);
+        y -= alturaLinha;
+        pinta(esq, margem, y, tam, negE, o.corEsq || [0.32, 0.32, 0.32]);
+        if (dir) pinta(dir, margem + larguraUtil - largura(dir, tam, negD), y, tam, negD, o.corDir || [0, 0, 0]);
+        return api;
+      },
+
+      // abre pagina nova se nao sobrar pelo menos `alt` — evita cabecalho de
+      // item orfao no pe da pagina, com o corpo do bloco na pagina seguinte
+      reserva: function (alt) { garante(alt); return api; },
+
       espaco: function (n) { y -= (n || 6); return api; },
 
       regua: function (grossura, c) {

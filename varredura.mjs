@@ -318,7 +318,9 @@ await pool(fin, 6, async (e) => {
 process.stderr.write('  ' + errArq + ' erros\n');
 
 // ---------------------------------------------------------------- 5. saidas
-const hojeISO = new Date().toISOString().slice(0, 10);
+// Data em America/Sao_Paulo, nao em UTC: rodando de noite no Brasil o toISOString
+// ja virou o dia e a varredura saia carimbada com a data de amanha.
+const hojeISO = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
 const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vMod, porModalidade, vOrgao, vCient, vPiso, vObj, vData, candidatos: cands.length, errItens, ...st };
 const bruta = { st: resumo, editais: fin };
 

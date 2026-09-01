@@ -22,7 +22,8 @@ const linhas = editais.map(e => [e.mun, e.uf, e.org, e.ed, e.fecha, e.qtd, e.val
 
 const saida = {
   meta: {
-    varredura: new Date().toISOString().slice(0, 10),
+    // ver a nota do hojeISO no varredura.mjs: a data e a de Sao Paulo, nao UTC
+    varredura: new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' }),
     gerado: new Date().toISOString(),
     ufs: UFS,
     termos: 32,

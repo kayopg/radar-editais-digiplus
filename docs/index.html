@@ -346,9 +346,28 @@ function resumo(i){
               + (r[14] ? "  (" + String(r[14]).toUpperCase() + ")" : ""));
   }
 
-  doc.espaco(9);
-  doc.texto("Itens solicitados", { tam:11, negrito:true, depois:3 });
-  doc.tabela(COLS_ITENS, linhasItens(r));
+  doc.espaco(11);
+  doc.texto("Itens solicitados", { tam:12, negrito:true });
+  doc.regua(0.8, [0.55,0.55,0.55]);
+  doc.espaco(2);
+
+  // Um bloco por item, com o descritivo em corpo cheio. A tabela apertada que
+  // havia antes espremia descritivo de 500+ caracteres numa coluna de 47% da
+  // largura; aqui ele ocupa a linha inteira e da para ler para cotar.
+  r[8].forEach(function(it, k){
+    if(k > 0){ doc.espaco(5); doc.regua(0.5, [0.78,0.78,0.78]); doc.espaco(3); }
+    doc.reserva(64);   // cabecalho do item nao fica orfao no pe da pagina
+    doc.parOposto("ITEM " + (k+1) + "   ·   " + CATPDF[it[0]],
+                  it[1].toLocaleString("pt-BR") + (it[1] === 1 ? " unidade" : " unidades"),
+                  { tam:10, negritoEsq:true, negritoDir:true, corEsq:[0,0,0] });
+    doc.espaco(2);
+    doc.texto(it[3], { tam:9.5, alturaLinha:13 });
+    doc.espaco(3);
+    doc.parOposto("Valor unitário de referência", it[2] ? moeda(it[2]) : "sigiloso", { tam:8.5 });
+    doc.parOposto("Total do item", it[2] ? moeda(it[1]*it[2]) : "sigiloso",
+                  { tam:8.5, negritoDir:true });
+  });
+
   ressalvas(doc);
 
   RadarPDF.baixa(doc.bytes(), nomeArquivo("Edital " + r[0] + " " + r[1] + " " + numeroEdital(r[3])) + ".pdf");

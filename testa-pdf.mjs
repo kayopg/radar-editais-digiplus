@@ -63,12 +63,23 @@ function montaResumo(r){
       + '/compras/' + pp[1] + '/' + pp[2] + '/arquivos/' + r[13]
       + (r[14] ? '  (' + String(r[14]).toUpperCase() + ')' : ''));
   }
-  doc.espaco(9);
-  doc.texto('Itens solicitados', { tam:11, negrito:true, depois:3 });
-  doc.tabela(COLS, r[8].map((it,k) => [
-    String(k+1), CAT[it[0]], it[3], it[1].toLocaleString('pt-BR'),
-    it[2] ? moeda(it[2]) : 'sigiloso', it[2] ? moeda(it[1]*it[2]) : 'sigiloso'
-  ]));
+  doc.espaco(11);
+  doc.texto('Itens solicitados', { tam:12, negrito:true });
+  doc.regua(0.8, [0.55,0.55,0.55]);
+  doc.espaco(2);
+  r[8].forEach((it, k) => {
+    if(k > 0){ doc.espaco(5); doc.regua(0.5, [0.78,0.78,0.78]); doc.espaco(3); }
+    doc.reserva(64);
+    doc.parOposto('ITEM ' + (k+1) + '   ·   ' + CAT[it[0]],
+                  it[1].toLocaleString('pt-BR') + (it[1] === 1 ? ' unidade' : ' unidades'),
+                  { tam:10, negritoEsq:true, negritoDir:true, corEsq:[0,0,0] });
+    doc.espaco(2);
+    doc.texto(it[3], { tam:9.5, alturaLinha:13 });
+    doc.espaco(3);
+    doc.parOposto('Valor unitário de referência', it[2] ? moeda(it[2]) : 'sigiloso', { tam:8.5 });
+    doc.parOposto('Total do item', it[2] ? moeda(it[1]*it[2]) : 'sigiloso',
+                  { tam:8.5, negritoDir:true });
+  });
   doc.espaco(10);
   doc.texto('Os valores são estimativas do órgão, não referência de mercado. Itens marcados como '
     + 'sigiloso tiveram o orçamento fechado pelo órgão. Sobram cerca de 4% de falsos positivos '
