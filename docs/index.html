@@ -152,7 +152,7 @@ button.btn{font-family:inherit;cursor:pointer}
 <script src="pdf.js"></script>
 <script src="pdf-le.js"></script>
 <script>
-var CAT={RF:"Refrigeração",CL:"Climatização",CC:"Cocção",PR:"Preparo",EP:"Eletroportáteis",LV:"Lavanderia",BB:"Bebedouro",CX:"Coifa/Exaustão",OT:"Outros"};
+var CAT={RF:"Refrigeração",CL:"Climatização",CC:"Cocção",PR:"Preparo",EP:"Eletroportáteis",LV:"Lavanderia",BB:"Bebedouro",CX:"Coifa/Exaustão",BL:"Balanças",LD:"Lousa digital",GE:"Geradores",AQ:"Aquecimento",OT:"Outros"};
 // [mun, uf, orgao, edital, fecha, qtd, valor, path, itens[[cat,qtd,vunit,desc]]]
 // [mun, uf, orgao, edital, fecha, qtd, valor, path, itens[[cat,qtd,vunit,desc]]]
 var D=[];
@@ -364,53 +364,145 @@ async function resumo(botao, i){
   }
 }
 
-async function montaResumo(r){
-  var doc = RadarPDF.novo({ rodape: "Radar de Editais Digiplus \u00b7 varredura de " + varreduraTxt() });
+// A unidade de medida (it[4]) e o numero do item dentro do edital (it[5]) so
+// existem no dados.json a partir da varredura de 01/09/2026. Enquanto o JSON
+// antigo estiver no ar eles vem undefined, e o resumo tem de sair como saia
+// antes, em vez de escrever "undefined" no PDF.
+function rotuloItem(it, k){
+  return it[5] ? "ITEM " + it[5] + " do edital" : "ITEM " + (k + 1);
+}
+function qtdItem(it){
+  var q = it[1].toLocaleString("pt-BR");
+  return it[4] ? q + " " + it[4] : q + (it[1] === 1 ? " unidade" : " unidades");
+}
+function umaLinha(s){ return String(s == null ? "" : s).replace(/\s+/g, " ").trim(); }
 
-  doc.tituloComValor(r[0] + " / " + r[1], r[6] ? moeda(r[6]) : "or\u00e7amento sigiloso", { tam:15 });
-  doc.texto(r[2], { tam:9, cor:[0.28,0.28,0.28] });
-  doc.regua(1);
-  doc.espaco(3);
+// O edital inteiro, buscado na hora do download. O /itens do PNCP manda o CORS
+// certo (access-control-allow-origin: *), ao contrario do /arquivos, que manda
+// "*, *" e o navegador recusa — por isso este anexo funciona e o das paginas
+// do PDF oficial nao. tamanhoPagina=500 cobre o maior edital ja visto (278
+// itens). Falha nao derruba o download: o resumo sai sem o anexo.
+async function buscaTodosItens(r){
+  var pp = r[7].split("/");
+  try{
+    var resp = await fetch("https://pncp.gov.br/api/pncp/v1/orgaos/" + pp[0]
+      + "/compras/" + pp[1] + "/" + pp[2] + "/itens?pagina=1&tamanhoPagina=500");
+    if(!resp.ok) throw new Error("HTTP " + resp.status);
+    var j = await resp.json();
+    return Array.isArray(j) ? j : [];
+  }catch(e){ return null; }
+}
 
-  doc.campo("Edital", r[3]);
-  if(r[11]) doc.campo("Modalidade", r[11]);
-  if(r[10]) doc.campo("Unidade", r[10]);
-  doc.campo("Encerramento", quandoTxt(r[4]));
-  doc.campo("Valor total estimado", r[6] ? moeda(r[6]) : "or\u00e7amento sigiloso");
-  doc.campo("Quantidade total", r[5].toLocaleString("pt-BR") + " unidades em "
-            + r[8].length + (r[8].length === 1 ? " item" : " itens"));
-  if(r[12]) doc.campo("Publicado no PNCP", dataBR(r[12]));
-  if(r[9]) doc.campo("Objeto", r[9]);
-  doc.campo("Processo PNCP", r[7]);
-  doc.campo("P\u00e1gina oficial", "https://pncp.gov.br/app/editais/" + r[7]);
-  if(r[13]){
-    var pp = r[7].split("/");
-    doc.campo("Arquivo oficial", "https://pncp.gov.br/api/pncp/v1/orgaos/" + pp[0]
-              + "/compras/" + pp[1] + "/" + pp[2] + "/arquivos/" + r[13]
-              + (r[14] ? "  (" + String(r[14]).toUpperCase() + ")" : ""));
-  }
+// Quais itens do edital ja aparecem detalhados como "de interesse". Serve para
+// o anexo nao repetir o mesmo fogao duas vezes: a lista de baixo passa a ser
+// "o que mais tem no edital", nao "tudo de novo". Casa pelo numero do item
+// quando ele existe (varredura de 01/09/2026 em diante) e cai no descritivo
+// enquanto o dados.json antigo estiver no ar — os dois lados passam pela mesma
+// normalizacao de espacos, entao o texto bate.
+function jaDetalhados(r){
+  var num = {}, desc = {};
+  r[8].forEach(function(it){
+    if(it[5]) num[it[5]] = 1;
+    desc[umaLinha(it[3])] = 1;
+  });
+  return function(x){
+    return !!(num[x.numeroItem] || desc[umaLinha(x.descricao)]);
+  };
+}
 
-  doc.espaco(11);
-  doc.texto("Itens solicitados", { tam:12, negrito:true });
+function secao(doc, titulo){
+  doc.espaco(12);
+  doc.texto(titulo, { tam:11, negrito:true });
   doc.regua(0.8, [0.55,0.55,0.55]);
-  doc.espaco(2);
+  doc.espaco(3);
+}
 
-  // Um bloco por item, com o descritivo em corpo cheio. A tabela apertada que
-  // havia antes espremia descritivo de 500+ caracteres numa coluna de 47% da
-  // largura; aqui ele ocupa a linha inteira e da para ler para cotar.
+async function montaResumo(r){
+  var doc = RadarPDF.novo({ rodape: "Radar de Editais Digiplus · varredura de " + varreduraTxt() });
+
+  // --------------------------------------------------------- identificacao
+  // O valor ja sai no titulo, entao nao se repete como campo abaixo. O caminho
+  // do processo tambem sai: ele e o final da URL da pagina oficial, no fim.
+  doc.tituloComValor(r[0] + " / " + r[1], r[6] ? moeda(r[6]) : "orçamento sigiloso", { tam:15 });
+  doc.texto(r[2] + (r[10] ? "  ·  " + r[10] : ""), { tam:8.5, cor:[0.35,0.35,0.35] });
+  doc.regua(1);
+  doc.espaco(6);
+
+  doc.texto(r[3] + (r[11] ? "   ·   " + r[11] : ""), { tam:10.5, negrito:true });
+  doc.espaco(1);
+  // o prazo e o dado mais perecivel do resumo: fica logo abaixo do edital,
+  // e nao enterrado como quarto campo de uma lista de onze
+  doc.texto("Encerra " + quandoTxt(r[4]) + (r[12] ? "   ·   publicado em " + dataBR(r[12]) : ""),
+            { tam:9, cor:[0.25,0.25,0.25] });
+  doc.espaco(6);
+
+  if(r[9]) doc.campo("Objeto", r[9], { tam:9, larguraRotulo:52 });
+
+  // --------------------------------------------------------- itens de interesse
+  secao(doc, "Itens de interesse (" + r[8].length + ")");
+  doc.texto(r[5].toLocaleString("pt-BR") + " unidades · "
+            + (r[6] ? moeda(r[6]) + " estimados" : "orçamento sigiloso"),
+            { tam:8.5, cor:[0.4,0.4,0.4] });
+  doc.espaco(5);
+
   r[8].forEach(function(it, k){
     if(k > 0){ doc.espaco(5); doc.regua(0.5, [0.78,0.78,0.78]); doc.espaco(3); }
     doc.reserva(64);   // cabecalho do item nao fica orfao no pe da pagina
-    doc.parOposto("ITEM " + (k+1) + "   ·   " + CATPDF[it[0]],
-                  it[1].toLocaleString("pt-BR") + (it[1] === 1 ? " unidade" : " unidades"),
+    doc.parOposto(rotuloItem(it, k) + "   ·   " + CATPDF[it[0]], qtdItem(it),
                   { tam:10, negritoEsq:true, negritoDir:true, corEsq:[0,0,0] });
     doc.espaco(2);
     doc.texto(it[3], { tam:9.5, alturaLinha:13 });
     doc.espaco(3);
-    doc.parOposto("Valor unitário de referência", it[2] ? moeda(it[2]) : "sigiloso", { tam:8.5 });
-    doc.parOposto("Total do item", it[2] ? moeda(it[1]*it[2]) : "sigiloso",
+    // unitario e total na mesma linha: eram duas, e uma delas so repetia a conta
+    doc.parOposto("Unitário " + (it[2] ? moeda(it[2]) : "sigiloso"),
+                  it[2] ? "Total " + moeda(it[1]*it[2]) : "",
                   { tam:8.5, negritoDir:true });
   });
+
+  // --------------------------------------------------------- resto do edital
+  // Os de interesse ja foram detalhados acima; aqui entra so o que sobra, em
+  // linha compacta. E o que diz se a compra e de tres fogoes ou de tres fogoes
+  // no meio de 275 itens de limpeza.
+  var todos = await buscaTodosItens(r);
+  if(todos === null){
+    secao(doc, "Demais itens do edital");
+    doc.texto("Não consegui buscar a lista completa agora. Use o link da página oficial no fim.",
+      { tam:8.5, cor:[0.35,0.35,0.35] });
+  } else {
+    var conhecido = jaDetalhados(r);
+    var demais = todos.filter(function(x){ return !conhecido(x); });
+    secao(doc, "Demais itens do edital (" + demais.length + ")");
+    if(!demais.length){
+      doc.texto("O edital tem só os itens detalhados acima.", { tam:8.5, cor:[0.35,0.35,0.35] });
+    } else {
+      doc.texto("O que mais está sendo comprado no mesmo edital, para dimensionar a disputa.",
+        { tam:8.5, cor:[0.4,0.4,0.4] });
+      doc.espaco(4);
+      demais.forEach(function(x){
+        doc.reserva(22);
+        var q = (+x.quantidade || 0).toLocaleString("pt-BR");
+        var vu = +x.valorUnitarioEstimado || 0;
+        doc.campo("Item " + (x.numeroItem || "—"),
+                  q + (x.unidadeMedida ? " " + x.unidadeMedida : "") + "  ·  "
+                  + (vu ? moeda(vu) : "sigiloso") + "   " + umaLinha(x.descricao),
+                  { tam:8, larguraRotulo:52 });
+        doc.espaco(2);
+      });
+    }
+  }
+
+  // --------------------------------------------------------- onde conferir
+  // As URLs sao longas e dominavam o cabecalho. No fim elas continuam a um
+  // clique de distancia e nao competem com o que se le primeiro.
+  secao(doc, "Onde conferir");
+  doc.campo("Página", "https://pncp.gov.br/app/editais/" + r[7], { tam:8.5, larguraRotulo:52 });
+  if(r[13]){
+    var pp = r[7].split("/");
+    doc.campo("Arquivo", "https://pncp.gov.br/api/pncp/v1/orgaos/" + pp[0]
+              + "/compras/" + pp[1] + "/" + pp[2] + "/arquivos/" + r[13]
+              + (r[14] ? "  (" + String(r[14]).toUpperCase() + ")" : ""),
+              { tam:8.5, larguraRotulo:52 });
+  }
 
   ressalvas(doc);
 
