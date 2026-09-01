@@ -125,7 +125,7 @@ button.btn{font-family:inherit;cursor:pointer}
   <div class="crow"><input type="search" id="q" placeholder="Buscar município, órgão ou produto…" autocomplete="off"><button class="clear" id="clear">limpar filtros</button></div>
   <div class="crow"><span class="clabel">Estado</span><div id="uf" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
   <div class="crow"><span class="clabel">Categoria</span><div id="cat" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
-  <div class="crow"><span class="clabel">Prazo</span><div id="pz" style="display:flex;flex-wrap:wrap;gap:6px"></div><span class="count" id="count" style="margin-left:auto"></span><button class="btn alt" type="button" id="pdfLista">Baixar lista em PDF</button></div>
+  <div class="crow"><span class="clabel">Prazo</span><div id="pz" style="display:flex;flex-wrap:wrap;gap:6px"></div><span class="count" id="count" style="margin-left:auto"></span></div>
 </div>
 
 <div class="kpis">
@@ -181,7 +181,6 @@ var pronto=false;
 
 var NOW=new Date();
 var fUF=[], fCAT=[], fPZ=null, fQ="";
-var linhasVisiveis=[];   // o que render() acabou de mostrar; e o que o PDF da lista exporta
 
 function brl(n){
   if(!n) return "sigiloso";
@@ -216,10 +215,7 @@ function pass(r){
 function render(){
   if(!pronto) return;
   var rows=D.filter(pass);
-  linhasVisiveis=rows;
   document.getElementById("count").textContent=rows.length+" de "+D.length+" editais";
-  var bp=document.getElementById("pdfLista");
-  if(bp){ bp.textContent="Baixar lista em PDF ("+rows.length+")"; bp.disabled=!rows.length; }
   document.getElementById("k1").textContent=rows.length;
   // sem resultado o total eh zero, e brl(0) diz "sigiloso" (certo para item, errado aqui)
   document.getElementById("k2").textContent=rows.length?brl(rows.reduce(function(a,r){return a+r[6];},0)):"—";
@@ -294,21 +290,6 @@ function numeroEdital(t){
 }
 function varreduraTxt(){
   return (document.getElementById("dataVarredura") || {}).textContent || "";
-}
-var COLS_ITENS = [
-  {titulo:"#",           larg:0.045, alinha:"centro"},
-  {titulo:"Categoria",   larg:0.125},
-  {titulo:"Descritivo",  larg:0.475},
-  {titulo:"Qtd",         larg:0.075, alinha:"centro"},
-  {titulo:"Valor unit.", larg:0.14,  alinha:"direita"},
-  {titulo:"Total",       larg:0.14,  alinha:"direita"}
-];
-function linhasItens(r){
-  return r[8].map(function(it, k){
-    return [ String(k+1), CATPDF[it[0]], it[3], it[1].toLocaleString("pt-BR"),
-             it[2] ? moeda(it[2]) : "sigiloso",
-             it[2] ? moeda(it[1]*it[2]) : "sigiloso" ];
-  });
 }
 function ressalvas(doc){
   doc.espaco(10);
@@ -448,76 +429,6 @@ async function montaResumo(r){
   RadarPDF.baixa(doc.bytes(), nomeArquivo("Edital " + r[0] + " " + r[1] + " " + numeroEdital(r[3])) + ".pdf");
 }
 
-// ------------------------------------------------- a lista inteira
-function descreveFiltros(){
-  var f = [];
-  if(fUF.length)  f.push("Estados: " + fUF.join(", "));
-  if(fCAT.length) f.push("Categorias: " + fCAT.map(function(c){ return CATPDF[c]; }).join(", "));
-  if(fPZ!==null)  f.push("Prazo: " + (fPZ===0 ? "fecham hoje" : "at\u00e9 " + fPZ + " dias"));
-  if(fQ)          f.push("Busca: \u201c" + fQ + "\u201d");
-  return f.length ? "Filtros aplicados \u2014 " + f.join(" \u00b7 ")
-                  : "Sem filtros \u2014 lista completa da varredura.";
-}
-
-function listaPdf(){
-  var rows = linhasVisiveis;
-  if(!rows.length){ alert("Nenhum edital com esses filtros."); return; }
-
-  var doc = RadarPDF.novo({ rodape: "Radar de Editais Digiplus \u00b7 varredura de " + varreduraTxt() });
-  var totalVal = rows.reduce(function(a,r){ return a + r[6]; }, 0);
-  var totalQtd = rows.reduce(function(a,r){ return a + r[5]; }, 0);
-  var muns = {}; rows.forEach(function(r){ muns[r[0]+r[1]] = 1; });
-  var nMun = Object.keys(muns).length;
-
-  doc.texto("Radar de Editais Digiplus", { tam:19, negrito:true });
-  doc.texto("Licita\u00e7\u00f5es abertas no PNCP com itens de linha branca, climatiza\u00e7\u00e3o, coc\u00e7\u00e3o, "
-    + "lavanderia e eletroport\u00e1teis \u2014 apenas fornecimento puro.", { tam:9, cor:[0.3,0.3,0.3] });
-  doc.texto("Varredura de " + varreduraTxt() + " \u00b7 " + rows.length + " edita"
-    + (rows.length===1?"l":"is") + " \u00b7 " + nMun + " munic\u00edpio" + (nMun===1?"":"s")
-    + " \u00b7 " + totalQtd.toLocaleString("pt-BR") + " unidades \u00b7 " + moeda(totalVal) + " estimados",
-    { tam:9, cor:[0.3,0.3,0.3] });
-  doc.texto(descreveFiltros(), { tam:8.5, cor:[0.4,0.4,0.4] });
-  doc.espaco(10);
-
-  doc.texto("\u00cdndice", { tam:13, negrito:true, depois:3 });
-  doc.tabela(
-    [ {titulo:"#",              larg:0.05, alinha:"centro"},
-      {titulo:"Munic\u00edpio / UF", larg:0.24},
-      {titulo:"Edital",         larg:0.28},
-      {titulo:"Encerramento",   larg:0.15, alinha:"centro"},
-      {titulo:"Qtd",            larg:0.08, alinha:"centro"},
-      {titulo:"Valor estimado", larg:0.20, alinha:"direita"} ],
-    rows.map(function(r,k){
-      return [ String(k+1), r[0] + " / " + r[1], r[3],
-               dataBR(r[4]) + (r[4].slice(11,16)!=="00:00" ? " " + r[4].slice(11,16) : ""),
-               r[5].toLocaleString("pt-BR"),
-               r[6] ? moeda(r[6]) : "sigiloso" ];
-    })
-  );
-
-  doc.novaPagina();
-  doc.texto("Editais", { tam:13, negrito:true, depois:5 });
-  rows.forEach(function(r,k){
-    if(k > 0){ doc.espaco(7); doc.regua(1.1); doc.espaco(3); }
-    doc.tituloComValor((k+1) + ". " + r[0] + " / " + r[1],
-                       r[6] ? moeda(r[6]) : "or\u00e7amento sigiloso", { tam:11.5 });
-    doc.texto(r[2] + " \u00b7 " + r[3] + (r[11] ? " \u00b7 " + r[11] : ""),
-              { tam:8, cor:[0.3,0.3,0.3] });
-    doc.campo("Encerramento", quandoTxt(r[4]) + " \u00b7 " + r[5].toLocaleString("pt-BR")
-              + " unidades em " + r[8].length + (r[8].length===1?" item":" itens"),
-              { tam:8, larguraRotulo:78 });
-    if(r[9]) doc.campo("Objeto", r[9], { tam:8, larguraRotulo:78 });
-    doc.campo("PNCP", "https://pncp.gov.br/app/editais/" + r[7], { tam:8, larguraRotulo:78 });
-    doc.espaco(4);
-    doc.tabela(COLS_ITENS, linhasItens(r));
-  });
-  ressalvas(doc);
-
-  RadarPDF.baixa(doc.bytes(),
-    nomeArquivo("Radar Digiplus " + varreduraTxt().replace(new RegExp("/","g"),"-")
-                + " " + rows.length + " editais") + ".pdf");
-}
-
 function multi(host,items,arr){
   var e=document.getElementById(host);
   e.innerHTML=items.map(function(i){return '<button class="chip" aria-pressed="false" data-v="'+i.v+'">'+i.l+"</button>";}).join("");
@@ -542,7 +453,6 @@ pe.addEventListener("click",function(ev){
   render();
 });
 
-document.getElementById("pdfLista").addEventListener("click", listaPdf);
 document.getElementById("q").addEventListener("input",function(e){ fQ=e.target.value.trim().toLowerCase(); render(); });
 document.getElementById("clear").addEventListener("click",function(){
   fUF.length=0; fCAT.length=0; fPZ=null; fQ="";
