@@ -10,7 +10,15 @@ on:
     # mundo agenda. Em 31/08/2026 o job marcado para 10:00 UTC só pegou vaga às 17:27,
     # 7h27 depois, e a lista que devia estar pronta às 7h chegou às 14h27. Sair do :00
     # e antecipar meia hora dá folga para a fila sem perder o horário útil.
-    - cron: '23 9 * * 1-5'
+    #
+    # Só que não bastou: em 01/09/2026 o job das 09:23 ainda não tinha pegado vaga
+    # 4h21 depois. A fila é best-effort e não há prioridade para comprar, então em vez
+    # de perseguir o horário certo o jeito é tentar de novo. Três janelas: a primeira
+    # que conseguir vaga publica, e as seguintes olham o dados.json que está no ar,
+    # veem a data de hoje e saem na hora — sem gastar os 12 min da varredura.
+    - cron: '23 9 * * 1-5'      # 06:23 BRT — janela principal
+    - cron: '23 11 * * 1-5'     # 08:23 BRT — 1ª repescagem
+    - cron: '23 13 * * 1-5'     # 10:23 BRT — 2ª repescagem
   workflow_dispatch:      # permite rodar na mão pelo botão "Run workflow"
 
 # Sem isso o job não consegue commitar o dados.json de volta.
@@ -30,22 +38,44 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # A repescagem só existe para o caso de a janela anterior não ter pegado vaga.
+      # Se o dados.json que está no ar já é de hoje, não há o que fazer: sai antes de
+      # gastar os 12 minutos da varredura. O disparo manual ignora a trava de
+      # propósito — é o botão de "roda de novo mesmo assim".
+      - name: A varredura de hoje já está publicada?
+        id: guarda
+        run: |
+          hoje=$(TZ=America/Sao_Paulo date +%F)
+          pub=$(grep -o '"varredura":"[0-9-]\{10\}"' docs/dados.json | head -1 | cut -d'"' -f4)
+          echo "no ar: ${pub:-nenhuma} · hoje: $hoje · evento: ${{ github.event_name }}"
+          if [ "$pub" = "$hoje" ] && [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "rodar=nao" >> "$GITHUB_OUTPUT"
+            echo "A varredura de $hoje já está publicada — nada a fazer." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "rodar=sim" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/setup-node@v4
+        if: steps.guarda.outputs.rodar == 'sim'
         with:
           node-version: '22'
 
       - name: Guardar a versão anterior para comparar
+        if: steps.guarda.outputs.rodar == 'sim'
         run: git show HEAD:docs/dados.json > /tmp/anterior.json 2>/dev/null || echo '{}' > /tmp/anterior.json
 
       - name: Varrer o PNCP
+        if: steps.guarda.outputs.rodar == 'sim'
         run: node varredura.mjs
 
       - name: Gerar docs/dados.json
+        if: steps.guarda.outputs.rodar == 'sim'
         run: node publicar.mjs
 
       # O tee manda o delta para o log ALÉM do Summary. O Summary não tem endpoint
       # na API REST, então sem isso o comparativo do dia só existe no navegador.
       - name: Resumo do que mudou
+        if: steps.guarda.outputs.rodar == 'sim'
         run: |
           set -o pipefail
           node delta.mjs /tmp/anterior.json | tee -a "$GITHUB_STEP_SUMMARY"
@@ -54,6 +84,7 @@ jobs:
       # falhando derrubam o job ANTES do commit. Assim o dados.json de ontem
       # continua no ar — dado velho e inteiro é melhor que novo pela metade.
       - name: Conferir se o resultado faz sentido
+        if: steps.guarda.outputs.rodar == 'sim'
         run: |
           { echo '### Sanidade'; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           set -o pipefail
@@ -65,6 +96,7 @@ jobs:
           exit $st
 
       - name: Publicar se houve mudança
+        if: steps.guarda.outputs.rodar == 'sim'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
