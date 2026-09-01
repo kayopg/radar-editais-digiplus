@@ -157,6 +157,12 @@
     var y = 0;
     var larguraUtil = A4.l - margem * 2;
 
+    // paginas copiadas do edital oficial pelo docs/pdf-le.js. Chegam com a
+    // numeracao da origem; o bytes() e que atribui numero neste documento.
+    var externos = [];            // [{id, valor}] na ordem de emissao
+    var paginasExternas = [];     // ids (dentro de `externos`) que sao pagina
+    var externasAntes = false;
+
     function novaPagina() {
       pag = [];
       paginas.push(pag);
@@ -263,6 +269,16 @@
         return api;
       },
 
+      // pacote vem do RadarPDFLe.extraiPaginas(). antes=true poe as paginas do
+      // orgao na frente do resumo; o padrao e o resumo primeiro.
+      anexaExternas: function (pacote, antes) {
+        if (!pacote || !pacote.objetos) return api;
+        externos = externos.concat(pacote.objetos);
+        paginasExternas = paginasExternas.concat(pacote.paginas);
+        externasAntes = !!antes;
+        return api;
+      },
+
       novaPagina: function () { novaPagina(); return api; },
 
       // --------------------------------------------------------- tabela
@@ -330,56 +346,106 @@
 
       // ------------------------------------------------------ serializacao
       bytes: function () {
-        var total = paginas.length;
+        var meus = paginas.length;
+        var antes = externasAntes ? paginasExternas.length : 0;
+        var totalDoc = meus + paginasExternas.length;
 
-        // rodape com "x de N" so da para escrever agora, com N conhecido
-        for (var i = 0; i < total; i++) {
-          var marca = (rodape ? rodape + "  ·  " : "") + "pagina " + (i + 1) + " de " + total;
+        // rodape com "x de N" so da para escrever agora, com N conhecido — e N
+        // conta as paginas do orgao tambem, senao a numeracao mente
+        for (var i = 0; i < meus; i++) {
+          var marca = (rodape ? rodape + "  \u00b7  " : "") + "pagina " + (antes + i + 1) + " de " + totalDoc;
           paginas[i].push("0.42 0.42 0.42 rg");
           paginas[i].push("BT /F1 7.5 Tf " + margem + " " + (margem - 12).toFixed(2) +
                           " Td " + literal(marca) + " Tj ET");
         }
 
-        var objs = [];
         // 1 catalogo, 2 pages, 3 F1, 4 F2, depois pagina/conteudo aos pares
         var idPag = [], idCont = [];
-        for (var p = 0; p < total; p++) { idPag.push(5 + p * 2); idCont.push(6 + p * 2); }
+        for (var p = 0; p < meus; p++) { idPag.push(5 + p * 2); idCont.push(6 + p * 2); }
+        var proximo = 5 + meus * 2;
 
-        objs[1] = "<< /Type /Catalog /Pages 2 0 R >>";
-        objs[2] = "<< /Type /Pages /Count " + total + " /Kids [" +
-                  idPag.map(function (n) { return n + " 0 R"; }).join(" ") + "] >>";
-        objs[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
-        objs[4] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
+        var mapa = {};
+        for (var e = 0; e < externos.length; e++) mapa[externos[e].id] = proximo++;
+        // -1 e o apelido da minha arvore de paginas, usado no /Parent das copiadas
+        var remapeia = function (n) { return n === -1 ? 2 : (mapa[n] !== undefined ? mapa[n] : 0); };
+        var idsExternas = paginasExternas.map(function (id) { return mapa[id]; });
+        var kids = externasAntes ? idsExternas.concat(idPag) : idPag.concat(idsExternas);
 
-        for (var q = 0; q < total; q++) {
-          objs[idPag[q]] =
+        // corpo[n] e string, ou {cab, bruto, fim} quando o objeto tem fluxo
+        var corpo = [];
+        corpo[1] = "<< /Type /Catalog /Pages 2 0 R >>";
+        corpo[2] = "<< /Type /Pages /Count " + kids.length + " /Kids [" +
+                   kids.map(function (n) { return n + " 0 R"; }).join(" ") + "] >>";
+        corpo[3] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>";
+        corpo[4] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
+
+        for (var q = 0; q < meus; q++) {
+          corpo[idPag[q]] =
             "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + A4.l + " " + A4.a + "] " +
             "/Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents " + idCont[q] + " 0 R >>";
           var fluxo = paginas[q].join("\n");
-          objs[idCont[q]] = "<< /Length " + bytesDe(fluxo).length + " >>\nstream\n" + fluxo + "\nendstream";
+          corpo[idCont[q]] = "<< /Length " + bytesDe(fluxo).length + " >>\nstream\n" + fluxo + "\nendstream";
         }
 
-        var saida = "%PDF-1.4\n";
+        var LE = raiz.RadarPDFLe;
+        for (var x = 0; x < externos.length; x++) {
+          var num = mapa[externos[x].id];
+          var v = externos[x].valor;
+          if (v && v.__fluxo) {
+            var d = {};
+            for (var chave in v.dict.__dict) d[chave] = v.dict.__dict[chave];
+            d.Length = v.bruto.length;      // o /Length da origem pode ser referencia
+            corpo[num] = { cab: LE.serializa(LE.Dict(d), remapeia) + "\nstream\n",
+                           bruto: v.bruto, fim: "\nendstream" };
+          } else {
+            // a pagina copiada tem que apontar para a MINHA arvore de paginas
+            if (LE.ehDict(v) && LE.ehNome(v.__dict.Type) && v.__dict.Type.__nome === "Page") {
+              var pd = {};
+              for (var c2 in v.__dict) pd[c2] = v.__dict[c2];
+              pd.Parent = LE.Ref(-1, 0);
+              v = LE.Dict(pd);
+            }
+            corpo[num] = LE.serializa(v, remapeia);
+          }
+        }
+
+        // Monta em pedacos em vez de concatenar string: o fluxo copiado e
+        // binario, e emenda-lo com replace() faria o "$" dele virar grupo de
+        // captura. Aqui cada pedaco entra byte a byte, sem interpretacao.
+        var partes = [], tam = 0;
+        function poe(s) { partes.push(s); tam += s.length; }
+        function poeBruto(u8) { partes.push(u8); tam += u8.length; }
+
+        poe("%PDF-1.4\n%\u00e2\u00e3\u00cf\u00d3\n");
         var offsets = [];
-        for (var n = 1; n < objs.length; n++) {
-          offsets[n] = saida.length;
-          saida += n + " 0 obj\n" + objs[n] + "\nendobj\n";
+        for (var n = 1; n < corpo.length; n++) {
+          if (corpo[n] === undefined) { offsets[n] = 0; continue; }
+          offsets[n] = tam;
+          poe(n + " 0 obj\n");
+          if (typeof corpo[n] === "string") poe(corpo[n]);
+          else { poe(corpo[n].cab); poeBruto(corpo[n].bruto); poe(corpo[n].fim); }
+          poe("\nendobj\n");
         }
-        var inicioXref = saida.length;
-        saida += "xref\n0 " + objs.length + "\n0000000000 65535 f \n";
-        for (var m = 1; m < objs.length; m++) {
-          saida += ("0000000000" + offsets[m]).slice(-10) + " 00000 n \n";
+        var inicioXref = tam;
+        poe("xref\n0 " + corpo.length + "\n0000000000 65535 f \n");
+        for (var m = 1; m < corpo.length; m++) {
+          poe(("0000000000" + (offsets[m] || 0)).slice(-10) + " 00000 " +
+              (corpo[m] === undefined ? "f" : "n") + " \n");
         }
-        saida += "trailer\n<< /Size " + objs.length + " /Root 1 0 R >>\nstartxref\n" +
-                 inicioXref + "\n%%EOF\n";
+        poe("trailer\n<< /Size " + corpo.length + " /Root 1 0 R >>\nstartxref\n" +
+            inicioXref + "\n%%EOF\n");
 
-        // cada caractere aqui ja e um byte: os literais passaram por bytesDe()
-        var arr = new Uint8Array(saida.length);
-        for (var b = 0; b < saida.length; b++) arr[b] = saida.charCodeAt(b) & 0xFF;
+        var arr = new Uint8Array(tam), pos = 0;
+        for (var k = 0; k < partes.length; k++) {
+          var pe = partes[k];
+          if (typeof pe === "string") {
+            for (var z = 0; z < pe.length; z++) arr[pos++] = pe.charCodeAt(z) & 0xFF;
+          } else { arr.set(pe, pos); pos += pe.length; }
+        }
         return arr;
       },
 
-      paginas: function () { return paginas.length; }
+            paginas: function () { return paginas.length; }
     };
 
     return api;

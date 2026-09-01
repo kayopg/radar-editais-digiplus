@@ -31,7 +31,10 @@ varredura.mjs  →  dados/ultima.json  →  publicar.mjs  →  docs/dados.json  
 | `conferir.mjs` | Trava de sanidade: derruba o job antes do commit se o resultado do dia parecer degradado. |
 | `docs/index.html` | A página. Sem dependência externa, sem build. |
 | `docs/pdf.js` | Gerador de PDF próprio, ~12 KB, sem biblioteca. "Baixar edital resumido" baixa um arquivo por edital; "Baixar lista em PDF" baixa a lista inteira que o filtro está mostrando, com índice na frente. |
+| `docs/pdf-le.js` | Leitor de PDF: abre o edital oficial do órgão e copia páginas dele para dentro do PDF gerado. Entende xref clássico e xref stream, object stream e FlateDecode. |
 | `testa-pdf.mjs` | Gera os dois PDFs pelo Node com dados reais, para conferir layout e paginação sem abrir o navegador. |
+| `testa-descritivo.mjs` | Prova que o PDF não altera o descritivo de nenhum produto. |
+| `testa-anexo.mjs` | Baixa editais oficiais reais e confere que a página copiada sai idêntica à original. |
 
 Rodar na mão:
 

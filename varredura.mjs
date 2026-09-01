@@ -23,7 +23,12 @@ const CAT = [
   ["OT",["enceradeira","lavadora de alta pressao","televisor","smart tv","aquecedor"]],
 ];
 
-const PISO = { CL:400, LV:400, RF:300, BB:300, CC:250, CX:200, OT:150, PR:100, EP:60 };
+// 5.4 - piso por PRODUTO, unico para todas as categorias (decisao do usuario em
+// 31/08/2026). Antes havia nove pisos por categoria, e o de Climatizacao (R$ 400)
+// fora calibrado para ar-condicionado: derrubava ventilador de verdade junto -
+// "Ventilador de coluna, 20 un, R$ 244,59" no edital 163/2026 de Gravatai/RS.
+// Quem decide se o edital vale a viagem e o PISO_EDITAL, nao este.
+const PISO_ITEM = 150;
 
 // 5.6 - piso do edital inteiro. Compra de troco (uma chaleira, um liquidificador)
 // nao vale a viagem. Valor ZERO e orcamento sigiloso e fica: nao se sabe o tamanho,
@@ -221,7 +226,7 @@ for (const o of cands) {
     if (temVeto(d)) continue;
     if (cat === 'RF' && VETO_RF_CIENT.some(v => d.includes(v))) { vCient++; continue; }
     const v = +it.v || 0;
-    if (v > 0 && v < PISO[cat]) continue;
+    if (v > 0 && v < PISO_ITEM) continue;
     keep.push([cat, Math.round(+it.q || 0), Math.round(v * 100) / 100, limpa(it.d)]);
   }
   if (!keep.length) { st.semItem++; continue; }

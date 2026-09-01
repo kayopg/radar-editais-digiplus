@@ -150,6 +150,7 @@ button.btn{font-family:inherit;cursor:pointer}
 
 
 <script src="pdf.js"></script>
+<script src="pdf-le.js"></script>
 <script>
 var CAT={RF:"Refrigeração",CL:"Climatização",CC:"Cocção",PR:"Preparo",EP:"Eletroportáteis",LV:"Lavanderia",BB:"Bebedouro",CX:"Coifa/Exaustão",OT:"Outros"};
 // [mun, uf, orgao, edital, fecha, qtd, valor, path, itens[[cat,qtd,vunit,desc]]]
@@ -247,8 +248,8 @@ function render(){
       +'<div class="scroller"><table><thead><tr><th>Descritivo</th><th class="n">Qtd</th><th class="n">Valor unit. ref.</th></tr></thead><tbody>'+itens+'</tbody></table></div>'
       +'<div class="links">'
       +'<a class="btn" target="_blank" rel="noopener" href="https://pncp.gov.br/app/editais/'+r[7]+'">Abrir no PNCP</a>'
-      +'<a class="btn alt" target="_blank" rel="noopener" href="https://pncp.gov.br/pncp-api/v1/orgaos/'+pp[0]+"/compras/"+pp[1]+"/"+pp[2]+'/arquivos/'+(r[13]||1)+'">'+(r[14]?"Baixar edital ("+String(r[14]).toUpperCase()+")":"Baixar edital (arquivo oficial)")+'</a>'
-      +'<button class="btn alt" type="button" onclick="resumo('+D.indexOf(r)+')">Baixar edital resumido</button>'
+      +'<a class="btn alt" target="_blank" rel="noopener" href="https://pncp.gov.br/api/pncp/v1/orgaos/'+pp[0]+"/compras/"+pp[1]+"/"+pp[2]+'/arquivos/'+(r[13]||1)+'">'+(r[14]?"Baixar edital ("+String(r[14]).toUpperCase()+")":"Baixar edital (arquivo oficial)")+'</a>'
+      +'<button class="btn alt" type="button" onclick="resumo(this,'+D.indexOf(r)+')">Baixar resumo + edital</button>'
       +'</div></div></div>';
   }).join("");
 }
@@ -318,9 +319,71 @@ function ressalvas(doc){
 }
 
 // ------------------------------------------------- um edital
-function resumo(i){
+// Quantas paginas do edital oficial entram depois do resumo. As primeiras
+// trazem o preambulo: data, hora, portal da sessao, objeto e o contratante.
+// Mexer aqui e a unica coisa necessaria para trazer mais (ou menos).
+var PAGINAS_OFICIAIS = 3;
+
+// A rota e /api/pncp/v1/ e NAO /pncp-api/v1/. As duas servem o mesmo arquivo,
+// byte por byte, mas a segunda manda Access-Control-Allow-Origin DUAS vezes e o
+// navegador recusa ("contains multiple values '*, *'"). Como a pagina precisa
+// buscar o arquivo por fetch para anexar as paginas, so a primeira serve.
+function urlArquivo(r){
+  if(!r[13]) return null;
+  var pp = r[7].split("/");
+  return "https://pncp.gov.br/api/pncp/v1/orgaos/" + pp[0] + "/compras/" + pp[1]
+       + "/" + pp[2] + "/arquivos/" + r[13];
+}
+
+// Busca o edital oficial no PNCP e copia as primeiras paginas para dentro do
+// doc. So funciona quando o arquivo e PDF: 174 dos 203 sao, e o resto vem em
+// ZIP, DOC ou XLSX, que nao da para mesclar. Falha nao derruba o download \u2014
+// o resumo sai assim mesmo, so que sem as paginas do orgao.
+// DESLIGADO porque o PNCP manda o cabecalho CORS errado NO ENDPOINT DE ARQUIVOS:
+//   /pncp-api/v1/.../arquivos/1   -> Access-Control-Allow-Origin duas vezes
+//   /api/pncp/v1/.../arquivos/1   -> uma vez, com o valor "*, *"
+// Os dois casos o navegador recusa. O endpoint de /itens do mesmo host esta
+// correto, entao e defeito so desse caminho. Nao ha contorno pelo cliente:
+// no-cors devolve resposta opaca, sem bytes legiveis.
+//
+// O codigo abaixo esta testado e funciona (14 editais reais, texto identico ao
+// original). Basta virar para true no dia em que o PNCP corrigir o cabecalho.
+// A outra saida e gerar os arquivos ja mesclados no GitHub Actions.
+var ANEXAR_OFICIAL = false;
+
+async function anexaOficial(doc, r){
+  if(!ANEXAR_OFICIAL) return { ok:false, motivo:null };
+  if(String(r[14]).toLowerCase() !== "pdf") return { ok:false, motivo:"o arquivo oficial nao e PDF" };
+  var url = urlArquivo(r);
+  if(!url) return { ok:false, motivo:"o orgao nao publicou arquivo" };
+  try{
+    var resp = await fetch(url);
+    if(!resp.ok) throw new Error("HTTP " + resp.status);
+    var bruto = new Uint8Array(await resp.arrayBuffer());
+    var le = await RadarPDFLe.abre(bruto);
+    var n = Math.min(PAGINAS_OFICIAIS, le.total);
+    var quais = [];
+    for(var k = 0; k < n; k++) quais.push(k);
+    doc.anexaExternas(await RadarPDFLe.extraiPaginas(le, quais), false);
+    return { ok:true, paginas:n, total:le.total };
+  }catch(e){
+    return { ok:false, motivo:"nao foi possivel ler o arquivo oficial (" + e.message + ")" };
+  }
+}
+
+async function resumo(botao, i){
   var r = D[i];
   if(!r) return;
+  var rotulo = botao && botao.textContent;
+  if(botao){ botao.disabled = true; botao.textContent = "montando PDF\u2026"; }
+  try{
+    await montaResumo(r);
+  } finally {
+    if(botao){ botao.disabled = false; botao.textContent = rotulo; }
+  }
+}
+
+async function montaResumo(r){
   var doc = RadarPDF.novo({ rodape: "Radar de Editais Digiplus \u00b7 varredura de " + varreduraTxt() });
 
   doc.tituloComValor(r[0] + " / " + r[1], r[6] ? moeda(r[6]) : "or\u00e7amento sigiloso", { tam:15 });
@@ -341,7 +404,7 @@ function resumo(i){
   doc.campo("P\u00e1gina oficial", "https://pncp.gov.br/app/editais/" + r[7]);
   if(r[13]){
     var pp = r[7].split("/");
-    doc.campo("Arquivo oficial", "https://pncp.gov.br/pncp-api/v1/orgaos/" + pp[0]
+    doc.campo("Arquivo oficial", "https://pncp.gov.br/api/pncp/v1/orgaos/" + pp[0]
               + "/compras/" + pp[1] + "/" + pp[2] + "/arquivos/" + r[13]
               + (r[14] ? "  (" + String(r[14]).toUpperCase() + ")" : ""));
   }
@@ -369,6 +432,18 @@ function resumo(i){
   });
 
   ressalvas(doc);
+
+  // as paginas do orgao entram depois do resumo, no mesmo arquivo
+  var anexo = await anexaOficial(doc, r);
+  if(anexo.ok || anexo.motivo){
+    doc.espaco(8);
+    doc.texto(anexo.ok
+        ? "A seguir, " + (anexo.paginas === 1 ? "a primeira página" : "as " + anexo.paginas + " primeiras páginas")
+          + " do edital oficial (" + anexo.total + " no total), copiadas do arquivo publicado no PNCP."
+        : "As páginas do edital oficial não foram anexadas: " + anexo.motivo
+          + ". Use o link do arquivo oficial acima.",
+      { tam:8, negrito:true, cor:[0.2,0.2,0.2] });
+  }
 
   RadarPDF.baixa(doc.bytes(), nomeArquivo("Edital " + r[0] + " " + r[1] + " " + numeroEdital(r[3])) + ".pdf");
 }
