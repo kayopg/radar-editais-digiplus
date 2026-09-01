@@ -13,10 +13,14 @@
 // aplica CORS. Ver a nota do ANEXAR_OFICIAL no docs/index.html.
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import os from 'node:os';
 import { createRequire } from 'node:module';
 
-const DIR = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+// fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
+// entao uma pasta de usuario com acento no nome virava Usu%C3%A1rio e o
+// require nao achava nada. So aparece fora do Actions, onde o caminho e ASCII.
+const DIR = path.dirname(fileURLToPath(import.meta.url));
 const req = createRequire(import.meta.url);
 const PDF = req(path.join(DIR, 'docs', 'pdf.js'));
 const LE  = req(path.join(DIR, 'docs', 'pdf-le.js'));

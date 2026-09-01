@@ -6,8 +6,12 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const DIR = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+// fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
+// entao uma pasta de usuario com acento no nome virava Usu%C3%A1rio e o
+// require nao achava nada. So aparece fora do Actions, onde o caminho e ASCII.
+const DIR = path.dirname(fileURLToPath(import.meta.url));
 const antesArq = process.argv[2];
 const agoraArq = process.argv[3] || path.join(DIR, 'docs', 'dados.json');
 

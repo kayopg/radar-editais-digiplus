@@ -7,9 +7,13 @@
 // Uso: node testa-descritivo.mjs
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 
-const DIR = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+// fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
+// entao uma pasta de usuario com acento no nome virava Usu%C3%A1rio e o
+// require nao achava nada. So aparece fora do Actions, onde o caminho e ASCII.
+const DIR = path.dirname(fileURLToPath(import.meta.url));
 const PDF = createRequire(import.meta.url)(path.join(DIR, 'docs', 'pdf.js'));
 const dados = JSON.parse(fs.readFileSync(path.join(DIR, 'docs', 'dados.json'), 'utf8'));
 
