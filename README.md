@@ -29,7 +29,9 @@ varredura.mjs  →  dados/ultima.json  →  publicar.mjs  →  docs/dados.json  
 | `publicar.mjs` | Converte a saída bruta no `docs/dados.json` que a página consome. |
 | `delta.mjs` | Compara duas versões do `dados.json` e imprime o que entrou, o que saiu e o que fecha em 48 h. |
 | `conferir.mjs` | Trava de sanidade: derruba o job antes do commit se o resultado do dia parecer degradado. |
-| `docs/index.html` | A página. Sem dependência externa, sem build. Dois caminhos para PDF, ambos pela impressão do navegador: "Baixar edital resumido" gera uma página por edital, e "Baixar lista em PDF" exporta a lista inteira que o filtro está mostrando, com índice na frente. |
+| `docs/index.html` | A página. Sem dependência externa, sem build. |
+| `docs/pdf.js` | Gerador de PDF próprio, ~12 KB, sem biblioteca. "Baixar edital resumido" baixa um arquivo por edital; "Baixar lista em PDF" baixa a lista inteira que o filtro está mostrando, com índice na frente. |
+| `testa-pdf.mjs` | Gera os dois PDFs pelo Node com dados reais, para conferir layout e paginação sem abrir o navegador. |
 
 Rodar na mão:
 

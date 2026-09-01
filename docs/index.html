@@ -107,51 +107,6 @@ td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .method code{background:var(--line2);padding:1px 5px;border-radius:4px;font-size:12.5px}
 .empty{text-align:center;padding:46px 20px;color:var(--ink3)}
 button.btn{font-family:inherit;cursor:pointer}
-/* Resumo em PDF: nao existe servidor para gerar arquivo, entao a pagina monta um
-   bloco limpo e chama a impressao do navegador. O usuario escolhe "Salvar como PDF".
-   Zero dependencia, texto selecionavel e acentuacao correta. */
-#print{display:none}
-@media print{
-  @page{margin:14mm}
-  html,body{background:#fff !important}
-  body>*{display:none !important}
-  body>#print{display:block !important}
-  #print{color:#000;font:12px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-  /* o resto da pagina usa variaveis do tema escuro; no papel tudo tem que ser preto */
-  #print,#print h1,#print h2,#print th,#print td,#print p{color:#000}
-  #print table{min-width:0}
-  #print table.meta th{text-transform:none;font-size:11.5px;letter-spacing:0;border:0;color:#444}
-  #print table.meta td{border:0}
-  #print h1{font-size:19px;margin:0 0 2px;letter-spacing:-.01em}
-  #print .org{margin:0 0 14px;color:#333;font-size:11.5px}
-  #print h2{font-size:13px;margin:16px 0 6px;border-bottom:1px solid #000;padding-bottom:3px}
-  #print table{width:100%;border-collapse:collapse}
-  #print table.meta th{text-align:left;width:155px;padding:3px 8px 3px 0;vertical-align:top;font-weight:600}
-  #print table.meta td{padding:3px 0;vertical-align:top}
-  #print table.itens th,#print table.itens td{border:1px solid #999;padding:4px 5px;vertical-align:top;font-size:10.5px}
-  #print table.itens th{background:#eee}
-  #print table.itens tr{break-inside:avoid}
-  #print td.c{text-align:center;white-space:nowrap}
-  #print td.r{text-align:right;white-space:nowrap}
-  #print .desc{width:50%}
-  #print .nota{font-size:9.5px;color:#444;margin-top:12px;line-height:1.4}
-  /* --- lista completa (Baixar lista em PDF) --- */
-  #print .capa{margin:0 0 14px}
-  #print .capa h1{font-size:22px;margin:0 0 3px}
-  #print .capa .sub2{font-size:11.5px;color:#333;margin:0 0 2px}
-  #print .capa .filtros{font-size:11px;color:#444;margin:6px 0 0}
-  #print .quebra{break-after:page}
-  #print table.idx th,#print table.idx td{border:1px solid #bbb;padding:3px 5px;font-size:9.5px;vertical-align:top}
-  #print table.idx th{background:#eee;text-align:left}
-  #print table.idx tr{break-inside:avoid}
-  /* o cabecalho do edital nao pode ficar sozinho no fim da pagina */
-  #print .edh{break-inside:avoid;break-after:avoid}
-  #print .ed{margin:0 0 15px}
-  #print .ed+.ed{padding-top:11px;border-top:2px solid #000}
-  #print .edh h2{font-size:13px;margin:0 0 2px;border:0;padding:0;display:flex;justify-content:space-between;gap:10px}
-  #print .edh .edorg{font-size:10.5px;color:#333;margin:0 0 3px}
-  #print .edh .edobj{font-size:10px;color:#444;margin:0 0 6px;line-height:1.35}
-}
 @media(max-width:640px){.cside{text-align:left;flex:1 1 100%}.clabel{min-width:100%}}
 </style>
 </head>
@@ -193,8 +148,8 @@ button.btn{font-family:inherit;cursor:pointer}
 </div>
 </div>
 
-<div id="print"></div>
 
+<script src="pdf.js"></script>
 <script>
 var CAT={RF:"Refrigeração",CL:"Climatização",CC:"Cocção",PR:"Preparo",EP:"Eletroportáteis",LV:"Lavanderia",BB:"Bebedouro",CX:"Coifa/Exaustão",OT:"Outros"};
 // [mun, uf, orgao, edital, fecha, qtd, valor, path, itens[[cat,qtd,vunit,desc]]]
@@ -300,169 +255,174 @@ function render(){
 
 
 
-// ------------------------------------------------------------ resumo em PDF
-// Nao ha servidor para gerar arquivo, entao a pagina monta um bloco limpo e
-// chama a impressao do navegador; o usuario salva como PDF. Sem biblioteca,
-// texto selecionavel, acentuacao correta e funciona no celular.
-var tituloOriginal = null;
+// ------------------------------------------------------------ PDF
+// Gera arquivo .pdf de verdade e dispara o download, via docs/pdf.js.
+// Nao usa window.print(): a caixa de impressao nunca salva arquivo direto,
+// e no celular ela e um passo a mais entre o usuario e o documento.
+var CATPDF = { RF:"Refrigeracao", CL:"Climatizacao", CC:"Coccao", PR:"Preparo",
+               EP:"Eletroportateis", LV:"Lavanderia", BB:"Bebedouro",
+               CX:"Coifa/Exaustao", OT:"Outros" };
+CATPDF = CAT;   // usa os rotulos acentuados ja definidos no topo
 
 function moeda(v){
   return "R$ " + v.toLocaleString("pt-BR", {minimumFractionDigits:2, maximumFractionDigits:2});
 }
+function dataBR(iso){
+  return iso.slice(8,10) + "/" + iso.slice(5,7) + "/" + iso.slice(0,4);
+}
+function quandoTxt(iso){
+  var d = dias(iso), hm = iso.slice(11,16);
+  return dataBR(iso) + (hm && hm !== "00:00" ? " \u00e0s " + hm : "")
+       + " (" + (d <= 0 ? "hoje" : d === 1 ? "amanh\u00e3" : "em " + d + " dias") + ")";
+}
+function nomeArquivo(s){
+  return s.replace(new RegExp("/","g"),"-")
+          .replace(new RegExp("[^0-9A-Za-zÀ-ÿ .-]","g")," ")
+          .replace(new RegExp("  +","g")," ").trim();
+}
+// "Edital nº (9466) | 16-0/2026" -> "16-0/2026". Serve so para o nome do arquivo:
+// usar o titulo inteiro daria "Edital ... Edital n 9466 16-0 2026".
+function numeroEdital(t){
+  // .* guloso de proposito: pega o ULTIMO "nº". Com .*? preguicoso o primeiro
+  // "n" de "Aviso de Contratação Direta" casava e sobrava "tratação Direta nº ...".
+  var n = String(t || "")
+    .replace(/^.*n[º°]\s*/i, "")
+    .replace(/^\(\d+\)\s*\|\s*/, "")
+    .trim();
+  return n || String(t || "");
+}
+function varreduraTxt(){
+  return (document.getElementById("dataVarredura") || {}).textContent || "";
+}
+var COLS_ITENS = [
+  {titulo:"#",           larg:0.045, alinha:"centro"},
+  {titulo:"Categoria",   larg:0.125},
+  {titulo:"Descritivo",  larg:0.475},
+  {titulo:"Qtd",         larg:0.075, alinha:"centro"},
+  {titulo:"Valor unit.", larg:0.14,  alinha:"direita"},
+  {titulo:"Total",       larg:0.14,  alinha:"direita"}
+];
+function linhasItens(r){
+  return r[8].map(function(it, k){
+    return [ String(k+1), CATPDF[it[0]], it[3], it[1].toLocaleString("pt-BR"),
+             it[2] ? moeda(it[2]) : "sigiloso",
+             it[2] ? moeda(it[1]*it[2]) : "sigiloso" ];
+  });
+}
+function ressalvas(doc){
+  doc.espaco(10);
+  doc.texto("Os valores s\u00e3o estimativas do \u00f3rg\u00e3o, n\u00e3o refer\u00eancia de mercado. Itens marcados como "
+    + "sigiloso tiveram o or\u00e7amento fechado pelo \u00f3rg\u00e3o. Sobram cerca de 4% de falsos positivos "
+    + "residuais: confira o edital oficial antes de cotar.",
+    { tam:7.5, cor:[0.35,0.35,0.35] });
+}
 
+// ------------------------------------------------- um edital
 function resumo(i){
   var r = D[i];
   if(!r) return;
+  var doc = RadarPDF.novo({ rodape: "Radar de Editais Digiplus \u00b7 varredura de " + varreduraTxt() });
 
-  var dt = new Date(r[4]);
-  var dia = ("0"+dt.getDate()).slice(-2) + "/" + ("0"+(dt.getMonth()+1)).slice(-2) + "/" + dt.getFullYear();
-  var hora = r[4].slice(11,16);
-  var d = dias(r[4]);
-  var quando = dia + (hora && hora !== "00:00" ? " às " + hora : "") +
-               " (" + (d <= 0 ? "hoje" : d === 1 ? "amanhã" : "em " + d + " dias") + ")";
+  doc.tituloComValor(r[0] + " / " + r[1], r[6] ? moeda(r[6]) : "or\u00e7amento sigiloso", { tam:15 });
+  doc.texto(r[2], { tam:9, cor:[0.28,0.28,0.28] });
+  doc.regua(1);
+  doc.espaco(3);
 
-  var linhas = r[8].map(function(it, k){
-    var vu = it[2] ? moeda(it[2]) : "sigiloso";
-    var vt = it[2] ? moeda(it[1] * it[2]) : "sigiloso";
-    return "<tr><td class='c'>" + (k+1) + "</td>"
-         + "<td>" + CAT[it[0]] + "</td>"
-         + "<td class='desc'>" + esc(it[3]) + "</td>"
-         + "<td class='c'>" + it[1].toLocaleString("pt-BR") + "</td>"
-         + "<td class='r'>" + vu + "</td>"
-         + "<td class='r'>" + vt + "</td></tr>";
-  }).join("");
+  doc.campo("Edital", r[3]);
+  if(r[11]) doc.campo("Modalidade", r[11]);
+  if(r[10]) doc.campo("Unidade", r[10]);
+  doc.campo("Encerramento", quandoTxt(r[4]));
+  doc.campo("Valor total estimado", r[6] ? moeda(r[6]) : "or\u00e7amento sigiloso");
+  doc.campo("Quantidade total", r[5].toLocaleString("pt-BR") + " unidades em "
+            + r[8].length + (r[8].length === 1 ? " item" : " itens"));
+  if(r[12]) doc.campo("Publicado no PNCP", dataBR(r[12]));
+  if(r[9]) doc.campo("Objeto", r[9]);
+  doc.campo("Processo PNCP", r[7]);
+  doc.campo("P\u00e1gina oficial", "https://pncp.gov.br/app/editais/" + r[7]);
+  if(r[13]){
+    var pp = r[7].split("/");
+    doc.campo("Arquivo oficial", "https://pncp.gov.br/pncp-api/v1/orgaos/" + pp[0]
+              + "/compras/" + pp[1] + "/" + pp[2] + "/arquivos/" + r[13]
+              + (r[14] ? "  (" + String(r[14]).toUpperCase() + ")" : ""));
+  }
 
-  var total = r[6] ? moeda(r[6]) : "orçamento sigiloso";
-  var varredura = (document.getElementById("dataVarredura") || {}).textContent || "";
+  doc.espaco(9);
+  doc.texto("Itens solicitados", { tam:11, negrito:true, depois:3 });
+  doc.tabela(COLS_ITENS, linhasItens(r));
+  ressalvas(doc);
 
-  document.getElementById("print").innerHTML =
-      "<h1>" + esc(r[0]) + " / " + r[1] + "</h1>"
-    + "<p class='org'>" + esc(r[2]) + "</p>"
-    + "<table class='meta'>"
-    + "<tr><th>Modalidade</th><td>" + esc(r[11] || "-") + "</td></tr>"
-    + "<tr><th>Edital</th><td>" + esc(r[3]) + "</td></tr>"
-    + (r[9] ? "<tr><th>Objeto</th><td>" + esc(r[9]) + "</td></tr>" : "")
-    + (r[10] ? "<tr><th>Unidade</th><td>" + esc(r[10]) + "</td></tr>" : "")
-    + "<tr><th>Encerramento</th><td><strong>" + quando + "</strong></td></tr>"
-    + "<tr><th>Valor total estimado</th><td>" + total + "</td></tr>"
-    + "<tr><th>Quantidade total</th><td>" + r[5].toLocaleString("pt-BR")
-      + " unidades em " + r[8].length + (r[8].length === 1 ? " item" : " itens") + "</td></tr>"
-    + (r[12] ? "<tr><th>Publicado no PNCP</th><td>" + r[12].slice(8,10) + "/" + r[12].slice(5,7) + "/" + r[12].slice(0,4) + "</td></tr>" : "")
-    + "<tr><th>Processo PNCP</th><td>" + r[7] + "</td></tr>"
-    + "<tr><th>Página oficial</th><td>https://pncp.gov.br/app/editais/" + r[7] + "</td></tr>"
-    + (r[13] ? "<tr><th>Arquivo oficial</th><td>https://pncp.gov.br/pncp-api/v1/orgaos/" + r[7].split("/")[0] + "/compras/" + r[7].split("/")[1] + "/" + r[7].split("/")[2] + "/arquivos/" + r[13] + "</td></tr>" : "")
-    + "</table>"
-    + "<h2>Itens solicitados</h2>"
-    + "<table class='itens'><thead><tr>"
-    + "<th>#</th><th>Categoria</th><th>Descritivo</th><th>Qtd</th><th>Valor unit.</th><th>Total</th>"
-    + "</tr></thead><tbody>" + linhas + "</tbody></table>"
-    + "<p class='nota'><strong>Resumo gerado pelo Radar de Editais Digiplus</strong> a partir dos "
-    + "dados públicos do PNCP, varredura de " + varredura + ". Não substitui o edital oficial.</p>"
-    + "<p class='nota'>Os valores são estimativas do órgão, não referência de mercado. "
-    + "Itens marcados como sigiloso tiveram o orçamento fechado pelo órgão. "
-    + "Confira o edital oficial antes de cotar.</p>";
-
-  // o navegador usa o title como nome do arquivo salvo
-  if(tituloOriginal === null) tituloOriginal = document.title;
-  var limpo = new RegExp("[^0-9A-Za-zÀ-ÿ .-]", "g");
-  document.title = ("Resumo " + r[0] + " " + r[1] + " " + r[3]).replace(limpo, " ")
-                   .replace(new RegExp("  +","g")," ").trim();
-
-  window.print();
+  RadarPDF.baixa(doc.bytes(), nomeArquivo("Edital " + r[0] + " " + r[1] + " " + numeroEdital(r[3])) + ".pdf");
 }
 
-// ------------------------------------------------- lista inteira em PDF
-// Mesmo caminho do resumo por edital: monta um bloco limpo e chama a impressao
-// do navegador. Exporta exatamente o que o filtro esta mostrando, nao os 200
-// sempre — filtrar por UF/categoria/prazo e depois baixar e o uso normal.
-function dataBR(iso){
-  var dt=new Date(iso);
-  return ("0"+dt.getDate()).slice(-2)+"/"+("0"+(dt.getMonth()+1)).slice(-2)+"/"+dt.getFullYear();
-}
-
+// ------------------------------------------------- a lista inteira
 function descreveFiltros(){
-  var f=[];
-  if(fUF.length)  f.push("Estados: "+fUF.join(", "));
-  if(fCAT.length) f.push("Categorias: "+fCAT.map(function(c){return CAT[c];}).join(", "));
-  if(fPZ!==null)  f.push("Prazo: "+(fPZ===0?"fecham hoje":"até "+fPZ+" dias"));
-  if(fQ)          f.push('Busca: "'+fQ+'"');
-  return f.length ? "Filtros aplicados — "+f.join(" · ") : "Sem filtros — lista completa da varredura.";
+  var f = [];
+  if(fUF.length)  f.push("Estados: " + fUF.join(", "));
+  if(fCAT.length) f.push("Categorias: " + fCAT.map(function(c){ return CATPDF[c]; }).join(", "));
+  if(fPZ!==null)  f.push("Prazo: " + (fPZ===0 ? "fecham hoje" : "at\u00e9 " + fPZ + " dias"));
+  if(fQ)          f.push("Busca: \u201c" + fQ + "\u201d");
+  return f.length ? "Filtros aplicados \u2014 " + f.join(" \u00b7 ")
+                  : "Sem filtros \u2014 lista completa da varredura.";
 }
 
 function listaPdf(){
-  var rows=linhasVisiveis;
+  var rows = linhasVisiveis;
   if(!rows.length){ alert("Nenhum edital com esses filtros."); return; }
 
-  var varredura=(document.getElementById("dataVarredura")||{}).textContent||"";
-  var totalVal=rows.reduce(function(a,r){return a+r[6];},0);
-  var totalQtd=rows.reduce(function(a,r){return a+r[5];},0);
-  var muns={}; rows.forEach(function(r){ muns[r[0]+r[1]]=1; });
+  var doc = RadarPDF.novo({ rodape: "Radar de Editais Digiplus \u00b7 varredura de " + varreduraTxt() });
+  var totalVal = rows.reduce(function(a,r){ return a + r[6]; }, 0);
+  var totalQtd = rows.reduce(function(a,r){ return a + r[5]; }, 0);
+  var muns = {}; rows.forEach(function(r){ muns[r[0]+r[1]] = 1; });
+  var nMun = Object.keys(muns).length;
 
-  // indice: uma linha por edital, para achar rapido num PDF longo
-  var idx="<table class='idx'><thead><tr><th>#</th><th>Município / UF</th><th>Edital</th>"
-        + "<th>Encerramento</th><th>Qtd</th><th>Valor estimado</th></tr></thead><tbody>"
-        + rows.map(function(r,k){
-            return "<tr><td class='c'>"+(k+1)+"</td>"
-                 + "<td>"+esc(r[0])+" / "+r[1]+"</td>"
-                 + "<td>"+esc(r[3])+"</td>"
-                 + "<td class='c'>"+dataBR(r[4])+(r[4].slice(11,16)!=="00:00"?" "+r[4].slice(11,16):"")+"</td>"
-                 + "<td class='c'>"+r[5].toLocaleString("pt-BR")+"</td>"
-                 + "<td class='r'>"+(r[6]?moeda(r[6]):"sigiloso")+"</td></tr>";
-          }).join("")
-        + "</tbody></table>";
+  doc.texto("Radar de Editais Digiplus", { tam:19, negrito:true });
+  doc.texto("Licita\u00e7\u00f5es abertas no PNCP com itens de linha branca, climatiza\u00e7\u00e3o, coc\u00e7\u00e3o, "
+    + "lavanderia e eletroport\u00e1teis \u2014 apenas fornecimento puro.", { tam:9, cor:[0.3,0.3,0.3] });
+  doc.texto("Varredura de " + varreduraTxt() + " \u00b7 " + rows.length + " edita"
+    + (rows.length===1?"l":"is") + " \u00b7 " + nMun + " munic\u00edpio" + (nMun===1?"":"s")
+    + " \u00b7 " + totalQtd.toLocaleString("pt-BR") + " unidades \u00b7 " + moeda(totalVal) + " estimados",
+    { tam:9, cor:[0.3,0.3,0.3] });
+  doc.texto(descreveFiltros(), { tam:8.5, cor:[0.4,0.4,0.4] });
+  doc.espaco(10);
 
-  var corpo=rows.map(function(r,k){
-    var d=dias(r[4]);
-    var quando=dataBR(r[4])+(r[4].slice(11,16)!=="00:00"?" às "+r[4].slice(11,16):"")
-             + " ("+(d<=0?"hoje":d===1?"amanhã":"em "+d+" dias")+")";
-    var linhas=r[8].map(function(it,j){
-      return "<tr><td class='c'>"+(j+1)+"</td><td>"+CAT[it[0]]+"</td>"
-           + "<td class='desc'>"+esc(it[3])+"</td>"
-           + "<td class='c'>"+it[1].toLocaleString("pt-BR")+"</td>"
-           + "<td class='r'>"+(it[2]?moeda(it[2]):"sigiloso")+"</td>"
-           + "<td class='r'>"+(it[2]?moeda(it[1]*it[2]):"sigiloso")+"</td></tr>";
-    }).join("");
-    return "<div class='ed'><div class='edh'>"
-      + "<h2><span>"+(k+1)+". "+esc(r[0])+" / "+r[1]+"</span><span>"+(r[6]?moeda(r[6]):"orçamento sigiloso")+"</span></h2>"
-      + "<p class='edorg'>"+esc(r[2])+" · "+esc(r[3])+(r[11]?" · "+esc(r[11]):"")
-        + "<br>Encerramento: <strong>"+quando+"</strong> · "+r[5].toLocaleString("pt-BR")
-        + " unidades em "+r[8].length+(r[8].length===1?" item":" itens")+"</p>"
-      + (r[9]?"<p class='edobj'><strong>Objeto:</strong> "+esc(r[9])+"</p>":"")
-      + "</div>"
-      + "<table class='itens'><thead><tr><th>#</th><th>Categoria</th><th>Descritivo</th>"
-      + "<th>Qtd</th><th>Valor unit.</th><th>Total</th></tr></thead><tbody>"+linhas+"</tbody></table>"
-      + "<p class='nota'>PNCP: https://pncp.gov.br/app/editais/"+r[7]+"</p>"
-      + "</div>";
-  }).join("");
+  doc.texto("\u00cdndice", { tam:13, negrito:true, depois:3 });
+  doc.tabela(
+    [ {titulo:"#",              larg:0.05, alinha:"centro"},
+      {titulo:"Munic\u00edpio / UF", larg:0.24},
+      {titulo:"Edital",         larg:0.28},
+      {titulo:"Encerramento",   larg:0.15, alinha:"centro"},
+      {titulo:"Qtd",            larg:0.08, alinha:"centro"},
+      {titulo:"Valor estimado", larg:0.20, alinha:"direita"} ],
+    rows.map(function(r,k){
+      return [ String(k+1), r[0] + " / " + r[1], r[3],
+               dataBR(r[4]) + (r[4].slice(11,16)!=="00:00" ? " " + r[4].slice(11,16) : ""),
+               r[5].toLocaleString("pt-BR"),
+               r[6] ? moeda(r[6]) : "sigiloso" ];
+    })
+  );
 
-  document.getElementById("print").innerHTML =
-      "<div class='capa'><h1>Radar de Editais Digiplus</h1>"
-    + "<p class='sub2'>Licitações abertas no PNCP com itens de linha branca, climatização, cocção, "
-    + "lavanderia e eletroportáteis — apenas fornecimento puro.</p>"
-    + "<p class='sub2'>Varredura de "+esc(varredura)+" · "+rows.length+" edita"+(rows.length===1?"l":"is")
-    + " · "+Object.keys(muns).length+" município"+(Object.keys(muns).length===1?"":"s")
-    + " · "+totalQtd.toLocaleString("pt-BR")+" unidades · "+moeda(totalVal)+" estimados</p>"
-    + "<p class='filtros'>"+esc(descreveFiltros())+"</p></div>"
-    + "<h2>Índice</h2>" + idx
-    + "<div class='quebra'></div>"
-    + "<h2>Editais</h2>" + corpo
-    + "<p class='nota'><strong>Gerado pelo Radar de Editais Digiplus</strong> a partir dos dados "
-    + "públicos do PNCP, varredura de "+esc(varredura)+". Não substitui o edital oficial.</p>"
-    + "<p class='nota'>Os valores são estimativas do órgão, não referência de mercado. Itens marcados "
-    + "como sigiloso tiveram o orçamento fechado pelo órgão. Sobram cerca de 4% de falsos positivos "
-    + "residuais: confira o edital oficial antes de cotar.</p>";
+  doc.novaPagina();
+  doc.texto("Editais", { tam:13, negrito:true, depois:5 });
+  rows.forEach(function(r,k){
+    if(k > 0){ doc.espaco(7); doc.regua(1.1); doc.espaco(3); }
+    doc.tituloComValor((k+1) + ". " + r[0] + " / " + r[1],
+                       r[6] ? moeda(r[6]) : "or\u00e7amento sigiloso", { tam:11.5 });
+    doc.texto(r[2] + " \u00b7 " + r[3] + (r[11] ? " \u00b7 " + r[11] : ""),
+              { tam:8, cor:[0.3,0.3,0.3] });
+    doc.campo("Encerramento", quandoTxt(r[4]) + " \u00b7 " + r[5].toLocaleString("pt-BR")
+              + " unidades em " + r[8].length + (r[8].length===1?" item":" itens"),
+              { tam:8, larguraRotulo:78 });
+    if(r[9]) doc.campo("Objeto", r[9], { tam:8, larguraRotulo:78 });
+    doc.campo("PNCP", "https://pncp.gov.br/app/editais/" + r[7], { tam:8, larguraRotulo:78 });
+    doc.espaco(4);
+    doc.tabela(COLS_ITENS, linhasItens(r));
+  });
+  ressalvas(doc);
 
-  if(tituloOriginal===null) tituloOriginal=document.title;
-  document.title=("Radar Digiplus "+varredura.replace(new RegExp("/","g"),"-")+" ("+rows.length+" editais)");
-  window.print();
+  RadarPDF.baixa(doc.bytes(),
+    nomeArquivo("Radar Digiplus " + varreduraTxt().replace(new RegExp("/","g"),"-")
+                + " " + rows.length + " editais") + ".pdf");
 }
-
-function encerraImpressao(){
-  if(tituloOriginal !== null){ document.title = tituloOriginal; tituloOriginal = null; }
-  var alvo = document.getElementById("print");
-  if(alvo) alvo.innerHTML = "";
-}
-window.addEventListener("afterprint", encerraImpressao);
 
 function multi(host,items,arr){
   var e=document.getElementById(host);

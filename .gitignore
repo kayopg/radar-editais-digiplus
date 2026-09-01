@@ -10,3 +10,10 @@ radar-digiplus.html
 # Ferramentas locais
 .claude/
 node_modules/
+
+# Saidas de teste do gerador de PDF e o comparativo local do delta.
+*.pdf
+teste-*.pdf
+anterior.json
+saida.txt
+acentos.txt
