@@ -77,7 +77,22 @@ const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motocicle
 // 5.3 — veto por item (lista viva, construída de falsos positivos reais)
 const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","pedestal","suporte para tv","suporte de tv","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
 // acrescentados em 30/08/2026
-"torneira de parede","torneira para pia","tubo de ferro","tubo de cobre","tubo cobre","pecas /","pecas/","para pedreiro","suporte para televis","suporte de televis","suporte de videocassete","embalag","espaco destinado","onibus","caminhao","impressao 3d","sem funcionamento","quarto de hotel","diaria","estadia","hospedagem","locacao de","prestacao de","autoclave","concentrador de","tampao","projetor","resistencia aquecedor","luva termica","frigideira","prato fundo","alicate","removedor de","coador pano","ralador/fatiador","carro balde","chave controle","elemento filtrante","filtro purificacao","liner","projeto executivo","fantasia","formula infantil","nutricao oral","nutricao geral","placa aquecedora","boia para","controle universal","controle remoto universal"];
+"torneira de parede","torneira para pia","tubo de ferro","tubo de cobre","tubo cobre","pecas /","pecas/","para pedreiro","suporte para televis","suporte de televis","suporte de videocassete","embalag","espaco destinado","onibus","caminhao","impressao 3d","sem funcionamento","quarto de hotel","diaria","estadia","hospedagem","locacao de","prestacao de","autoclave","concentrador de","tampao","projetor","resistencia aquecedor","luva termica","frigideira","prato fundo","alicate","removedor de","coador pano","ralador/fatiador","carro balde","chave controle","elemento filtrante","filtro purificacao","liner","projeto executivo","fantasia","formula infantil","nutricao oral","nutricao geral","placa aquecedora","boia para","controle universal","controle remoto universal",
+// acrescentados em 01/09/2026. Tres mecanismos distintos, todos medidos na
+// varredura de 31/08:
+//   - hardware de PC casando com Climatizacao porque a descricao cita o
+//     ventilador da propria peca: fonte ATX em Guaporema/PR e placa de video
+//     em Mario Campos/MG. O "cooler" e o "gabinete" que ja estavam na lista
+//     nao pegam nenhum dos dois.
+//   - filtro de ar de maquina pesada (pa carregadeira, escavadeira, rolo
+//     compactador) em Terra Boa/PR: casa com "ar condicionado", e o veto que
+//     ja existia, "filtro ar condicionado", nao tem o "de".
+//   - peca de vestuario cuja etiqueta manda lavar a maquina, o que casa com
+//     Lavanderia: jaqueta de nylon em Assis Chateaubriand/PR.
+// "esteira para" e estreito de proposito: a esteira de pao frances e acessorio,
+// mas "forno turbo 10 esteiras" e forno de verdade, de R$ 7 a 9 mil.
+"filtro de ar","escavadeira","carregadeira","rolo compactador","jaqueta",
+"esteira para","placa de video","placa-mae","pci-e","para computador","atx"];
 
 const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 
