@@ -17,3 +17,6 @@ teste-*.pdf
 anterior.json
 saida.txt
 acentos.txt
+
+# PDFs completos gerados pelo resumos.mjs: centenas de MB, nao versionar.
+resumos/
