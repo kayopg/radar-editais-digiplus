@@ -106,7 +106,7 @@ td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .method ul{padding-left:20px}.method li{margin-bottom:5px}
 .method code{background:var(--line2);padding:1px 5px;border-radius:4px;font-size:12.5px}
 .empty{text-align:center;padding:46px 20px;color:var(--ink3)}
-.links button.btn{font-family:inherit;cursor:pointer}
+button.btn{font-family:inherit;cursor:pointer}
 /* Resumo em PDF: nao existe servidor para gerar arquivo, entao a pagina monta um
    bloco limpo e chama a impressao do navegador. O usuario escolhe "Salvar como PDF".
    Zero dependencia, texto selecionavel e acentuacao correta. */
@@ -135,6 +135,22 @@ td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
   #print td.r{text-align:right;white-space:nowrap}
   #print .desc{width:50%}
   #print .nota{font-size:9.5px;color:#444;margin-top:12px;line-height:1.4}
+  /* --- lista completa (Baixar lista em PDF) --- */
+  #print .capa{margin:0 0 14px}
+  #print .capa h1{font-size:22px;margin:0 0 3px}
+  #print .capa .sub2{font-size:11.5px;color:#333;margin:0 0 2px}
+  #print .capa .filtros{font-size:11px;color:#444;margin:6px 0 0}
+  #print .quebra{break-after:page}
+  #print table.idx th,#print table.idx td{border:1px solid #bbb;padding:3px 5px;font-size:9.5px;vertical-align:top}
+  #print table.idx th{background:#eee;text-align:left}
+  #print table.idx tr{break-inside:avoid}
+  /* o cabecalho do edital nao pode ficar sozinho no fim da pagina */
+  #print .edh{break-inside:avoid;break-after:avoid}
+  #print .ed{margin:0 0 15px}
+  #print .ed+.ed{padding-top:11px;border-top:2px solid #000}
+  #print .edh h2{font-size:13px;margin:0 0 2px;border:0;padding:0;display:flex;justify-content:space-between;gap:10px}
+  #print .edh .edorg{font-size:10.5px;color:#333;margin:0 0 3px}
+  #print .edh .edobj{font-size:10px;color:#444;margin:0 0 6px;line-height:1.35}
 }
 @media(max-width:640px){.cside{text-align:left;flex:1 1 100%}.clabel{min-width:100%}}
 </style>
@@ -154,7 +170,7 @@ td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
   <div class="crow"><input type="search" id="q" placeholder="Buscar município, órgão ou produto…" autocomplete="off"><button class="clear" id="clear">limpar filtros</button></div>
   <div class="crow"><span class="clabel">Estado</span><div id="uf" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
   <div class="crow"><span class="clabel">Categoria</span><div id="cat" style="display:flex;flex-wrap:wrap;gap:6px"></div></div>
-  <div class="crow"><span class="clabel">Prazo</span><div id="pz" style="display:flex;flex-wrap:wrap;gap:6px"></div><span class="count" id="count" style="margin-left:auto"></span></div>
+  <div class="crow"><span class="clabel">Prazo</span><div id="pz" style="display:flex;flex-wrap:wrap;gap:6px"></div><span class="count" id="count" style="margin-left:auto"></span><button class="btn alt" type="button" id="pdfLista">Baixar lista em PDF</button></div>
 </div>
 
 <div class="kpis">
@@ -209,6 +225,7 @@ var pronto=false;
 
 var NOW=new Date();
 var fUF=[], fCAT=[], fPZ=null, fQ="";
+var linhasVisiveis=[];   // o que render() acabou de mostrar; e o que o PDF da lista exporta
 
 function brl(n){
   if(!n) return "sigiloso";
@@ -243,7 +260,10 @@ function pass(r){
 function render(){
   if(!pronto) return;
   var rows=D.filter(pass);
+  linhasVisiveis=rows;
   document.getElementById("count").textContent=rows.length+" de "+D.length+" editais";
+  var bp=document.getElementById("pdfLista");
+  if(bp){ bp.textContent="Baixar lista em PDF ("+rows.length+")"; bp.disabled=!rows.length; }
   document.getElementById("k1").textContent=rows.length;
   // sem resultado o total eh zero, e brl(0) diz "sigiloso" (certo para item, errado aqui)
   document.getElementById("k2").textContent=rows.length?brl(rows.reduce(function(a,r){return a+r[6];},0)):"—";
@@ -351,6 +371,92 @@ function resumo(i){
   window.print();
 }
 
+// ------------------------------------------------- lista inteira em PDF
+// Mesmo caminho do resumo por edital: monta um bloco limpo e chama a impressao
+// do navegador. Exporta exatamente o que o filtro esta mostrando, nao os 200
+// sempre — filtrar por UF/categoria/prazo e depois baixar e o uso normal.
+function dataBR(iso){
+  var dt=new Date(iso);
+  return ("0"+dt.getDate()).slice(-2)+"/"+("0"+(dt.getMonth()+1)).slice(-2)+"/"+dt.getFullYear();
+}
+
+function descreveFiltros(){
+  var f=[];
+  if(fUF.length)  f.push("Estados: "+fUF.join(", "));
+  if(fCAT.length) f.push("Categorias: "+fCAT.map(function(c){return CAT[c];}).join(", "));
+  if(fPZ!==null)  f.push("Prazo: "+(fPZ===0?"fecham hoje":"até "+fPZ+" dias"));
+  if(fQ)          f.push('Busca: "'+fQ+'"');
+  return f.length ? "Filtros aplicados — "+f.join(" · ") : "Sem filtros — lista completa da varredura.";
+}
+
+function listaPdf(){
+  var rows=linhasVisiveis;
+  if(!rows.length){ alert("Nenhum edital com esses filtros."); return; }
+
+  var varredura=(document.getElementById("dataVarredura")||{}).textContent||"";
+  var totalVal=rows.reduce(function(a,r){return a+r[6];},0);
+  var totalQtd=rows.reduce(function(a,r){return a+r[5];},0);
+  var muns={}; rows.forEach(function(r){ muns[r[0]+r[1]]=1; });
+
+  // indice: uma linha por edital, para achar rapido num PDF longo
+  var idx="<table class='idx'><thead><tr><th>#</th><th>Município / UF</th><th>Edital</th>"
+        + "<th>Encerramento</th><th>Qtd</th><th>Valor estimado</th></tr></thead><tbody>"
+        + rows.map(function(r,k){
+            return "<tr><td class='c'>"+(k+1)+"</td>"
+                 + "<td>"+esc(r[0])+" / "+r[1]+"</td>"
+                 + "<td>"+esc(r[3])+"</td>"
+                 + "<td class='c'>"+dataBR(r[4])+(r[4].slice(11,16)!=="00:00"?" "+r[4].slice(11,16):"")+"</td>"
+                 + "<td class='c'>"+r[5].toLocaleString("pt-BR")+"</td>"
+                 + "<td class='r'>"+(r[6]?moeda(r[6]):"sigiloso")+"</td></tr>";
+          }).join("")
+        + "</tbody></table>";
+
+  var corpo=rows.map(function(r,k){
+    var d=dias(r[4]);
+    var quando=dataBR(r[4])+(r[4].slice(11,16)!=="00:00"?" às "+r[4].slice(11,16):"")
+             + " ("+(d<=0?"hoje":d===1?"amanhã":"em "+d+" dias")+")";
+    var linhas=r[8].map(function(it,j){
+      return "<tr><td class='c'>"+(j+1)+"</td><td>"+CAT[it[0]]+"</td>"
+           + "<td class='desc'>"+esc(it[3])+"</td>"
+           + "<td class='c'>"+it[1].toLocaleString("pt-BR")+"</td>"
+           + "<td class='r'>"+(it[2]?moeda(it[2]):"sigiloso")+"</td>"
+           + "<td class='r'>"+(it[2]?moeda(it[1]*it[2]):"sigiloso")+"</td></tr>";
+    }).join("");
+    return "<div class='ed'><div class='edh'>"
+      + "<h2><span>"+(k+1)+". "+esc(r[0])+" / "+r[1]+"</span><span>"+(r[6]?moeda(r[6]):"orçamento sigiloso")+"</span></h2>"
+      + "<p class='edorg'>"+esc(r[2])+" · "+esc(r[3])+(r[11]?" · "+esc(r[11]):"")
+        + "<br>Encerramento: <strong>"+quando+"</strong> · "+r[5].toLocaleString("pt-BR")
+        + " unidades em "+r[8].length+(r[8].length===1?" item":" itens")+"</p>"
+      + (r[9]?"<p class='edobj'><strong>Objeto:</strong> "+esc(r[9])+"</p>":"")
+      + "</div>"
+      + "<table class='itens'><thead><tr><th>#</th><th>Categoria</th><th>Descritivo</th>"
+      + "<th>Qtd</th><th>Valor unit.</th><th>Total</th></tr></thead><tbody>"+linhas+"</tbody></table>"
+      + "<p class='nota'>PNCP: https://pncp.gov.br/app/editais/"+r[7]+"</p>"
+      + "</div>";
+  }).join("");
+
+  document.getElementById("print").innerHTML =
+      "<div class='capa'><h1>Radar de Editais Digiplus</h1>"
+    + "<p class='sub2'>Licitações abertas no PNCP com itens de linha branca, climatização, cocção, "
+    + "lavanderia e eletroportáteis — apenas fornecimento puro.</p>"
+    + "<p class='sub2'>Varredura de "+esc(varredura)+" · "+rows.length+" edita"+(rows.length===1?"l":"is")
+    + " · "+Object.keys(muns).length+" município"+(Object.keys(muns).length===1?"":"s")
+    + " · "+totalQtd.toLocaleString("pt-BR")+" unidades · "+moeda(totalVal)+" estimados</p>"
+    + "<p class='filtros'>"+esc(descreveFiltros())+"</p></div>"
+    + "<h2>Índice</h2>" + idx
+    + "<div class='quebra'></div>"
+    + "<h2>Editais</h2>" + corpo
+    + "<p class='nota'><strong>Gerado pelo Radar de Editais Digiplus</strong> a partir dos dados "
+    + "públicos do PNCP, varredura de "+esc(varredura)+". Não substitui o edital oficial.</p>"
+    + "<p class='nota'>Os valores são estimativas do órgão, não referência de mercado. Itens marcados "
+    + "como sigiloso tiveram o orçamento fechado pelo órgão. Sobram cerca de 4% de falsos positivos "
+    + "residuais: confira o edital oficial antes de cotar.</p>";
+
+  if(tituloOriginal===null) tituloOriginal=document.title;
+  document.title=("Radar Digiplus "+varredura.replace(new RegExp("/","g"),"-")+" ("+rows.length+" editais)");
+  window.print();
+}
+
 function encerraImpressao(){
   if(tituloOriginal !== null){ document.title = tituloOriginal; tituloOriginal = null; }
   var alvo = document.getElementById("print");
@@ -382,6 +488,7 @@ pe.addEventListener("click",function(ev){
   render();
 });
 
+document.getElementById("pdfLista").addEventListener("click", listaPdf);
 document.getElementById("q").addEventListener("input",function(e){ fQ=e.target.value.trim().toLowerCase(); render(); });
 document.getElementById("clear").addEventListener("click",function(){
   fUF.length=0; fCAT.length=0; fPZ=null; fQ="";

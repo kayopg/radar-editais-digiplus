@@ -29,7 +29,7 @@ varredura.mjs  →  dados/ultima.json  →  publicar.mjs  →  docs/dados.json  
 | `publicar.mjs` | Converte a saída bruta no `docs/dados.json` que a página consome. |
 | `delta.mjs` | Compara duas versões do `dados.json` e imprime o que entrou, o que saiu e o que fecha em 48 h. |
 | `conferir.mjs` | Trava de sanidade: derruba o job antes do commit se o resultado do dia parecer degradado. |
-| `docs/index.html` | A página. Sem dependência externa, sem build. O botão "Baixar edital resumido" gera um PDF de uma página pela impressão do navegador. |
+| `docs/index.html` | A página. Sem dependência externa, sem build. Dois caminhos para PDF, ambos pela impressão do navegador: "Baixar edital resumido" gera uma página por edital, e "Baixar lista em PDF" exporta a lista inteira que o filtro está mostrando, com índice na frente. |
 
 Rodar na mão:
 
