@@ -23,6 +23,10 @@ export const CAT = { RF: 'Refrigeração', CL: 'Climatização', CC: 'Cocção',
 
 export const moeda = v => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 export const dataBR = iso => iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4);
+const dataHoraBR = iso => {
+  const hm = iso.slice(11, 16);
+  return dataBR(iso) + (hm && hm !== '00:00' ? ' às ' + hm : '');
+};
 export const umaLinha = s => String(s == null ? '' : s).replace(/\s+/g, ' ').trim();
 export const numeroEdital = t => String(t || '').replace(/^.*n[º°]\s*/i, '').replace(/^\(\d+\)\s*\|\s*/, '').trim() || String(t || '');
 export const nomeArquivo = s => s.replace(/\//g, '-').replace(/[^0-9A-Za-zÀ-ÿ .-]/g, ' ').replace(/ {2,}/g, ' ').trim();
@@ -38,6 +42,23 @@ const qtdItem = it => {
   const q = it[1].toLocaleString('pt-BR');
   return it[4] ? q + ' ' + it[4] : q + (it[1] === 1 ? ' unidade' : ' unidades');
 };
+
+// it[6]: E = exclusiva ME/EPP, C = cota reservada, S = sem beneficio. Quem nao e
+// ME/EPP nem pode disputar o item exclusivo, e sao 41% deles — por isso o aviso
+// vem em negrito junto do titulo, e nao escondido num campo la embaixo.
+export const BENEFICIO = { E: 'Exclusivo ME/EPP', C: 'Cota reservada ME/EPP', S: 'Sem benefício' };
+const beneficioItem = it => BENEFICIO[it[6]] || '';
+
+// Resumo do beneficio no edital inteiro, para quem le so o cabecalho.
+export function resumoBeneficio(r) {
+  const n = { E: 0, C: 0, S: 0 };
+  for (const it of r[8]) if (n[it[6]] !== undefined) n[it[6]]++;
+  const t = r[8].length;
+  if (n.E === t) return 'todos os itens exclusivos para ME/EPP';
+  if (n.E) return n.E + ' de ' + t + ' itens exclusivos para ME/EPP';
+  if (n.C) return n.C + ' de ' + t + ' com cota reservada para ME/EPP';
+  return n.S ? 'sem benefício ME/EPP' : '';
+}
 
 export const urlArquivo = r => {
   if (!r[13]) return null;
@@ -138,14 +159,20 @@ export async function montaResumo(r, opts = {}) {
 
   doc.texto(r[3] + (r[11] ? '   ·   ' + r[11] : ''), { tam: 10.5, negrito: true });
   doc.espaco(1);
-  doc.texto('Encerra ' + quandoTxt(r[4]) + (r[12] ? '   ·   publicado em ' + dataBR(r[12]) : ''),
+  // Abertura e encerramento juntos: o encerramento sozinho nao dizia quando a
+  // sessao comeca, que e o que define se ainda da tempo de cotar.
+  doc.texto((r[15] ? 'Propostas de ' + dataHoraBR(r[15]) + ' a ' : 'Encerra ') + quandoTxt(r[4]),
             { tam: 9, cor: [0.25, 0.25, 0.25] });
+  const ficha = [r[12] ? 'publicado em ' + dataBR(r[12]) : '', r[17], r[16]].filter(Boolean);
+  if (ficha.length) doc.texto(ficha.join('   ·   '), { tam: 8.5, cor: [0.42, 0.42, 0.42] });
   doc.espaco(6);
   if (r[9]) doc.campo('Objeto', r[9], { tam: 9, larguraRotulo: 52 });
 
   secao(doc, 'Itens de interesse (' + r[8].length + ')');
+  const ben = resumoBeneficio(r);
   doc.texto(r[5].toLocaleString('pt-BR') + ' unidades · '
-            + (r[6] ? moeda(r[6]) + ' estimados' : 'orçamento sigiloso'),
+            + (r[6] ? moeda(r[6]) + ' estimados' : 'orçamento sigiloso')
+            + (ben ? ' · ' + ben : ''),
             { tam: 8.5, cor: [0.4, 0.4, 0.4] });
   doc.espaco(5);
 
@@ -160,6 +187,9 @@ export async function montaResumo(r, opts = {}) {
     doc.parOposto('Unitário ' + (it[2] ? moeda(it[2]) : 'sigiloso'),
                   it[2] ? 'Total ' + moeda(it[1] * it[2]) : '',
                   { tam: 8.5, negritoDir: true });
+    const b = beneficioItem(it);
+    if (b) doc.parOposto(b, '', { tam: 8, negritoEsq: it[6] === 'E',
+                                  corEsq: it[6] === 'E' ? [0.55, 0.1, 0.1] : [0.42, 0.42, 0.42] });
   });
 
   const todos = opts.todos !== undefined ? opts.todos : await buscaTodosItens(r);

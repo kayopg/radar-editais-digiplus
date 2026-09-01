@@ -240,7 +240,8 @@ const itensUrl = o => `https://pncp.gov.br/api/pncp/v1/orgaos/${o.orgao_cnpj}/co
 await pool(cands, 6, async (o) => {
   try {
     const j = await getJson(itensUrl(o));
-    o.__it = (Array.isArray(j) ? j : []).map(x => ({ d: x.descricao, m: x.materialOuServico, q: x.quantidade, v: x.valorUnitarioEstimado, u: x.unidadeMedida, n: x.numeroItem }));
+    o.__it = (Array.isArray(j) ? j : []).map(x => ({ d: x.descricao, m: x.materialOuServico, q: x.quantidade, v: x.valorUnitarioEstimado, u: x.unidadeMedida, n: x.numeroItem,
+      b: x.tipoBeneficioNome, sit: x.situacaoCompraItemNome }));
   } catch { o.__it = null; }
 });
 const semItens = cands.filter(o => o.__it === null || o.__it === undefined);
@@ -249,7 +250,8 @@ if (semItens.length) {
   await pool(semItens, 2, async (o) => {
     try {
       const j = await getJson(itensUrl(o));
-      o.__it = (Array.isArray(j) ? j : []).map(x => ({ d: x.descricao, m: x.materialOuServico, q: x.quantidade, v: x.valorUnitarioEstimado, u: x.unidadeMedida, n: x.numeroItem }));
+      o.__it = (Array.isArray(j) ? j : []).map(x => ({ d: x.descricao, m: x.materialOuServico, q: x.quantidade, v: x.valorUnitarioEstimado, u: x.unidadeMedida, n: x.numeroItem,
+      b: x.tipoBeneficioNome, sit: x.situacaoCompraItemNome }));
     } catch { o.__it = null; }
   });
 }
@@ -258,6 +260,20 @@ process.stderr.write(`  ${errItens} erros\n`);
 
 // ------------------------------------------------- 4. cinco filtros + dedupe
 const classifica = d => { for (const [c, ts] of CAT) for (const t of ts) if (d.includes(t)) return c; return null; };
+
+// Beneficio em uma letra. O PNCP manda a frase por extenso em cada item.
+const beneficio = s => {
+  const t = norm(s);
+  if (t.includes('exclusiva')) return 'E';
+  if (t.includes('cota')) return 'C';
+  if (t.includes('sem beneficio')) return 'S';
+  return '';
+};
+
+// 5.7 - item ja cancelado. O PNCP mantem no /itens o que foi anulado, revogado
+// ou cancelado, e sem olhar isso o resumo mandava cotar item morto: eram 96 na
+// varredura de 01/09/2026. So o item sai; o edital continua pelos outros.
+const itemVivo = s => !norm(s).includes('anulado');
 // 5.3c - "projetor" veta projetor de video avulso, que nao e produto da casa,
 // mas lousa digital costuma ser descrita "com projetor integrado" e seria
 // derrubada junto. Escopar o veto para fora da categoria LD resolve sem ter de
@@ -266,7 +282,7 @@ const VETO_FORA_DE = { projetor: 'LD' };
 const temVeto = (d, cat) => VETO_ITEM.some(v =>
   (VETO_FORA_DE[v] !== cat) && d.includes(v)) || RE_VAN.test(d);
 
-let vPiso = 0, vCient = 0, vBalanca = 0;
+let vPiso = 0, vCient = 0, vBalanca = 0, vCancel = 0;
 const st = { objServ: 0, itemServ: 0, semItem: 0, ok: 0 };
 const bruto = [];
 for (const o of cands) {
@@ -289,12 +305,18 @@ for (const o of cands) {
     if (temVeto(d, cat)) continue;
     if (cat === 'RF' && VETO_RF_CIENT.some(v => d.includes(v))) { vCient++; continue; }
     if (cat === 'BL' && VETO_BL_MEDICA.some(v => d.includes(v))) { vBalanca++; continue; }
+    if (!itemVivo(it.sit)) { vCancel++; continue; }
     const v = +it.v || 0;
     if (v > 0 && v < PISO_ITEM) continue;
     // Posicoes 0-3 sao as antigas; 4 e 5 vieram com o resumo mais completo
-    // (01/09/2026). Acrescente sempre no fim: a pagina le por indice.
+    // (01/09/2026) e 6 logo depois. Acrescente sempre no fim: a pagina le por indice.
+    //
+    // O beneficio vai como letra para nao repetir a frase inteira 12 mil vezes
+    // no JSON: E = exclusiva ME/EPP, C = cota reservada, S = sem beneficio.
+    // Nao e detalhe: 41% dos itens da varredura de 01/09 sao exclusivos de
+    // ME/EPP, e quem nao e ME/EPP nem pode disputar.
     keep.push([cat, Math.round(+it.q || 0), Math.round(v * 100) / 100, limpa(it.d),
-               limpa(it.u), +it.n || 0]);
+               limpa(it.u), +it.n || 0, beneficio(it.b)]);
   }
   if (!keep.length) { st.semItem++; continue; }
 
@@ -307,6 +329,11 @@ for (const o of cands) {
     obj: limpa(o.description), uni: limpa(o.unidade_nome),
     mod: limpa(o.modalidade_licitacao_nome), pub: o.data_publicacao_pncp || null,
     fecha: o.data_fim_vigencia, qtd, val,
+    // acrescentados em 01/09/2026: abertura das propostas, esfera do orgao e
+    // situacao do edital. A abertura e o que diz quando a sessao comeca — o
+    // encerramento sozinho nao contava metade da historia.
+    abre: o.data_inicio_vigencia || null, esfera: limpa(o.esfera_nome),
+    sit: limpa(o.situacao_nome),
     path: `${o.orgao_cnpj}/${o.ano}/${o.numero_sequencial}`, it: keep,
   });
   st.ok++;
@@ -393,7 +420,7 @@ process.stderr.write('  ' + errArq + ' erros\n');
 // Data em America/Sao_Paulo, nao em UTC: rodando de noite no Brasil o toISOString
 // ja virou o dia e a varredura saia carimbada com a data de amanha.
 const hojeISO = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
-const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vMod, porModalidade, vOrgao, vCient, vBalanca, vPiso, vObj, vData, candidatos: cands.length, errItens, ...st };
+const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vMod, porModalidade, vOrgao, vCient, vBalanca, vCancel, vPiso, vObj, vData, candidatos: cands.length, errItens, ...st };
 const bruta = { st: resumo, editais: fin };
 
 // A saida bruta nao vai para o git (uns 320 KB por dia). O que o site consome

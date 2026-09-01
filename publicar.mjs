@@ -22,7 +22,9 @@ const UFS = ['PR', 'RS', 'SP', 'MG', 'GO', 'MT', 'MS', 'SC'];
 // Colunas 0-8 sao as antigas; 9 em diante vieram com o resumo em PDF (31/08/2026).
 // Acrescente sempre no fim: a pagina le por indice.
 const linhas = editais.map(e => [e.mun, e.uf, e.org, e.ed, e.fecha, e.qtd, e.val, e.path, e.it,
-  e.obj || '', e.uni || '', e.mod || '', e.pub || '', e.arq || 0, e.arqExt || '']);
+  e.obj || '', e.uni || '', e.mod || '', e.pub || '', e.arq || 0, e.arqExt || '',
+  // 15 em diante entraram em 01/09/2026, com o resumo mais completo
+  e.abre || '', e.esfera || '', e.sit || '']);
 
 const saida = {
   meta: {
@@ -45,9 +47,10 @@ const saida = {
   // documenta o formato para quem abrir o JSON direto
   colunas: ['municipio', 'uf', 'orgao', 'edital', 'encerramento', 'quantidade',
             'valorEstimado', 'path', 'itens', 'objeto', 'unidade', 'modalidade',
-            'publicacao', 'arquivoSeq', 'arquivoExtensao'],
+            'publicacao', 'arquivoSeq', 'arquivoExtensao',
+            'aberturaPropostas', 'esfera', 'situacao'],
   colunasItem: ['categoria', 'quantidade', 'valorUnitario', 'descricao',
-                'unidadeMedida', 'numeroItem'],
+                'unidadeMedida', 'numeroItem', 'beneficio'],
   editais: linhas,
 };
 
