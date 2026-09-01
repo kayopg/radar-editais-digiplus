@@ -10,7 +10,7 @@ Estados atendidos: PR, RS, SP, MG, GO, MT, MS, SC.
 
 ## Como funciona
 
-O GitHub Actions roda a varredura de segunda a sexta às 7h (horário de Brasília), grava
+O GitHub Actions roda a varredura de segunda a sexta às 6h23 (horário de Brasília), grava
 `docs/dados.json` e commita. A página busca esse JSON toda vez que alguém abre — não é
 preciso republicar nada, e o link nunca muda.
 

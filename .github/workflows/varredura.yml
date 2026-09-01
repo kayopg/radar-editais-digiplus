@@ -2,9 +2,15 @@ name: Varredura PNCP
 
 on:
   schedule:
-    # 10:00 UTC = 07:00 em America/Sao_Paulo (o Brasil não tem mais horário de verão).
+    # 09:23 UTC = 06:23 em America/Sao_Paulo (o Brasil não tem mais horário de verão).
     # O GitHub usa sempre UTC; se o fuso mudar, ajuste aqui.
-    - cron: '0 10 * * 1-5'
+    #
+    # Por que 09:23 e não 10:00: agendamento em repositório gratuito entra numa fila
+    # de baixa prioridade, e o topo da hora é o horário mais concorrido — é onde todo
+    # mundo agenda. Em 31/08/2026 o job marcado para 10:00 UTC só pegou vaga às 17:27,
+    # 7h27 depois, e a lista que devia estar pronta às 7h chegou às 14h27. Sair do :00
+    # e antecipar meia hora dá folga para a fila sem perder o horário útil.
+    - cron: '23 9 * * 1-5'
   workflow_dispatch:      # permite rodar na mão pelo botão "Run workflow"
 
 # Sem isso o job não consegue commitar o dados.json de volta.
@@ -37,8 +43,12 @@ jobs:
       - name: Gerar docs/dados.json
         run: node publicar.mjs
 
+      # O tee manda o delta para o log ALÉM do Summary. O Summary não tem endpoint
+      # na API REST, então sem isso o comparativo do dia só existe no navegador.
       - name: Resumo do que mudou
-        run: node delta.mjs /tmp/anterior.json >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          set -o pipefail
+          node delta.mjs /tmp/anterior.json | tee -a "$GITHUB_STEP_SUMMARY"
 
       # Trava de sanidade: lista vazia, encolhimento brusco ou muitas buscas
       # falhando derrubam o job ANTES do commit. Assim o dados.json de ontem
