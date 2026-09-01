@@ -76,6 +76,17 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 
 const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 
+// 5.3b - refrigeracao cientifica/hospitalar (decisao do usuario em 31/08/2026).
+// Camara de vacina, refrigerador de imunobiologicos e freezer de hemocomponentes
+// sao outro mercado - Indrel, Fanem, Nova Etica - com registro na Anvisa e faixa
+// de temperatura controlada, nao linha branca.
+//
+// So vale para itens de REFRIGERACAO, e isso e proposital: 'laboratori' solto
+// derrubaria "Aspirador Po/Liquido, potencia 1.200, aplicacao: laboratorio"
+// (Rio Verde/GO), que e produto legitimo. Escopar na categoria resolve sem
+// precisar adivinhar o contexto pelo texto.
+const VETO_RF_CIENT = ['imunobiolog','termolab','hemocompon','laboratori','vacina'];
+
 // ---------------------------------------------------------------- utilidades
 const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ');
 const limpa = s => String(s ?? '').replace(/\s+/g, ' ').trim();
@@ -187,7 +198,7 @@ process.stderr.write(`  ${errItens} erros\n`);
 const classifica = d => { for (const [c, ts] of CAT) for (const t of ts) if (d.includes(t)) return c; return null; };
 const temVeto = d => VETO_ITEM.some(v => d.includes(v)) || RE_VAN.test(d);
 
-let vPiso = 0;
+let vPiso = 0, vCient = 0;
 const st = { objServ: 0, itemServ: 0, semItem: 0, ok: 0 };
 const bruto = [];
 for (const o of cands) {
@@ -208,6 +219,7 @@ for (const o of cands) {
   const keep = [];
   for (const [cat, it, d] of interesse) {
     if (temVeto(d)) continue;
+    if (cat === 'RF' && VETO_RF_CIENT.some(v => d.includes(v))) { vCient++; continue; }
     const v = +it.v || 0;
     if (v > 0 && v < PISO[cat]) continue;
     keep.push([cat, Math.round(+it.q || 0), Math.round(v * 100) / 100, limpa(it.d)]);
@@ -307,7 +319,7 @@ process.stderr.write('  ' + errArq + ' erros\n');
 
 // ---------------------------------------------------------------- 5. saidas
 const hojeISO = new Date().toISOString().slice(0, 10);
-const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vMod, porModalidade, vOrgao, vPiso, vObj, vData, candidatos: cands.length, errItens, ...st };
+const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vMod, porModalidade, vOrgao, vCient, vPiso, vObj, vData, candidatos: cands.length, errItens, ...st };
 const bruta = { st: resumo, editais: fin };
 
 // A saida bruta nao vai para o git (uns 320 KB por dia). O que o site consome

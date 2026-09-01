@@ -57,6 +57,9 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
 2. **Veto por objeto** — derruba o edital inteiro quando o objeto é de veículo, trator,
    alimento, material de limpeza e afins. Veículos casam com a busca porque têm
    ar-condicionado de fábrica.
+3b. **Refrigeração científica** — itens de refrigeração para vacina, imunobiológico,
+   hemocomponente ou laboratório saem: é outro mercado, com registro na Anvisa. O teste vale
+   só para a categoria Refrigeração, senão derrubaria aspirador de pó "aplicação: laboratório".
 3. **Veto por item** — lista de falsos positivos reais, ampliada conforme aparecem novos:
    ventilador pulmonar, conector "split bolt", cooler de PC, diária de hotel "com
    ar-condicionado e frigobar", tubo de cobre, fórmula infantil.
