@@ -101,6 +101,32 @@ if(busca){
 }
 
 const doc = montaResumo(alvo);
+
+// Anexa as primeiras páginas do edital oficial, se pedido:
+//   node testa-pdf.mjs "Gravataí" 2
+// Aqui funciona porque o Node não aplica CORS. No navegador está desligado —
+// ver a nota do ANEXAR_OFICIAL no docs/index.html.
+const nPag = Number(process.argv[3] || 0);
+if (nPag > 0 && alvo[13] && String(alvo[14]).toLowerCase() === 'pdf') {
+  const LE = createRequire(import.meta.url)(path.join(DIR, 'docs', 'pdf-le.js'));
+  const pp = alvo[7].split('/');
+  const url = 'https://pncp.gov.br/api/pncp/v1/orgaos/' + pp[0] + '/compras/' + pp[1]
+            + '/' + pp[2] + '/arquivos/' + alvo[13];
+  try {
+    const resp = await fetch(url);
+    const le = await LE.abre(new Uint8Array(await resp.arrayBuffer()));
+    const q = Math.min(nPag, le.total);
+    doc.espaco(8);
+    doc.texto('A seguir, ' + (q === 1 ? 'a primeira página' : 'as ' + q + ' primeiras páginas')
+      + ' do edital oficial (' + le.total + ' no total), copiadas do arquivo publicado no PNCP.',
+      { tam: 8, negrito: true, cor: [0.2, 0.2, 0.2] });
+    doc.anexaExternas(await LE.extraiPaginas(le, Array.from({ length: q }, (_, i) => i)), false);
+    console.log('anexadas', q, 'de', le.total, 'paginas do edital oficial');
+  } catch (e) {
+    console.log('nao deu para anexar:', e.message);
+  }
+}
+
 const bytes = doc.bytes();
 const nome = nomeArquivo('Edital ' + alvo[0] + ' ' + alvo[1] + ' ' + numeroEdital(alvo[3])) + '.pdf';
 fs.writeFileSync(path.join(DIR, nome), bytes);
