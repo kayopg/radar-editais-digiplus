@@ -4,8 +4,12 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const DIR = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+// fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
+// entao uma pasta de usuario com acento no nome virava Usu%C3%A1rio e o
+// require nao achava nada. So aparece fora do Actions, onde o caminho e ASCII.
+const DIR = path.dirname(fileURLToPath(import.meta.url));
 const entrada = process.argv[2] || path.join(DIR, 'dados', 'ultima.json');
 
 const { st, editais } = JSON.parse(fs.readFileSync(entrada, 'utf8'));
@@ -26,7 +30,10 @@ const saida = {
     varredura: new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' }),
     gerado: new Date().toISOString(),
     ufs: UFS,
-    termos: 32,
+    // Derivado, nao fixo: ficou 32 no arquivo depois que a lista virou 38 termos
+    // em 01/09/2026, e a pagina passou a anunciar menos busca do que faz.
+    // consultas = termos x UFs x 2 paginas, entao o caminho de volta e este.
+    termos: st.consultas ? Math.round(st.consultas / (UFS.length * 2)) : 0,
     candidatos: st.unicos ?? 0,
     editais: linhas.length,
     porUf: st.porUf ?? {},
@@ -39,7 +46,8 @@ const saida = {
   colunas: ['municipio', 'uf', 'orgao', 'edital', 'encerramento', 'quantidade',
             'valorEstimado', 'path', 'itens', 'objeto', 'unidade', 'modalidade',
             'publicacao', 'arquivoSeq', 'arquivoExtensao'],
-  colunasItem: ['categoria', 'quantidade', 'valorUnitario', 'descricao'],
+  colunasItem: ['categoria', 'quantidade', 'valorUnitario', 'descricao',
+                'unidadeMedida', 'numeroItem'],
   editais: linhas,
 };
 

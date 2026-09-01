@@ -4,23 +4,48 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const DIR = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+// fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
+// entao uma pasta de usuario com acento no nome virava Usu%C3%A1rio e o
+// require nao achava nada. So aparece fora do Actions, onde o caminho e ASCII.
+const DIR = path.dirname(fileURLToPath(import.meta.url));
 
 // ---------------------------------------------------------------- parâmetros
-const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira","freezer","frigobar","fogao industrial","fogao","forno industrial","forno eletrico","microondas","cooktop","liquidificador industrial","liquidificador","batedeira planetaria","cafeteira","chaleira eletrica","fritadeira","coifa","lavadora de roupas","maquina de lavar roupas","secadora de roupas","bebedouro","purificador de agua","camara fria","expositor refrigerado","ar condicionado","climatizador","cortina de ar","equipamentos de cozinha","aspirador de po","ferro de passar"];
+// Termos de busca. Os 32 primeiros sao os originais; os 8 do fim entraram em
+// 01/09/2026, da lista de produtos que a Digiplus de fato trabalha. Tres deles
+// — ventilador, aquecedor de agua e purificador de ar — ja tinham categoria mas
+// nao eram BUSCADOS: so apareciam de carona quando o edital tambem citava um
+// termo antigo, entao edital so de ventilador nunca era encontrado.
+const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira","freezer","frigobar","fogao industrial","fogao","forno industrial","forno eletrico","microondas","cooktop","liquidificador industrial","liquidificador","batedeira planetaria","cafeteira","chaleira eletrica","fritadeira","lavadora de roupas","maquina de lavar roupas","secadora de roupas","bebedouro","purificador de agua","camara fria","expositor refrigerado","ar condicionado","climatizador","cortina de ar","equipamentos de cozinha","aspirador de po",
+// acrescentados em 01/09/2026
+"ventilador","purificador de ar","gerador de energia","aquecedor de agua","refresqueira","balcao termico","buffet termico","cafeteira expresso",
+// segunda leva da lista da Digiplus, 01/09/2026. "coifa" e "exaustor" voltam:
+// tinham saido nesta mesma data, antes de a coifa industrial ser confirmada.
+"coifa","exaustor","balanca","lousa digital","geladeira industrial","climatizador industrial"];
 const UFS = ["PR","RS","SP","MG","GO","MT","MS","SC"];
 
 const CAT = [
   ["RF",["refrigerador","geladeira","frigobar","freezer","congelador","conservadora","camara fria","camara frigorifica","expositor refrigerado","balcao refrigerado","cervejeira","resfriador"]],
-  ["BB",["bebedouro","purificador de agua"]],
-  ["CC",["fogao","forno","microondas","micro-ondas","micro ondas","cooktop","fritadeira","salamandra","char broiler","charbroiler","caldeirao","panela eletrica","churrasqueira"]],
-  ["CX",["coifa","depurador","exaustor"]],
+  ["BB",["bebedouro","purificador de agua","refresqueira","suqueira","refresqueira industrial"]],
+  ["CC",["fogao","forno","microondas","micro-ondas","micro ondas","cooktop","fritadeira","salamandra","char broiler","charbroiler","caldeirao","panela eletrica","churrasqueira","balcao termico","buffet termico","banho maria","banho-maria","estufa para salgados","pista termica"]],
   ["PR",["liquidificador","batedeira","processador de alimentos","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador","masseira","amassadeira"]],
-  ["EP",["cafeteira","chaleira","sanduicheira","torradeira","air fryer","airfryer","ferro de passar","aspirador de po","grill eletrico"]],
+  // O aspirador da Digiplus e o de po E AGUA, e o PNCP escreve de varios jeitos:
+  // "aspirador de po e agua", "aspirador po/liquido", "aspirador de po/agua".
+  // So "aspirador de po" nao pega as duas ultimas, que nao tem o "de".
+  ["EP",["cafeteira","chaleira","sanduicheira","torradeira","air fryer","airfryer","aspirador de po","aspirador po","aspirador de agua","aspirador agua","grill eletrico"]],
   ["LV",["lavadora de roupa","maquina de lavar","secadora","centrifuga de roupa","calandra","tanquinho","lava-loucas","lava loucas","lavadora extratora"]],
-  ["CL",["ar-condicionado","ar condicionado","arcondicionado","condicionador de ar","split","climatizador","cortina de ar","ventilador","desumidificador","umidificador"]],
-  ["OT",["enceradeira","lavadora de alta pressao","televisor","smart tv","aquecedor"]],
+  ["CL",["ar-condicionado","ar condicionado","arcondicionado","condicionador de ar","split","climatizador","cortina de ar","ventilador","desumidificador","umidificador","purificador de ar"]],
+  // CX voltou em 01/09/2026: saiu de manha, quando "coifas" entrou na lista de
+  // retirar, e voltou de tarde com "coifa industrial" e "exaustores".
+  ["CX",["coifa","coifa industrial","depurador","exaustor","exaustor industrial","coifa de parede","coifa central"]],
+  ["BL",["balanca","balanca comercial","balanca industrial","balanca digital","balanca de plataforma","balanca eletronica"]],
+  ["LD",["lousa digital","lousa interativa","lousa eletronica","quadro interativo","painel interativo","tela interativa"]],
+  // GE entrou em 01/09/2026: gerador nao e climatizacao nem cozinha, e virava
+  // "Outros" — categoria que a pagina mostra como se fosse sobra.
+  ["GE",["gerador de energia","gerador a diesel","gerador a gasolina","grupo gerador","motogerador"]],
+  ["AQ",["aquecedor de agua","aquecedor a gas","aquecedor eletrico","boiler","aquecedor de passagem","aquecedor solar"]],
+  ["OT",["enceradeira","aquecedor"]],
 ];
 
 // 5.4 - piso por PRODUTO, unico para todas as categorias (decisao do usuario em
@@ -75,7 +100,7 @@ const SERV_OBJ = ["instalacao","montagem","mao de obra"];
 const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motociclet","automov","trator","maquinas agricolas","brinquedo","material de construcao","processamento de dados","formulas aliment","dieta enteral","generos aliment","material de limpeza","higiene e limpeza","sucata","velorio","tecidos aviamento"];
 
 // 5.3 — veto por item (lista viva, construída de falsos positivos reais)
-const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","pedestal","suporte para tv","suporte de tv","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
+const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
 // acrescentados em 30/08/2026
 "torneira de parede","torneira para pia","tubo de ferro","tubo de cobre","tubo cobre","pecas /","pecas/","para pedreiro","suporte para televis","suporte de televis","suporte de videocassete","embalag","espaco destinado","onibus","caminhao","impressao 3d","sem funcionamento","quarto de hotel","diaria","estadia","hospedagem","locacao de","prestacao de","autoclave","concentrador de","tampao","projetor","resistencia aquecedor","luva termica","frigideira","prato fundo","alicate","removedor de","coador pano","ralador/fatiador","carro balde","chave controle","elemento filtrante","filtro purificacao","liner","projeto executivo","fantasia","formula infantil","nutricao oral","nutricao geral","placa aquecedora","boia para","controle universal","controle remoto universal",
 // acrescentados em 01/09/2026. Tres mecanismos distintos, todos medidos na
@@ -106,6 +131,23 @@ const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 // (Rio Verde/GO), que e produto legitimo. Escopar na categoria resolve sem
 // precisar adivinhar o contexto pelo texto.
 const VETO_RF_CIENT = ['imunobiolog','termolab','hemocompon','laboratori','vacina'];
+
+// 5.3d - balanca medica e de laboratorio (01/09/2026). "balanca" entrou como
+// termo e trouxe 143 itens, dos quais 95 sao de outro mercado: antropometrica
+// (pediatrica, para obeso, de bioimpedancia), analitica de laboratorio com
+// resolucao de 0,0001 g, e ate uma cama hospitalar e uma mesa de apoio para
+// balanca. Sobram 48, que sao as comerciais e industriais: cozinha, plataforma,
+// eletronica digital.
+//
+// Escopado em BL, como o VETO_RF_CIENT e em RF: "paciente" e "corporal" soltos
+// derrubariam item legitimo de outra categoria. "antopometr" nao e erro meu, e
+// como o orgao escreveu ("BALANCA ANTOPOMETRICA ADULTO"). E o veto e por
+// PRODUTO, nao pela palavra: "balanca precisao" veta a balanca de precisao, mas
+// "precisao minima de 5 g" na balanca comercial de 15 kg continua passando.
+const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioimpedanc',
+  'biompedanc','pesar pessoas','obeso','paciente','corporal','balanca analitica',
+  'analitica de precisao','balanca precisao','balanca de precisao','cama hospitalar',
+  'mesa auxiliadora','tipo balanca','paleteira','pilha tipo bateria'];
 
 // ---------------------------------------------------------------- utilidades
 const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ');
@@ -198,7 +240,7 @@ const itensUrl = o => `https://pncp.gov.br/api/pncp/v1/orgaos/${o.orgao_cnpj}/co
 await pool(cands, 6, async (o) => {
   try {
     const j = await getJson(itensUrl(o));
-    o.__it = (Array.isArray(j) ? j : []).map(x => ({ d: x.descricao, m: x.materialOuServico, q: x.quantidade, v: x.valorUnitarioEstimado }));
+    o.__it = (Array.isArray(j) ? j : []).map(x => ({ d: x.descricao, m: x.materialOuServico, q: x.quantidade, v: x.valorUnitarioEstimado, u: x.unidadeMedida, n: x.numeroItem }));
   } catch { o.__it = null; }
 });
 const semItens = cands.filter(o => o.__it === null || o.__it === undefined);
@@ -207,7 +249,7 @@ if (semItens.length) {
   await pool(semItens, 2, async (o) => {
     try {
       const j = await getJson(itensUrl(o));
-      o.__it = (Array.isArray(j) ? j : []).map(x => ({ d: x.descricao, m: x.materialOuServico, q: x.quantidade, v: x.valorUnitarioEstimado }));
+      o.__it = (Array.isArray(j) ? j : []).map(x => ({ d: x.descricao, m: x.materialOuServico, q: x.quantidade, v: x.valorUnitarioEstimado, u: x.unidadeMedida, n: x.numeroItem }));
     } catch { o.__it = null; }
   });
 }
@@ -216,9 +258,15 @@ process.stderr.write(`  ${errItens} erros\n`);
 
 // ------------------------------------------------- 4. cinco filtros + dedupe
 const classifica = d => { for (const [c, ts] of CAT) for (const t of ts) if (d.includes(t)) return c; return null; };
-const temVeto = d => VETO_ITEM.some(v => d.includes(v)) || RE_VAN.test(d);
+// 5.3c - "projetor" veta projetor de video avulso, que nao e produto da casa,
+// mas lousa digital costuma ser descrita "com projetor integrado" e seria
+// derrubada junto. Escopar o veto para fora da categoria LD resolve sem ter de
+// adivinhar o contexto pelo texto — mesmo recurso do VETO_RF_CIENT.
+const VETO_FORA_DE = { projetor: 'LD' };
+const temVeto = (d, cat) => VETO_ITEM.some(v =>
+  (VETO_FORA_DE[v] !== cat) && d.includes(v)) || RE_VAN.test(d);
 
-let vPiso = 0, vCient = 0;
+let vPiso = 0, vCient = 0, vBalanca = 0;
 const st = { objServ: 0, itemServ: 0, semItem: 0, ok: 0 };
 const bruto = [];
 for (const o of cands) {
@@ -238,11 +286,15 @@ for (const o of cands) {
 
   const keep = [];
   for (const [cat, it, d] of interesse) {
-    if (temVeto(d)) continue;
+    if (temVeto(d, cat)) continue;
     if (cat === 'RF' && VETO_RF_CIENT.some(v => d.includes(v))) { vCient++; continue; }
+    if (cat === 'BL' && VETO_BL_MEDICA.some(v => d.includes(v))) { vBalanca++; continue; }
     const v = +it.v || 0;
     if (v > 0 && v < PISO_ITEM) continue;
-    keep.push([cat, Math.round(+it.q || 0), Math.round(v * 100) / 100, limpa(it.d)]);
+    // Posicoes 0-3 sao as antigas; 4 e 5 vieram com o resumo mais completo
+    // (01/09/2026). Acrescente sempre no fim: a pagina le por indice.
+    keep.push([cat, Math.round(+it.q || 0), Math.round(v * 100) / 100, limpa(it.d),
+               limpa(it.u), +it.n || 0]);
   }
   if (!keep.length) { st.semItem++; continue; }
 
@@ -341,7 +393,7 @@ process.stderr.write('  ' + errArq + ' erros\n');
 // Data em America/Sao_Paulo, nao em UTC: rodando de noite no Brasil o toISOString
 // ja virou o dia e a varredura saia carimbada com a data de amanha.
 const hojeISO = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
-const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vMod, porModalidade, vOrgao, vCient, vPiso, vObj, vData, candidatos: cands.length, errItens, ...st };
+const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vMod, porModalidade, vOrgao, vCient, vBalanca, vPiso, vObj, vData, candidatos: cands.length, errItens, ...st };
 const bruta = { st: resumo, editais: fin };
 
 // A saida bruta nao vai para o git (uns 320 KB por dia). O que o site consome
