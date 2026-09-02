@@ -5,6 +5,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+import { textoDasPaginas } from './paginas-uteis.mjs';
+import { analisaExigencias } from './exigencias.mjs';
 
 // fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
 // entao uma pasta de usuario com acento no nome virava Usu%C3%A1rio e o
@@ -98,6 +101,48 @@ function orgaoOk(o) {
   return ENSINO.some(v => txt.includes(v)) || SAUDE.some(v => txt.includes(v));
 }
 
+
+// 5.8 — portal de origem (decisao do usuario em 02/09/2026). A Digiplus so
+// disputa em seis portais; edital publicado por outro sistema fica de fora.
+//
+// Todo portal e obrigado a publicar no PNCP desde a Lei 14.133, entao o Radar
+// ja via todos — o campo usuarioNome e o registro de QUEM publicou. A maioria
+// dos editais nao vem de bolsa de licitacao e sim do ERP da prefeitura
+// (ECustomize, Megasoft, IPM, Elotech), e esses agora saem.
+//
+// O nome vem por extenso e varia ("BLL Compras", "Bolsa Nacional De Compras -
+// BNC"), por isso a comparacao e por trecho e nao por igualdade.
+const PORTAIS_OK = [
+  'bll compras', 'bolsa de licitacoes',                       // BLL
+  'bolsa nacional de compras',                                // BNC
+  'compras.gov.br', 'comprasnet',                             // Compras GOV
+  'banrisul',                                                 // Banrisul
+  'portal de compras publicas', 'compras publicas',           // Compras Publicas
+  'licitanet',                                                // Licitanet
+];
+const portalOk = nome => {
+  const t = norm(nome);
+  return !!t && PORTAIS_OK.some(p => t.includes(p));
+};
+
+// A API de consulta e outra: tem o portal, mas com cota curta — seis requisicoes
+// em paralelo derrubam tudo por 30 s. Por isso roda serializada, e so sobre a
+// lista final (uns 250), nao sobre os 1500 candidatos.
+async function buscaPortal(e) {
+  const [c, a, s] = e.path.split('/');
+  for (let t = 0; t < 5; t++) {
+    try {
+      const r = await fetch(`https://pncp.gov.br/api/consulta/v1/orgaos/${c}/compras/${a}/${s}`);
+      if (r.status === 429) { await new Promise(x => setTimeout(x, 35000)); continue; }
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const j = await r.json();
+      return limpa(j.usuarioNome || '');
+    } catch {
+      await new Promise(x => setTimeout(x, 3000));
+    }
+  }
+  return null;      // nao deu para saber: mantem o edital, ver nota no filtro
+}
 
 // 5.1 — serviço no item
 const SERV_ITEM = ["instalacao","montagem","manutencao","higienizacao","desinstalacao","recarga de gas","limpeza de ar","mao de obra","servicos de"];
@@ -341,7 +386,7 @@ for (const o of cands) {
     // situacao do edital. A abertura e o que diz quando a sessao comeca — o
     // encerramento sozinho nao contava metade da historia.
     abre: o.data_inicio_vigencia || null, esfera: limpa(o.esfera_nome),
-    sit: limpa(o.situacao_nome),
+    sit: limpa(o.situacao_nome), portal: null, exige: null,
     path: `${o.orgao_cnpj}/${o.ano}/${o.numero_sequencial}`, it: keep,
   });
   st.ok++;
@@ -360,6 +405,79 @@ for (const e of bruto) {
 const fin = [...grupo.values()].sort((a, b) => a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : (a.mun < b.mun ? -1 : 1));
 
 st.dup = bruto.length - fin.length;
+
+// ------------------------------------------------ 4c. filtro por portal
+// Serializado de proposito: a API de consulta tem cota curta e uma rajada
+// derruba tudo por 30 s. Sao uns 250, entao custa uns 5 min.
+process.stderr.write('Portais: ' + fin.length + ' consultas (serializadas)\n');
+let vPortal = 0, errPortal = 0;
+const porPortal = {};
+for (let i = 0; i < fin.length; i++) {
+  const e = fin[i];
+  e.portal = await buscaPortal(e);
+  if (e.portal === null) errPortal++;
+  else porPortal[e.portal] = (porPortal[e.portal] || 0) + 1;
+  if ((i + 1) % 50 === 0) process.stderr.write(`  ${i + 1}/${fin.length}\n`);
+  await new Promise(x => setTimeout(x, 1200));
+}
+// Portal desconhecido MANTEM o edital: falha de rede nao pode virar exclusao
+// silenciosa. Some so quem respondeu com um portal fora da lista.
+const finP = fin.filter(e => {
+  if (e.portal === null) return true;
+  if (portalOk(e.portal)) return true;
+  vPortal++; return false;
+});
+process.stderr.write(`  ${vPortal} fora dos portais da casa, ${errPortal} sem resposta\n`);
+fin.length = 0; fin.push(...finP);
+
+// ------------------------------------ 4d. exigencias que impedem participar
+// Amostra, comprovacao de sustentabilidade, carta de solidariedade e garantia
+// contratual: se o edital EXIGE qualquer uma delas, a Digiplus nao disputa.
+// So o que e obrigatorio derruba — "podera solicitar", "caso o TR exija" e
+// "reserva-se no direito" ficam, por decisao do usuario em 02/09/2026.
+//
+// O texto so existe dentro do PDF do orgao, entao esta fase baixa o edital de
+// cada um: uns 0,6 GB e 10 min para 250. E o preco de nao mandar cotar edital
+// que a casa nao pode disputar.
+const LE = createRequire(import.meta.url)(path.join(DIR, 'docs', 'pdf-le.js'));
+process.stderr.write('Exigencias: ' + fin.length + ' editais\n');
+let vExige = 0, semTexto = 0, errExige = 0;
+const porExigencia = {};
+let feitosEx = 0;
+await pool(fin, 4, async (e) => {
+  e.exige = null;
+  if (String(e.arqExt).toLowerCase() !== 'pdf' || !e.arq) { e.exige = 'sem-arquivo'; return; }
+  try {
+    const [c, a, s] = e.path.split('/');
+    const r = await fetch(`https://pncp.gov.br/api/pncp/v1/orgaos/${c}/compras/${a}/${s}/arquivos/${e.arq}`);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const le = await LE.abre(new Uint8Array(await r.arrayBuffer()));
+    const pgs = await textoDasPaginas(le);
+    // PDF digitalizado: nao da para afirmar nem que exige nem que dispensa.
+    if (!pgs.some(t => t.length > 40)) { e.exige = 'sem-texto'; semTexto++; return; }
+    e.exige = analisaExigencias(pgs).bloqueia;
+  } catch { e.exige = 'erro'; errExige++; }
+  if (++feitosEx % 50 === 0) process.stderr.write(`  ${feitosEx}/${fin.length}\n`);
+});
+
+// Sai so quem EXIGE de verdade. Nao avaliado (sem texto, sem arquivo, erro)
+// continua na lista, marcado, para conferencia humana — nunca sumir calado.
+const finE = fin.filter(e => {
+  if (!Array.isArray(e.exige) || !e.exige.length) return true;
+  vExige++;
+  e.exige.forEach(x => { porExigencia[x] = (porExigencia[x] || 0) + 1; });
+  return false;
+});
+process.stderr.write(`  ${vExige} com exigencia impeditiva, ${semTexto} sem texto, ${errExige} erro\n`);
+fin.length = 0; fin.push(...finE);
+
+st.vPortal = vPortal;
+st.errPortal = errPortal;
+st.porPortal = porPortal;
+st.vExige = vExige;
+st.semTextoExige = semTexto;
+st.errExige = errExige;
+st.porExigencia = porExigencia;
 st.final = fin.length;
 st.porUf = {};
 for (const e of fin) st.porUf[e.uf] = (st.porUf[e.uf] || 0) + 1;

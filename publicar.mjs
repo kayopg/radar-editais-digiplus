@@ -24,7 +24,11 @@ const UFS = ['PR', 'RS', 'SP', 'MG', 'GO', 'MT', 'MS', 'SC'];
 const linhas = editais.map(e => [e.mun, e.uf, e.org, e.ed, e.fecha, e.qtd, e.val, e.path, e.it,
   e.obj || '', e.uni || '', e.mod || '', e.pub || '', e.arq || 0, e.arqExt || '',
   // 15 em diante entraram em 01/09/2026, com o resumo mais completo
-  e.abre || '', e.esfera || '', e.sit || '']);
+  e.abre || '', e.esfera || '', e.sit || '', e.portal || '',
+  // 19: vazio = edital lido e sem exigencia impeditiva. Texto = NAO foi
+  // possivel avaliar (PDF digitalizado, sem arquivo, erro), e por isso ele
+  // continua na lista — cabe conferencia humana.
+  Array.isArray(e.exige) ? '' : (e.exige || '')]);
 
 const saida = {
   meta: {
@@ -48,7 +52,7 @@ const saida = {
   colunas: ['municipio', 'uf', 'orgao', 'edital', 'encerramento', 'quantidade',
             'valorEstimado', 'path', 'itens', 'objeto', 'unidade', 'modalidade',
             'publicacao', 'arquivoSeq', 'arquivoExtensao',
-            'aberturaPropostas', 'esfera', 'situacao'],
+            'aberturaPropostas', 'esfera', 'situacao', 'portal', 'naoAvaliado'],
   colunasItem: ['categoria', 'quantidade', 'valorUnitario', 'descricao',
                 'unidadeMedida', 'numeroItem', 'beneficio'],
   editais: linhas,
