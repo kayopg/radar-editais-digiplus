@@ -430,57 +430,6 @@ const finP = fin.filter(e => {
 process.stderr.write(`  ${vPortal} fora dos portais da casa, ${errPortal} sem resposta\n`);
 fin.length = 0; fin.push(...finP);
 
-// ------------------------------------ 4d. exigencias que impedem participar
-// Amostra, comprovacao de sustentabilidade, carta de solidariedade e garantia
-// contratual: se o edital EXIGE qualquer uma delas, a Digiplus nao disputa.
-// So o que e obrigatorio derruba — "podera solicitar", "caso o TR exija" e
-// "reserva-se no direito" ficam, por decisao do usuario em 02/09/2026.
-//
-// O texto so existe dentro do PDF do orgao, entao esta fase baixa o edital de
-// cada um: uns 0,6 GB e 10 min para 250. E o preco de nao mandar cotar edital
-// que a casa nao pode disputar.
-const LE = createRequire(import.meta.url)(path.join(DIR, 'docs', 'pdf-le.js'));
-process.stderr.write('Exigencias: ' + fin.length + ' editais\n');
-let vExige = 0, semTexto = 0, errExige = 0;
-const porExigencia = {};
-let feitosEx = 0;
-await pool(fin, 4, async (e) => {
-  e.exige = null;
-  if (String(e.arqExt).toLowerCase() !== 'pdf' || !e.arq) { e.exige = 'sem-arquivo'; return; }
-  try {
-    const [c, a, s] = e.path.split('/');
-    const r = await fetch(`https://pncp.gov.br/api/pncp/v1/orgaos/${c}/compras/${a}/${s}/arquivos/${e.arq}`);
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const le = await LE.abre(new Uint8Array(await r.arrayBuffer()));
-    const pgs = await textoDasPaginas(le);
-    // PDF digitalizado: nao da para afirmar nem que exige nem que dispensa.
-    if (!pgs.some(t => t.length > 40)) { e.exige = 'sem-texto'; semTexto++; return; }
-    e.exige = analisaExigencias(pgs).bloqueia;
-  } catch { e.exige = 'erro'; errExige++; }
-  if (++feitosEx % 50 === 0) process.stderr.write(`  ${feitosEx}/${fin.length}\n`);
-});
-
-// Sai so quem EXIGE de verdade. Nao avaliado (sem texto, sem arquivo, erro)
-// continua na lista, marcado, para conferencia humana — nunca sumir calado.
-const finE = fin.filter(e => {
-  if (!Array.isArray(e.exige) || !e.exige.length) return true;
-  vExige++;
-  e.exige.forEach(x => { porExigencia[x] = (porExigencia[x] || 0) + 1; });
-  return false;
-});
-process.stderr.write(`  ${vExige} com exigencia impeditiva, ${semTexto} sem texto, ${errExige} erro\n`);
-fin.length = 0; fin.push(...finE);
-
-st.vPortal = vPortal;
-st.errPortal = errPortal;
-st.porPortal = porPortal;
-st.vExige = vExige;
-st.semTextoExige = semTexto;
-st.errExige = errExige;
-st.porExigencia = porExigencia;
-st.final = fin.length;
-st.porUf = {};
-for (const e of fin) st.porUf[e.uf] = (st.porUf[e.uf] || 0) + 1;
 
 
 // ------------------------------------------------ 4b. arquivo oficial do edital
@@ -541,6 +490,61 @@ await pool(fin, 6, async (e) => {
   } catch { errArq++; }
 });
 process.stderr.write('  ' + errArq + ' erros\n');
+
+// ------------------------------------ 4d. exigencias que impedem participar
+// A ORDEM IMPORTA e ja quebrou uma vez: esta fase precisa do e.arq, que so
+// existe depois do 4b. Rodando antes, todo edital caia em "sem-arquivo" e a
+// analise nao avaliava nenhum — sem erro, sem aviso, so zeros nas estatisticas.
+// Amostra, comprovacao de sustentabilidade, carta de solidariedade e garantia
+// contratual: se o edital EXIGE qualquer uma delas, a Digiplus nao disputa.
+// So o que e obrigatorio derruba — "podera solicitar", "caso o TR exija" e
+// "reserva-se no direito" ficam, por decisao do usuario em 02/09/2026.
+//
+// O texto so existe dentro do PDF do orgao, entao esta fase baixa o edital de
+// cada um: uns 0,6 GB e 10 min para 250. E o preco de nao mandar cotar edital
+// que a casa nao pode disputar.
+const LE = createRequire(import.meta.url)(path.join(DIR, 'docs', 'pdf-le.js'));
+process.stderr.write('Exigencias: ' + fin.length + ' editais\n');
+let vExige = 0, semTexto = 0, errExige = 0;
+const porExigencia = {};
+let feitosEx = 0;
+await pool(fin, 4, async (e) => {
+  e.exige = null;
+  if (String(e.arqExt).toLowerCase() !== 'pdf' || !e.arq) { e.exige = 'sem-arquivo'; return; }
+  try {
+    const [c, a, s] = e.path.split('/');
+    const r = await fetch(`https://pncp.gov.br/api/pncp/v1/orgaos/${c}/compras/${a}/${s}/arquivos/${e.arq}`);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const le = await LE.abre(new Uint8Array(await r.arrayBuffer()));
+    const pgs = await textoDasPaginas(le);
+    // PDF digitalizado: nao da para afirmar nem que exige nem que dispensa.
+    if (!pgs.some(t => t.length > 40)) { e.exige = 'sem-texto'; semTexto++; return; }
+    e.exige = analisaExigencias(pgs).bloqueia;
+  } catch { e.exige = 'erro'; errExige++; }
+  if (++feitosEx % 50 === 0) process.stderr.write(`  ${feitosEx}/${fin.length}\n`);
+});
+
+// Sai so quem EXIGE de verdade. Nao avaliado (sem texto, sem arquivo, erro)
+// continua na lista, marcado, para conferencia humana — nunca sumir calado.
+const finE = fin.filter(e => {
+  if (!Array.isArray(e.exige) || !e.exige.length) return true;
+  vExige++;
+  e.exige.forEach(x => { porExigencia[x] = (porExigencia[x] || 0) + 1; });
+  return false;
+});
+process.stderr.write(`  ${vExige} com exigencia impeditiva, ${semTexto} sem texto, ${errExige} erro\n`);
+fin.length = 0; fin.push(...finE);
+
+st.vPortal = vPortal;
+st.errPortal = errPortal;
+st.porPortal = porPortal;
+st.vExige = vExige;
+st.semTextoExige = semTexto;
+st.errExige = errExige;
+st.porExigencia = porExigencia;
+st.final = fin.length;
+st.porUf = {};
+for (const e of fin) st.porUf[e.uf] = (st.porUf[e.uf] || 0) + 1;
 
 // ---------------------------------------------------------------- 5. saidas
 // Data em America/Sao_Paulo, nao em UTC: rodando de noite no Brasil o toISOString
