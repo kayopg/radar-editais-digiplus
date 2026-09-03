@@ -124,12 +124,13 @@ export async function anexaOficial(doc, r, opts = {}) {
     } else {
       const paginas = await textoDasPaginas(le);
       const sel = escolhePaginas(r, opts.itens || [], paginas);
-      // Exige a TABELA, nao so a pagina do objeto: sem ela nao ha descritivo, e
-      // uma pagina de capa sozinha seria pior que entregar o documento inteiro.
-      if (sel.tabela.length) {
+      // Exige conteudo que DESCREVA os itens: a tabela pontuada pelos descritivos
+      // ou uma secao de especificacao achada pelo cabecalho. So capa nao basta —
+      // seria pior que entregar o documento inteiro.
+      if (sel.tabela.length || (sel.tr && sel.tr.length)) {
         quais = sel.escolhidas;
         comoEscolhi = 'as páginas do edital oficial que descrevem os produtos '
-          + '(objeto e tabela de especificação), ' + quais.length + ' de ' + le.total;
+          + '(capa, objeto e especificação dos itens), ' + quais.length + ' de ' + le.total;
       } else {
         // PDF de imagem, ou fonte com codificacao propria: nao da para pontuar
         // pagina nenhuma. Melhor entregar o documento inteiro do que nada.
