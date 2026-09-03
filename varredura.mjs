@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { textoDasPaginas } from './paginas-uteis.mjs';
 import { analisaExigencias } from './exigencias.mjs';
+import { devedorDe } from './devedores.mjs';
 
 // fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
 // entao uma pasta de usuario com acento no nome virava Usu%C3%A1rio e o
@@ -264,7 +265,8 @@ process.stderr.write(`  ${res.size} editais unicos, ${errBusca} erros\n`);
 // ------------------------------------------- 2. veto por objeto + data valida
 const hoje = new Date();
 const cands = [];
-let vObj = 0, vData = 0, vMod = 0, vOrgao = 0;
+let vObj = 0, vData = 0, vMod = 0, vOrgao = 0, vDevedor = 0;
+const porDevedor = {};
 const porModalidade = {};
 for (const o of res.values()) {
   const mod = Number(o.modalidade_licitacao_id);
@@ -275,6 +277,12 @@ for (const o of res.values()) {
     continue;
   }
   if (!orgaoOk(o)) { vOrgao++; continue; }
+
+  // 5.0c — devedor. Orgao que deve para a casa ou para as coligadas nao se cota
+  // (decisao do usuario em 03/09/2026, lista de 13/07/2026). Aqui em cima, antes
+  // da leitura de itens: e o filtro mais barato que existe, so compara nome.
+  const dev = devedorDe(o.municipio_nome, o.uf, o.orgao_nome, o.unidade_nome, o.esfera_nome);
+  if (dev) { vDevedor++; porDevedor[dev.nome] = (porDevedor[dev.nome] || 0) + 1; continue; }
 
   const f = o.data_fim_vigencia;
   const dt = f ? new Date(f) : null;
@@ -550,7 +558,7 @@ for (const e of fin) st.porUf[e.uf] = (st.porUf[e.uf] || 0) + 1;
 // Data em America/Sao_Paulo, nao em UTC: rodando de noite no Brasil o toISOString
 // ja virou o dia e a varredura saia carimbada com a data de amanha.
 const hojeISO = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
-const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vMod, porModalidade, vOrgao, vCient, vBalanca, vCancel, vPiso, vObj, vData, candidatos: cands.length, errItens, ...st };
+const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vMod, porModalidade, vOrgao, vDevedor, porDevedor, vCient, vBalanca, vCancel, vPiso, vObj, vData, candidatos: cands.length, errItens, ...st };
 const bruta = { st: resumo, editais: fin };
 
 // A saida bruta nao vai para o git (uns 320 KB por dia). O que o site consome
