@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
-import { textoDasPaginas } from './paginas-uteis.mjs';
+import { textoDasPaginas, textoUtil } from './paginas-uteis.mjs';
 import { analisaExigencias } from './exigencias.mjs';
 import { devedorDe } from './devedores.mjs';
 
@@ -157,6 +157,10 @@ const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motocicle
 const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
 // acrescentados em 30/08/2026
 "torneira de parede","torneira para pia","tubo de ferro","tubo de cobre","tubo cobre","pecas /","pecas/","para pedreiro","suporte para televis","suporte de televis","suporte de videocassete","embalag","espaco destinado","onibus","caminhao","impressao 3d","sem funcionamento","quarto de hotel","diaria","estadia","hospedagem","locacao de","prestacao de","autoclave","concentrador de","tampao","projetor","resistencia aquecedor","luva termica","frigideira","prato fundo","alicate","removedor de","coador pano","ralador/fatiador","carro balde","chave controle","elemento filtrante","filtro purificacao","liner","projeto executivo","fantasia","formula infantil","nutricao oral","nutricao geral","placa aquecedora","boia para","controle universal","controle remoto universal",
+// acrescentados em 03/09/2026: EPI casando com "purificador de ar". Montes
+// Claros/MG entrou com 5 itens, todos respirador PFF2 e filtro de mascara
+// contra gas — mascara purificadora de ar nao e eletrodomestico.
+"respirador","mascara","pff2","pff1","pff3","filtro de mascara","protecao respiratoria",
 // acrescentados em 01/09/2026. Tres mecanismos distintos, todos medidos na
 // varredura de 31/08:
 //   - hardware de PC casando com Climatizacao porque a descricao cita o
@@ -526,7 +530,7 @@ await pool(fin, 4, async (e) => {
     const le = await LE.abre(new Uint8Array(await r.arrayBuffer()));
     const pgs = await textoDasPaginas(le);
     // PDF digitalizado: nao da para afirmar nem que exige nem que dispensa.
-    if (!pgs.some(t => t.length > 40)) { e.exige = 'sem-texto'; semTexto++; return; }
+    if (!textoUtil(pgs)) { e.exige = "sem-texto"; semTexto++; return; }
     e.exige = analisaExigencias(pgs).bloqueia;
   } catch { e.exige = 'erro'; errExige++; }
   if (++feitosEx % 50 === 0) process.stderr.write(`  ${feitosEx}/${fin.length}\n`);

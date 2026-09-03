@@ -7,7 +7,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
-import { textoDasPaginas, escolhePaginas } from './paginas-uteis.mjs';
+import { textoDasPaginas, escolhePaginas, textoUtil, coberturaItens } from './paginas-uteis.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const req = createRequire(import.meta.url);
@@ -110,8 +110,20 @@ export async function anexaOficial(doc, r, opts = {}) {
   const url = urlArquivo(r);
   if (!url) return { ok: false, motivo: 'o orgao nao publicou arquivo' };
   try {
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    // O PNCP devolve 502 e derruba conexao de vez em quando: no lote de
+    // 03/09/2026 tres editais ficaram sem anexo so por isso. Tres tentativas
+    // com espera crescente resolvem sem custo quando esta tudo bem.
+    let resp = null;
+    for (let t = 0; t < 3; t++) {
+      try {
+        resp = await fetch(url);
+        if (resp.ok) break;
+        throw new Error('HTTP ' + resp.status);
+      } catch (e) {
+        if (t === 2) throw e;
+        await new Promise(x => setTimeout(x, 2000 * (t + 1)));
+      }
+    }
     const le = await LE.abre(new Uint8Array(await resp.arrayBuffer()));
 
     let quais, comoEscolhi;
@@ -127,7 +139,13 @@ export async function anexaOficial(doc, r, opts = {}) {
       // Exige conteudo que DESCREVA os itens: a tabela pontuada pelos descritivos
       // ou uma secao de especificacao achada pelo cabecalho. So capa nao basta —
       // seria pior que entregar o documento inteiro.
-      if (sel.tabela.length || (sel.tr && sel.tr.length)) {
+      // textoUtil filtra o caso em que so o carimbo de assinatura foi extraido:
+      // tem texto, mas e a mesma frase em toda pagina.
+      // A selecao so vale se COBRIR os itens. Apertada demais, ela perdia
+      // descritivo em silencio — o pior desfecho possivel, porque o PDF sai
+      // parecendo completo. Abaixo de 60%% dos itens presentes, entrega tudo.
+      const cobre = coberturaItens(r, paginas, sel.escolhidas);
+      if (textoUtil(paginas) && cobre >= 0.6 && (sel.tabela.length || (sel.tr && sel.tr.length))) {
         quais = sel.escolhidas;
         comoEscolhi = 'as páginas do edital oficial que descrevem os produtos '
           + '(capa, objeto e especificação dos itens), ' + quais.length + ' de ' + le.total;
@@ -135,7 +153,7 @@ export async function anexaOficial(doc, r, opts = {}) {
         // PDF de imagem, ou fonte com codificacao propria: nao da para pontuar
         // pagina nenhuma. Melhor entregar o documento inteiro do que nada.
         quais = Array.from({ length: le.total }, (_, i) => i);
-        comoEscolhi = 'o edital oficial completo (não consegui ler o texto para separar as páginas úteis)';
+        comoEscolhi = 'o edital oficial completo (não foi possível isolar com segurança as páginas que descrevem os produtos)';
       }
     }
 
