@@ -8,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { textoDasPaginas, escolhePaginas, textoUtil, coberturaItens } from './paginas-uteis.mjs';
-import { abreZip, pdfsDoZip, textoDocx, textoDoc, extDe } from './arquivo-oficial.mjs';
+import { abreZip, pdfsDoZip, blocosDocx, blocosDoc, extDe } from './arquivo-oficial.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const req = createRequire(import.meta.url);
@@ -221,7 +221,7 @@ export async function anexaOficial(doc, r, opts = {}) {
   if (reservas.length) {
     const usar = reservas.sort((a, b) => a.ordem - b.ordem).slice(0, 2);
     return anexaTexto(doc, r,
-      usar.map(x => x.txt).join('\n\n'),
+      usar.flatMap(x => x.blocos),
       [...new Set(usar.map(x => x.formato))].join(' + '),
       usar.map(x => x.nome).filter(Boolean).join(' + '),
       modo, opts.itens || []);
@@ -252,7 +252,7 @@ async function fontesDe(c, tropecos) {
     // Um .docx tambem comeca com PK: a assinatura nao separa os dois, o
     // conteudo separa.
     if (dentro.some(e => e.nome === 'word/document.xml')) {
-      return { pdfs: [], texto: { txt: textoDocx(bytes), formato: 'DOCX', nome: c.titulo } };
+      return { pdfs: [], texto: { blocos: blocosDocx(bytes), formato: 'DOCX', nome: c.titulo } };
     }
     const pdfs = pdfsDoZip(bytes).slice(0, 3)
       .map(p => ({ nome: p.nome.split('/').pop(), tipo: p.nome, bytes: p.abre(), zip: true }))
@@ -260,12 +260,12 @@ async function fontesDe(c, tropecos) {
     if (pdfs.length) return { pdfs, texto: null };
 
     const dx = dentro.find(e => extDe(e.nome) === 'docx');
-    if (dx) return { pdfs: [], texto: { txt: textoDocx(dx.abre()), formato: 'DOCX', nome: dx.nome } };
+    if (dx) return { pdfs: [], texto: { blocos: blocosDocx(dx.abre()), formato: 'DOCX', nome: dx.nome } };
     tropecos.push('o zip publicado nao trazia PDF nem DOCX');
     return { pdfs: [], texto: null };
   }
 
-  if (tipo === 'ole') return { pdfs: [], texto: { txt: textoDoc(bytes), formato: 'DOC', nome: c.titulo } };
+  if (tipo === 'ole') return { pdfs: [], texto: { blocos: blocosDoc(bytes), formato: 'DOC', nome: c.titulo } };
   tropecos.push('formato nao reconhecido (' + (c.ext || 'sem extensao') + ')');
   return { pdfs: [], texto: null };
 }
@@ -282,27 +282,39 @@ async function fontesDe(c, tropecos) {
 const CHARS_POR_PAGINA = 3500;
 const TEXTO_CURTO = 20000;   // abaixo disso nao compensa fatiar
 
-function fatia(txt) {
-  const partes = [];
-  let atual = '';
-  for (const linha of txt.split('\n')) {
-    if (atual.length + linha.length > CHARS_POR_PAGINA && atual) { partes.push(atual); atual = ''; }
-    atual += linha + '\n';
-  }
-  if (atual.trim()) partes.push(atual);
-  return partes;
-}
+const textoDoBloco = b => b.t === 'tab' ? b.linhas.map(l => l.join(' ')).join('\n') : b.txt;
 
 // Um edital em Word costuma vir com o Termo de Referencia colado duas vezes —
 // no corpo e no anexo. Sem tirar, o anexo sai com a mesma tabela repetida.
-function semRepetidas(fatias) {
-  const vistas = new Set();
-  return fatias.filter(f => {
-    const chave = f.replace(/\s+/g, ' ').trim();
-    if (vistas.has(chave)) return false;
-    vistas.add(chave);
+// So blocos longos entram na conta: linha curta ("R$", "UNIDADE") se repete de
+// verdade, e cortar a segunda quebraria a tabela.
+function semRepetidos(blocos) {
+  const vistos = new Set();
+  return blocos.filter(b => {
+    const t = textoDoBloco(b).replace(/\s+/g, ' ').trim();
+    if (t.length < 200) return true;
+    if (vistos.has(t)) return false;
+    vistos.add(t);
     return true;
   });
+}
+
+// Agrupa blocos ate dar o tamanho de uma pagina, para o seletor trabalhar em
+// pedacos comparaveis aos de um PDF.
+function agrupa(blocos) {
+  const grupos = [];
+  let atual = { blocos: [], txt: '' };
+  for (const b of blocos) {
+    const t = textoDoBloco(b);
+    if (atual.txt.length + t.length > CHARS_POR_PAGINA && atual.blocos.length) {
+      grupos.push(atual);
+      atual = { blocos: [], txt: '' };
+    }
+    atual.blocos.push(b);
+    atual.txt += t + '\n';
+  }
+  if (atual.blocos.length) grupos.push(atual);
+  return grupos;
 }
 
 const PARADAS = new Set(['para', 'com', 'sem', 'dos', 'das', 'que', 'por', 'uma', 'nao',
@@ -344,22 +356,30 @@ function trechosDosItens(r, fatias) {
   return [...new Set([0, ...faixa])].sort((a, b) => a - b);
 }
 
-function anexaTexto(doc, r, txt, formato, nome, modo, itens) {
-  if (!txt || txt.replace(/\s/g, '').length < 200) {
+// Acima disso a tabela fica com coluna de dois centimetros e o descritivo sai
+// picado letra a letra: melhor entregar como texto, uma linha por registro.
+const MAX_COLUNAS = 8;
+
+function anexaTexto(doc, r, blocos, formato, nome, modo, itens) {
+  blocos = semRepetidos(blocos || []);
+  const inteiro = blocos.map(textoDoBloco).join('\n');
+  if (inteiro.replace(/\s/g, '').length < 200) {
     return { ok: false, motivo: 'o arquivo ' + formato + ' nao tinha texto legivel' };
   }
 
-  let usado = txt, rota = 'texto', partes = null, total = null;
-  if (modo === 'uteis' && txt.length > TEXTO_CURTO) {
-    const fatias = semRepetidas(fatia(txt));
-    const quais = trechosDosItens(r, fatias);
+  let usar = blocos, rota = 'texto', partes = null, total = null;
+  if (modo === 'uteis' && inteiro.length > TEXTO_CURTO) {
+    const grupos = agrupa(blocos);
+    const quais = trechosDosItens(r, grupos.map(g => g.txt));
     if (quais) {
-      usado = quais.map(i => fatias[i]).join('\n[...]\n');
+      usar = quais.flatMap(i => grupos[i].blocos);
       rota = 'texto-selecao';
       partes = quais.length;
-      total = fatias.length;
+      total = grupos.length;
     }
   }
+
+  const tabelas = usar.filter(b => b.t === 'tab').length;
 
   doc.novaPagina();
   doc.texto('Texto do arquivo publicado pelo órgão', { tam: 13, negrito: true });
@@ -367,19 +387,29 @@ function anexaTexto(doc, r, txt, formato, nome, modo, itens) {
   doc.texto('O órgão não publicou o edital em PDF: publicou em ' + formato
     + (nome ? ' (' + nome + ')' : '') + '. Esse formato não tem páginas fixas, então o que segue é '
     + (rota === 'texto-selecao'
-      ? 'a parte do texto que descreve os produtos (abertura, objeto e especificação dos itens), '
-        + partes + ' de ' + total + ' trechos — os cortes vêm marcados com [...]'
-      : 'o texto do arquivo, na íntegra')
-    + (formato === 'DOC' ? '. O .doc é um formato binário antigo e a extração é aproximada, '
-      + 'podendo trazer trechos fora de ordem' : '')
-    + '. As tabelas perdem o alinhamento; o descritivo dos itens continua legível.',
-    { tam: 8.5, cor: [0.3, 0.3, 0.3] });
+      ? 'a parte do documento que descreve os produtos (abertura, objeto e especificação dos itens), '
+        + partes + ' de ' + total + ' trechos'
+      : 'o documento inteiro')
+    + (tabelas ? ', com as ' + tabelas + ' tabela(s) remontadas coluna a coluna' : '')
+    + (formato.includes('DOC') && !formato.includes('DOCX')
+      ? '. O .doc é um formato binário antigo: a extração é aproximada e não preserva tabelas' : '')
+    + '.', { tam: 8.5, cor: [0.3, 0.3, 0.3] });
   doc.espaco(12);
-  for (const linha of usado.split('\n')) {
-    if (!linha.trim()) { doc.espaco(4); continue; }
-    doc.texto(linha, { tam: 8.5, alturaLinha: 11.2 });
+
+  for (const b of usar) {
+    if (b.t !== 'tab') { doc.texto(b.txt, { tam: 8.5, alturaLinha: 11.2 }); continue; }
+    if (b.fracoes.length > MAX_COLUNAS) {
+      for (const l of b.linhas) doc.texto(l.filter(Boolean).join(' · '), { tam: 8, alturaLinha: 10.5 });
+      continue;
+    }
+    const cab = b.linhas[0];
+    const cols = b.fracoes.map((f, i) => ({ titulo: cab[i] || '', larg: f }));
+    doc.espaco(4);
+    doc.tabela(cols, b.linhas.slice(1), { tam: 7.5, tamCabecalho: 7 });
+    doc.espaco(8);
   }
-  return { ok: true, rota, formato, paginas: partes, total, chars: usado.length };
+  return { ok: true, rota, formato, paginas: partes, total,
+           chars: usar.map(textoDoBloco).join('').length, tabelas };
 }
 
 // Recebe UM ou VARIOS PDFs e trata todos como um documento so.
