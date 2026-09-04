@@ -44,10 +44,29 @@ if (LIMITE) alvos = alvos.slice(0, LIMITE);
 
 if (!alvos.length) { console.error('nenhum edital com esse filtro'); process.exit(1); }
 
-// Uma pasta por estado e o nome comecando pela data de encerramento: quem cota
-// trabalha por prazo, entao o que fecha antes aparece primeiro na ordenacao.
-const destinoDe = e => path.join(SAIDA, e[1],
-  nomeArquivo(e[4].slice(0, 10) + ' ' + e[0] + ' - ' + numeroEdital(e[3])) + '.pdf');
+// Uma pasta por estado, e dentro dela o padrao pedido pelo usuario em
+// 03/09/2026: "Edital - Municipio - Estado - Data". A data e a de ENCERRAMENTO,
+// que e o prazo que importa para quem cota, em dd-mm-aaaa.
+//
+// Custo da mudanca: o nome deixou de ordenar por prazo dentro da pasta, porque
+// a data nao vem mais na frente. O indice.json e o LEIA-ME.md continuam
+// ordenados por encerramento, entao a informacao nao se perde.
+// Dois editais do mesmo municipio fechando no mesmo dia dao o mesmo nome, e um
+// sobrescrevia o outro em silencio: o log dizia 73 PDFs e o disco tinha 72
+// (Sao Paulo/SP, 10-09-2026, lote de 03/09/2026). Quando isso acontece, o
+// numero do edital entra no fim para desempatar — so nesses casos, para o
+// padrao pedido continuar valendo nos demais.
+const usados = new Set();
+const destinoDe = (e) => {
+  const [ano, mes, dia] = e[4].slice(0, 10).split('-');
+  const base = 'Edital - ' + e[0] + ' - ' + e[1] + ' - ' + dia + '-' + mes + '-' + ano;
+  let nome = nomeArquivo(base);
+  if (usados.has(nome)) nome = nomeArquivo(base + ' - ' + numeroEdital(e[3]));
+  let n = 2;
+  while (usados.has(nome)) nome = nomeArquivo(base + ' - ' + numeroEdital(e[3]) + ' (' + n++ + ')');
+  usados.add(nome);
+  return path.join(SAIDA, e[1], nome + '.pdf');
+};
 
 console.log(`${alvos.length} edital(is)${UF ? ' em ' + UF : ''} · varredura de ${varredura}`);
 console.log(SEM_ANEXO ? 'sem anexar o edital oficial'
@@ -100,7 +119,7 @@ fs.writeFileSync(path.join(SAIDA, 'indice.json'),
   JSON.stringify({ varredura, gerado: new Date().toISOString(), total: relatorio.length, editais: relatorio }, null, 1), 'utf8');
 
 const linhas = ['# Resumos por edital — varredura de ' + varredura, '',
-  `${relatorio.length} edital(is). Uma pasta por estado; o nome comeca pela data de encerramento.`,
+  `${relatorio.length} edital(is). Uma pasta por estado; o nome segue "Edital - Municipio - Estado - Data de encerramento".`,
   'O descritivo completo de cada produto esta nas paginas do edital oficial, anexadas ao fim de cada PDF.', ''];
 let ufAtual = '';
 for (const r of relatorio.slice().sort((a, b) => a.uf === b.uf ? (a.fecha < b.fecha ? -1 : 1) : (a.uf < b.uf ? -1 : 1))) {
