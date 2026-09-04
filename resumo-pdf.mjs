@@ -126,13 +126,18 @@ export async function anexaOficial(doc, r, opts = {}) {
     }
     const le = await LE.abre(new Uint8Array(await resp.arrayBuffer()));
 
-    let quais, comoEscolhi;
+    // "rota" e o caminho que o anexo tomou. Sem ele so da para adivinhar pelo
+    // numero de paginas, e "escolheu todas" e "nao conseguiu escolher" viram a
+    // mesma coisa — justamente o caso que o painel do lote precisa distinguir.
+    let quais, comoEscolhi, rota;
     if (modo === 'inteiro') {
       quais = Array.from({ length: le.total }, (_, i) => i);
       comoEscolhi = 'o edital oficial completo';
+      rota = 'inteiro';
     } else if (typeof modo === 'number' && modo > 0) {
       quais = Array.from({ length: Math.min(modo, le.total) }, (_, i) => i);
       comoEscolhi = 'as ' + quais.length + ' primeiras páginas do edital oficial';
+      rota = 'primeiras';
     } else {
       const paginas = await textoDasPaginas(le);
       const sel = escolhePaginas(r, opts.itens || [], paginas);
@@ -149,11 +154,13 @@ export async function anexaOficial(doc, r, opts = {}) {
         quais = sel.escolhidas;
         comoEscolhi = 'as páginas do edital oficial que descrevem os produtos '
           + '(capa, objeto e especificação dos itens), ' + quais.length + ' de ' + le.total;
+        rota = 'selecao';
       } else {
         // PDF de imagem, ou fonte com codificacao propria: nao da para pontuar
         // pagina nenhuma. Melhor entregar o documento inteiro do que nada.
         quais = Array.from({ length: le.total }, (_, i) => i);
         comoEscolhi = 'o edital oficial completo (não foi possível isolar com segurança as páginas que descrevem os produtos)';
+        rota = 'completo';
       }
     }
 
@@ -162,7 +169,7 @@ export async function anexaOficial(doc, r, opts = {}) {
       + 'É nele que está o descritivo completo de cada produto.',
       { tam: 8, negrito: true, cor: [0.2, 0.2, 0.2] });
     doc.anexaExternas(await LE.extraiPaginas(le, quais), false);
-    return { ok: true, paginas: quais.length, total: le.total, numeros: quais.map(i => i + 1) };
+    return { ok: true, rota, paginas: quais.length, total: le.total, numeros: quais.map(i => i + 1) };
   } catch (e) {
     return { ok: false, motivo: 'nao foi possivel ler o arquivo oficial (' + e.message + ')' };
   }

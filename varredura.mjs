@@ -264,7 +264,11 @@ if (falhas.length) {
   });
 }
 errBusca = falhas.length;
+// Nomear a consulta que ficou de fora: uma falha e um pedaco da varredura que
+// nao aconteceu, e sem o termo/UF nao da para saber se o buraco importa.
+const naoConsultados = falhas.map(([t, u, p]) => `${t}/${u} p${p}`);
 process.stderr.write(`  ${res.size} editais unicos, ${errBusca} erros\n`);
+if (errBusca) process.stderr.write(`  sem resposta: ${naoConsultados.join(', ')}\n`);
 
 // ------------------------------------------- 2. veto por objeto + data valida
 const hoje = new Date();

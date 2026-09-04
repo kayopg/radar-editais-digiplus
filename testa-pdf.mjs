@@ -46,6 +46,7 @@ if (process.argv.length > 3) {
 }
 
 const bytes = doc.bytes();
-const nome = nomeArquivo('Edital ' + alvo[0] + ' ' + alvo[1] + ' ' + numeroEdital(alvo[3])) + '.pdf';
+const [ano, mes, dia] = alvo[4].slice(0, 10).split('-');
+const nome = nomeArquivo('Edital - ' + alvo[0] + ' - ' + alvo[1] + ' - ' + dia + '-' + mes + '-' + ano) + '.pdf';
 fs.writeFileSync(path.join(DIR, nome), bytes);
 console.log('resumo :', nome, '|', (bytes.length / 1024).toFixed(1), 'KB |', doc.paginas(), 'pagina(s)');

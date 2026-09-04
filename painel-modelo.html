@@ -1,0 +1,358 @@
+<title>Painel do Lote Digiplus</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Paleta do Radar (docs/index.html), assumidamente escura: o painel e a mesma
+   ferramenta, so que virada para a rodada em vez de para o edital. */
+:root{
+  --bg:#0b1522; --panel:#132234; --rail:#0f1c2c; --line:#20334a; --line2:#172740;
+  --ink:#e7edf6; --ink2:#98a8be; --ink3:#6c7d95;
+  --accent:#4fa3e3; --accent-soft:#132b45;
+  --ok:#6fd39f; --ok-soft:#12291e;
+  --gold:#e0ae5f; --gold-soft:#2b2416;
+  --hot:#ff8b73; --hot-soft:#3a1c17;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Consolas,monospace;
+  --sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:34px 20px 80px;display:flex;flex-direction:column;gap:38px}
+
+/* ------------------------------------------------------------------ topo */
+.eyebrow{font:600 11.5px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+h1{font-size:clamp(27px,4.2vw,38px);line-height:1.1;letter-spacing:-.025em;font-weight:700;margin:10px 0 0;text-wrap:balance}
+.sub{color:var(--ink2);max-width:62ch;margin:12px 0 0}
+.selo{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.selo span{font:500 12px/1 var(--mono);color:var(--ink2);background:var(--rail);border:1px solid var(--line);
+  padding:7px 11px;border-radius:5px}
+.selo b{color:var(--ink);font-weight:600}
+
+h2{font-size:13px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3);
+  margin:0 0 16px;font-family:var(--mono)}
+section{display:block}
+
+/* ------------------------------------------------------------------ funil */
+.funil{display:flex;flex-direction:column;gap:0}
+.fase{display:grid;grid-template-columns:112px 1fr;gap:20px;padding:18px 0;border-top:1px solid var(--line2)}
+.fase:first-child{border-top:0}
+.contas{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;padding-top:2px}
+.contas .de{font-size:12px;color:var(--ink3);display:block}
+.contas .para{font-size:25px;font-weight:600;color:var(--ink);letter-spacing:-.02em;display:block;line-height:1.15}
+.contas .seta{font-size:12px;color:var(--ink3);display:block;margin:1px 0}
+.fase h3{margin:0;font-size:16px;font-weight:600;letter-spacing:-.01em}
+.fase .rot{font-size:12.5px;color:var(--ink3);margin-top:1px}
+.fase .nota{font-size:13px;color:var(--ink2);margin:7px 0 0;max-width:64ch}
+.cortes{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.corte{display:inline-flex;align-items:baseline;gap:6px;background:var(--rail);border:1px solid var(--line);
+  border-radius:5px;padding:5px 9px;font-size:12.5px;color:var(--ink2)}
+.corte b{font-family:var(--mono);font-weight:600;color:var(--gold);font-variant-numeric:tabular-nums}
+
+/* -------------------------------------------------------------- o anexo */
+.rotas{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.rota{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px 17px;
+  border-left:3px solid var(--ink3);display:flex;flex-direction:column;gap:5px}
+.rota.selecao{border-left-color:var(--ok)}
+.rota.inteiro{border-left-color:var(--accent)}
+.rota .num{font:600 30px/1 var(--mono);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.rota.selecao .num{color:var(--ok)}
+.rota.inteiro .num{color:var(--accent)}
+.rota.sem .num{color:var(--ink2)}
+.rota .tit{font-weight:600;font-size:14.5px}
+.rota .exp{font-size:13px;color:var(--ink2);line-height:1.5}
+
+/* ------------------------------------------------------------- controles */
+.barra{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:18px}
+.chip{font:500 12.5px/1 var(--sans);color:var(--ink2);background:var(--panel);border:1px solid var(--line);
+  border-radius:99px;padding:7px 13px;cursor:pointer;transition:.12s}
+.chip:hover{border-color:var(--ink3);color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:#a9d3f5}
+.chip:focus-visible,.lin:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tudo{margin-left:auto;background:none;border:0;color:var(--accent);font:500 12.5px var(--sans);cursor:pointer;padding:7px 2px}
+
+/* ----------------------------------------------------------------- lista */
+.uf{margin-bottom:26px}
+.ufcab{display:flex;align-items:baseline;gap:10px;padding-bottom:9px;margin-bottom:10px;border-bottom:1px solid var(--line)}
+.ufsig{font:600 15px/1 var(--mono);letter-spacing:.06em;color:var(--ink)}
+.ufnome{font-size:13px;color:var(--ink3)}
+.ufqtd{margin-left:auto;font:500 12px/1 var(--mono);color:var(--ink3);font-variant-numeric:tabular-nums}
+
+.lin{width:100%;text-align:left;background:var(--panel);color:inherit;font:inherit;cursor:pointer;
+  border:1px solid var(--line);border-left:3px solid var(--ink3);border-radius:7px;
+  display:grid;grid-template-columns:78px minmax(0,1fr) auto;gap:15px;align-items:center;
+  padding:12px 15px;margin-bottom:7px;transition:border-color .12s,background .12s}
+.lin:hover{background:#16283d;border-color:var(--line);border-left-color:inherit}
+.lin.selecao{border-left-color:var(--ok)}
+.lin.inteiro{border-left-color:var(--accent)}
+.lin[aria-expanded="true"]{border-bottom-left-radius:0;border-bottom-right-radius:0;margin-bottom:0;background:#16283d}
+
+.prazo{font-family:var(--mono);font-variant-numeric:tabular-nums;line-height:1.25}
+.prazo .d{display:block;font-size:15px;font-weight:600}
+.prazo .r{display:block;font-size:11px;color:var(--ink3)}
+.prazo.urg .d{color:var(--hot)}
+.prazo.perto .d{color:var(--gold)}
+
+.quem{min-width:0}
+.mun{font-weight:600;font-size:15px;letter-spacing:-.01em}
+.org{font-size:12px;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.cats{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.cat{font-size:11px;color:var(--ink2);background:var(--rail);border:1px solid var(--line);
+  border-radius:4px;padding:2px 7px;white-space:nowrap}
+.cat b{font-family:var(--mono);color:var(--ink3);font-weight:500}
+
+.num2{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums;line-height:1.3;white-space:nowrap}
+.num2 .v{display:block;font-size:14px;font-weight:600}
+.num2 .v.sig{color:var(--ink3);font-weight:500;font-size:12.5px}
+.num2 .p{display:block;font-size:11px;color:var(--ink3)}
+
+/* ------------------------------------------------------------- expandido */
+.det{border:1px solid var(--line);border-top:0;border-left:3px solid var(--ink3);
+  border-radius:0 0 7px 7px;background:var(--rail);padding:16px 17px 18px;margin-bottom:7px}
+.det.selecao{border-left-color:var(--ok)}
+.det.inteiro{border-left-color:var(--accent)}
+.objeto{font-size:13.5px;color:var(--ink2);line-height:1.6;max-width:78ch;margin:0 0 15px}
+.ficha{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.ficha span{font-size:12px;color:var(--ink2);background:var(--panel);border:1px solid var(--line);
+  border-radius:5px;padding:5px 9px}
+.ficha b{color:var(--ink3);font-weight:500}
+.ficha code{font-family:var(--mono);font-size:11.5px;color:var(--ink2)}
+
+.tabwrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:640px}
+th{text-align:left;font:600 10.5px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);
+  padding:9px 11px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--rail)}
+td{padding:10px 11px;border-bottom:1px solid var(--line2);vertical-align:top;color:var(--ink2)}
+tr:last-child td{border-bottom:0}
+td.n,td.q,td.u{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink3)}
+td.u{color:var(--ink);font-weight:500}
+td.d{color:var(--ink);line-height:1.5;min-width:260px}
+.me{display:inline-block;margin-left:7px;font:500 10px/1 var(--mono);letter-spacing:.05em;color:var(--gold);
+  background:var(--gold-soft);border:1px solid #4a3d1e;border-radius:3px;padding:3px 5px;vertical-align:1px}
+.arq{margin-top:13px;font-family:var(--mono);font-size:11.5px;color:var(--ink3);word-break:break-all}
+.arq b{color:var(--ink2);font-weight:500}
+
+footer{border-top:1px solid var(--line);padding-top:20px;font-size:12.5px;color:var(--ink3);line-height:1.65}
+footer b{color:var(--ink2);font-weight:500}
+@media (max-width:620px){
+  .fase{grid-template-columns:1fr;gap:6px}
+  .contas{text-align:left;display:flex;align-items:baseline;gap:8px}
+  .contas .de,.contas .seta,.contas .para{display:inline}
+  .lin{grid-template-columns:64px minmax(0,1fr);row-gap:8px}
+  .num2{grid-column:1/-1;text-align:left}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Radar de Editais · Digiplus</div>
+    <h1>Painel do lote</h1>
+    <p class="sub">O que a varredura encontrou e o que entrou em cada PDF. Cada linha abaixo virou
+      um arquivo em <code style="font-family:var(--mono);font-size:13px">resumos/</code>, com o resumo
+      dos itens e as páginas do edital original.</p>
+    <div class="selo" id="selo"></div>
+  </header>
+
+  <section>
+    <h2>Da busca até a lista</h2>
+    <div class="funil" id="funil"></div>
+  </section>
+
+  <section>
+    <h2>O que cada PDF recebeu</h2>
+    <div class="rotas" id="rotas"></div>
+  </section>
+
+  <section>
+    <h2>Editais do lote</h2>
+    <div class="barra" id="barra"></div>
+    <div id="lista"></div>
+  </section>
+
+  <footer id="rodape"></footer>
+</div>
+
+<script>
+var D = /*DADOS*/null;
+
+var esc = function(s){ return String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+var mil = function(v){ return v.toLocaleString('pt-BR'); };
+var reais = function(v){ return 'R$ ' + v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+var curto = function(v){
+  if (v >= 1000000) return 'R$ ' + (v/1000000).toLocaleString('pt-BR',{maximumFractionDigits:1}) + ' mi';
+  if (v >= 1000) return 'R$ ' + (v/1000).toLocaleString('pt-BR',{maximumFractionDigits:0}) + ' mil';
+  return reais(v);
+};
+var dia = function(iso){ var p = iso.slice(0,10).split('-'); return p[2] + '/' + p[1]; };
+var hora = function(iso){ return iso.length > 10 ? iso.slice(11,16) : ''; };
+var prazoTxt = function(n){
+  if (n < 0) return 'encerrado';
+  if (n === 0) return 'hoje';
+  if (n === 1) return 'amanhã';
+  return 'em ' + n + ' dias';
+};
+
+// ------------------------------------------------------------------- topo
+var r = D.resumo;
+document.getElementById('selo').innerHTML =
+  [['Varredura', dia(D.varredura) + '/' + D.varredura.slice(0,4)],
+   ['Editais', mil(r.total)],
+   ['Itens de interesse', mil(r.itens)],
+   ['PDFs gerados', r.total + ' · ' + r.mb + ' MB']]
+  .map(function(p){ return '<span>' + esc(p[0]) + ' <b>' + esc(p[1]) + '</b></span>'; }).join('');
+
+// ------------------------------------------------------------------ funil
+document.getElementById('funil').innerHTML = D.fases.map(function(f){
+  return '<div class="fase">' +
+    '<div class="contas">' +
+      '<span class="de">' + mil(f.entrou) + ' ' + esc(f.unid) + '</span>' +
+      '<span class="seta">↓</span>' +
+      '<span class="para">' + mil(f.saiu) + '</span>' +
+    '</div>' +
+    '<div>' +
+      '<h3>' + esc(f.nome) + '</h3>' +
+      '<div class="rot">' + esc(f.saiuRot) + '</div>' +
+      '<p class="nota">' + esc(f.nota) + '</p>' +
+      (f.cortes.length ? '<div class="cortes">' + f.cortes.map(function(c){
+        return '<span class="corte"><b>' + mil(c.val) + '</b> ' + esc(c.rot) + '</span>';
+      }).join('') + '</div>' : '') +
+    '</div></div>';
+}).join('');
+
+// ------------------------------------------------------------------ rotas
+var semTipos = Object.keys(r.formatos).map(function(k){ return r.formatos[k] + ' ' + k.toUpperCase(); }).join(', ');
+document.getElementById('rotas').innerHTML =
+  [['selecao', r.selecao, 'Páginas selecionadas',
+    'Capa, objeto e as páginas que descrevem os itens — o descritivo completo, sem o resto do edital.'],
+   ['inteiro', r.inteiro, 'Edital inteiro',
+    'A seleção não cobriu os itens com segurança (PDF de imagem ou fonte ilegível), então vai o documento completo.'],
+   ['sem', r.sem, 'Sem anexo',
+    'O órgão publicou o edital fora de PDF' + (semTipos ? ' (' + semTipos + ')' : '') + '. O resumo dos itens vai igual; o edital tem que ser aberto no portal.']]
+  .map(function(x){
+    return '<div class="rota ' + x[0] + '"><div class="num">' + x[1] + '</div>' +
+      '<div class="tit">' + esc(x[2]) + '</div><div class="exp">' + esc(x[3]) + '</div></div>';
+  }).join('');
+
+// ------------------------------------------------------------------ lista
+var filtro = null;
+
+document.getElementById('barra').innerHTML =
+  [['selecao','Páginas selecionadas',r.selecao],['inteiro','Edital inteiro',r.inteiro],['sem','Sem anexo',r.sem]]
+    .map(function(x){
+      return '<button class="chip" type="button" data-f="' + x[0] + '" aria-pressed="false">' +
+        esc(x[1]) + ' · ' + x[2] + '</button>';
+    }).join('') +
+  '<button class="tudo" type="button" id="btnTudo">Abrir todos</button>';
+
+function linha(e, i){
+  var cats = {};
+  e.itens.forEach(function(it){ cats[it.cat] = (cats[it.cat] || 0) + 1; });
+  var chips = Object.keys(cats).map(function(c){
+    return '<span class="cat">' + esc(D.cat[c] || c) + ' <b>' + cats[c] + '</b></span>';
+  }).join('');
+  var urg = e.dias <= 1 ? ' urg' : (e.dias <= 4 ? ' perto' : '');
+  var pag = e.rota === 'sem' ? 'sem anexo'
+    : (e.pag ? e.pag[0] + '/' + e.pag[1] + ' pág' : '');
+  var val = e.valor > 0
+    ? '<span class="v">' + esc(curto(e.valor)) + '</span>'
+    : '<span class="v sig">valor sigiloso</span>';
+
+  return '<button class="lin ' + e.rota + '" type="button" aria-expanded="false" data-i="' + i + '">' +
+    '<span class="prazo' + urg + '"><span class="d">' + dia(e.fecha) + '</span>' +
+      '<span class="r">' + esc(prazoTxt(e.dias)) + '</span></span>' +
+    '<span class="quem"><span class="mun">' + esc(e.mun) + '</span>' +
+      '<span class="org">' + esc(e.orgao) + '</span>' +
+      '<span class="cats">' + chips + '</span></span>' +
+    '<span class="num2">' + val +
+      '<span class="p">' + e.itens.length + (e.itens.length > 1 ? ' itens' : ' item') +
+      (pag ? ' · ' + pag : '') + '</span></span>' +
+    '</button><div class="det ' + e.rota + '" data-d="' + i + '" hidden></div>';
+}
+
+function detalhe(e){
+  var ficha = [['Edital', e.edital], ['Modalidade', e.modalidade],
+    ['Encerra', dia(e.fecha) + (hora(e.fecha) ? ' às ' + hora(e.fecha) : '')],
+    e.abertura ? ['Abertura', dia(e.abertura) + (hora(e.abertura) ? ' às ' + hora(e.abertura) : '')] : null,
+    e.portal ? ['Portal', e.portal] : null,
+    ['Itens no edital', String(e.qtd)]]
+    .filter(Boolean)
+    .map(function(p){ return '<span><b>' + esc(p[0]) + '</b> <code>' + esc(p[1]) + '</code></span>'; }).join('');
+
+  var linhas = e.itens.map(function(it){
+    return '<tr><td class="n">' + (it.n || '–') + '</td>' +
+      '<td class="q">' + it.qtd + (it.un ? ' ' + esc(it.un.toLowerCase()) : '') + '</td>' +
+      '<td class="u">' + (it.vu > 0 ? esc(reais(it.vu)) : '–') + '</td>' +
+      '<td>' + esc(D.cat[it.cat] || it.cat) + '</td>' +
+      '<td class="d">' + esc(it.desc) + (it.me ? '<span class="me">ME/EPP</span>' : '') + '</td></tr>';
+  }).join('');
+
+  return (e.objeto ? '<p class="objeto">' + esc(e.objeto) + '</p>' : '') +
+    '<div class="ficha">' + ficha + '</div>' +
+    '<div class="tabwrap"><table><thead><tr><th>Nº</th><th>Qtd</th><th>Valor unit.</th>' +
+      '<th>Categoria</th><th>Descrição publicada</th></tr></thead><tbody>' + linhas + '</tbody></table></div>' +
+    (e.arquivo ? '<div class="arq"><b>' + esc(e.arquivo) + '</b> · ' + e.kb + ' KB' +
+      (e.pag ? ' · páginas ' + e.pag[0] + ' de ' + e.pag[1] + ' do edital original' : '') + '</div>' : '');
+}
+
+var todos = [];
+D.porUf.forEach(function(g){ g.editais.forEach(function(e){ todos.push(e); }); });
+
+function pinta(){
+  var html = '';
+  D.porUf.forEach(function(g){
+    var lista = g.editais.filter(function(e){ return !filtro || e.rota === filtro; });
+    if (!lista.length) return;
+    html += '<div class="uf"><div class="ufcab"><span class="ufsig">' + esc(g.uf) + '</span>' +
+      '<span class="ufnome">' + esc(g.nome) + '</span>' +
+      '<span class="ufqtd">' + lista.length + (filtro ? ' de ' + g.editais.length : '') + '</span></div>';
+    lista.forEach(function(e){ html += linha(e, todos.indexOf(e)); });
+    html += '</div>';
+  });
+  document.getElementById('lista').innerHTML = html ||
+    '<p style="color:var(--ink3)">Nenhum edital nesse filtro.</p>';
+}
+
+document.getElementById('lista').addEventListener('click', function(ev){
+  var b = ev.target.closest('.lin');
+  if (!b) return;
+  var det = b.nextElementSibling, aberto = b.getAttribute('aria-expanded') === 'true';
+  if (!aberto && !det.innerHTML) det.innerHTML = detalhe(todos[+b.dataset.i]);
+  b.setAttribute('aria-expanded', aberto ? 'false' : 'true');
+  det.hidden = aberto;
+});
+
+document.getElementById('barra').addEventListener('click', function(ev){
+  var c = ev.target.closest('.chip');
+  if (c){
+    filtro = filtro === c.dataset.f ? null : c.dataset.f;
+    [].forEach.call(document.querySelectorAll('.chip'), function(x){
+      x.setAttribute('aria-pressed', String(x.dataset.f === filtro));
+    });
+    pinta();
+    return;
+  }
+  if (ev.target.id === 'btnTudo'){
+    var abrir = ev.target.textContent.indexOf('Abrir') === 0;
+    [].forEach.call(document.querySelectorAll('.lin'), function(b){
+      var det = b.nextElementSibling;
+      if (abrir && !det.innerHTML) det.innerHTML = detalhe(todos[+b.dataset.i]);
+      b.setAttribute('aria-expanded', String(abrir));
+      det.hidden = !abrir;
+    });
+    ev.target.textContent = abrir ? 'Fechar todos' : 'Abrir todos';
+  }
+});
+
+pinta();
+
+// ----------------------------------------------------------------- rodape
+var dev = Object.keys(D.devedores);
+document.getElementById('rodape').innerHTML =
+  '<b>Como ler.</b> A tarja à esquerda de cada linha diz o que o PDF recebeu: ' +
+  'verde para as páginas selecionadas, azul para o edital inteiro, cinza para os que vieram fora de PDF. ' +
+  'A descrição na tabela é a que o órgão publicou no PNCP — o descritivo completo está nas páginas anexadas.' +
+  (dev.length ? '<br><b>Devedores.</b> ' + D.vDevedor + ' edital(is) barrados nesta rodada pela lista de devedores, ' +
+    'pelos nomes: ' + esc(dev.join(', ')) + '.' : '') +
+  '<br><b>Gerado em</b> ' + esc(new Date(D.gerado).toLocaleString('pt-BR')) + ' a partir da varredura de ' +
+  esc(D.varredura.split('-').reverse().join('/')) + '.';
+</script>
