@@ -53,9 +53,11 @@ section{display:block}
   border-left:3px solid var(--ink3);display:flex;flex-direction:column;gap:5px}
 .rota.selecao{border-left-color:var(--ok)}
 .rota.inteiro{border-left-color:var(--accent)}
+.rota.texto{border-left-color:var(--gold)}
 .rota .num{font:600 30px/1 var(--mono);letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .rota.selecao .num{color:var(--ok)}
 .rota.inteiro .num{color:var(--accent)}
+.rota.texto .num{color:var(--gold)}
 .rota.sem .num{color:var(--ink2)}
 .rota .tit{font-weight:600;font-size:14.5px}
 .rota .exp{font-size:13px;color:var(--ink2);line-height:1.5}
@@ -83,6 +85,7 @@ section{display:block}
 .lin:hover{background:#16283d;border-color:var(--line);border-left-color:inherit}
 .lin.selecao{border-left-color:var(--ok)}
 .lin.inteiro{border-left-color:var(--accent)}
+.lin.texto{border-left-color:var(--gold)}
 .lin[aria-expanded="true"]{border-bottom-left-radius:0;border-bottom-right-radius:0;margin-bottom:0;background:#16283d}
 
 .prazo{font-family:var(--mono);font-variant-numeric:tabular-nums;line-height:1.25}
@@ -109,6 +112,7 @@ section{display:block}
   border-radius:0 0 7px 7px;background:var(--rail);padding:16px 17px 18px;margin-bottom:7px}
 .det.selecao{border-left-color:var(--ok)}
 .det.inteiro{border-left-color:var(--accent)}
+.det.texto{border-left-color:var(--gold)}
 .objeto{font-size:13.5px;color:var(--ink2);line-height:1.6;max-width:78ch;margin:0 0 15px}
 .ficha{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
 .ficha span{font-size:12px;color:var(--ink2);background:var(--panel);border:1px solid var(--line);
@@ -226,8 +230,10 @@ document.getElementById('rotas').innerHTML =
     'Capa, objeto e as páginas que descrevem os itens — o descritivo completo, sem o resto do edital.'],
    ['inteiro', r.inteiro, 'Edital inteiro',
     'A seleção não cobriu os itens com segurança (PDF de imagem ou fonte ilegível), então vai o documento completo.'],
+   ['texto', r.texto, 'Texto do Word',
+    'O órgão publicou em DOC ou DOCX, que não tem páginas para anexar. Vai o texto do arquivo, da abertura até o fim da especificação dos itens.'],
    ['sem', r.sem, 'Sem anexo',
-    'O órgão publicou o edital fora de PDF' + (semTipos ? ' (' + semTipos + ')' : '') + '. O resumo dos itens vai igual; o edital tem que ser aberto no portal.']]
+    'Não deu para abrir o que o órgão publicou' + (semTipos ? ' (' + semTipos + ')' : '') + '. O resumo dos itens vai igual; o edital tem que ser aberto no portal.']]
   .map(function(x){
     return '<div class="rota ' + x[0] + '"><div class="num">' + x[1] + '</div>' +
       '<div class="tit">' + esc(x[2]) + '</div><div class="exp">' + esc(x[3]) + '</div></div>';
@@ -237,7 +243,8 @@ document.getElementById('rotas').innerHTML =
 var filtro = null;
 
 document.getElementById('barra').innerHTML =
-  [['selecao','Páginas selecionadas',r.selecao],['inteiro','Edital inteiro',r.inteiro],['sem','Sem anexo',r.sem]]
+  [['selecao','Páginas selecionadas',r.selecao],['inteiro','Edital inteiro',r.inteiro],
+   ['texto','Texto do Word',r.texto],['sem','Sem anexo',r.sem]]
     .map(function(x){
       return '<button class="chip" type="button" data-f="' + x[0] + '" aria-pressed="false">' +
         esc(x[1]) + ' · ' + x[2] + '</button>';
@@ -252,6 +259,7 @@ function linha(e, i){
   }).join('');
   var urg = e.dias <= 1 ? ' urg' : (e.dias <= 4 ? ' perto' : '');
   var pag = e.rota === 'sem' ? 'sem anexo'
+    : e.rota === 'texto' ? (e.pag ? e.pag[0] + '/' + e.pag[1] + ' trechos' : 'texto completo')
     : (e.pag ? e.pag[0] + '/' + e.pag[1] + ' pág' : '');
   var val = e.valor > 0
     ? '<span class="v">' + esc(curto(e.valor)) + '</span>'
@@ -349,7 +357,8 @@ pinta();
 var dev = Object.keys(D.devedores);
 document.getElementById('rodape').innerHTML =
   '<b>Como ler.</b> A tarja à esquerda de cada linha diz o que o PDF recebeu: ' +
-  'verde para as páginas selecionadas, azul para o edital inteiro, cinza para os que vieram fora de PDF. ' +
+  'verde para as páginas selecionadas, azul para o edital inteiro, dourado para o texto extraído de DOC ou DOCX, ' +
+  'cinza para o que não abriu. ' +
   'A descrição na tabela é a que o órgão publicou no PNCP — o descritivo completo está nas páginas anexadas.' +
   (dev.length ? '<br><b>Devedores.</b> ' + D.vDevedor + ' edital(is) barrados nesta rodada pela lista de devedores, ' +
     'pelos nomes: ' + esc(dev.join(', ')) + '.' : '') +

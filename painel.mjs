@@ -30,7 +30,13 @@ const UF_NOME = { PR: 'Paraná', RS: 'Rio Grande do Sul', SP: 'São Paulo', MG: 
 // tem a frase do log — dai o numero de paginas responde: escolher todas as
 // paginas e nao ter conseguido escolher dao no mesmo arquivo.
 const rotaDe = (r) => {
-  if (r.rota) return r.rota === 'selecao' ? 'selecao' : 'inteiro';
+  if (r.rota) {
+    if (r.rota === 'selecao') return 'selecao';
+    if (r.rota === 'sem') return 'sem';
+    // DOC e DOCX nao tem pagina para anexar: o que vai e o texto.
+    if (r.rota.startsWith('texto')) return 'texto';
+    return 'inteiro';
+  }
   const m = /^(\d+)\/(\d+) pag/.exec(r.nota || '');
   if (!m) return 'sem';
   return m[1] === m[2] ? 'inteiro' : 'selecao';
@@ -59,7 +65,8 @@ const editais = dados.editais.map(e => {
     modalidade: e[C.modalidade], portal: e[C.portal], abertura: e[C.aberturaPropostas],
     itens: e[C.itens].map(it => ({ cat: it[0], qtd: it[1], vu: it[2], desc: it[3],
       un: it[4], n: it[5], me: it[6] === 'S' })),
-    rota: rotaDe(r), pag: paginasDe(r), kb: r.kb || 0, formato: formatoDe(r),
+    rota: rotaDe(r), pag: paginasDe(r), kb: r.kb || 0,
+    formato: r.formato || formatoDe(r), deZip: r.deZip || null,
     arquivo: (r.arquivo || '').split(/[\\/]/).pop()
   };
 });
@@ -68,7 +75,7 @@ editais.sort((a, b) => a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : a.mun.lo
 const conta = (rota) => editais.filter(e => e.rota === rota).length;
 const resumoLote = {
   total: editais.length,
-  selecao: conta('selecao'), inteiro: conta('inteiro'), sem: conta('sem'),
+  selecao: conta('selecao'), inteiro: conta('inteiro'), texto: conta('texto'), sem: conta('sem'),
   mb: +(editais.reduce((s, e) => s + e.kb, 0) / 1024).toFixed(1),
   itens: editais.reduce((s, e) => s + e.itens.length, 0),
   formatos: editais.filter(e => e.rota === 'sem').reduce((o, e) => (o[e.formato] = (o[e.formato] || 0) + 1, o), {})
@@ -143,4 +150,5 @@ const saida = path.join(DIR, 'resumos', 'painel.html');
 fs.writeFileSync(saida, html, 'utf8');
 console.log('painel: ' + path.relative(DIR, saida) + ' · ' + (html.length / 1024).toFixed(0) + ' KB · '
   + resumoLote.total + ' editais (' + resumoLote.selecao + ' seleção, '
-  + resumoLote.inteiro + ' inteiro, ' + resumoLote.sem + ' sem anexo)');
+  + resumoLote.inteiro + ' inteiro, ' + resumoLote.texto + ' texto, '
+  + resumoLote.sem + ' sem anexo)');

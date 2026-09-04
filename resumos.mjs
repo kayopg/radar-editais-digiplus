@@ -93,18 +93,27 @@ await pool(alvos, 4, async (e) => {
     // seletor usa os mesmos descritivos para achar a tabela no edital oficial.
     const itens = await buscaTodosItens(e);
     const { doc, nDemais, nTodos } = await montaResumo(e, { varredura, todos: itens });
-    let nota = 'sem anexo';
+    let nota = 'sem anexo', anexo = {};
     if (!SEM_ANEXO) {
       const a = await anexaOficial(doc, e, { modo: MODO, itens: itens || [] });
-      if (a.ok) { nota = `${a.paginas}/${a.total} pag. do oficial`; comAnexo++; }
-      else { nota = a.motivo; semAnexo++; }
+      if (a.ok) {
+        // A rota do texto e "texto" ou "texto-selecao": comparar so com "texto"
+        // deixava o DOC/DOCX selecionado sair rotulado como pagina de PDF.
+        nota = a.rota.startsWith('texto')
+          ? (a.paginas ? a.paginas + '/' + a.total + ' trechos do ' + a.formato
+                       : 'texto integral do ' + a.formato)
+          : `${a.paginas}/${a.total} pag. do oficial` + (a.deZip ? ', de dentro do zip' : '');
+        anexo = { rota: a.rota, paginas: a.paginas ?? null, total: a.total ?? null,
+                  formato: a.formato || null, deZip: a.deZip || null };
+        comAnexo++;
+      } else { anexo = { rota: 'sem' }; nota = a.motivo; semAnexo++; }
     }
     const bytes = doc.bytes();
     fs.mkdirSync(path.dirname(destino), { recursive: true });
     fs.writeFileSync(destino, bytes);
     relatorio.push({ uf: e[1], mun: e[0], edital: e[3], fecha: e[4].slice(0, 10),
                      itens: e[8].length, demais: nDemais, todos: nTodos,
-                     kb: +(bytes.length / 1024).toFixed(1), nota,
+                     kb: +(bytes.length / 1024).toFixed(1), nota, ...anexo,
                      arquivo: path.relative(DIR, destino) });
     feitos++;
     console.log(`  [${String(feitos).padStart(3)}/${alvos.length}] ${e[0]}/${e[1]} · ${(bytes.length / 1024).toFixed(0)} KB · ${nota}`);
