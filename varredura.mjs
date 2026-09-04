@@ -175,7 +175,22 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // "esteira para" e estreito de proposito: a esteira de pao frances e acessorio,
 // mas "forno turbo 10 esteiras" e forno de verdade, de R$ 7 a 9 mil.
 "filtro de ar","escavadeira","carregadeira","rolo compactador","jaqueta",
-"esteira para","placa de video","placa-mae","pci-e","para computador","atx"];
+"esteira para","placa de video","placa-mae","pci-e","para computador","atx",
+// acrescentados em 04/09/2026, conferindo os 291 itens do lote um a um. Todos
+// tem em comum a palavra da categoria aparecendo LA NO MEIO da descricao, como
+// peca do que esta sendo comprado, e nao como o produto:
+//   - Vere/PR: "Conjunto de britagem e rebritagem ... COM GERADOR DE ENERGIA
+//     de 260KA" — R$ 2 milhoes de britador que entrou como Gerador. Foi este
+//     que o usuario pegou e mandou conferir todos.
+//   - Sao Paulo/SP: "Acessorio Para Equipamento Medico tipo: UMIDIFICADOR" e
+//     "Ventilador / Exaustor Axial - PECA / ACESSORIO".
+//   - Barretos/SP: "Material Confeccao De Protese Dental ... c/ EXAUSTOR".
+//   - Cuiaba/MT: banho-maria e chapa aquecedora de LABORATORIO. Vetar por
+//     "agitacao de agua" e "aplicacao: laboratorio" e mais seguro que vetar
+//     "banho maria", que no balcao termico e produto da casa.
+"britagem","rebritagem","britador","peneira vibratoria","mesa alimentadora",
+"equipamento medico","peca / acessorio","peca/acessorio","acessorio para equipamento",
+"protese","jateamento","agitacao de agua","aplicacao: laboratorio","uso laboratorial"];
 
 const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 
@@ -205,7 +220,15 @@ const VETO_RF_CIENT = ['imunobiolog','termolab','hemocompon','laboratori','vacin
 const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioimpedanc',
   'biompedanc','pesar pessoas','obeso','paciente','corporal','balanca analitica',
   'analitica de precisao','balanca precisao','balanca de precisao','cama hospitalar',
-  'mesa auxiliadora','tipo balanca','paleteira','pilha tipo bateria'];
+  'mesa auxiliadora','tipo balanca','paleteira','pilha tipo bateria',
+  // Acrescentados em 04/09/2026, na conferencia item a item dos 291 itens do
+  // lote. Os quatro primeiros nem balanca sao: a palavra aparece no meio da
+  // descricao de outro produto — a incubadora neonatal que tem "modulo ii: c/
+  // balanca", e a placa de PVC escrita "aguarde a sua vez para entrar na
+  // balanca". Os demais sao balanca de pesar gente, que o usuario ja tinha
+  // dito ser outro mercado, escritos de um jeito que a lista nao pegava.
+  'incubadora','placa sinalizadora','sinalizadora','pesagem de pessoas',
+  'balanca infantil','digital infantil','com regua','coluna articulada'];
 
 // ---------------------------------------------------------------- utilidades
 const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ');
