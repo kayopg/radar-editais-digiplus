@@ -470,8 +470,28 @@ function secao(doc, titulo){
   doc.espaco(3);
 }
 
+// Índice dos descritivos completos do edital que está sendo montado. Fica
+// numa variável porque o desenho dos itens é síncrono e a leitura do
+// descritivos.json não é — carrega uma vez, no começo, e o resto consulta.
+var DESC_ATUAL = null;
+function indexaDescritivos(r, base){
+  var d = base && base.editais ? base.editais[r[7]] : null;
+  var porNum = {}, porDesc = {};
+  if(d && d.itens) d.itens.forEach(function(x){
+    if(x[6]){ porNum[x[0]] = x[6]; porDesc[umaLinha(x[1]).toLowerCase()] = x[6]; }
+  });
+  DESC_ATUAL = { porNum:porNum, porDesc:porDesc };
+}
+// Casa pelo número do item; o descritivo serve de reserva porque o número nem
+// sempre existe no dados.json antigo.
+function descritivoDoItem(r, it){
+  if(!DESC_ATUAL) return "";
+  return DESC_ATUAL.porNum[it[5]] || DESC_ATUAL.porDesc[umaLinha(it[3]).toLowerCase()] || "";
+}
+
 async function montaResumo(r){
   var doc = RadarPDF.novo({ rodape: "Radar de Editais Digiplus · varredura de " + varreduraTxt() });
+  try { indexaDescritivos(r, await carregaDescritivos()); } catch(e){ DESC_ATUAL = null; }
 
   // --------------------------------------------------------- identificacao
   // O valor ja sai no titulo, entao nao se repete como campo abaixo. O caminho
@@ -510,7 +530,15 @@ async function montaResumo(r){
     doc.parOposto(rotuloItem(it, k) + "   ·   " + CATPDF[it[0]], qtdItem(it),
                   { tam:10, negritoEsq:true, negritoDir:true, corEsq:[0,0,0] });
     doc.espaco(2);
-    doc.texto(it[3], { tam:9.5, alturaLinha:13 });
+    // O descritivo do edital quando existe, e não o rótulo curto da API: o que
+    // o PNCP devolve é "VENTILADOR DE PAREDE", e o que se cota é "VENTILADOR DE
+    // PAREDE, preto, 60 cm de diâmetro (mínimo), movimento oscilante...".
+    var completo = descritivoDoItem(r, it);
+    doc.texto(completo || it[3], { tam:9.5, alturaLinha:13 });
+    if(completo){
+      doc.espaco(2);
+      doc.texto("descritivo do edital", { tam:7.5, cor:[0.5,0.5,0.5] });
+    }
     doc.espaco(3);
     // unitario e total na mesma linha: eram duas, e uma delas so repetia a conta
     doc.parOposto("Unitário " + (it[2] ? moeda(it[2]) : "sigiloso"),
@@ -539,17 +567,26 @@ async function montaResumo(r){
     } else {
       doc.texto("O que mais está sendo comprado no mesmo edital, para dimensionar a disputa.",
         { tam:8.5, cor:[0.4,0.4,0.4] });
-      doc.espaco(4);
-      demais.forEach(function(x){
-        doc.reserva(22);
-        var q = (+x.quantidade || 0).toLocaleString("pt-BR");
-        var vu = +x.valorUnitarioEstimado || 0;
-        doc.campo("Item " + (x.numeroItem || "—"),
-                  q + (x.unidadeMedida ? " " + x.unidadeMedida : "") + "  ·  "
-                  + (vu ? moeda(vu) : "sigiloso") + "   " + umaLinha(x.descricao),
-                  { tam:8, larguraRotulo:52 });
-        doc.espaco(2);
-      });
+      doc.espaco(6);
+      // Tabela, e não linhas corridas: é assim que o edital apresenta os itens,
+      // uma linha por item com a especificação inteira na célula, e foi assim
+      // que o usuário pediu em 08/09/2026, mandando a página do edital de
+      // Salto/SP como exemplo. O cabeçalho se repete na quebra de página.
+      doc.tabela(
+        [{ titulo:"Item", larg:0.08, alinha:"centro" },
+         { titulo:"Qtd", larg:0.13 },
+         { titulo:"Valor unit.", larg:0.14, alinha:"direita" },
+         { titulo:"Descrição", larg:0.65 }],
+        demais.map(function(x){
+          var vu = +x.valorUnitarioEstimado || 0;
+          var completo = DESC_ATUAL && (DESC_ATUAL.porNum[x.numeroItem]
+                       || DESC_ATUAL.porDesc[umaLinha(x.descricao).toLowerCase()]);
+          return [ String(x.numeroItem || "—"),
+                   (+x.quantidade || 0).toLocaleString("pt-BR") + (x.unidadeMedida ? " " + x.unidadeMedida : ""),
+                   vu ? moeda(vu) : "sigiloso",
+                   umaLinha(completo || x.descricao) ];
+        }),
+        { tam:8 });
     }
   }
 
