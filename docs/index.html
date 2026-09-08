@@ -564,7 +564,68 @@ async function montaResumo(r){
       { tam:8, negrito:true, cor:[0.2,0.2,0.2] });
   }
 
+  await secoesDoEdital(doc, r);
+
   return RadarPDF.baixa(doc.bytes(), nomeArquivo("Edital " + r[0] + " " + r[1] + " " + numeroEdital(r[3])) + ".pdf");
+}
+
+// O Termo de Referência e as demais seções que descrevem os produtos, escritas
+// no resumo.
+//
+// O navegador não consegue buscar o arquivo do edital no PNCP: o endpoint dos
+// arquivos manda o CORS errado ("access-control-allow-origin: *, *") e, dentro
+// do artefato, o sandbox bloqueia qualquer busca externa. Por isso o texto
+// dessas seções é extraído fora do navegador (descritivos.mjs) e viaja pronto
+// em descritivos.json — assim o resumo baixado sai com o descritivo completo
+// sem depender de rede.
+//
+// O lote local (resumos/) continua melhor: lá vão as PÁGINAS originais, com
+// tabela e diagramação. Isto é o que dá para entregar dentro do navegador.
+var DESCRITIVOS = null;
+function carregaDescritivos(){
+  if(DESCRITIVOS) return Promise.resolve(DESCRITIVOS);
+  // Não entra no carregamento da lista: são alguns MB, e só interessa a quem
+  // clica em baixar.
+  return fetch("descritivos.json?v=" + Date.now(), {cache:"no-store"})
+    .then(function(resp){ return resp.ok ? resp.json() : null; })
+    .then(function(j){ DESCRITIVOS = j && j.editais ? j : { editais:{} }; return DESCRITIVOS; })
+    .catch(function(){ DESCRITIVOS = { editais:{} }; return DESCRITIVOS; });
+}
+
+async function secoesDoEdital(doc, r){
+  var base;
+  try { base = await carregaDescritivos(); } catch(e){ base = { editais:{} }; }
+  var d = base.editais[r[7]];
+
+  doc.novaPagina();
+  secao(doc, "Do edital oficial");
+
+  if(!d || !d.secoes || !d.secoes.length){
+    doc.texto("Não foi possível extrair o texto do edital publicado"
+      + (d && d.motivo ? " (" + d.motivo + ")" : "")
+      + ". Abra o arquivo oficial pelo link acima.",
+      { tam:9, cor:[0.35,0.35,0.35] });
+    return;
+  }
+
+  doc.texto("Trechos copiados do arquivo que o órgão publicou no PNCP"
+    + (d.paginas && d.total ? ", " + d.paginas + " de " + d.total + " páginas" : "")
+    + ". É aqui que está a especificação completa de cada produto.",
+    { tam:8.5, cor:[0.35,0.35,0.35] });
+
+  for(var i=0; i<d.secoes.length; i++){
+    var s = d.secoes[i];
+    doc.espaco(10);
+    doc.texto(s.rotulo, { tam:10.5, negrito:true });
+    doc.regua(0.6, [0.6,0.6,0.6]);
+    doc.espaco(4);
+    doc.texto(s.texto, { tam:8.5, alturaLinha:11.5 });
+    if(s.cortado){
+      doc.espaco(4);
+      doc.texto("[trecho cortado no limite do resumo — o restante está no arquivo oficial]",
+        { tam:8, negrito:true, cor:[0.45,0.45,0.45] });
+    }
+  }
 }
 
 function multi(host,items,arr){

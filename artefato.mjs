@@ -39,6 +39,25 @@ html = html.replace(chamada,
   'var RADAR_DADOS = ' + JSON.stringify(dados).replace(/</g, '\\u003c') + ';\n'
   + 'Promise.resolve({ ok:true, json:function(){ return RADAR_DADOS; } })');
 
+// O texto do Termo de Referencia entra embutido pelo mesmo caminho. Sem ele o
+// resumo baixado do artefato sai com uma pagina so: o sandbox nao deixa a
+// pagina buscar nem o descritivos.json nem o arquivo no PNCP.
+const chamadaDesc = 'fetch("descritivos.json?v=" + Date.now(), {cache:"no-store"})';
+if (!html.includes(chamadaDesc)) throw new Error('nao achei a chamada do descritivos.json no index.html');
+let descritivos = { editais: {} };
+try { descritivos = JSON.parse(doc('descritivos.json')); }
+catch { console.error('aviso: docs/descritivos.json nao encontrado — o resumo sai sem o Termo de Referencia'); }
+
+// A constante entra no TOPO do script, e nao no lugar da chamada: aquele fetch
+// esta depois de um "return", e "return var X = ..." e erro de sintaxe. Deu
+// pagina em branco na primeira tentativa, com o script inteiro sem executar.
+const ancora = 'var D=[];';
+if (!html.includes(ancora)) throw new Error('nao achei a ancora "' + ancora + '" no index.html');
+html = html.replace(ancora,
+  'var RADAR_DESCRITIVOS = ' + JSON.stringify(descritivos).replace(/</g, '\\u003c') + ';\n' + ancora);
+html = html.replace(chamadaDesc,
+  'Promise.resolve({ ok:true, json:function(){ return RADAR_DESCRITIVOS; } })');
+
 const saida = process.argv[2] || path.join(DIR, 'radar-artefato.html');
 fs.writeFileSync(saida, html, 'utf8');
 console.log('artefato: ' + saida + ' · ' + (html.length / 1024).toFixed(0) + ' KB · '

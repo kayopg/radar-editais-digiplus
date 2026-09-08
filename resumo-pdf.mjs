@@ -241,7 +241,7 @@ const ORDEM = { edital: 0, tr: 1, outro: 2 };
 
 // Transforma um arquivo publicado no que der para usar: PDFs para anexar as
 // paginas, ou texto quando o orgao so publicou Word.
-async function fontesDe(c, tropecos) {
+export async function fontesDe(c, tropecos) {
   const bytes = await baixa(c.url);
   const tipo = farejaTipo(bytes);
 
