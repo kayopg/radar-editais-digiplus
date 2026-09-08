@@ -50,14 +50,68 @@ const MIN_CAMPOS = 3;
 // pagina de assinaturas, que tambem repete varios desses rotulos.
 const PRIMEIRAS = 6;
 
+// Marcas de CAPA, para o edital que nao usa o quadro de campos. Sao as coisas
+// que qualquer folha de rosto de licitacao traz: o numero do pregao, o
+// processo, o objeto, a data de abertura, o tipo de julgamento, a lei. Aqui
+// nao se exige caixa alta — numa capa o texto e curto e o risco de casar com
+// mencao solta e baixo.
+const MARCAS_CAPA = [
+  /PREG[ÃA]O\s+ELETR[ÔO]NICO/i, /AVISO\s+DE\s+LICITA[ÇC][ÃA]O/i, /EDITAL\s*N?[ºo°]/i,
+  /PROCESSO\s*(?:ADMINISTRATIVO)?\s*N?[ºo°]/i, /\bOBJETO\b/i, /DO\s+OBJETO/i,
+  /ABERTURA/i, /RECEBIMENTO\s+DAS\s+PROPOSTAS/i, /SESS[ÃA]O/i, /MENOR\s+PRE[ÇC]O/i,
+  /REGISTRO\s+DE\s+PRE[ÇC]OS/i, /LEI\s*N?[ºo°]?\s*14\.?133/i, /PREFEITURA|MUNIC[ÍI]PIO\s+DE/i,
+  /LICITA[ÇC][ÃA]O/i
+];
+// Marcas que sobrevivem ao texto embaralhado. Quando a fonte do PDF tem
+// codificacao propria, o extrator troca as letras ACENTUADAS ("PREGÃO" vira
+// "PREGïO"), e as regras acima param de casar; o pedaco sem acento continua
+// legivel. Em Caceres/MT era o unico jeito de reconhecer a capa.
+const MARCAS_SEM_ACENTO = [
+  /EDITAL/i, /PROCESSO/i, /LICITA/i, /PREFEITURA/i, /MUNIC/i, /PREG/i,
+  /MENOR PRE/i, /OBJETO/i, /ABERTURA/i, /PROPOSTA/i, /SESS/i, /CNPJ/i
+];
+const MIN_MARCAS = 3;
+const PRIMEIRAS_CAPA = 3;
+// Capa de edital digitalizado nao tem texto para pontuar. Abaixo disso a
+// pagina e imagem, carimbo ou moldura — e a primeira folha e a capa do mesmo
+// jeito.
+const POUCO_TEXTO = 200;
+
+// Tres niveis, do mais especifico ao mais generico. O usuario pediu em
+// 08/09/2026 para procurar tambem "palavras semelhantes ou paginas
+// semelhantes" nos editais em que o quadro nao aparecia — eram 44 de 68.
 function achaAbertura(paginas) {
+  // 1. o quadro de campos, que e a pagina que o usuario mandou de exemplo
   let melhor = -1, melhorN = 0;
   for (let i = 0; i < Math.min(paginas.length, PRIMEIRAS); i++) {
-    const t = paginas[i] || '';
-    const n = CAMPOS.filter(re => re.test(t)).length;
+    const n = CAMPOS.filter(re => re.test(paginas[i] || '')).length;
     if (n > melhorN) { melhorN = n; melhor = i; }
   }
-  return melhorN >= MIN_CAMPOS ? { pagina: melhor, campos: melhorN } : null;
+  if (melhorN >= MIN_CAMPOS) return { pagina: melhor, campos: melhorN, via: 'quadro' };
+
+  // 2. a folha de rosto comum, pelas marcas de capa
+  let capa = -1, capaN = 0;
+  for (let i = 0; i < Math.min(paginas.length, PRIMEIRAS_CAPA); i++) {
+    const n = MARCAS_CAPA.filter(re => re.test(paginas[i] || '')).length;
+    if (n > capaN) { capaN = n; capa = i; }
+  }
+  if (capaN >= MIN_MARCAS) return { pagina: capa, campos: capaN, via: 'capa' };
+
+  // 3. o mesmo, tolerando texto embaralhado
+  let solta = -1, soltaN = 0;
+  for (let i = 0; i < Math.min(paginas.length, PRIMEIRAS_CAPA); i++) {
+    const n = MARCAS_SEM_ACENTO.filter(re => re.test(paginas[i] || '')).length;
+    if (n > soltaN) { soltaN = n; solta = i; }
+  }
+  if (soltaN >= MIN_MARCAS) return { pagina: solta, campos: soltaN, via: 'embaralhado' };
+
+  // 4. PDF digitalizado: nao ha o que pontuar, mas a primeira folha de um
+  // edital escaneado e a capa do mesmo jeito.
+  if (paginas.length && (paginas[0] || '').replace(/\s/g, '').length < POUCO_TEXTO) {
+    return { pagina: 0, campos: 0, via: 'imagem' };
+  }
+
+  return null;
 }
 
 async function pool(itens, n, fn) {
@@ -91,11 +145,11 @@ await pool(alvos, 2, async (e) => {
     const carona = PDF.novo({ rodape: '' });
     carona.anexaExternas(await LE.extraiPaginas(le, [achado.pagina]), true);
     const bytes = carona.bytes();
-    saida[e[C.path]] = { pagina: achado.pagina + 1, campos: achado.campos,
+    saida[e[C.path]] = { pagina: achado.pagina + 1, campos: achado.campos, via: achado.via,
                          b64: Buffer.from(bytes).toString('base64') };
     bytesTotal += bytes.length;
     com++;
-    console.log(`  ${nome} · pagina ${achado.pagina + 1} · ${achado.campos} campos · ${(bytes.length / 1024).toFixed(0)} KB`);
+    console.log(`  ${nome} · pagina ${achado.pagina + 1} · ${achado.via} · ${(bytes.length / 1024).toFixed(0)} KB`);
   } catch (err) {
     erros++;
     console.log(`  [erro] ${nome}: ${err.message}`);
