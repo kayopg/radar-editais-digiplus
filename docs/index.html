@@ -427,7 +427,23 @@ async function buscaTodosItens(r){
     if(!resp.ok) throw new Error("HTTP " + resp.status);
     var j = await resp.json();
     return Array.isArray(j) ? j : [];
-  }catch(e){ return null; }
+  }catch(e){
+    // Dentro do artefato esta chamada nunca chega ao PNCP, e o resumo saia
+    // dizendo "Não consegui buscar a lista completa agora" — ou seja, sem os
+    // produtos do edital original, que é justamente o que se precisa ver ao
+    // lado do Termo de Referência. A lista vem embutida em descritivos.json,
+    // gravada pelo itens-embutidos.mjs, no formato compacto
+    // [numero, descricao, quantidade, unidade, valor unitário, benefício].
+    try{
+      var base = await carregaDescritivos();
+      var d = base.editais[r[7]];
+      if(!d || !d.itens) return null;
+      return d.itens.map(function(x){
+        return { numeroItem:x[0], descricao:x[1], quantidade:x[2],
+                 unidadeMedida:x[3], valorUnitarioEstimado:x[4], tipoBeneficioNome:x[5] };
+      });
+    }catch(e2){ return null; }
+  }
 }
 
 // Quais itens do edital ja aparecem detalhados como "de interesse". Serve para
