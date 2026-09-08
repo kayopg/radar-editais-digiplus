@@ -42,13 +42,18 @@ jobs:
     #
     # O teto era de quando a varredura levava 12 minutos. Ela cresceu: a consulta
     # de portal roda serializada por causa da cota do PNCP, e a fase de
-    # exigencias baixa e le o PDF de cada edital da lista final. Hoje leva uns
-    # 35 min nesta maquina, e mais no runner.
+    # exigencias baixa e le o PDF de cada edital da lista final.
     #
-    # 90 minutos e o dobro da medida atual, com folga para o PNCP ter um dia
-    # ruim. Nao ha custo em sobrar: a trava do passo seguinte faz a janela
-    # extra sair na hora quando o dia ja foi publicado.
-    timeout-minutes: 90
+    # A duracao real, cronometrada em 08/09/2026 nesta maquina: 101 minutos
+    # (07:29 as 09:10). Vale desconfiar de estimativa nao medida — a primeira
+    # correcao deste teto foi para 90 minutos, em cima de um "uns 35 min" que
+    # ninguem tinha cronometrado, e teria matado o job de novo.
+    #
+    # 150 minutos da meia hora de folga sobre a medida, para o PNCP ter um dia
+    # ruim. Sobrar nao custa: a trava do passo seguinte faz a janela extra sair
+    # na hora quando o dia ja foi publicado, e o repositorio e publico, onde o
+    # minuto de Actions nao e cobrado.
+    timeout-minutes: 150
 
     steps:
       - uses: actions/checkout@v4

@@ -231,6 +231,21 @@ const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioim
   'balanca infantil','digital infantil','com regua','coluna articulada'];
 
 // ---------------------------------------------------------------- utilidades
+// Cada linha de progresso sai carimbada com o tempo decorrido.
+//
+// Sem isso ninguem sabia quanto a varredura realmente levava: o teto do job no
+// GitHub Actions foi calculado sobre "uns 12 minutos", a varredura cresceu para
+// 101, e em 07/09/2026 as tres janelas do dia morreram no teto sem gerar erro
+// nem aviso — o site ficou quatro dias parado. Estimativa nao medida foi o que
+// escondeu o problema, entao agora toda rodada se cronometra.
+const T0 = Date.now();
+const escreveErr = process.stderr.write.bind(process.stderr);
+process.stderr.write = (txt, ...resto) => {
+  const s = Math.round((Date.now() - T0) / 1000);
+  const carimbo = String((s / 60) | 0).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0') + ' ';
+  return escreveErr(String(txt).replace(/^(?=.)/gm, carimbo), ...resto);
+};
+
 const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ');
 const limpa = s => String(s ?? '').replace(/\s+/g, ' ').trim();
 
