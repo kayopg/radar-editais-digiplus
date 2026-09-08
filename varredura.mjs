@@ -279,18 +279,46 @@ async function pool(itens, n, fn) {
 // ---------------------------------------------------------------- 1. buscas
 const res = new Map();
 let errBusca = 0;
+// Uma consulta por termo/UF, trazendo tudo de uma vez.
+//
+// Antes eram duas paginas de 50, e isso perdia edital em silencio. A lista vem
+// ordenada por data e nao para de crescer enquanto a varredura roda: um edital
+// publicado entre o pedido da pagina 1 e o da pagina 2 empurra todo mundo uma
+// posicao para baixo, e quem estava na fronteira das duas paginas escorrega de
+// uma para a outra sem aparecer em nenhuma. Foi o que aconteceu com
+// Severinia/SP em 08/09/2026: ventiladores de R$ 210 mil, prazo no dia
+// seguinte, portal BLL, passava em todos os filtros — e simplesmente nao
+// estava na lista. Estava na posicao 51 de 115 para "ventilador"/SP.
+//
+// tam_pagina=500 devolve tudo num pedido so nos termos medidos (o maior era
+// "material eletrico"/SP com 208), entao nao ha fronteira para escorregar. De
+// quebra sao 352 consultas em vez de 704, o que encurta a fase mais demorada.
+// Se algum termo passar de 500, o laco abaixo pega o resto.
+const TAM_PAGINA = 500;
 const jobs = [];
-for (const t of TERMOS) for (const u of UFS) for (const p of [1, 2]) jobs.push([t, u, p]);
+for (const t of TERMOS) for (const u of UFS) jobs.push([t, u, 1]);
 
 process.stderr.write(`Buscas: ${jobs.length} consultas\n`);
-const buscaUrl = ([t, u, p]) => `https://pncp.gov.br/api/search/?q=${encodeURIComponent(t)}&tipos_documento=edital&ordenacao=-data&pagina=${p}&tam_pagina=50&status=recebendo_proposta&ufs=${u}`;
+const buscaUrl = ([t, u, p]) => `https://pncp.gov.br/api/search/?q=${encodeURIComponent(t)}&tipos_documento=edital&ordenacao=-data&pagina=${p}&tam_pagina=${TAM_PAGINA}&status=recebendo_proposta&ufs=${u}`;
 let falhas = [];
+const sobras = [];      // termos que passaram de TAM_PAGINA e pedem outra pagina
 await pool(jobs, 6, async (j) => {
   try {
     const d = await getJson(buscaUrl(j));
     for (const it of (d.items || [])) res.set(it.numero_controle_pncp, it);
+    const total = +d.total || 0;
+    for (let p = 2; (p - 1) * TAM_PAGINA < total; p++) sobras.push([j[0], j[1], p]);
   } catch { falhas.push(j); }
 });
+if (sobras.length) {
+  process.stderr.write(`  ${sobras.length} consulta(s) passaram de ${TAM_PAGINA} resultados\n`);
+  await pool(sobras, 4, async (j) => {
+    try {
+      const d = await getJson(buscaUrl(j));
+      for (const it of (d.items || [])) res.set(it.numero_controle_pncp, it);
+    } catch { falhas.push(j); }
+  });
+}
 if (falhas.length) {
   process.stderr.write(`  repescagem de ${falhas.length} consultas\n`);
   const resto = falhas; falhas = [];

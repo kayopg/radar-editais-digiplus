@@ -38,8 +38,11 @@ const saida = {
     ufs: UFS,
     // Derivado, nao fixo: ficou 32 no arquivo depois que a lista virou 38 termos
     // em 01/09/2026, e a pagina passou a anunciar menos busca do que faz.
-    // consultas = termos x UFs x 2 paginas, entao o caminho de volta e este.
-    termos: st.consultas ? Math.round(st.consultas / (UFS.length * 2)) : 0,
+    // consultas = termos x UFs, entao o caminho de volta e este. Era dividido
+    // tambem por 2 enquanto a busca lia duas paginas por termo; desde 08/09/2026
+    // e uma consulta so, com tam_pagina grande, e o /2 passou a mostrar metade
+    // dos termos na pagina.
+    termos: st.consultas ? Math.round(st.consultas / UFS.length) : 0,
     candidatos: st.unicos ?? 0,
     editais: linhas.length,
     porUf: st.porUf ?? {},
