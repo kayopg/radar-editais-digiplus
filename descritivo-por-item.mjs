@@ -61,7 +61,7 @@ function ancoraDe(plano, curto) {
 
 // Teto por item. Existe so para o ULTIMO item da tabela, que nao tem um proximo
 // para fechar a celula.
-const TETO_ITEM = 1400;
+const TETO_ITEM = 2200;
 
 // Corte de reserva, para quando o proximo item nao vira marca — porque o rotulo
 // dele na API nao aparece com essas palavras no edital, e ai nao ha limite pela
@@ -85,7 +85,20 @@ const FIM_DE_LINHA = [
   // Fonte com codificacao propria devolve o texto em letras soltas:
   // "& ¤ P D U D  1 D F L R Q D O  G H". Nao da para consertar, mas da para
   // nao arrastar o lixo para dentro do descritivo — corta onde comeca.
-  /(?:\s\S){8,}(?=\s|$)/
+  /(?:\s\S){8,}(?=\s|$)/,
+  // Fim da linha sem o numero do proximo item, que fica fora do teto:
+  // "...+/- 5% de tolerância. UN 2 R$ 37.963,33 R$ 75.926," em Catanduva/SP.
+  /\s(?:UNIDADES?|UNID|UND|UN|PCS|PC|CX|PAR|KG|LT)\.?\s+\d{1,4}\s+R\$/i,
+  // O ULTIMO item da tabela nao tem um proximo para fechar a celula, e o
+  // recorte segue para o corpo do edital. Estas palavras nao aparecem em
+  // descritivo de produto — aparecem em clausula: em Paranapoema/PR o
+  // frigobar seguia por "1.3. DO PROSPECTO 1.4.1. A licitante classificada
+  // provisoriamente em primeiro lugar devera encaminhar ao pregoeiro...".
+  /\s(?:o |a |ao |pelo |pela )?(?:pregoeir[oa]|licitantes?\b|desclassifica|fase de lances|assinatura do contrato|custo estimado|vedada a inclus)/i,
+  // Depois da tabela costuma vir a minuta do contrato, e o ultimo item entrava
+  // nela: a mesa de futmesa de Rio Bom/PR seguia por "de um lado, a PREFEITURA
+  // DO MUNICIPIO DE RIO BOM - PR, pessoa juridica de direito publico...".
+  /\s(?:pessoa jur[íi]dica de direito|de um lado,?\s+[ao]\s+PREFEITURA|CL[ÁA]USULA\s+(?:PRIMEIRA|SEGUNDA|[IVX]+)|CONTRATANTE\b|CONTRATADA\b|doravante denominad)/i
 ];
 
 // Rodape de pagina que cai no meio da celula quando o descritivo atravessa uma
@@ -97,8 +110,26 @@ const RODAPE = [
   /\s*www\.[^\s]+/gi,
   /\s*CEP[:\s]*\d{5}-?\d{3}/gi,
   /\s*PABX[^A-Za-zÀ-ú]*(?:\(\d{2}\))?[\d\s.\-]{6,}/gi,
-  /\s*(?:Rua|Avenida|Av\.|Praça)\s+[^,]{3,45},\s*n?º?\s*\d+[^,]{0,30},?/gi
+  /\s*(?:Rua|Avenida|Av\.|Praça)\s+[^,]{3,45},\s*n?º?\s*\d+[^,]{0,30},?/gi,
+  // Carimbo de assinatura digital, que o sistema estampa no rodape de cada
+  // pagina: "Assinado por 1 pessoa: SIMONE TORRES DUARTE Documento assinado
+  // digitalmente/eletronicamente. Confira as assinaturas no link: https://..."
+  // Cai no meio da celula quando o descritivo atravessa a quebra, em Itai/SP.
+  /\s*Assinado por \d+ pessoas?:\s*[A-ZÀ-Ú][A-ZÀ-Úa-zà-ÿ\s.]{0,70}/gi,
+  /\s*Documento assinado (?:digital|eletronic)[^.]{0,40}\.?/gi,
+  /\s*Confira as assinaturas? no link:?\s*\S*/gi,
+  /\s*\S*pp-signer\/verify\?code=\S*/gi,
+  /\s*Tramitado e Assinado Eletronicamente por\s+\S+/gi,
+  /\s*SEI\s*n[ºo°]?\s*[\d/.\-]+/gi,
+  /\s*P[áa]gina\s+\d+(?:\s+de\s+\d+)?/gi
 ];
+
+// Ultima linha de defesa. Cada sistema de assinatura carimba de um jeito
+// proprio — um deles sai ate sem espaco nenhum ("StatusASSINADOOutrasinforma
+// esCategoria") — e perseguir todos os formatos nao acaba. Sobrando marca de
+// carimbo depois da limpeza, o descritivo e descartado e o item volta a mostrar
+// a descricao do PNCP: melhor uma descricao curta que uma suja.
+const AINDA_SUJO = /assinad[oa]|pp-signer|tramitado e assinado|confira as assinatura/i;
 function tiraRodape(txt) {
   let t = txt;
   for (const re of RODAPE) t = t.replace(re, ' ');
@@ -110,11 +141,20 @@ function cortaNaProximaLinha(txt) {
   let fim = limpo.length;
   for (const re of FIM_DE_LINHA) {
     const m = re.exec(limpo);
-    // > 60 para nao cortar no proprio comeco, quando o item abre com o preco
-    if (m && m.index > 60 && m.index < fim) fim = m.index;
+    // A trava so existe para o caso de o trecho ABRIR com o preco da linha
+    // anterior; 20 basta. Estava em 60 e por isso deixou passar o item 34 de
+    // Nova Prata do Iguacu/PR, onde o fim da linha casava na posicao 53 e o
+    // descritivo seguiu ate o teto com dois itens de pinca cirurgica dentro.
+    if (m && m.index > 20 && m.index < fim) fim = m.index;
   }
   return (fim === limpo.length ? limpo : limpo.slice(0, fim)).trim();
 }
+
+// Descritivo tem de comecar no nome do produto. Comecando com minuscula ou
+// pontuacao, o que se pegou foi o meio de uma frase — em Severinia/SP a ancora
+// casou em "especificacoes do objeto" no meio da clausula 8.6 do edital, e o
+// "descritivo" era texto de proposta, nao produto.
+const comecaNoMeio = t => /^[a-zà-ÿ,;.)\-]/.test(t.trim());
 
 // Recorta o descritivo de cada item cortando no comeco do PROXIMO item.
 //
@@ -180,9 +220,13 @@ for (const e of dados.editais) {
     itensTotal++;
     // it = [numero, descricao, quantidade, unidade, valor, beneficio]
     const completo = recortes.get(i);
-    // So vale guardar o que acrescenta de verdade ao rotulo que ja temos.
-    if (completo && completo.length > it[1].length + 40) { it[6] = completo; itensRicos++; }
-    else if (it.length > 6) it.length = 6;
+    // So vale guardar o que acrescenta de verdade ao rotulo que ja temos, e so
+    // se comecar no nome do produto.
+    if (completo && completo.length > it[1].length + 40
+        && !comecaNoMeio(completo) && !AINDA_SUJO.test(completo)) {
+      it[6] = completo;
+      itensRicos++;
+    } else if (it.length > 6) it.length = 6;
   });
 }
 
