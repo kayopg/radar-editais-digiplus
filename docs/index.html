@@ -366,10 +366,23 @@ async function resumo(botao, i){
   if(!r) return;
   var rotulo = botao && botao.textContent;
   if(botao){ botao.disabled = true; botao.textContent = "montando PDF\u2026"; }
+  var res = null;
   try{
-    await montaResumo(r);
+    res = await montaResumo(r);
   } finally {
-    if(botao){ botao.disabled = false; botao.textContent = rotulo; }
+    if(botao){
+      botao.disabled = false;
+      // Voltar ao rotulo normal depois de uma falha fazia o botao parecer que
+      // nao funcionava: no artefato o download passa por uma confirmacao, e se
+      // ela falha nao ha arquivo nenhum e nada dizia isso. Recusar a
+      // confirmacao nao entra aqui \u2014 e escolha de quem clicou.
+      var erro = res && res.ok === false && res.motivo;
+      botao.textContent = erro ? "n\u00e3o deu para salvar" : rotulo;
+      if(erro){
+        console.error("download falhou:", res.motivo);
+        setTimeout(function(){ botao.textContent = rotulo; }, 4000);
+      }
+    }
   }
 }
 
@@ -551,7 +564,7 @@ async function montaResumo(r){
       { tam:8, negrito:true, cor:[0.2,0.2,0.2] });
   }
 
-  RadarPDF.baixa(doc.bytes(), nomeArquivo("Edital " + r[0] + " " + r[1] + " " + numeroEdital(r[3])) + ".pdf");
+  return RadarPDF.baixa(doc.bytes(), nomeArquivo("Edital " + r[0] + " " + r[1] + " " + numeroEdital(r[3])) + ".pdf");
 }
 
 function multi(host,items,arr){

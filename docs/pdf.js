@@ -452,16 +452,57 @@
   }
 
   // dispara o download de verdade: Blob + <a download>, sem servidor
-  function baixa(bytes, nome) {
-    var blob = new Blob([bytes], { type: "application/pdf" });
+  // O mesmo arquivo serve a dois lugares com regras diferentes de download.
+  //
+  // No site (GitHub Pages) vale o de sempre: blob + <a download> + click.
+  //
+  // Dentro do artefato do claude.ai isso e inerte. O sandbox do visualizador
+  // bloqueia qualquer download que a propria pagina dispare — link com href
+  // blob: ou data: inclusive — entao o botao montava o PDF, chamava o clique e
+  // nao acontecia nada. Sem erro no console, sem aviso: parecia quebrado.
+  // Ali o caminho e a capacidade "downloads", que mostra uma confirmacao ao
+  // visualizador; ele pode recusar, e recusa nao e defeito.
+  //
+  // A capacidade e resolvida uma vez, no carregamento, porque claude.use
+  // demora a responder (ate 10 s quando nao ha visualizador) e nao pode
+  // atrasar o clique. Fora do artefato window.claude nem existe.
+  var CAPACIDADE = (function () {
+    try {
+      if (typeof window !== "undefined" && window.claude && typeof window.claude.use === "function") {
+        return window.claude.use("downloads");
+      }
+    } catch (e) { /* sem capacidade: fica o link */ }
+    return Promise.resolve(null);
+  })();
+
+  function porLink(blob, nome) {
     var url = URL.createObjectURL(blob);
     var a = document.createElement("a");
     a.href = url;
-    a.download = nome.replace(/[^0-9A-Za-zÀ-ÿ ._-]/g, " ").replace(/ +/g, " ").trim();
+    a.download = nome;
     document.body.appendChild(a);
     a.click();
     a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+  }
+
+  // Devolve promessa de {ok, motivo}. Quem chama decide o que mostrar; antes
+  // era sincrona e sem retorno, e por isso a falha nao tinha como aparecer.
+  function baixa(bytes, nome) {
+    var arquivo = nome.replace(/[^0-9A-Za-zÀ-ÿ ._-]/g, " ").replace(/ +/g, " ").trim();
+    var blob = new Blob([bytes], { type: "application/pdf" });
+    return CAPACIDADE.then(function (dl) {
+      if (!dl) { porLink(blob, arquivo); return { ok: true }; }
+      return dl.save({ filename: arquivo, data: blob }).then(
+        function () { return { ok: true }; },
+        function (e) {
+          var cod = (e && e.code) || "";
+          // Recusar a confirmacao e escolha do usuario, nao falha a relatar.
+          if (cod === "declined") return { ok: false, motivo: null };
+          return { ok: false, motivo: (e && e.message) || cod || "falha ao salvar" };
+        }
+      );
+    });
   }
 
   var mod = { novo: novo, baixa: baixa, largura: largura, quebra: quebra, A4: A4 };
