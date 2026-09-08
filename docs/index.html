@@ -434,7 +434,53 @@ function indexaDescritivos(r, base){
   // total vem gravado quando a lista de itens foi enxugada para o artefato;
   // no site, onde ela vai inteira, o tamanho da lista serve.
   DESC_ATUAL = { porNum:porNum, porDesc:porDesc,
-                 total: (d && (d.total || (d.itens ? d.itens.length : 0))) || 0 };
+                 total: (d && (d.total || (d.itens ? d.itens.length : 0))) || 0,
+                 outros: resumeOutros(r, d) };
+}
+
+// Os demais itens do edital em tópicos curtos, para caberem na mesma folha.
+//
+// Não é a tabela de novo com outro nome: aqui vai só o nome do produto, sem
+// quantidade, valor nem especificação. Serve para ver o que mais está sendo
+// comprado junto — se são três fogões ou três fogões no meio de 275 itens de
+// limpeza — e não para cotar.
+//
+// Repetido vira um tópico com contagem: o edital de Salto/SP lista o mesmo
+// ventilador de parede em dois itens, e duas linhas iguais não informam nada.
+function resumeOutros(r, d){
+  if(!d || !d.itens) return [];
+  var meusNum = {}, meusDesc = {};
+  r[8].forEach(function(it){
+    if(it[5]) meusNum[it[5]] = 1;
+    meusDesc[umaLinha(it[3]).toLowerCase()] = 1;
+  });
+
+  var contagem = {}, ordem = [];
+  d.itens.forEach(function(x){
+    if(meusNum[x[0]] || meusDesc[umaLinha(x[1]).toLowerCase()]) return;
+    // O nome do produto é o que vem antes da primeira vírgula ou do primeiro
+    // par "campo: valor" — o resto é especificação, que aqui não interessa.
+    //
+    // A vírgula decimal é protegida antes do corte: sem isso "GARRAFA TERMICA
+    // 1,8 L" virava "GARRAFA TERMICA 1" e ficava ao lado de "GARRAFA TERMICA
+    // 1 L" como se fossem dois produtos diferentes.
+    var nome = umaLinha(x[1]).replace(/(\d),(\d)/g, "$1$2")
+                 .split(/[,;]| [A-Za-zÀ-ÿ]+:/)[0]
+                 .replace(//g, ",").trim();
+    if(nome.length > 58) nome = nome.slice(0, 58).replace(/\s+\S*$/, "") + "…";
+    if(!nome) return;
+    var chave = nome.toLowerCase();
+    if(!contagem[chave]){ contagem[chave] = { nome:nome, n:0 }; ordem.push(chave); }
+    contagem[chave].n++;
+  });
+
+  var LIMITE = 28;   // acima disso a lista deixa de caber na folha
+  var tops = ordem.slice(0, LIMITE).map(function(k){
+    return contagem[k].nome + (contagem[k].n > 1 ? " (" + contagem[k].n + "×)" : "");
+  });
+  var sobra = ordem.length - LIMITE;
+  if(sobra > 0) tops.push("e mais " + sobra + " tipo(s) de item");
+  return tops;
 }
 // Casa pelo número do item; o descritivo serve de reserva porque o número nem
 // sempre existe no dados.json antigo.
@@ -510,6 +556,19 @@ async function montaResumo(r){
               .filter(function(v,i,a){ return a.indexOf(v) === i; }).join(" · ")
             + (totalEdital ? "   ·   o edital tem " + totalEdital + " itens no total" : ""),
     { tam:8, cor:[0.45,0.45,0.45] });
+
+  // Os demais itens em tópicos, logo abaixo da tabela e na mesma folha — pedido
+  // do usuário em 08/09/2026. Fonte pequena e uma linha por tópico: é para
+  // passar o olho, não para cotar.
+  var outros = (DESC_ATUAL && DESC_ATUAL.outros) || [];
+  if(outros.length){
+    doc.espaco(9);
+    doc.texto("Demais itens do edital", { tam:9, negrito:true, cor:[0.25,0.25,0.25] });
+    doc.espaco(3);
+    outros.forEach(function(t){
+      doc.texto("•  " + t, { tam:7.6, alturaLinha:9.6, cor:[0.4,0.4,0.4] });
+    });
+  }
 
 
   // --------------------------------------------------------- onde conferir

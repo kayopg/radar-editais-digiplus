@@ -48,11 +48,13 @@ let descritivos = { editais: {} };
 try { descritivos = JSON.parse(doc('descritivos.json')); }
 catch { console.error('aviso: docs/descritivos.json nao encontrado — o resumo sai sem o Termo de Referencia'); }
 
-// Enxuga o que vai embutido: desde que os demais itens do edital sairam do
-// resumo (pedido do usuario em 08/09/2026), so interessam os itens que a
-// Digiplus cota. Guardar os 2.817 itens de todos os editais engordava a pagina
-// em varios MB sem ninguem ler — o total continua guardado, que e a unica
-// coisa que o resumo mostra sobre os demais.
+// Enxuga o que vai embutido, sem perder nenhum item.
+//
+// O peso nao esta na lista de itens: esta no descritivo completo de cada um,
+// que so os itens cotados usam. Os demais entram como topico resumido no
+// resumo (pedido do usuario em 08/09/2026), e para isso basta o nome — entao
+// deles vao so o numero e o comeco da descricao. Guardar tudo levava a pagina
+// a 4,8 MB; assim fica em pouco mais de 3.
 {
   const C = dados.colunas.reduce((o, n, i) => (o[n] = i, o), {});
   const uma = s => String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -65,7 +67,9 @@ catch { console.error('aviso: docs/descritivos.json nao encontrado — o resumo 
     enxuto[e[C.path]] = {
       ...v,
       total: (v.itens || []).length,
-      itens: (v.itens || []).filter(x => querNum.has(x[0]) || querDesc.has(uma(x[1])))
+      itens: (v.itens || []).map(x => (querNum.has(x[0]) || querDesc.has(uma(x[1])))
+        ? x
+        : [x[0], String(x[1] || '').slice(0, 80)])
     };
   }
   descritivos = { ...descritivos, editais: enxuto };
