@@ -435,7 +435,8 @@ function indexaDescritivos(r, base){
   // no site, onde ela vai inteira, o tamanho da lista serve.
   DESC_ATUAL = { porNum:porNum, porDesc:porDesc,
                  total: (d && (d.total || (d.itens ? d.itens.length : 0))) || 0,
-                 outros: resumeOutros(r, d) };
+                 outros: resumeOutros(r, d),
+                 quadro: (d && d.quadro) || null };
 }
 
 // Os demais itens do edital em tópicos curtos, para caberem na mesma folha.
@@ -598,6 +599,7 @@ async function montaResumo(r){
       { tam:8, negrito:true, cor:[0.2,0.2,0.2] });
   }
 
+  quadroDoEdital(doc, r);
   await secoesDoEdital(doc, r);
 
   return RadarPDF.baixa(doc.bytes(), nomeArquivo("Edital " + r[0] + " " + r[1] + " " + numeroEdital(r[3])) + ".pdf");
@@ -624,6 +626,27 @@ function carregaDescritivos(){
     .then(function(resp){ return resp.ok ? resp.json() : null; })
     .then(function(j){ DESCRITIVOS = j && j.editais ? j : { editais:{} }; return DESCRITIVOS; })
     .catch(function(){ DESCRITIVOS = { editais:{} }; return DESCRITIVOS; });
+}
+
+// O quadro resumo da página de abertura do edital: contratante, objeto, valor
+// estimado, data da sessão, critério de julgamento e modo de disputa.
+//
+// O usuário mandou essa página do pregão 411/2026 da UFPel em 08/09/2026 e
+// disse que é das mais importantes — é onde se vê, de uma olhada, se vale
+// entrar na disputa. Nem todo edital tem: dos 68 da varredura de 08/09, 12 têm.
+// Quando não tem, a seção simplesmente não aparece.
+function quadroDoEdital(doc, r){
+  var q = DESC_ATUAL && DESC_ATUAL.quadro;
+  if(!q || !q.length) return;
+  secao(doc, "Quadro resumo do edital");
+  doc.texto("Da página de abertura do documento oficial publicado no PNCP.",
+    { tam:8, cor:[0.45,0.45,0.45] });
+  doc.espaco(5);
+  q.forEach(function(p){
+    doc.reserva(20);
+    doc.campo(p[0], p[1], { tam:9, larguraRotulo:132 });
+    doc.espaco(3);
+  });
 }
 
 async function secoesDoEdital(doc, r){
