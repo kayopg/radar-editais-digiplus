@@ -492,6 +492,7 @@ function descritivoDoItem(r, it){
 async function montaResumo(r){
   var doc = RadarPDF.novo({ rodape: "Radar de Editais Digiplus · varredura de " + varreduraTxt() });
   try { indexaDescritivos(r, await carregaDescritivos()); } catch(e){ DESC_ATUAL = null; }
+  await abrePelaPaginaOriginal(doc, r);
 
   // --------------------------------------------------------- identificacao
   // O valor ja sai no titulo, entao nao se repete como campo abaixo. O caminho
@@ -615,6 +616,48 @@ async function montaResumo(r){
 //
 // O lote local (resumos/) continua melhor: lá vão as PÁGINAS originais, com
 // tabela e diagramação. Isto é o que dá para entregar dentro do navegador.
+// A folha de abertura do edital ORIGINAL, na frente de tudo.
+//
+// Não é o conteúdo remontado em texto: é a página do PDF do órgão, com logo,
+// moldura e diagramação. Ela vem pronta em aberturas.json, extraída fora do
+// navegador pelo pagina-abertura.mjs — aqui não há como buscá-la, nem no site
+// (o CORS do PNCP) nem no artefato (o sandbox).
+//
+// Cada folha viaja como um PDF de carona em base64, com a página original na
+// frente e uma página em branco atrás; só a primeira é extraída.
+var ABERTURAS = null;
+function carregaAberturas(){
+  if(ABERTURAS) return Promise.resolve(ABERTURAS);
+  return fetch("aberturas.json?v=" + Date.now(), {cache:"no-store"})
+    .then(function(resp){ return resp.ok ? resp.json() : null; })
+    .then(function(j){ ABERTURAS = j && j.editais ? j : { editais:{} }; return ABERTURAS; })
+    .catch(function(){ ABERTURAS = { editais:{} }; return ABERTURAS; });
+}
+
+function bytesDeBase64(b64){
+  var bin = atob(b64), n = bin.length, u = new Uint8Array(n);
+  for(var i = 0; i < n; i++) u[i] = bin.charCodeAt(i);
+  return u;
+}
+
+async function abrePelaPaginaOriginal(doc, r){
+  var base;
+  try { base = await carregaAberturas(); } catch(e){ return; }
+  var a = base.editais[r[7]];
+  if(!a || !a.b64) return;
+  try{
+    var le = await RadarPDFLe.abre(bytesDeBase64(a.b64));
+    // "antes" põe a folha na frente das páginas do resumo, sem tocar em nada
+    // do que vem depois — a tabela e os itens detalhados ficam como estão.
+    //
+    // Cuidado ao mexer: o pdf.js guarda esse "antes" numa variável só para o
+    // documento inteiro, e a última chamada manda. Hoje esta é a única, porque
+    // o ANEXAR_OFICIAL está desligado; ligando-o, a chamada dele (com antes
+    // falso) jogaria esta folha para o fim do arquivo.
+    doc.anexaExternas(await RadarPDFLe.extraiPaginas(le, [0]), true);
+  }catch(e){ /* sem a folha, o resumo sai como saía */ }
+}
+
 var DESCRITIVOS = null;
 function carregaDescritivos(){
   if(DESCRITIVOS) return Promise.resolve(DESCRITIVOS);

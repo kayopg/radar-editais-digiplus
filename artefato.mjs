@@ -85,6 +85,20 @@ html = html.replace(ancora,
 html = html.replace(chamadaDesc,
   'Promise.resolve({ ok:true, json:function(){ return RADAR_DESCRITIVOS; } })');
 
+// As folhas de abertura, pelo mesmo caminho. Sao a maior parte do peso da
+// pagina: cada uma e um PDF de uma folha em base64, com as fontes do orgao
+// dentro. O teto do artefato e 16 MB, entao o publicador avisa quando chega
+// perto.
+const chamadaAber = 'fetch("aberturas.json?v=" + Date.now(), {cache:"no-store"})';
+if (!html.includes(chamadaAber)) throw new Error('nao achei a chamada do aberturas.json no index.html');
+let aberturas = { editais: {} };
+try { aberturas = JSON.parse(doc('aberturas.json')); }
+catch { console.error('aviso: docs/aberturas.json nao encontrado — o resumo sai sem a folha de abertura'); }
+html = html.replace(ancora,
+  'var RADAR_ABERTURAS = ' + JSON.stringify(aberturas).replace(/</g, '\\u003c') + ';\n' + ancora);
+html = html.replace(chamadaAber,
+  'Promise.resolve({ ok:true, json:function(){ return RADAR_ABERTURAS; } })');
+
 const saida = process.argv[2] || path.join(DIR, 'radar-artefato.html');
 fs.writeFileSync(saida, html, 'utf8');
 console.log('artefato: ' + saida + ' · ' + (html.length / 1024).toFixed(0) + ' KB · '
