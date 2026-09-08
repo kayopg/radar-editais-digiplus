@@ -414,55 +414,6 @@ function qtdItem(it){
 }
 function umaLinha(s){ return String(s == null ? "" : s).replace(/\s+/g, " ").trim(); }
 
-// O edital inteiro, buscado na hora do download. O /itens do PNCP manda o CORS
-// certo (access-control-allow-origin: *), ao contrario do /arquivos, que manda
-// "*, *" e o navegador recusa — por isso este anexo funciona e o das paginas
-// do PDF oficial nao. tamanhoPagina=500 cobre o maior edital ja visto (278
-// itens). Falha nao derruba o download: o resumo sai sem o anexo.
-async function buscaTodosItens(r){
-  var pp = r[7].split("/");
-  try{
-    var resp = await fetch("https://pncp.gov.br/api/pncp/v1/orgaos/" + pp[0]
-      + "/compras/" + pp[1] + "/" + pp[2] + "/itens?pagina=1&tamanhoPagina=500");
-    if(!resp.ok) throw new Error("HTTP " + resp.status);
-    var j = await resp.json();
-    return Array.isArray(j) ? j : [];
-  }catch(e){
-    // Dentro do artefato esta chamada nunca chega ao PNCP, e o resumo saia
-    // dizendo "Não consegui buscar a lista completa agora" — ou seja, sem os
-    // produtos do edital original, que é justamente o que se precisa ver ao
-    // lado do Termo de Referência. A lista vem embutida em descritivos.json,
-    // gravada pelo itens-embutidos.mjs, no formato compacto
-    // [numero, descricao, quantidade, unidade, valor unitário, benefício].
-    try{
-      var base = await carregaDescritivos();
-      var d = base.editais[r[7]];
-      if(!d || !d.itens) return null;
-      return d.itens.map(function(x){
-        return { numeroItem:x[0], descricao:x[1], quantidade:x[2],
-                 unidadeMedida:x[3], valorUnitarioEstimado:x[4], tipoBeneficioNome:x[5] };
-      });
-    }catch(e2){ return null; }
-  }
-}
-
-// Quais itens do edital ja aparecem detalhados como "de interesse". Serve para
-// o anexo nao repetir o mesmo fogao duas vezes: a lista de baixo passa a ser
-// "o que mais tem no edital", nao "tudo de novo". Casa pelo numero do item
-// quando ele existe (varredura de 01/09/2026 em diante) e cai no descritivo
-// enquanto o dados.json antigo estiver no ar — os dois lados passam pela mesma
-// normalizacao de espacos, entao o texto bate.
-function jaDetalhados(r){
-  var num = {}, desc = {};
-  r[8].forEach(function(it){
-    if(it[5]) num[it[5]] = 1;
-    desc[umaLinha(it[3])] = 1;
-  });
-  return function(x){
-    return !!(num[x.numeroItem] || desc[umaLinha(x.descricao)]);
-  };
-}
-
 function secao(doc, titulo){
   doc.espaco(12);
   doc.texto(titulo, { tam:11, negrito:true });
@@ -480,7 +431,10 @@ function indexaDescritivos(r, base){
   if(d && d.itens) d.itens.forEach(function(x){
     if(x[6]){ porNum[x[0]] = x[6]; porDesc[umaLinha(x[1]).toLowerCase()] = x[6]; }
   });
-  DESC_ATUAL = { porNum:porNum, porDesc:porDesc };
+  // total vem gravado quando a lista de itens foi enxugada para o artefato;
+  // no site, onde ela vai inteira, o tamanho da lista serve.
+  DESC_ATUAL = { porNum:porNum, porDesc:porDesc,
+                 total: (d && (d.total || (d.itens ? d.itens.length : 0))) || 0 };
 }
 // Casa pelo número do item; o descritivo serve de reserva porque o número nem
 // sempre existe no dados.json antigo.
@@ -524,71 +478,39 @@ async function montaResumo(r){
             { tam:8.5, cor:[0.4,0.4,0.4] });
   doc.espaco(5);
 
-  r[8].forEach(function(it, k){
-    if(k > 0){ doc.espaco(5); doc.regua(0.5, [0.78,0.78,0.78]); doc.espaco(3); }
-    doc.reserva(64);   // cabecalho do item nao fica orfao no pe da pagina
-    doc.parOposto(rotuloItem(it, k) + "   ·   " + CATPDF[it[0]], qtdItem(it),
-                  { tam:10, negritoEsq:true, negritoDir:true, corEsq:[0,0,0] });
-    doc.espaco(2);
-    // O descritivo do edital quando existe, e não o rótulo curto da API: o que
-    // o PNCP devolve é "VENTILADOR DE PAREDE", e o que se cota é "VENTILADOR DE
-    // PAREDE, preto, 60 cm de diâmetro (mínimo), movimento oscilante...".
-    var completo = descritivoDoItem(r, it);
-    doc.texto(completo || it[3], { tam:9.5, alturaLinha:13 });
-    if(completo){
-      doc.espaco(2);
-      doc.texto("descritivo do edital", { tam:7.5, cor:[0.5,0.5,0.5] });
-    }
-    doc.espaco(3);
-    // unitario e total na mesma linha: eram duas, e uma delas so repetia a conta
-    doc.parOposto("Unitário " + (it[2] ? moeda(it[2]) : "sigiloso"),
-                  it[2] ? "Total " + moeda(it[1]*it[2]) : "",
-                  { tam:8.5, negritoDir:true });
-    var b = BENEFICIO[it[6]] || "";
-    if(b) doc.parOposto(b, "", { tam:8, negritoEsq: it[6]==="E",
-                                 corEsq: it[6]==="E" ? [0.55,0.1,0.1] : [0.42,0.42,0.42] });
-  });
+  // Tabela, uma linha por item, como o edital apresenta — pedido do usuário em
+  // 08/09/2026, com a página do edital de Salto/SP como exemplo. Só os itens
+  // que a Digiplus cota entram; os demais do edital ficaram de fora a pedido
+  // dele, e antes ocupavam a tabela no lugar destes.
+  //
+  // A descrição é a do EDITAL quando existe. O PNCP devolve "VENTILADOR DE
+  // PAREDE", 20 caracteres com que não se cota; o edital diz "VENTILADOR DE
+  // PAREDE, preto, 60 cm de diâmetro (mínimo), 03 níveis de velocidade...".
+  doc.tabela(
+    [{ titulo:"Item", larg:0.07, alinha:"centro" },
+     { titulo:"Qtd", larg:0.12 },
+     { titulo:"Valor unit.", larg:0.13, alinha:"direita" },
+     { titulo:"Benefício", larg:0.11 },
+     { titulo:"Descrição", larg:0.57 }],
+    r[8].map(function(it, k){
+      return [ String(it[5] || (k + 1)),
+               qtdItem(it),
+               it[2] ? moeda(it[2]) : "sigiloso",
+               // O item exclusivo de ME/EPP nem pode ser disputado por quem não
+               // é, e são 41% deles: some da tabela seria perder a informação
+               // que mais muda a decisão.
+               it[6] === "E" ? "Exclusivo ME/EPP" : it[6] === "C" ? "Cota ME/EPP" : "—",
+               umaLinha(descritivoDoItem(r, it) || it[3]) ];
+    }),
+    { tam:8 });
 
-  // --------------------------------------------------------- resto do edital
-  // Os de interesse ja foram detalhados acima; aqui entra so o que sobra, em
-  // linha compacta. E o que diz se a compra e de tres fogoes ou de tres fogoes
-  // no meio de 275 itens de limpeza.
-  var todos = await buscaTodosItens(r);
-  if(todos === null){
-    secao(doc, "Demais itens do edital");
-    doc.texto("Não consegui buscar a lista completa agora. Use o link da página oficial no fim.",
-      { tam:8.5, cor:[0.35,0.35,0.35] });
-  } else {
-    var conhecido = jaDetalhados(r);
-    var demais = todos.filter(function(x){ return !conhecido(x); });
-    secao(doc, "Demais itens do edital (" + demais.length + ")");
-    if(!demais.length){
-      doc.texto("O edital tem só os itens detalhados acima.", { tam:8.5, cor:[0.35,0.35,0.35] });
-    } else {
-      doc.texto("O que mais está sendo comprado no mesmo edital, para dimensionar a disputa.",
-        { tam:8.5, cor:[0.4,0.4,0.4] });
-      doc.espaco(6);
-      // Tabela, e não linhas corridas: é assim que o edital apresenta os itens,
-      // uma linha por item com a especificação inteira na célula, e foi assim
-      // que o usuário pediu em 08/09/2026, mandando a página do edital de
-      // Salto/SP como exemplo. O cabeçalho se repete na quebra de página.
-      doc.tabela(
-        [{ titulo:"Item", larg:0.08, alinha:"centro" },
-         { titulo:"Qtd", larg:0.13 },
-         { titulo:"Valor unit.", larg:0.14, alinha:"direita" },
-         { titulo:"Descrição", larg:0.65 }],
-        demais.map(function(x){
-          var vu = +x.valorUnitarioEstimado || 0;
-          var completo = DESC_ATUAL && (DESC_ATUAL.porNum[x.numeroItem]
-                       || DESC_ATUAL.porDesc[umaLinha(x.descricao).toLowerCase()]);
-          return [ String(x.numeroItem || "—"),
-                   (+x.quantidade || 0).toLocaleString("pt-BR") + (x.unidadeMedida ? " " + x.unidadeMedida : ""),
-                   vu ? moeda(vu) : "sigiloso",
-                   umaLinha(completo || x.descricao) ];
-        }),
-        { tam:8 });
-    }
-  }
+  doc.espaco(6);
+  var totalEdital = DESC_ATUAL && DESC_ATUAL.total;
+  doc.texto("Categorias: " + r[8].map(function(it){ return CATPDF[it[0]]; })
+              .filter(function(v,i,a){ return a.indexOf(v) === i; }).join(" · ")
+            + (totalEdital ? "   ·   o edital tem " + totalEdital + " itens no total" : ""),
+    { tam:8, cor:[0.45,0.45,0.45] });
+
 
   // --------------------------------------------------------- onde conferir
   // As URLs sao longas e dominavam o cabecalho. No fim elas continuam a um

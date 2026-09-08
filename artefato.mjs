@@ -48,6 +48,29 @@ let descritivos = { editais: {} };
 try { descritivos = JSON.parse(doc('descritivos.json')); }
 catch { console.error('aviso: docs/descritivos.json nao encontrado — o resumo sai sem o Termo de Referencia'); }
 
+// Enxuga o que vai embutido: desde que os demais itens do edital sairam do
+// resumo (pedido do usuario em 08/09/2026), so interessam os itens que a
+// Digiplus cota. Guardar os 2.817 itens de todos os editais engordava a pagina
+// em varios MB sem ninguem ler — o total continua guardado, que e a unica
+// coisa que o resumo mostra sobre os demais.
+{
+  const C = dados.colunas.reduce((o, n, i) => (o[n] = i, o), {});
+  const uma = s => String(s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  const enxuto = {};
+  for (const e of dados.editais) {
+    const v = descritivos.editais[e[C.path]];
+    if (!v) continue;
+    const querNum = new Set(e[C.itens].map(it => it[5]).filter(Boolean));
+    const querDesc = new Set(e[C.itens].map(it => uma(it[3])));
+    enxuto[e[C.path]] = {
+      ...v,
+      total: (v.itens || []).length,
+      itens: (v.itens || []).filter(x => querNum.has(x[0]) || querDesc.has(uma(x[1])))
+    };
+  }
+  descritivos = { ...descritivos, editais: enxuto };
+}
+
 // A constante entra no TOPO do script, e nao no lugar da chamada: aquele fetch
 // esta depois de um "return", e "return var X = ..." e erro de sintaxe. Deu
 // pagina em branco na primeira tentativa, com o script inteiro sem executar.
