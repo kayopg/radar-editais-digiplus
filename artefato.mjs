@@ -94,6 +94,34 @@ if (!html.includes(chamadaAber)) throw new Error('nao achei a chamada do abertur
 let aberturas = { editais: {} };
 try { aberturas = JSON.parse(doc('aberturas.json')); }
 catch { console.error('aviso: docs/aberturas.json nao encontrado — o resumo sai sem a folha de abertura'); }
+
+// Teto por folha, escolhido pelo usuario em 09/09/2026.
+//
+// As 62 folhas somam 20 MB, e em base64 levariam o artefato a 29 MB — quase o
+// dobro do teto de 16 MB que o visualizador aceita. O peso esta nas capas
+// escaneadas: o orgao imprime, assina, digitaliza e sobe a foto, e uma pagina
+// dessas chega a 3,5 MB (Jaraguari/MS) contra 240 KB de uma folha com texto.
+//
+// 450 KB por folha mantem 49 das 62 e deixa o artefato em 14,7 MB. O usuario
+// pediu 500, mas 500 nao cabe: as duas folhas seguintes (475 e 478 KB) levam o
+// arquivo a 16,02 MB e a publicacao e recusada por dois centesimos. 450 e o
+// maior valor que ainda entra, com 1,2 MB de folga para a lista crescer.
+//
+// As 13 que ficam de fora nao se perdem: o lote local em resumos/ nao tem teto
+// e anexa as paginas originais dos 68 editais. O corte vale so para o que roda
+// dentro do navegador.
+const TETO_FOLHA = 450 * 1024;
+{
+  const dentro = {}, fora = [];
+  for (const [k, v] of Object.entries(aberturas.editais || {})) {
+    const bytes = Math.round((v.b64 || '').length * 0.75);
+    if (bytes <= TETO_FOLHA) dentro[k] = v;
+    else fora.push([k, Math.round(bytes / 1024)]);
+  }
+  aberturas = { ...aberturas, editais: dentro };
+  console.log(`folhas de abertura: ${Object.keys(dentro).length} embutidas, ${fora.length} acima do teto de ${TETO_FOLHA / 1024} KB`);
+  for (const [k, kb] of fora.sort((a, b) => b[1] - a[1])) console.log(`  fora: ${k} · ${kb} KB`);
+}
 html = html.replace(ancora,
   'var RADAR_ABERTURAS = ' + JSON.stringify(aberturas).replace(/</g, '\\u003c') + ';\n' + ancora);
 html = html.replace(chamadaAber,
