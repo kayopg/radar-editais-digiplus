@@ -41,15 +41,28 @@ const ACENTOS = { 'á':'a','à':'a','â':'a','ã':'a','ä':'a','é':'e','è':'e'
 // de bater com as do original, senao o recorte sai deslocado.
 const normIgual = s => String(s ?? '').toLowerCase().replace(/[^\x00-\x7f]/g, c => ACENTOS[c] || c);
 
+// Palavras que o PNCP poe na frente do nome e o edital nao usa: "Aparelho Ar
+// Condicionado" no catalogo e "AR CONDICIONADO SPLIT" no termo de referencia.
+// Enquanto a ancora comecava por "aparelho", nada casava.
+const GENERICAS = /^(?:aparelho|equipamento|conjunto|kit|material|produto|item|maquina)\s+/i;
+
 function ancoraDe(plano, curto) {
   const tentativas = [curto];
   const antesDoCampo = curto.split(/\s+[A-Za-zÀ-ÿ]+:\s/)[0];
   if (antesDoCampo && antesDoCampo.length >= 6 && antesDoCampo !== curto) tentativas.push(antesDoCampo);
-  const palavras = curto.split(/\s+/);
-  for (const n of [6, 4, 3]) {
-    if (palavras.length > n) {
-      const t = palavras.slice(0, n).join(' ');
-      if (t.length >= 6) tentativas.push(t);
+  const semGenerica = (antesDoCampo || curto).replace(GENERICAS, '');
+  if (semGenerica.length >= 6 && !tentativas.includes(semGenerica)) tentativas.push(semGenerica);
+
+  // Duas palavras entram desde que somem 12 caracteres: "ar condicionado" e
+  // especifico o bastante, "de mesa" nao seria. O piso existia em tres palavras
+  // e deixava de fora justamente os nomes curtos de produto.
+  for (const base of [semGenerica, curto]) {
+    const palavras = base.split(/\s+/);
+    for (const n of [6, 4, 3, 2]) {
+      if (palavras.length > n || (n === 2 && palavras.length === 2)) {
+        const t = palavras.slice(0, n).join(' ');
+        if (t.length >= (n === 2 ? 12 : 6) && !tentativas.includes(t)) tentativas.push(t);
+      }
     }
   }
   for (const t of tentativas) {
@@ -222,8 +235,21 @@ for (const e of dados.editais) {
     const completo = recortes.get(i);
     // So vale guardar o que acrescenta de verdade ao rotulo que ja temos, e so
     // se comecar no nome do produto.
-    if (completo && completo.length > it[1].length + 40
-        && !comecaNoMeio(completo) && !AINDA_SUJO.test(completo)) {
+    //
+    // A regra era "40 caracteres a mais que o rotulo", e so isso. Ela castigava
+    // justamente o item cujo rotulo do PNCP ja e comprido: em "Fogao Industrial
+    // aplicacao: alimentacao e nutricao, caracteristicas adicionais: sem forno"
+    // o rotulo tem 150 caracteres, entao o edital precisava de 190 para valer —
+    // e uma celula de 160 caracteres, que E o texto oficial, era recusada.
+    // Eram 409 itens nessa situacao, medidos em 09/09/2026 quando o usuario
+    // notou que os descritivos tinham encolhido.
+    //
+    // Agora vale por qualquer um dos dois caminhos: acrescenta 40 ao rotulo, ou
+    // e uma especificacao substancial por si (150+) e ainda maior que o rotulo.
+    const vale = completo
+      && (completo.length > it[1].length + 40
+          || (completo.length >= 150 && completo.length > it[1].length));
+    if (vale && !comecaNoMeio(completo) && !AINDA_SUJO.test(completo)) {
       it[6] = completo;
       itensRicos++;
     } else if (it.length > 6) it.length = 6;
