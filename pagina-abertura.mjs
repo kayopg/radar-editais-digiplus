@@ -30,10 +30,24 @@ const LE = createRequire(import.meta.url)(path.join(DIR, 'docs', 'pdf-le.js'));
 
 const arg = (n, p) => { const i = process.argv.indexOf(n); return i > 0 && process.argv[i + 1] ? process.argv[i + 1] : p; };
 const LIMITE = Number(arg('--limite', 0));
+// --faltantes so mexe em quem ainda nao tem folha, e junta ao arquivo existente
+// em vez de refaze-lo. Serve para a repescagem de quem caiu por falha de rede:
+// em 09/09/2026 Coxim/MS e Foz do Iguacu/PR deram HTTP 504 do PNCP, e refazer
+// os 62 que ja estavam prontos custaria 40 minutos por causa de dois.
+const FALTANTES = process.argv.includes('--faltantes');
 
 const dados = JSON.parse(fs.readFileSync(path.join(DIR, 'docs', 'dados.json'), 'utf8'));
 const C = dados.colunas.reduce((o, n, i) => (o[n] = i, o), {});
+const arquivoSaida = path.join(DIR, 'docs', 'aberturas.json');
+
+let jaTem = {};
+if (FALTANTES) {
+  try { jaTem = JSON.parse(fs.readFileSync(arquivoSaida, 'utf8')).editais || {}; }
+  catch { console.error('aviso: nao achei aberturas.json — vai processar todos'); }
+}
+
 let alvos = dados.editais;
+if (FALTANTES) alvos = alvos.filter(e => !jaTem[e[C.path]]);
 if (LIMITE) alvos = alvos.slice(0, LIMITE);
 
 // Os campos que identificam a folha de abertura. Contam so em CAIXA ALTA: no
@@ -75,7 +89,14 @@ const PRIMEIRAS_CAPA = 3;
 // Capa de edital digitalizado nao tem texto para pontuar. Abaixo disso a
 // pagina e imagem, carimbo ou moldura — e a primeira folha e a capa do mesmo
 // jeito.
-const POUCO_TEXTO = 200;
+//
+// A conta e de LETRAS, nao de caracteres. A capa de Aparecida do Taboado/MS
+// devolve 2.254 caracteres de lixo de controle (' \n \r\r \r \r \n !"#$%&'&#')
+// porque a fonte do PDF tem codificacao propria: contando caracteres ela
+// parecia cheia de texto e nao caia aqui, contando letras ela e o que e — uma
+// pagina ilegivel, que so vale como imagem.
+const POUCAS_LETRAS = 200;
+const letrasDe = t => (String(t || '').match(/[A-Za-zÀ-ÿ]/g) || []).length;
 
 // Tres niveis, do mais especifico ao mais generico. O usuario pediu em
 // 08/09/2026 para procurar tambem "palavras semelhantes ou paginas
@@ -107,7 +128,7 @@ function achaAbertura(paginas) {
 
   // 4. PDF digitalizado: nao ha o que pontuar, mas a primeira folha de um
   // edital escaneado e a capa do mesmo jeito.
-  if (paginas.length && (paginas[0] || '').replace(/\s/g, '').length < POUCO_TEXTO) {
+  if (paginas.length && letrasDe(paginas[0]) < POUCAS_LETRAS) {
     return { pagina: 0, campos: 0, via: 'imagem' };
   }
 
@@ -121,7 +142,7 @@ async function pool(itens, n, fn) {
   }));
 }
 
-const saida = {};
+const saida = { ...jaTem };
 let com = 0, sem = 0, erros = 0, bytesTotal = 0;
 
 await pool(alvos, 2, async (e) => {
@@ -156,8 +177,7 @@ await pool(alvos, 2, async (e) => {
   }
 });
 
-const arquivo = path.join(DIR, 'docs', 'aberturas.json');
-fs.writeFileSync(arquivo, JSON.stringify({ varredura: dados.meta.varredura, editais: saida }), 'utf8');
+fs.writeFileSync(arquivoSaida, JSON.stringify({ varredura: dados.meta.varredura, editais: saida }), 'utf8');
 console.log(`\n${com} com folha de abertura · ${sem} sem · ${erros} erro(s)`);
 console.log(`paginas originais: ${(bytesTotal / 1024 / 1024).toFixed(2)} MB antes do base64`);
-console.log(`docs/aberturas.json: ${(fs.statSync(arquivo).size / 1024 / 1024).toFixed(2)} MB`);
+console.log(`docs/aberturas.json: ${(fs.statSync(arquivoSaida).size / 1024 / 1024).toFixed(2)} MB`);

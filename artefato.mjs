@@ -129,6 +129,21 @@ html = html.replace(chamadaAber,
 
 const saida = process.argv[2] || path.join(DIR, 'radar-artefato.html');
 fs.writeFileSync(saida, html, 'utf8');
+const mb = html.length / 1024 / 1024;
 console.log('artefato: ' + saida + ' · ' + (html.length / 1024).toFixed(0) + ' KB · '
   + dados.editais.length + ' editais da varredura de '
   + dados.meta.varredura.split('-').reverse().join('/'));
+
+// O visualizador recusa acima de 16 MB, e a recusa vem na hora de publicar,
+// depois de todo o trabalho. Como as folhas de abertura crescem com a lista de
+// editais, o aviso fica aqui: baixar o TETO_FOLHA e o jeito de voltar a caber.
+const TETO_ARTEFATO = 16;
+if (mb > TETO_ARTEFATO) {
+  console.error(`\nERRO: ${mb.toFixed(2)} MB passa do teto de ${TETO_ARTEFATO} MB do artefato.`);
+  console.error(`Baixe o TETO_FOLHA (hoje ${TETO_FOLHA / 1024} KB) e gere de novo.`);
+  process.exit(1);
+}
+if (mb > TETO_ARTEFATO - 1.5) {
+  console.error(`\naviso: ${mb.toFixed(2)} MB, a ${(TETO_ARTEFATO - mb).toFixed(2)} MB do teto.`
+    + ` Na proxima varredura com mais editais isso estoura — considere baixar o TETO_FOLHA.`);
+}
