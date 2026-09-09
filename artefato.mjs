@@ -101,37 +101,48 @@ let aberturas = { editais: {} };
 try { aberturas = JSON.parse(doc('aberturas.json')); }
 catch { console.error('aviso: docs/aberturas.json nao encontrado — o resumo sai sem a folha de abertura'); }
 
-// Teto por folha, escolhido pelo usuario em 09/09/2026.
+// ORCAMENTO, e nao teto fixo por folha.
 //
-// As 62 folhas somam 20 MB, e em base64 levariam o artefato a 29 MB — quase o
-// dobro do teto de 16 MB que o visualizador aceita. O peso esta nas capas
-// escaneadas: o orgao imprime, assina, digitaliza e sobe a foto, e uma pagina
-// dessas chega a 3,5 MB (Jaraguari/MS) contra 240 KB de uma folha com texto.
+// O peso esta nas capas escaneadas: o orgao imprime, assina, digitaliza e sobe
+// a foto, e uma pagina dessas chega a 3,5 MB (Jaraguari/MS) contra 240 KB de
+// uma folha com texto. Todas as folhas juntas passam de 20 MB, e o
+// visualizador recusa acima de 16.
 //
-// 500 KB por folha mantem 53 das 64 e deixa o artefato em 14,3 MB.
+// As que ficam de fora nao se perdem: o lote local em resumos/ nao tem teto e
+// anexa as paginas originais de todos os editais. O corte vale so para o que
+// roda dentro do navegador.
 //
-// O teto foi 450 enquanto o texto das secoes viajava embutido; tirando esse
-// texto (que deixou de ser impresso no resumo) sobraram 2 MB, e os 500 que o
-// usuario tinha pedido passaram a caber.
+// O teto fixo teve de ser mudado tres vezes em dois dias — 400, 450, 500 — e
+// na varredura de 09/09, com 12 editais a mais, os mesmos 500 KB levaram a
+// pagina a 16,79 MB e a publicacao seria recusada. Teto fixo nao sabe quantos
+// editais existem; orcamento sabe.
 //
-// Subir mais nao adianta: as 11 folhas que sobram somam 10 MB, e mesmo sem a
-// maior delas (Jaraguari/MS, 3,5 MB numa pagina escaneada) sao 6,6 MB para
-// 1,7 MB de espaco. Nao e escolha, e aritmetica.
+// A regra agora: as folhas entram da mais leve para a mais pesada ate encher o
+// orcamento. Isso maximiza a QUANTIDADE de folhas, que e o que o usuario quer,
+// e garante que o arquivo cabe sem ninguem recalcular teto a cada rodada.
 //
-// As 13 que ficam de fora nao se perdem: o lote local em resumos/ nao tem teto
-// e anexa as paginas originais dos 68 editais. O corte vale so para o que roda
-// dentro do navegador.
-const TETO_FOLHA = 500 * 1024;
+// O limite por folha continua existindo, alto, so para uma capa escaneada
+// gigante nao comer o orcamento sozinha: a de Jaraguari/MS tem 3,5 MB, que
+// sozinha valeria por dez folhas com texto.
+const ORCAMENTO_MB = 14;
+const LIMITE_FOLHA = 800 * 1024;
 {
-  const dentro = {}, fora = [];
-  for (const [k, v] of Object.entries(aberturas.editais || {})) {
-    const bytes = Math.round((v.b64 || '').length * 0.75);
-    if (bytes <= TETO_FOLHA) dentro[k] = v;
-    else fora.push([k, Math.round(bytes / 1024)]);
+  const todas = Object.entries(aberturas.editais || {})
+    .map(([k, v]) => [k, v, Math.round((v.b64 || '').length * 0.75)])
+    .sort((a, b) => a[2] - b[2]);
+
+  const dentro = {};
+  let usado = 0, fora = 0;
+  for (const [k, v, bytes] of todas) {
+    // base64 infla um terco: o orcamento e medido no tamanho que vai na pagina
+    const naPagina = bytes * 4 / 3;
+    if (bytes > LIMITE_FOLHA || usado + naPagina > ORCAMENTO_MB * 1024 * 1024) { fora++; continue; }
+    dentro[k] = v;
+    usado += naPagina;
   }
   aberturas = { ...aberturas, editais: dentro };
-  console.log(`folhas de abertura: ${Object.keys(dentro).length} embutidas, ${fora.length} acima do teto de ${TETO_FOLHA / 1024} KB`);
-  for (const [k, kb] of fora.sort((a, b) => b[1] - a[1])) console.log(`  fora: ${k} · ${kb} KB`);
+  console.log(`folhas de abertura: ${Object.keys(dentro).length} embutidas (${(usado / 1024 / 1024).toFixed(1)} MB`
+    + ` de ${ORCAMENTO_MB} MB de orcamento), ${fora} fora`);
 }
 html = html.replace(ancora,
   'var RADAR_ABERTURAS = ' + JSON.stringify(aberturas).replace(/</g, '\\u003c') + ';\n' + ancora);
