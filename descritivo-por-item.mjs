@@ -39,14 +39,15 @@ const ACENTOS = { 'á':'a','à':'a','â':'a','ã':'a','ä':'a','é':'e','è':'e'
   'û':'u','ü':'u','ç':'c','ñ':'n' };
 // Troca cada caractere por UM caractere: as posicoes no texto normalizado tem
 // de bater com as do original, senao o recorte sai deslocado.
-const normIgual = s => String(s ?? '').toLowerCase().replace(/[^\x00-\x7f]/g, c => ACENTOS[c] || c);
+const normIgual = s => String(s ?? '').toLowerCase()
+  .replace(/[^\x00-\x7f]/g, c => ACENTOS[c] || c);
 
 // Palavras que o PNCP poe na frente do nome e o edital nao usa: "Aparelho Ar
 // Condicionado" no catalogo e "AR CONDICIONADO SPLIT" no termo de referencia.
 // Enquanto a ancora comecava por "aparelho", nada casava.
 const GENERICAS = /^(?:aparelho|equipamento|conjunto|kit|material|produto|item|maquina)\s+/i;
 
-function ancoraDe(plano, curto) {
+function ancoraDe(plano, planoH, curto) {
   const tentativas = [curto];
   const antesDoCampo = curto.split(/\s+[A-Za-zÀ-ÿ]+:\s/)[0];
   if (antesDoCampo && antesDoCampo.length >= 6 && antesDoCampo !== curto) tentativas.push(antesDoCampo);
@@ -65,10 +66,27 @@ function ancoraDe(plano, curto) {
       }
     }
   }
-  for (const t of tentativas) {
-    const a = normIgual(t).replace(/\s+/g, ' ').trim();
-    if (a.length >= 6 && plano.includes(a)) return a;
+  // Procura primeiro no texto como ele e; so se nada casar, tenta de novo com
+  // o hifen valendo espaco.
+  //
+  // Monte Alto/SP escreve "Ar-condicionado Split Inverter 9.000 BTU/h" e o
+  // catalogo do PNCP escreve "Ar Condicionado": sem a segunda passada os tres
+  // aparelhos (9.000, 12.000 e 18.000) caiam no texto generico do Anexo II.
+  //
+  // Mas a segunda passada nao pode ser a primeira. Em Paranavai/PR o edital usa
+  // as duas grafias — "Ar Condicionado, TIPO: Split Cassete" abre a linha e
+  // "Ar-condicionado 48.000 btus" aparece de novo no meio dela — e marcar as
+  // duas cortava a celula ao meio. Os dois planos tem o mesmo comprimento, entao
+  // a posicao encontrada vale igual no texto original.
+  for (const onde of [plano, planoH]) {
+    for (const t of tentativas) {
+      const a = normIgual(t).replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+      const exata = normIgual(t).replace(/\s+/g, ' ').trim();
+      const alvo = onde === plano ? exata : a;
+      if (alvo.length >= 6 && onde.includes(alvo)) return { ancora: alvo, plano: onde };
+    }
   }
+  return null;
   return '';
 }
 
@@ -279,8 +297,35 @@ function marcaPorProximidade(tokens, alvo) {
   return melhorN >= minimo ? melhorPos : -1;
 }
 
+// Vale a pena guardar este recorte para este item?
+//
+// Acrescenta 40 caracteres ao rotulo, ou e uma especificacao substancial por si
+// (150+) e ainda maior que o rotulo; alem disso comeca no nome do produto, nao
+// esta sujo de assinatura digital e fala do mesmo produto do rotulo.
+function serve(rotulo, t, confirmado) {
+  if (!t) return false;
+  // Especificacao de 150 caracteres para cima vale por si, sem comparar com o
+  // rotulo. Comparar castigava justamente o item que o PNCP descreve por
+  // extenso: o item 2 de Paranavai/PR tem 340 caracteres de rotulo de catalogo
+  // e a celula do edital tem 280 — a celula oficial, do produto certo, era
+  // recusada por ser "curta", e o item ficava com a linha do cassete de 48.000,
+  // que passava so por ser a mais comprida da tabela.
+  // Piso de 150 caracteres para a celula anonima; 60 para a que abre com o
+  // numero do item impresso no edital, porque ai a identidade esta provada e o
+  // que resta e so o tamanho. O item 107 de Sao Jose da Boa Vista/PR e assim: a
+  // linha inteira dele e "Ventilador de parede - Com 50cm de diametro, baixo
+  // nivel de ruido e facil instalacao", 85 caracteres, e recusa-la deixava o
+  // item sem nada ou, pior, com a linha do ventilador de teto ao lado.
+  const piso = confirmado ? 60 : 150;
+  const grande = t.length >= piso || t.length > rotulo.length + 40;
+  return grande && !comecaNoMeio(t) && !AINDA_SUJO.test(t) && falaDoMesmoProduto(rotulo, t);
+}
+
 function descritivosPorItem(secoes, itens) {
   const plano = normIgual(secoes);
+  // Mesmo comprimento do plano, so com o hifen valendo espaco: serve de
+  // segunda tentativa para a ancora, sem deslocar posicao nenhuma.
+  const planoH = plano.replace(/-/g, ' ');
   // Uma marca por POSICAO, com todos os itens que casam ali. Guardar uma marca
   // por item dava marcas repetidas na mesma posicao quando dois itens sao o
   // mesmo produto, e o trecho entre duas marcas coladas tem tamanho zero: em
@@ -289,11 +334,12 @@ function descritivosPorItem(secoes, itens) {
   const porPos = new Map();
   const semAncora = [];
   itens.forEach((it, i) => {
-    const a = ancoraDe(plano, it[1]);
-    if (!a) { semAncora.push(i); return; }
+    const achado = ancoraDe(plano, planoH, it[1]);
+    if (!achado) { semAncora.push(i); return; }
+    const { ancora: a, plano: onde } = achado;
     let de = 0;
     for (;;) {
-      const k = plano.indexOf(a, de);
+      const k = onde.indexOf(a, de);
       if (k < 0) break;
       if (!porPos.has(k)) porPos.set(k, []);
       porPos.get(k).push(i);
@@ -316,17 +362,186 @@ function descritivosPorItem(secoes, itens) {
   }
   const posicoes = [...porPos.keys()].sort((a, b) => a - b);
 
-  const melhor = new Map();
-  posicoes.forEach((pos, k) => {
+  // Cada posicao vira um trecho: da marca ate a marca seguinte.
+  const trechos = posicoes.map((pos, k) => {
     const proxima = k + 1 < posicoes.length ? posicoes[k + 1] : secoes.length;
     const fim = Math.min(proxima, pos + TETO_ITEM, secoes.length);
-    const txt = cortaNaProximaLinha(secoes.slice(pos, fim).replace(/\s+/g, ' ').trim());
+    return cortaNaProximaLinha(secoes.slice(pos, fim).replace(/\s+/g, ' ').trim());
+  });
+
+  // Entre os trechos que sobraram para o item, ganha o que FALA DELE — nao o
+  // mais comprido.
+  //
+  // Escolher pelo tamanho parecia inofensivo e nao era. Quando a ancora encolhe
+  // ate o nome generico do produto ("ar condicionado"), ela casa na linha de
+  // TODOS os aparelhos do edital: os itens 1, 2 e 3 de Paranavai/PR — 9.000,
+  // 18.000 e 36.000 BTUs — ficaram os tres com a celula do item 4, o cassete de
+  // 48.000, so porque era a linha mais longa. Texto limpo, oficial e do produto
+  // errado nos tres. Em Catanduva/SP a balanca de animais FILHOTES 15 kg recebeu
+  // a de ADULTOS 200 kg pelo mesmo caminho.
+  //
+  // A contagem e na CABECA do trecho, onde fica o nome do produto: contando no
+  // corpo inteiro o trecho comprido venceria de novo, so por ter mais palavras.
+  const candidatos = new Map();
+  posicoes.forEach((pos, k) => {
     for (const i of porPos.get(pos)) {
-      const atual = melhor.get(i);
-      if (!atual || txt.length > atual.length) melhor.set(i, txt);
+      if (!candidatos.has(i)) candidatos.set(i, []);
+      candidatos.get(i).push(k);
     }
   });
-  return melhor;
+  const CABECA_ESCOLHA = 220;
+
+  // O numero do item, impresso logo antes da linha, decide antes das palavras.
+  //
+  // Em Santa Maria/RS a tabela sai colada — "...do produto.45Cafeteira eletrica
+  // com capacidade minima de 1,2 litros..." e "...232,000046Cafeteira automatica
+  // com capacidade minima de 6 litros...". As palavras nao separam as duas
+  // ("1,2" e curto demais para virar token), mas o numero separa, e ele e
+  // exatamente o que o edital usa para identificar o item.
+  // Le o numero que ABRE a linha, imediatamente antes do nome do produto.
+  //
+  // Tres formas, todas vistas em edital de verdade:
+  //   "45Cafeteira eletrica..."        numero colado (Santa Maria/RS)
+  //   "...490,75004Fogao eletrico"     numero com zero a esquerda, colado no
+  //                                    centavo da linha de cima (Santa Maria/RS)
+  //   "107 Unid Ventilador de parede"  numero, unidade, nome (Sao Jose da Boa
+  //                                    Vista/PR)
+  const ABERTURA = /(?:^|[^0-9])(0*[0-9]{1,4})[.)-]?\s*(?:(?:un|und|unid|unidade|pc|pca|peca|cx|caixa|par|kit|servico|kg)\.?\s*)?$/i;
+  const numeroDaLinhaAntes = (pos) => {
+    const antes = plano.slice(Math.max(0, pos - 22), pos);
+    const m = antes.match(ABERTURA);
+    if (m) return +m[1];
+    // colado em outro numero, so vale com zero a esquerda: "75004" e o item 4,
+    // "75" com o centavo nao e item nenhum
+    const z = antes.match(/0{1,4}([1-9][0-9]{0,3})$/);
+    return z ? +z[1] : null;
+  };
+
+  // A capacidade do aparelho vale por varias palavras.
+  //
+  // Em Paranavai/PR os itens 1 e 2 sao os dois um split high wall quente/frio
+  // com controle remoto sem fio a 220V; o que os separa e 9.000 contra 18.000
+  // BTUs. Contando cada palavra igual, as duas linhas empatavam em 8 e o
+  // desempate por tamanho dava a linha do 9.000 para os dois. O numero e o unico
+  // token que distingue, entao pesa 3.
+  const PESO_NUMERO = 3;
+  const ehNumero = w => /^[0-9]/.test(w);
+
+  // E a capacidade DO OUTRO item veta.
+  //
+  // Se a cabeca do trecho anuncia 48.000 BTUs, 48.000 e a capacidade de outro
+  // item do mesmo edital e a capacidade deste nao aparece ali, entao aquela
+  // linha e do outro — por mais palavras que as duas tenham em comum. Sem isto
+  // os itens 3 e 6 de Paranavai/PR (36.000 e 60.000) ficavam os dois com a
+  // celula do cassete de 48.000.
+  const numsDe = new Map();
+  for (const i of candidatos.keys()) numsDe.set(i, new Set(palavrasDoItem(itens[i][1]).filter(ehNumero)));
+  const alheios = new Map();
+  for (const i of candidatos.keys()) {
+    const fora = new Set();
+    for (const [j, ns] of numsDe) if (j !== i) for (const n of ns) fora.add(n);
+    for (const n of numsDe.get(i)) fora.delete(n);
+    alheios.set(i, fora);
+  }
+
+  const numerosDoEdital = new Set(itens.map(it => it[0]).filter(Number.isInteger));
+  const melhor = new Map();
+  for (const [i, quais] of candidatos) {
+    const rotulo = itens[i][1];
+    const alvo = palavrasDoItem(rotulo);
+    const meus = numsDe.get(i), fora = alheios.get(i);
+
+    // Cabeca de cada candidato, uma vez so.
+    const cabecas = quais.map(k => {
+      const t = trechos[k] || '';
+      const c = new Set(fatia(t.slice(0, CABECA_ESCOLHA)).map(limpaNum));
+      return { k, t, c, nums: [...c].filter(ehNumero) };
+    });
+
+    // O veto so age quando tem como apontar o certo: ou existe candidato que
+    // repete um numero DESTE item — e ai os que nao repetem sao de outro —, ou
+    // a cabeca anuncia a capacidade de outro item.
+    //
+    // Sem essa trava o veto derrubava dez descritivos certos, entre eles o
+    // FRIGOBAR do item 1 de Salto/SP, so porque a linha trazia o codigo do
+    // material e o rotulo do PNCP nao tem numero nenhum para comparar.
+    // Vale so o numero que e SO deste item. Tensao e potencia se repetem pelo
+    // edital inteiro: o item 107 de Sao Jose da Boa Vista/PR tem "127/220" no
+    // rotulo, o 109 tambem, e por causa desse 127 o veto derrubava a propria
+    // linha do 107.
+    const meusSo = new Set([...meus].filter(w => !fora.has(w)));
+    const alguemTemMeu = meusSo.size > 0 && cabecas.some(x => x.nums.some(w => meusSo.has(w)));
+
+    // "Forte" e o numero que so pode ser capacidade: 9.000, 18.000, 48.000 —
+    // mil para cima e redondo. Codigo de catalogo nao passa (165.6.260 vira
+    // 1656260, 104740 tambem nao e redondo) e a voltagem tambem nao: 220 esta
+    // em todo item do edital e servia de salvo-conduto para a linha errada — o
+    // item 5 de Paranavai/PR (55.000 BTUs) ficava com a celula do cassete de
+    // 48.000 so porque as duas linhas dizem 220V.
+    const forte = w => { const n = +w; return n >= 1000 && n % 100 === 0; };
+    const meusFortes = new Set([...meus].filter(forte));
+
+    // O numero impresso na abertura de cada linha candidata.
+    const numLinha = cabecas.map(x => numeroDaLinhaAntes(posicoes[x.k]));
+    // So veta pelo numero quando ele apontou a linha CERTA para este item; se
+    // nenhuma candidata abre com o numero dele, o numero nao sabe de nada e
+    // fica quieto. Era o que faltava para o item 107 de Sao Jose da Boa
+    // Vista/PR (ventilador de PAREDE), que ficava com a linha do 108 (de TETO)
+    // porque a celula certa e curta e a do vizinho e longa.
+    const achouMinhaLinha = numLinha.some(n => n === itens[i][0]);
+
+    let vencedor = '', nota = -1, venceuPeloNumero = false;
+    cabecas.forEach(({ k, t, c, nums }, idx) => {
+      if (!t) return;
+      const confirmado = numLinha[idx] === itens[i][0];
+      const doVizinho = achouMinhaLinha && !confirmado
+                     && numLinha[idx] !== null && numerosDoEdital.has(numLinha[idx]);
+      const temMeu = nums.some(w => meusSo.has(w));
+      // Se o edital imprime o numero deste item abrindo a linha, e a linha
+      // dele — nenhuma heuristica de palavra ou de capacidade desmente isso.
+      const deOutro = confirmado ? false : (doVizinho
+        || (!temMeu && alguemTemMeu)
+        || (meusFortes.size > 0 && !nums.some(w => meusFortes.has(w))
+            && nums.some(w => fora.has(w) && forte(w))));
+      // Ordem de peso: primeiro o trecho que SERVE (as mesmas regras que o
+      // gravam la embaixo) e nao e de outro item; depois o que traz o numero do
+      // item impresso antes; e so entao as palavras, com as numericas pesando
+      // mais. Sem a primeira camada o numero levava a escolha para um trecho
+      // que ia ser recusado adiante, e o item, que tinha uma celula boa entre
+      // as candidatas, acabava sem nada: foram quatro assim em Bueno Brandao/MG.
+      const n = (serve(rotulo, t, confirmado) && !deOutro ? 1e6 : 0)
+              + (confirmado ? 1e3 : 0)
+              + alvo.filter(w => c.has(w)).reduce((s, w) => s + (ehNumero(w) ? PESO_NUMERO : 1), 0);
+      if (n > nota || (n === nota && t.length > vencedor.length)) { nota = n; vencedor = t; venceuPeloNumero = confirmado; }
+    });
+    // Abaixo de 1e6 nenhum trecho servia, ou o unico que servia era de outro
+    // item. Melhor o item sem descritivo do que com a especificacao do vizinho.
+    if (vencedor && nota >= 1e6) melhor.set(i, { texto: vencedor, confirmado: venceuPeloNumero });
+  }
+
+  // Dois itens de rotulos diferentes nao podem sair com o MESMO descritivo.
+  //
+  // Quando isso acontece, uma das duas celulas e do outro produto — e nao ha
+  // como saber qual sem inventar. Em Santa Maria/RS tres cafeteiras (8 L, 1,2 L
+  // e 6 L) terminavam todas com a celula da de 1,2 L, e tres refrigeradores
+  // (445 L, 378 L, 378 L) com a de "entre 370 e 407 litros".
+  //
+  // Fica com o texto so quem teve o numero do item confirmado no edital; os
+  // demais ficam sem, e o resumo mostra o rotulo do PNCP, que ao menos traz a
+  // capacidade certa. Descritivo faltando o usuario percebe; descritivo do
+  // vizinho, nao.
+  const porTexto = new Map();
+  for (const [i, v] of melhor) {
+    if (!porTexto.has(v.texto)) porTexto.set(v.texto, []);
+    porTexto.get(v.texto).push(i);
+  }
+  const soTexto = new Map();
+  for (const [texto, quais] of porTexto) {
+    const rotulos = new Set(quais.map(i => normIgual(itens[i][1]).replace(/[^a-z0-9]+/g, ' ').trim()));
+    if (rotulos.size < 2) { for (const i of quais) soTexto.set(i, melhor.get(i)); continue; }
+    for (const i of quais) if (melhor.get(i).confirmado) soTexto.set(i, melhor.get(i));
+  }
+  return soTexto;
 }
 
 let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0;
@@ -344,25 +559,12 @@ for (const e of dados.editais) {
     itensTotal++;
     // it = [numero, descricao, quantidade, unidade, valor, beneficio]
     const completo = recortes.get(i);
-    // So vale guardar o que acrescenta de verdade ao rotulo que ja temos, e so
-    // se comecar no nome do produto.
-    //
-    // A regra era "40 caracteres a mais que o rotulo", e so isso. Ela castigava
-    // justamente o item cujo rotulo do PNCP ja e comprido: em "Fogao Industrial
-    // aplicacao: alimentacao e nutricao, caracteristicas adicionais: sem forno"
-    // o rotulo tem 150 caracteres, entao o edital precisava de 190 para valer —
-    // e uma celula de 160 caracteres, que E o texto oficial, era recusada.
-    // Eram 409 itens nessa situacao, medidos em 09/09/2026 quando o usuario
-    // notou que os descritivos tinham encolhido.
-    //
-    // Agora vale por qualquer um dos dois caminhos: acrescenta 40 ao rotulo, ou
-    // e uma especificacao substancial por si (150+) e ainda maior que o rotulo.
-    const vale = completo
-      && (completo.length > it[1].length + 40
-          || (completo.length >= 150 && completo.length > it[1].length));
-    if (vale && !comecaNoMeio(completo) && !AINDA_SUJO.test(completo)
-        && falaDoMesmoProduto(it[1], completo)) {
-      it[6] = completo;
+    // Uma regra so, a do serve(), para escolher entre trechos e para gravar.
+    // Enquanto eram duas, a escolha elegia a celula certa do item 2 de
+    // Paranavai/PR e a gravacao a recusava logo depois, por ser mais curta que
+    // o rotulo de catalogo — o item ficava vazio com o texto certo em maos.
+    if (completo && serve(it[1], completo.texto, completo.confirmado)) {
+      it[6] = completo.texto;
       itensRicos++;
     } else if (it.length > 6) it.length = 6;
   });

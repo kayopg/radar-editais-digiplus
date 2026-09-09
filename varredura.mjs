@@ -413,6 +413,38 @@ if (semItens.length) {
     } catch { o.__it = null; }
   });
 }
+// O numeroItem do PNCP nem sempre e o numero do item.
+//
+// Em algumas compras o PNCP publica o ID interno no lugar da numeracao: Santo
+// Antonio do Caiua/PR sai como 7965701, 7965702, 7965703 e o edital imprime
+// 01, 02, 03. Quem le o resumo cota "o item 7965701", que nao existe.
+//
+// Nao se reescreve por suspeita: so quando a compra INTEIRA e uma corrida
+// contigua que comeca alto demais para ser numeracao (a leitura sempre parte
+// da pagina 1, entao numeracao de verdade comeca em 1). Ai a posicao na lista
+// e o numero impresso — conferido no texto do edital de Santo Antonio do
+// Caiua/PR (01, 02, 03), Barra do Garcas/MT (8), Itapirapua/GO (02) e Vale de
+// Sao Domingos/MT (82).
+function corrigeNumeracao(lista) {
+  if (!Array.isArray(lista) || lista.length < 2) return lista;
+  const ns = lista.map(x => x.n);
+  if (ns.some(n => !Number.isInteger(n))) return lista;
+  const contigua = ns.every((n, i) => i === 0 || n === ns[i - 1] + 1);
+  if (!contigua || ns[0] <= 10000 || ns[0] <= lista.length) return lista;
+  const base = ns[0];
+  for (const x of lista) x.n = x.n - base + 1;
+  return lista;
+}
+let idTrocado = 0;
+for (const o of cands) {
+  if (!o.__it) continue;
+  const antes = o.__it.length ? o.__it[0].n : null;
+  corrigeNumeracao(o.__it);
+  if (o.__it.length && o.__it[0].n !== antes) idTrocado++;
+}
+if (idTrocado) process.stderr.write(`  ${idTrocado} compras vinham com ID no lugar do numero do item; renumeradas
+`);
+
 errItens = cands.filter(o => !o.__it).length;
 process.stderr.write(`  ${errItens} erros\n`);
 
