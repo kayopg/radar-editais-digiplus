@@ -151,7 +151,13 @@ const SERV_ITEM = ["instalacao","montagem","manutencao","higienizacao","desinsta
 const SERV_OBJ = ["instalacao","montagem","mao de obra"];
 
 // 5.2 — veto por objeto
-const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motociclet","automov","trator","maquinas agricolas","brinquedo","material de construcao","processamento de dados","formulas aliment","dieta enteral","generos aliment","material de limpeza","higiene e limpeza","sucata","velorio","tecidos aviamento"];
+const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motociclet","automov","trator","maquinas agricolas","brinquedo","material de construcao","processamento de dados","formulas aliment","dieta enteral","generos aliment","material de limpeza","higiene e limpeza","sucata","velorio","tecidos aviamento",
+// acrescentados em 09/09/2026. O objeto ja dizia o que o item escondia:
+// Praia Grande/SP e "aquisicao de coletor de residuos organicos e detritos",
+// R$ 3,1 milhoes de varricao urbana que entrou como eletroportatil; Coxim/MS e
+// "materiais de refrigeracao e rede de gases para MANUTENCAO de aparelhos de
+// ar condicionado", cujos itens sao pecas de reposicao.
+"coletor de residuos","residuos organicos","rede de gases","manutencao de aparelhos"];
 
 // 5.3 — veto por item (lista viva, construída de falsos positivos reais)
 const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
@@ -189,6 +195,23 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 //     "agitacao de agua" e "aplicacao: laboratorio" e mais seguro que vetar
 //     "banho maria", que no balcao termico e produto da casa.
 "britagem","rebritagem","britador","peneira vibratoria","mesa alimentadora",
+// acrescentados em 09/09/2026, conferindo edital por edital os itens sem
+// descritivo — o descritivo faltava porque o produto do edital nao era o que a
+// categoria dizia:
+//   - Praia Grande/SP, R$ 3.177.610: o PNCP catalogou como "Aspirador Po /
+//     Agua - Industrial", mas o objeto e "coletor de residuos organicos e
+//     detritos" e o edital descreve aspirador urbano SOBRE REBOQUE com motor a
+//     gasolina de 23 HP. Nao e o aspirador de po e agua da casa.
+//   - Coxim/MS: edital de manutencao de ar condicionado, e os 15 itens sao
+//     pecas — porca flange, valvula de servico, kit placa, fita de pvc, bolsa
+//     coletora, micro motor de ventilador.
+// "recolhimento de folhas" e "alimentacao gasolina" estao na descricao do
+// PROPRIO item de Praia Grande e nao deixam duvida: e maquina de varricao
+// urbana, movida a gasolina. Nao se veta "a gasolina" solto porque gerador a
+// gasolina e produto da casa e esta na lista de categorias.
+"sobre reboque","aspirador urbano","recolhimento de folhas","alimentacao gasolina",
+"porca flange","valvula de servico","valvula de servicos","kit placa","bolsa coletora",
+"fita de pvc","micro motor","rede de gases",
 "equipamento medico","peca / acessorio","peca/acessorio","acessorio para equipamento",
 "protese","jateamento","agitacao de agua","aplicacao: laboratorio","uso laboratorial"];
 

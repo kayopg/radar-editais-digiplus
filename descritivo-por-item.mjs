@@ -186,6 +186,24 @@ function cortaNaProximaLinha(txt) {
 // "descritivo" era texto de proposta, nao produto.
 const comecaNoMeio = t => /^[a-zà-ÿ,;.)\-]/.test(t.trim());
 
+// Prova final: o comeco do descritivo tem de falar do MESMO produto do rotulo.
+//
+// A busca por proximidade acerta quase sempre, mas quando erra o resultado e
+// perigoso — texto limpo, coerente, e de outro produto. Dois casos reais em
+// 09/09/2026: o ar-condicionado de 20.000 BTU recebeu a celula do de 30.000, e
+// a "PINCA KELLY CURVA 14 CM" recebeu a da "PINCA HARTMANN PARA COLOCACAO DE
+// DIU". Cotar em cima disso e pior do que nao ter descritivo nenhum.
+//
+// A comparacao ignora hifen porque o PDF quebra palavra no fim da linha
+// ("ELETROCARDIO-GRAMA") e isso nao e divergencia de produto.
+const CABECA = 160;
+function falaDoMesmoProduto(rotulo, texto) {
+  const alvo = palavrasDoItem(rotulo);
+  if (alvo.length < 2) return true;          // rotulo curto demais para julgar
+  const cabeca = new Set(fatia(texto.slice(0, CABECA)).map(limpaNum));
+  return alvo.filter(w => cabeca.has(w)).length >= 2;
+}
+
 // Recorta o descritivo de cada item cortando no comeco do PROXIMO item.
 //
 // Antes cada item era procurado sozinho e a celula terminava num padrao de
@@ -200,6 +218,67 @@ const comecaNoMeio = t => /^[a-zà-ÿ,;.)\-]/.test(t.trim());
 // seguinte, seja de quem for. Item nenhum pode invadir o proximo, porque o
 // proximo e o limite. Itens iguais repetidos (Salto lista a mesma geladeira nos
 // itens 5 e 6) geram marcas separadas e recebem o mesmo texto, que e o certo.
+// Palavras sem valor para reconhecer um produto.
+const VAZIAS = new Set(['para','com','sem','dos','das','que','por','uma','nao','tipo','material',
+  'modelo','unidade','medida','aplicacao','caracteristicas','adicionais','minimo','maximo',
+  'cor','voltagem','tensao','potencia','capacidade','altura','largura','comprimento','dimensoes']);
+
+// Remissoes que o orgao escreve no lugar da descricao: "AR-CONDICIONADO 30.000
+// BTU, CONFORME DESCRITIVO NO TERMO DE REFERENCIA". As palavras da remissao
+// aparecem no edital inteiro e puxavam a janela para o lugar errado.
+const REMISSAO = /\s*[,.;-]?\s*(?:conforme|vide|ver)\s+(?:o\s+|a\s+|as\s+|os\s+)?(?:termo|descritiv|edital|anexo|tabela|especifica|item)[^,.;]*/gi;
+
+// Os numeros contam, e juntos: "20.000" vira o token "20000", nao "20" e
+// "000". Sem isso o ar-condicionado de 20.000 BTU casava com a celula do de
+// 30.000 — texto limpo, produto errado, e ninguem percebia porque a auditoria
+// de contaminacao so procura item dentro de item.
+const fatia = s => normIgual(String(s).replace(/-\s*/g, ''))
+  .match(/[a-z]+|\d[\d.,]*\d|\d/g) || [];
+const util = w => (/^\d/.test(w) ? w.replace(/[.,]/g, '').length >= 3
+                                 : w.length >= 4 && !VAZIAS.has(w));
+const limpaNum = w => (/^\d/.test(w) ? w.replace(/[.,]/g, '') : w);
+
+const palavrasDoItem = rotulo => [...new Set(
+  fatia(String(rotulo).replace(REMISSAO, ' ')).filter(util).map(limpaNum))];
+
+// Segunda passada, para o item cujo rotulo nao aparece LITERAL no edital.
+//
+// A ancora exige trecho exato e contiguo, e isso perde o caso mais comum de
+// todos: o PNCP escreve "FOGAO 06 BOCAS" e o edital escreve "FOGAO INDUSTRIAL
+// 6 BOCAS" — mesmo produto, texto diferente. Eram 127 itens em 09/09/2026, o
+// maior grupo de faltantes, e o usuario pediu para conferir um por um.
+//
+// Aqui nao se procura a frase: procura-se ONDE as palavras do item se juntam.
+// Uma janela corre o texto e a posicao vencedora e a que reune mais palavras
+// distintas do rotulo. A segmentacao continua igual depois disso, entao um
+// item nunca invade o outro mesmo que a janela erre.
+const JANELA_TOKENS = 45;
+function marcaPorProximidade(tokens, alvo) {
+  if (alvo.length < 2) return -1;
+  const querido = new Set(alvo);
+  let melhorPos = -1, melhorN = 0;
+  for (let i = 0; i < tokens.length; i++) {
+    const vistas = new Set();
+    for (let j = i; j < tokens.length && j < i + JANELA_TOKENS; j++) {
+      if (querido.has(tokens[j].w)) vistas.add(tokens[j].w);
+    }
+    // A janela so vale se comecar numa palavra do item: comecando no meio, a
+    // marca cairia antes do nome do produto e o recorte abriria fora de lugar.
+    if (querido.has(tokens[i].w) && vistas.size > melhorN) { melhorN = vistas.size; melhorPos = tokens[i].p; }
+  }
+  // Exige a maioria das palavras do item, e nunca menos de duas: com uma so,
+  // "fogao" casaria com a linha de qualquer outro fogao.
+  //
+  // O teto de cinco existe porque a exigencia proporcional punia o rotulo
+  // LONGO: "Aparelho Ar Condicionado capacidade refrigeracao: 12.000,
+  // caracteristicas adicionais 1: controle remoto/display digital/timer/selo
+  // procel, modelo: split inverter" tem 13 palavras uteis e precisava de 8
+  // coincidencias, enquanto "FOGAO 06 BOCAS" precisava de 2. Quanto mais o
+  // PNCP descrevia, mais dificil ficava casar — o inverso do que faz sentido.
+  const minimo = Math.max(2, Math.min(5, Math.ceil(alvo.length * 0.6)));
+  return melhorN >= minimo ? melhorPos : -1;
+}
+
 function descritivosPorItem(secoes, itens) {
   const plano = normIgual(secoes);
   // Uma marca por POSICAO, com todos os itens que casam ali. Guardar uma marca
@@ -208,9 +287,10 @@ function descritivosPorItem(secoes, itens) {
   // Salto/SP a geladeira do item 5 ficava sem descritivo e a do item 6, que e
   // identica, ficava com ele.
   const porPos = new Map();
+  const semAncora = [];
   itens.forEach((it, i) => {
     const a = ancoraDe(plano, it[1]);
-    if (!a) return;
+    if (!a) { semAncora.push(i); return; }
     let de = 0;
     for (;;) {
       const k = plano.indexOf(a, de);
@@ -220,6 +300,20 @@ function descritivosPorItem(secoes, itens) {
       de = k + a.length;
     }
   });
+
+  // Quem nao casou pela frase exata tenta pela proximidade das palavras. Os
+  // tokens sao montados uma vez so: sao editais de centenas de milhares de
+  // caracteres, e refazer isso por item deixaria a rodada inviavel.
+  if (semAncora.length) {
+    const tokens = [];
+    for (const m of plano.matchAll(/[a-z]+|\d[\d.,]*\d|\d/g)) tokens.push({ p: m.index, w: limpaNum(m[0]) });
+    for (const i of semAncora) {
+      const pos = marcaPorProximidade(tokens, palavrasDoItem(itens[i][1]));
+      if (pos < 0) continue;
+      if (!porPos.has(pos)) porPos.set(pos, []);
+      porPos.get(pos).push(i);
+    }
+  }
   const posicoes = [...porPos.keys()].sort((a, b) => a - b);
 
   const melhor = new Map();
@@ -266,7 +360,8 @@ for (const e of dados.editais) {
     const vale = completo
       && (completo.length > it[1].length + 40
           || (completo.length >= 150 && completo.length > it[1].length));
-    if (vale && !comecaNoMeio(completo) && !AINDA_SUJO.test(completo)) {
+    if (vale && !comecaNoMeio(completo) && !AINDA_SUJO.test(completo)
+        && falaDoMesmoProduto(it[1], completo)) {
       it[6] = completo;
       itensRicos++;
     } else if (it.length > 6) it.length = 6;

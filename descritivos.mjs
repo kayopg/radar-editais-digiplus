@@ -36,10 +36,20 @@ const arg = (nome, padrao) => {
 const UF = (arg('--uf', '') || '').toUpperCase();
 const LIMITE = Number(arg('--limite', 0));
 
-// Teto por edital. O texto viaja embutido na pagina, entao nao pode crescer sem
-// limite: 60 mil caracteres sao umas 20 paginas de descritivo, mais do que
-// qualquer Termo de Referencia de eletrodomestico que apareceu ate agora.
-const TETO = 60000;
+// Teto por edital.
+//
+// Eram 60 mil caracteres, escolhidos quando este texto viajava embutido na
+// pagina do artefato. Desde 09/09/2026 ele nao viaja mais — o resumo deixou de
+// imprimir as folhas com os trechos do edital — e o teto virou so um limite de
+// extracao, sem contrapartida.
+//
+// E ele estava cortando fundo: 23 dos 60 editais batiam nele. Em Bueno
+// Brandao/MG a tabela de itens comeca na posicao 54.700, entao quase toda ela
+// caia fora, e "frigobar" e "geladeira" simplesmente nao existiam no texto que
+// sobrava. Era a maior causa de item sem descritivo — maior que a ancora.
+//
+// 250 mil cobre o edital inteiro na quase totalidade dos casos.
+const TETO = 250000;
 
 const dados = JSON.parse(fs.readFileSync(path.join(DIR, 'docs', 'dados.json'), 'utf8'));
 const C = dados.colunas.reduce((o, n, i) => (o[n] = i, o), {});
