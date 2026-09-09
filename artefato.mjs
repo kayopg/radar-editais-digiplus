@@ -108,15 +108,20 @@ catch { console.error('aviso: docs/aberturas.json nao encontrado — o resumo sa
 // escaneadas: o orgao imprime, assina, digitaliza e sobe a foto, e uma pagina
 // dessas chega a 3,5 MB (Jaraguari/MS) contra 240 KB de uma folha com texto.
 //
-// 450 KB por folha mantem 49 das 62 e deixa o artefato em 14,7 MB. O usuario
-// pediu 500, mas 500 nao cabe: as duas folhas seguintes (475 e 478 KB) levam o
-// arquivo a 16,02 MB e a publicacao e recusada por dois centesimos. 450 e o
-// maior valor que ainda entra, com 1,2 MB de folga para a lista crescer.
+// 500 KB por folha mantem 53 das 64 e deixa o artefato em 14,3 MB.
+//
+// O teto foi 450 enquanto o texto das secoes viajava embutido; tirando esse
+// texto (que deixou de ser impresso no resumo) sobraram 2 MB, e os 500 que o
+// usuario tinha pedido passaram a caber.
+//
+// Subir mais nao adianta: as 11 folhas que sobram somam 10 MB, e mesmo sem a
+// maior delas (Jaraguari/MS, 3,5 MB numa pagina escaneada) sao 6,6 MB para
+// 1,7 MB de espaco. Nao e escolha, e aritmetica.
 //
 // As 13 que ficam de fora nao se perdem: o lote local em resumos/ nao tem teto
 // e anexa as paginas originais dos 68 editais. O corte vale so para o que roda
 // dentro do navegador.
-const TETO_FOLHA = 450 * 1024;
+const TETO_FOLHA = 500 * 1024;
 {
   const dentro = {}, fora = [];
   for (const [k, v] of Object.entries(aberturas.editais || {})) {
