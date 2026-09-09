@@ -102,6 +102,12 @@ const FIM_DE_LINHA = [
   // Fim da linha sem o numero do proximo item, que fica fora do teto:
   // "...+/- 5% de tolerância. UN 2 R$ 37.963,33 R$ 75.926," em Catanduva/SP.
   /\s(?:UNIDADES?|UNID|UND|UN|PCS|PC|CX|PAR|KG|LT)\.?\s+\d{1,4}\s+R\$/i,
+  // Linha que comeca com o numero do item e o codigo de catalogo GRUDADOS, sem
+  // espaco: "...1080I E 1080P.0016248542CABO EXTENSOR TIPO: FLEXIVEL". E como
+  // Sabinopolis/MG monta a tabela, e sem isto o item 15 vinha com o 16 dentro.
+  // Oito digitos seguidos de maiuscula nao acontecem dentro de uma
+  // especificacao — "1080P" tem quatro.
+  /\d{8,}(?=[A-ZÀ-Ú])/,
   // O ULTIMO item da tabela nao tem um proximo para fechar a celula, e o
   // recorte segue para o corpo do edital. Estas palavras nao aparecem em
   // descritivo de produto — aparecem em clausula: em Paranapoema/PR o
@@ -149,8 +155,19 @@ function tiraRodape(txt) {
   return t.replace(/\s{2,}/g, ' ').replace(/\s+([.,;])/g, '$1').trim();
 }
 
+// O edital que lista o item duas vezes — a linha da tabela e depois
+// "Especificacao:" repetindo o mesmo texto — fazia o recorte sair dobrado, com
+// 1.309 caracteres onde ha 650 de conteudo (Sabinopolis/MG). Voltando ao
+// proprio comeco, o descritivo acabou ali.
+function cortaNaRepeticao(t) {
+  if (t.length < 200) return t;
+  const inicio = t.slice(0, 50);
+  const k = t.indexOf(inicio, 100);
+  return k > 0 ? t.slice(0, k).trim().replace(/[\s.,;:-]+$/, '') : t;
+}
+
 function cortaNaProximaLinha(txt) {
-  const limpo = tiraRodape(txt);
+  const limpo = cortaNaRepeticao(tiraRodape(txt));
   let fim = limpo.length;
   for (const re of FIM_DE_LINHA) {
     const m = re.exec(limpo);
