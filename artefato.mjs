@@ -64,8 +64,14 @@ catch { console.error('aviso: docs/descritivos.json nao encontrado — o resumo 
     if (!v) continue;
     const querNum = new Set(e[C.itens].map(it => it[5]).filter(Boolean));
     const querDesc = new Set(e[C.itens].map(it => uma(it[3])));
+    // O texto das secoes fica de fora: 1,73 MB que a pagina carregava para
+    // imprimir as folhas finais do resumo, retiradas em 09/09/2026. Ele
+    // continua no docs/descritivos.json, porque e dele que o
+    // descritivo-por-item.mjs recorta a especificacao de cada item — mas isso
+    // acontece aqui, antes de publicar, e o navegador nao precisa dele.
+    const { secoes, ...semSecoes } = v;
     enxuto[e[C.path]] = {
-      ...v,
+      ...semSecoes,
       total: (v.itens || []).length,
       itens: (v.itens || []).map(x => (querNum.has(x[0]) || querDesc.has(uma(x[1])))
         ? x
