@@ -688,7 +688,6 @@ function multi(host,items,arr){
     render();
   });
 }
-multi("cat",Object.keys(CAT).map(function(k){return {l:CAT[k],v:k};}),fCAT);
 
 // Preco: os dois primeiros ordenam, o terceiro FILTRA. Sigiloso nao tem lugar
 // numa ordem por valor — o edital pode ser de mil ou de milhao, e empilhar tudo
@@ -740,6 +739,17 @@ fetch("dados.json?v=" + Date.now(), {cache:"no-store"})
     var ufs = m.ufs || [];
     document.getElementById("listaUf").textContent = ufs.join(" ");
     multi("uf", ufs.map(function(u){ return {l:u, v:u}; }), fUF);
+
+    // So as categorias que existem na varredura de hoje viram filtro, e por isso
+    // isto mora aqui: a lista de CAT e fixa e cobre tudo que o radar ja
+    // classificou, entao "Lousa digital" e "Geradores" continuavam na tela
+    // depois de a lousa deixar de ser cotada — filtro que, clicado, nao mostra
+    // edital nenhum. Montado antes do fetch, D ainda esta vazio e nao sobra
+    // categoria nenhuma.
+    var catsUsadas = {};
+    D.forEach(function(r){ r[8].forEach(function(it){ catsUsadas[it[0]] = 1; }); });
+    multi("cat", Object.keys(CAT).filter(function(k){ return catsUsadas[k]; })
+      .map(function(k){ return {l:CAT[k], v:k}; }), fCAT);
 
     if(m.varredura){
       var p = m.varredura.split("-");
