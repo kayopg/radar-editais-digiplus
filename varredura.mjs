@@ -232,13 +232,14 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 //     lavanderia; o usuario respondeu que calandra nao esta na lista de
 //     produtos dele. Fica vetada;
 //   Vale de Sao Domingos/MT — descascador de laranja MANUAL, de manivela;
-//   Campinas/SP item 14 — espremedor de alho, manual. Utensilio, nao aparelho.
+//   Campinas/SP item 14 — espremedor de legume, manual, para alho. Utensilio,
+//     nao aparelho, e o usuario confirmou em 10/09/2026 que nao cota.
 "gaiola cobaia","bioterio","camundongo","forno calibracao","calandra rotativa",
 "descascador manual","espremedor legume",
-// O usuario conferiu a lista em 10/09/2026 e disse que a Digiplus nao cota
+// O usuario conferiu a lista em 10/09/2026 e disse que a Digiplus nao cota:
 // lousa interativa (a tela, de 52 a 86 polegadas, que aparecia em cinco
-// editais), nem secadora de papeis, reservatorio de bebedouro solto ou balanca
-// veterinaria de pesagem de animais.
+// editais), secadora de papeis, reservatorio de bebedouro solto, balanca
+// veterinaria de pesagem de animais, espremedor de legume e calandra rotativa.
 "lousa interativa","lousa digital","secadora papeis","secadora de papeis",
 "reservatorio bebedouro","pesagem de animais",
 "equipamento medico","peca / acessorio","peca/acessorio","acessorio para equipamento",
