@@ -242,7 +242,15 @@ async function extrai(e) {
   // Termo de Referencia", que e OUTRO arquivo. Sozinho ele dava cobertura zero
   // e o descritivo ficava de fora — justamente o que o usuario precisa.
   let paginas = [], textoWord = null, formato = null;
-  for (const c of cands.slice(0, 4)) {
+  // O que se chama de Termo de Referencia vai na frente, e leem-se oito
+  // arquivos, nao quatro.
+  //
+  // Chapadao do Sul/MS publica 27 arquivos e o "4__Termo_de_referncia" fica em
+  // decimo; com quatro leituras o edital entrava sem a tabela de itens e os 8
+  // itens ficavam sem descritivo. O mesmo em Montes Claros/MG e Pouso Alegre/MG.
+  const ehTR = a => /termo|referencia|refer[eê]ncia|anexo|especifica|memorial|planilha/i.test(String(a.titulo || ''));
+  const ordem = [...cands.filter(ehTR), ...cands.filter(a => !ehTR(a))];
+  for (const c of ordem.slice(0, 8)) {
     let f;
     try { f = await fontesDe(c, tropecos); } catch (err) { tropecos.push(err.message); continue; }
     for (const p of f.pdfs) {

@@ -366,9 +366,15 @@ function descritivosPorItem(secoes, itens) {
   //                                    centavo da linha de cima (Santa Maria/RS)
   //   "107 Unid Ventilador de parede"  numero, unidade, nome (Sao Jose da Boa
   //                                    Vista/PR)
-  const ABERTURA = /(?:^|[^0-9])(0*[0-9]{1,4})[.)-]?\s*(?:(?:un|und|unid|unidade|pc|pca|peca|cx|caixa|par|kit|servico|kg)\.?\s*)?$/i;
+  //   "03 391765 116669 FORNO MICROONDAS"  numero, codigo de catalogo, nome
+  //                                       (Ponta Grossa/PR, que numera "6.",
+  //                                       "1)" e "03" na mesma tabela)
+  // O separador antes do codigo e obrigatorio: sem ele o motor partia o codigo
+  // ao meio e lia "1" de "104740", dando o item 1 de Paranavai/PR como dono da
+  // linha do 18.000 BTUs.
+  const ABERTURA = /(?:^|[^0-9])(0*[0-9]{1,4})[.)\-]?(?:\s+[0-9]{5,9}[.,)\-]*){0,2}\s*(?:(?:un|und|unid|unidade|pc|pca|peca|cx|caixa|par|kit|servico|kg)\.?\s*)?$/i;
   const numeroDaLinhaAntes = (pos) => {
-    const antes = plano.slice(Math.max(0, pos - 22), pos);
+    const antes = plano.slice(Math.max(0, pos - 34), pos);
     const m = antes.match(ABERTURA);
     if (m) return +m[1];
     // colado em outro numero, so vale com zero a esquerda: "75004" e o item 4,
