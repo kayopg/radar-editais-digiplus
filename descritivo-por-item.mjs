@@ -152,6 +152,44 @@ const FIM_DE_LINHA = [
   // DO MUNICIPIO DE RIO BOM - PR, pessoa juridica de direito publico...".
   /\s(?:pessoa jur[íi]dica de direito|de um lado,?\s+[ao]\s+PREFEITURA|CL[ÁA]USULA\s+(?:PRIMEIRA|SEGUNDA|[IVX]+)|CONTRATANTE\b|CONTRATADA\b|doravante denominad)/i
   ,
+  // A CLAUSULA que abre o contrato, com o ordinal por extenso. O padrao antigo
+  // so listava PRIMEIRA e SEGUNDA, e os itens 7 e 14 de Descalvado/SP — as
+  // cortinas de ar — seguiam por "CLAUSULA SEXTA - DOS PAGAMENTOS 6.1. Os
+  // pagamentos serao efetuados em ate 15 (quinze) dias..." ate o teto. O usuario
+  // abriu o resumo e viu a clausula de pagamento no lugar da especificacao.
+  /CL[\u00c1A]USULA\s+[A-ZÀ-Ú]{4,}/,
+  // Numeracao de clausula: "5.1. A", "1.3. Natureza do objeto". Dentro de uma
+  // especificacao a medida usa virgula (2,35 x 3,51), nunca ponto seguido de
+  // ponto e maiuscula.
+  /\s\d{1,2}\.\d{1,2}\.\s+[A-ZÀ-Ú]/,
+  // Cabecalho do edital ou da tabela reaparecendo depois da celula.
+  /PROCESSO ADMINISTRATIVO N/i,
+  /ESTIMATIVA DO VALOR TOTAL/i,
+  /DESCRI[\u00c7C][\u00c3A]O DOS PRODUTOS\s+ITEM/i,
+  /Natureza do objeto|FUNDAMENTA[\u00c7C][\u00c3A]O DA CONTRATA/i,
+  /ser[\u00e1a] atestada a entrega|servidor designado pela administra/i
+  ,
+  // O formulario de proposta e o estudo tecnico, que vem logo depois da tabela
+  // e nao descrevem produto nenhum: em Descalvado/SP a cortina de ar seguia por
+  // "VALOR TOTAL DA PROPOSTA EM REAIS E POR EXTENSO", e em Itai/SP a cafeteira
+  // por "5.1 Metodologia de Definicao das Quantidades e Memoria de Calculo".
+  //
+  // Sao termos inteiros, e nao a numeracao "5.1" sozinha: dentro de uma
+  // especificacao "1.2 Litros" e medida, e cortar ali comeria o descritivo.
+  /VALOR TOTAL DA PROPOSTA/i,
+  /Metodologia de Defini[\u00e7c][\u00e3a]o/i,
+  /LEVANTAMENTO DO MERCADO/i,
+  /ESTIMATIVA DE VALORES DA CONTRATA/i,
+  /Mem[\u00f3o]ria de C[\u00e1a]lculo/i
+  ,
+  // A conclusao do estudo tecnico. Sem ela, o item 6 de Itai/SP trocava a
+  // especificacao da cafeteira pela justificativa da compra — "Destinada ao
+  // apoio das atividades escolares, atualmente o cafe e passado em panos" —,
+  // que e o trecho vizinho e ficava mais comprido depois dos outros cortes.
+  /\d\.?\s*CONCLUS[\u00c3A]O/i,
+  /Diante do exposto/i,
+  /esta Nutricionista Respons/i
+  ,
   // O cabecalho da tabela reaparecendo: dali para baixo e a proxima pagina da
   // planilha, nao a continuacao desta celula.
   /Item\s+Especifica[\u00e7c][\u00e3a]o\s+Unidade/i,
