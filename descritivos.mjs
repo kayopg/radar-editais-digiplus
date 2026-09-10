@@ -84,7 +84,41 @@ function embaralhado(t) {
 // Descartar o edital inteiro por causa de algumas paginas jogava fora
 // descritivo bom, entao a pagina ruim vira vazia e as demais seguem. O indice
 // e preservado porque o seletor de paginas trabalha por posicao.
-const limpaPaginas = paginas => paginas.map(p => (embaralhado(p) ? '' : p));
+// Antes de jogar a pagina fora, tenta consertar.
+//
+// Boa parte do que parecia "fonte com codificacao propria" e so o acento
+// deslocado 33 posicoes: "LicitaÆÔes" e "Licitações", "GestÂo" e "Gestão",
+// "ReferÉncia" e "Referência" — c6->e7, d4->f5, c2->e3, c9->ea, todos +33. As
+// letras sem acento sempre estiveram certas, entao o texto servia e ia para o
+// lixo inteiro: Governador Valadares/MG perdia 56 das 64 paginas, Santa
+// Maria/RS 26 das 48, e com elas o descritivo dos itens.
+//
+// Tres passadas porque o par sai grudado ("aÆÔ"): a primeira troca o Æ, e so
+// entao o Ô fica precedido de letra.
+function desloca(t) {
+  let x = t;
+  for (let n = 0; n < 3; n++) {
+    x = x.replace(/([A-Za-zÀ-ÿ])([\u00C0-\u00DF])/g,
+      (m, a, c) => a + String.fromCharCode(c.charCodeAt(0) + 33));
+  }
+  return x.replace(/\$ü/g, '-');
+}
+
+// So aceita o conserto se ele produzir portugues: sem esta prova, um texto
+// legitimo cheio de maiuscula acentuada sairia estragado.
+const PORTUGUES = /ção|ções|ão|ência|ário|ível|não/gi;
+function conserta(t) {
+  const x = desloca(t);
+  const antes = (t.match(PORTUGUES) || []).length;
+  const depois = (x.match(PORTUGUES) || []).length;
+  return depois > antes + 2 ? x : t;
+}
+
+const limpaPaginas = paginas => paginas.map(p => {
+  if (!embaralhado(p)) return p;
+  const c = conserta(p);
+  return embaralhado(c) ? '' : c;
+});
 
 // Corta o texto nos cabecalhos que abrem secao de descritivo, e devolve cada
 // pedaco com o rotulo COMO ESTA NO EDITAL — "ANEXO I - TERMO DE REFERENCIA" e
@@ -243,6 +277,7 @@ async function extrai(e) {
     }
   }
 
+  if (textoWord) textoWord = conserta(textoWord);
   if (textoWord && !embaralhado(textoWord)) {
     return { fonte: formato, paginas: null, total: null,
              secoes: limita(secoesDe(textoWord, 'ABERTURA DO EDITAL')) };

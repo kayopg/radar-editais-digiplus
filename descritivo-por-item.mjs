@@ -92,7 +92,13 @@ function ancoraDe(plano, planoH, curto) {
 
 // Teto por item. Existe so para o ULTIMO item da tabela, que nao tem um proximo
 // para fechar a celula.
-const TETO_ITEM = 2200;
+// Estava em 2.200 e cortava a especificacao no meio da frase em 8 itens — o
+// item 18 de Bueno Brandao/MG parava em "Decreto Federal n 5445 de 12/05/05. 8
+// pratel". O usuario pediu o descritivo inteiro, ate o detalhe menos
+// relevante, entao o teto sobe: ele so vale para o ULTIMO item da tabela, que
+// nao tem um proximo para fechar a celula, e o corte de reserva por fim de
+// linha continua valendo antes dele.
+const TETO_ITEM = 6000;
 
 // Corte de reserva, para quando o proximo item nao vira marca — porque o rotulo
 // dele na API nao aparece com essas palavras no edital, e ai nao ha limite pela
@@ -271,18 +277,28 @@ const palavrasDoItem = rotulo => [...new Set(
 // distintas do rotulo. A segmentacao continua igual depois disso, entao um
 // item nunca invade o outro mesmo que a janela erre.
 const JANELA_TOKENS = 45;
-function marcaPorProximidade(tokens, alvo) {
+function marcaPorProximidade(tokens, alvo, numero, numeroDaLinha) {
   if (alvo.length < 2) return -1;
   const querido = new Set(alvo);
-  let melhorPos = -1, melhorN = 0;
+  let melhorPos = -1, melhorN = 0, melhorNota = -1;
   for (let i = 0; i < tokens.length; i++) {
+    // A janela so vale se comecar numa palavra do item: comecando no meio, a
+    // marca cairia antes do nome do produto e o recorte abriria fora de lugar.
+    if (!querido.has(tokens[i].w)) continue;
     const vistas = new Set();
     for (let j = i; j < tokens.length && j < i + JANELA_TOKENS; j++) {
       if (querido.has(tokens[j].w)) vistas.add(tokens[j].w);
     }
-    // A janela so vale se comecar numa palavra do item: comecando no meio, a
-    // marca cairia antes do nome do produto e o recorte abriria fora de lugar.
-    if (querido.has(tokens[i].w) && vistas.size > melhorN) { melhorN = vistas.size; melhorPos = tokens[i].p; }
+    // O numero do item impresso na abertura da linha vale mais que qualquer
+    // palavra. Sem ele, os itens 2 e 3 de Cubatao/SP — "Cafeteira Eletrica
+    // capacidade: 15" e "capacidade: 6" — caem na MESMA posicao, porque as
+    // palavras sao as mesmas e a capacidade e curta demais para virar token; os
+    // dois recebem o mesmo trecho e acabam os dois sem descritivo. O edital
+    // separa as linhas com "...R$ 6.861,03 2 Cafeteira Industrial Eletrica" e
+    // "...R$ 6.375,43 3 Cafeteira...", e e esse numero que decide.
+    const nota = vistas.size
+      + (numeroDaLinha && numeroDaLinha(tokens[i].p) === numero ? 1000 : 0);
+    if (nota > melhorNota) { melhorNota = nota; melhorN = vistas.size; melhorPos = tokens[i].p; }
   }
   // Exige a maioria das palavras do item, e nunca menos de duas: com uma so,
   // "fogao" casaria com a linha de qualquer outro fogao.
@@ -294,6 +310,12 @@ function marcaPorProximidade(tokens, alvo) {
   // coincidencias, enquanto "FOGAO 06 BOCAS" precisava de 2. Quanto mais o
   // PNCP descrevia, mais dificil ficava casar — o inverso do que faz sentido.
   const minimo = Math.max(2, Math.min(5, Math.ceil(alvo.length * 0.6)));
+  // A linha que abre com o numero do item nao precisa provar mais nada: a
+  // identidade ja esta dada pelo edital. Sem esta saida, o item 3 de Cubatao/SP
+  // achava a linha certa pelo numero e era reprovado logo depois por reunir so
+  // tres palavras do rotulo — "Cafeteira Industrial Eletrica: Capacidade 06
+  // litros..." simplesmente nao repete o vocabulario do catalogo do PNCP.
+  if (melhorNota >= 1000) return melhorPos;
   return melhorN >= minimo ? melhorPos : -1;
 }
 
@@ -318,11 +340,43 @@ function serve(rotulo, t, confirmado) {
   // item sem nada ou, pior, com a linha do ventilador de teto ao lado.
   const piso = confirmado ? 60 : 150;
   const grande = t.length >= piso || t.length > rotulo.length + 40;
+  // A prova de produto e para quando nao se sabe de quem e a linha. Confirmada
+  // pelo numero do item, ela so atrapalha: o item 6 de Cubatao/SP e "Coifa
+  // aplicacao: cozinha" no catalogo e "Coifa Industrial/Residencial: Material em
+  // aco inox..." no edital — uma palavra em comum, e a linha e inequivocamente
+  // dele, aberta com o 6 depois do total da linha 5.
+  if (confirmado) return grande && !comecaNoMeio(t) && !AINDA_SUJO.test(t);
   return grande && !comecaNoMeio(t) && !AINDA_SUJO.test(t) && falaDoMesmoProduto(rotulo, t);
 }
 
 function descritivosPorItem(secoes, itens) {
   const plano = normIgual(secoes);
+  // O numero do item, impresso logo antes da linha, decide antes das palavras.
+  //
+  // Em Santa Maria/RS a tabela sai colada — "...do produto.45Cafeteira eletrica
+  // com capacidade minima de 1,2 litros..." e "...232,000046Cafeteira automatica
+  // com capacidade minima de 6 litros...". As palavras nao separam as duas
+  // ("1,2" e curto demais para virar token), mas o numero separa, e ele e
+  // exatamente o que o edital usa para identificar o item.
+  // Le o numero que ABRE a linha, imediatamente antes do nome do produto.
+  //
+  // Tres formas, todas vistas em edital de verdade:
+  //   "45Cafeteira eletrica..."        numero colado (Santa Maria/RS)
+  //   "...490,75004Fogao eletrico"     numero com zero a esquerda, colado no
+  //                                    centavo da linha de cima (Santa Maria/RS)
+  //   "107 Unid Ventilador de parede"  numero, unidade, nome (Sao Jose da Boa
+  //                                    Vista/PR)
+  const ABERTURA = /(?:^|[^0-9])(0*[0-9]{1,4})[.)-]?\s*(?:(?:un|und|unid|unidade|pc|pca|peca|cx|caixa|par|kit|servico|kg)\.?\s*)?$/i;
+  const numeroDaLinhaAntes = (pos) => {
+    const antes = plano.slice(Math.max(0, pos - 22), pos);
+    const m = antes.match(ABERTURA);
+    if (m) return +m[1];
+    // colado em outro numero, so vale com zero a esquerda: "75004" e o item 4,
+    // "75" com o centavo nao e item nenhum
+    const z = antes.match(/0{1,4}([1-9][0-9]{0,3})$/);
+    return z ? +z[1] : null;
+  };
+
   // Mesmo comprimento do plano, so com o hifen valendo espaco: serve de
   // segunda tentativa para a ancora, sem deslocar posicao nenhuma.
   const planoH = plano.replace(/-/g, ' ');
@@ -354,7 +408,8 @@ function descritivosPorItem(secoes, itens) {
     const tokens = [];
     for (const m of plano.matchAll(/[a-z]+|\d[\d.,]*\d|\d/g)) tokens.push({ p: m.index, w: limpaNum(m[0]) });
     for (const i of semAncora) {
-      const pos = marcaPorProximidade(tokens, palavrasDoItem(itens[i][1]));
+      const pos = marcaPorProximidade(tokens, palavrasDoItem(itens[i][1]),
+                                     itens[i][0], numeroDaLinhaAntes);
       if (pos < 0) continue;
       if (!porPos.has(pos)) porPos.set(pos, []);
       porPos.get(pos).push(i);
@@ -391,31 +446,6 @@ function descritivosPorItem(secoes, itens) {
   });
   const CABECA_ESCOLHA = 220;
 
-  // O numero do item, impresso logo antes da linha, decide antes das palavras.
-  //
-  // Em Santa Maria/RS a tabela sai colada — "...do produto.45Cafeteira eletrica
-  // com capacidade minima de 1,2 litros..." e "...232,000046Cafeteira automatica
-  // com capacidade minima de 6 litros...". As palavras nao separam as duas
-  // ("1,2" e curto demais para virar token), mas o numero separa, e ele e
-  // exatamente o que o edital usa para identificar o item.
-  // Le o numero que ABRE a linha, imediatamente antes do nome do produto.
-  //
-  // Tres formas, todas vistas em edital de verdade:
-  //   "45Cafeteira eletrica..."        numero colado (Santa Maria/RS)
-  //   "...490,75004Fogao eletrico"     numero com zero a esquerda, colado no
-  //                                    centavo da linha de cima (Santa Maria/RS)
-  //   "107 Unid Ventilador de parede"  numero, unidade, nome (Sao Jose da Boa
-  //                                    Vista/PR)
-  const ABERTURA = /(?:^|[^0-9])(0*[0-9]{1,4})[.)-]?\s*(?:(?:un|und|unid|unidade|pc|pca|peca|cx|caixa|par|kit|servico|kg)\.?\s*)?$/i;
-  const numeroDaLinhaAntes = (pos) => {
-    const antes = plano.slice(Math.max(0, pos - 22), pos);
-    const m = antes.match(ABERTURA);
-    if (m) return +m[1];
-    // colado em outro numero, so vale com zero a esquerda: "75004" e o item 4,
-    // "75" com o centavo nao e item nenhum
-    const z = antes.match(/0{1,4}([1-9][0-9]{0,3})$/);
-    return z ? +z[1] : null;
-  };
 
   // A capacidade do aparelho vale por varias palavras.
   //

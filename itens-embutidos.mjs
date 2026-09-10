@@ -46,6 +46,24 @@ async function itensDe(p, tent = 4) {
   }
 }
 
+// O numeroItem do PNCP nem sempre e o numero do item — a mesma correcao que a
+// varredura faz no dados.json precisa valer aqui, senao as duas listas ficam
+// numeradas de formas diferentes e o descritivo nao acha o dono. Em cinco
+// compras o PNCP publica o ID interno (Santo Antonio do Caiua/PR sai como
+// 7965701, 7965702, 7965703 e o edital imprime 01, 02, 03): corrida contigua
+// que comeca alto demais para ser numeracao, e como a leitura parte da pagina
+// 1, a posicao na lista e o numero impresso.
+function corrigeNumeracao(itens) {
+  if (itens.length < 2) return itens;
+  const ns = itens.map(x => x[0]);
+  if (ns.some(n => !Number.isInteger(n) || n < 1)) return itens;
+  const contigua = ns.every((n, k) => k === 0 || n === ns[k - 1] + 1);
+  if (!contigua || ns[0] <= 10000 || ns[0] <= itens.length) return itens;
+  const base = ns[0];
+  for (const x of itens) x[0] = x[0] - base + 1;
+  return itens;
+}
+
 let ok = 0, erros = 0, total = 0;
 for (const e of dados.editais) {
   const p = e[C.path];
@@ -59,6 +77,7 @@ for (const e of dados.editais) {
       limpa(x.unidadeMedida), Math.round((+x.valorUnitarioEstimado || 0) * 100) / 100,
       beneficio(x.tipoBeneficioNome)
     ]);
+    corrigeNumeracao(itens);
     base.editais[p] = { ...(base.editais[p] || { secoes: [] }), itens };
     total += itens.length;
     ok++;

@@ -13,7 +13,7 @@ const mun = Object.fromEntries(dd.editais.map(e => [e[C.path], e[C.municipio] + 
 
 const P = {
   'comeca no meio': x => /^[a-zà-ÿ,;.)]/.test(x[6].trim()),
-  'no teto': x => x[6].length >= 2195,
+  'no teto': x => x[6].length >= 5995,
   'embaralhado': x => ((x[6].match(/[a-z][ÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÃÕÇÆØ]/g) || []).length > 4),
   'letras soltas': x => /(?:\s\S){8,}(?=\s|$)/.test(x[6]),
   'rodape': x => /www\.|PABX|CEP[:\s]*\d{5}/i.test(x[6]),
