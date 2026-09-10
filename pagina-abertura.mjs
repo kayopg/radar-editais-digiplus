@@ -101,37 +101,108 @@ const letrasDe = t => (String(t || '').match(/[A-Za-zÀ-ÿ]/g) || []).length;
 // Tres niveis, do mais especifico ao mais generico. O usuario pediu em
 // 08/09/2026 para procurar tambem "palavras semelhantes ou paginas
 // semelhantes" nos editais em que o quadro nao aparecia — eram 44 de 68.
-function achaAbertura(paginas) {
+// Pagina que NUNCA e capa de edital, por mais marcas que tenha: a folha de
+// assinatura digital e a de conferencia de autenticidade que varios sistemas
+// grudam na frente do documento.
+//
+// O usuario abriu um resumo e recebeu a folha de outro edital. Nao era troca de
+// chave: era a pagina errada DENTRO do arquivo certo — Chapadao do Sul/MS,
+// Jaraguari/MS e Nova Esperanca/PR anexavam "assinado por 1 pessoa: ... para
+// verificar a validade das assinaturas", e Campinas/SP a folha do sigad da
+// Unicamp. Nenhuma delas diz de que licitacao se trata.
+const NAO_E_CAPA = [
+  /assinad[oa] (?:por|digitalmente|eletronicamente)/i,
+  /verificar a (?:validade|autenticidade)/i,
+  /verificar autenticidade/i,
+  /documento assinado/i,
+  /c[\u00f3o]digo verificador/i,
+];
+
+// O que a capa do edital certo tem e a de outro nao: as palavras do objeto e o
+// nome do orgao. Serve de desempate entre paginas que pontuam igual.
+const semAcento = s => String(s || '').toLowerCase().normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '');
+const VAZIAS_OBJ = new Set(['para','com','sem','dos','das','que','por','uma','nao','aquisicao',
+  'material','permanente','municipio','prefeitura','pregao','eletronico','registro','precos',
+  'futura','eventual','atender','demandas','secretaria','municipal','conforme','objeto','edital',
+  'contratacao','fornecimento','equipamentos','diversos','bens','itens','estado']);
+function palavrasDoEdital(e, C) {
+  const cru = [e[C.objeto], e[C.municipio], e[C.unidade]].join(' ');
+  return [...new Set(semAcento(cru).split(/[^a-z0-9]+/)
+    .filter(w => w.length >= 5 && !VAZIAS_OBJ.has(w)))];
+}
+
+function palavrasDoObjeto(e, C) {
+  return [...new Set(semAcento(String(e[C.objeto] || '')).split(/[^a-z0-9]+/)
+    .filter(w => w.length >= 5 && !VAZIAS_OBJ.has(w)))];
+}
+
+function achaAbertura(paginas, alvo, alvoObjeto) {
+  alvo = alvo || [];
+  alvoObjeto = alvoObjeto || [];
+  const relev = i => { const t = semAcento(paginas[i] || ''); return alvo.filter(w => t.includes(w)).length; };
+  // Para o VETO conta so o objeto. O nome do municipio nao serve: ele aparece
+  // na propria URL de conferencia da assinatura ("acesse
+  // https://chapadaodosul.1doc..."), e era o que fazia a folha de assinatura de
+  // Chapadao do Sul/MS e Jaraguari/MS escapar do veto.
+  const falaDoObjeto = i => { const t = semAcento(paginas[i] || ''); return alvoObjeto.some(w => t.includes(w)); };
+  // O carimbo de assinatura tambem aparece no RODAPE de capas legitimas, e
+  // vetar por ele sozinho custou tres folhas boas (Itai/SP e as duas de Ponta
+  // Grossa/PR). So e folha de assinatura a que traz o carimbo E nao diz nada
+  // sobre este edital.
+  const proibida = i => NAO_E_CAPA.some(re => re.test(paginas[i] || '')) && !falaDoObjeto(i);
+  // entre duas paginas com a mesma pontuacao, ganha a que fala DESTE edital
+  const melhorQue = (n, i, bn, bi) => n > bn || (n === bn && bi >= 0 && relev(i) > relev(bi));
+
   // 1. o quadro de campos, que e a pagina que o usuario mandou de exemplo
   let melhor = -1, melhorN = 0;
   for (let i = 0; i < Math.min(paginas.length, PRIMEIRAS); i++) {
+    if (proibida(i)) continue;
     const n = CAMPOS.filter(re => re.test(paginas[i] || '')).length;
-    if (n > melhorN) { melhorN = n; melhor = i; }
+    if (melhorQue(n, i, melhorN, melhor)) { melhorN = n; melhor = i; }
   }
   if (melhorN >= MIN_CAMPOS) return { pagina: melhor, campos: melhorN, via: 'quadro' };
 
   // 2. a folha de rosto comum, pelas marcas de capa
   let capa = -1, capaN = 0;
   for (let i = 0; i < Math.min(paginas.length, PRIMEIRAS_CAPA); i++) {
+    if (proibida(i)) continue;
     const n = MARCAS_CAPA.filter(re => re.test(paginas[i] || '')).length;
-    if (n > capaN) { capaN = n; capa = i; }
+    if (melhorQue(n, i, capaN, capa)) { capaN = n; capa = i; }
   }
   if (capaN >= MIN_MARCAS) return { pagina: capa, campos: capaN, via: 'capa' };
 
   // 3. o mesmo, tolerando texto embaralhado
   let solta = -1, soltaN = 0;
   for (let i = 0; i < Math.min(paginas.length, PRIMEIRAS_CAPA); i++) {
+    if (proibida(i)) continue;
     const n = MARCAS_SEM_ACENTO.filter(re => re.test(paginas[i] || '')).length;
-    if (n > soltaN) { soltaN = n; solta = i; }
+    if (melhorQue(n, i, soltaN, solta)) { soltaN = n; solta = i; }
   }
   if (soltaN >= MIN_MARCAS) return { pagina: solta, campos: soltaN, via: 'embaralhado' };
 
-  // 4. PDF digitalizado: nao ha o que pontuar, mas a primeira folha de um
+  // 4. nenhuma marca: fica a pagina que mais fala deste edital, se falar.
+  let rel = -1, relN = 1;
+  for (let i = 0; i < Math.min(paginas.length, PRIMEIRAS); i++) {
+    if (proibida(i)) continue;
+    const n = relev(i);
+    if (n > relN) { relN = n; rel = i; }
+  }
+  if (rel >= 0) return { pagina: rel, campos: relN, via: 'objeto' };
+
+  // 5. PDF digitalizado: nao ha o que pontuar, mas a primeira folha de um
   // edital escaneado e a capa do mesmo jeito.
-  if (paginas.length && letrasDe(paginas[0]) < POUCAS_LETRAS) {
-    return { pagina: 0, campos: 0, via: 'imagem' };
+  for (let i = 0; i < Math.min(paginas.length, 3); i++) {
+    if (proibida(i)) continue;
+    if (letrasDe(paginas[i]) < POUCAS_LETRAS) return { pagina: i, campos: 0, via: 'imagem' };
   }
 
+  // Ultimo recurso: a primeira folha que nao seja a de assinatura. Vale mais a
+  // capa sem marca reconhecida do que resumo nenhum — Valinhos/SP, Campinas/SP,
+  // Jaraguari/MS e Nova Esperanca/PR ficavam sem folha por isso.
+  for (let i = 0; i < Math.min(paginas.length, 4); i++) {
+    if (!proibida(i)) return { pagina: i, campos: 0, via: 'primeira' };
+  }
   return null;
 }
 
@@ -159,7 +230,7 @@ await pool(alvos, 2, async (e) => {
     }
     if (!paginas) { sem++; console.log(`  ${nome} · sem PDF legivel`); return; }
 
-    const achado = achaAbertura(paginas);
+    const achado = achaAbertura(paginas, palavrasDoEdital(e, C), palavrasDoObjeto(e, C));
     if (!achado) { sem++; console.log(`  ${nome} · sem folha de abertura`); return; }
 
     // PDF de carona: a pagina original na frente, a branca do novo() atras.
