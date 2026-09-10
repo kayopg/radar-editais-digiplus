@@ -334,7 +334,18 @@ async function baixaDe(c) {
 
 console.log(`${alvos.length} edital(is) · teto de ${(TETO / 1000)} mil caracteres por edital\n`);
 
-const saida = {};
+const arquivoSaidaDesc = path.join(DIR, 'docs', 'descritivos.json');
+// Parte do que ja esta gravado, e nao de um objeto vazio.
+//
+// Com --uf ou --limite o arquivo era reescrito so com os editais filtrados, e
+// os outros sumiam: um "node descritivos.mjs --uf PR" para conferir um edital
+// deixou o docs/descritivos.json com 18 dos 63. O git salvou, mas a rodada
+// seguinte teria publicado a perda.
+//
+// No fim, o que nao esta mais no dados.json e descartado — assim o arquivo se
+// limpa sozinho quando um edital encerra.
+let saida = {};
+try { saida = { ...(JSON.parse(fs.readFileSync(arquivoSaidaDesc, 'utf8')).editais || {}) }; } catch {}
 let ok = 0, vazios = 0, erros = 0, chars = 0;
 
 async function pool(itens, n, fn) {
@@ -367,6 +378,8 @@ await pool(alvos, 2, async (e) => {
 });
 
 const arquivo = path.join(DIR, 'docs', 'descritivos.json');
+const vivos = new Set(dados.editais.map(e => e[C.path]));
+for (const k of Object.keys(saida)) if (!vivos.has(k)) delete saida[k];
 fs.writeFileSync(arquivo, JSON.stringify({ varredura: dados.meta.varredura, editais: saida }), 'utf8');
 const kb = fs.statSync(arquivo).size / 1024;
 console.log(`\n${ok} com secoes · ${vazios} sem · ${erros} erro(s)`);
