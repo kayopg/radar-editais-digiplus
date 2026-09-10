@@ -53,7 +53,16 @@ jobs:
     # ruim. Sobrar nao custa: a trava do passo seguinte faz a janela extra sair
     # na hora quando o dia ja foi publicado, e o repositorio e publico, onde o
     # minuto de Actions nao e cobrado.
-    timeout-minutes: 150
+    # 150 minutos cobriam so a varredura. Desde 10/09/2026 o job faz o pipeline
+    # inteiro — varredura (101 min medidos), extracao do texto de cada edital
+    # (50 min) e o recorte por item — e o usuario pediu o resultado pronto por
+    # volta das 9h. Comecando 06:23 BRT, 2h30 de trabalho terminam 08:53.
+    #
+    # 300 da o dobro de folga sobre a medida. Sobrar nao custa: a trava da
+    # primeira etapa faz a janela extra sair na hora quando o dia ja foi
+    # publicado, e o repositorio e publico, onde o minuto de Actions nao e
+    # cobrado.
+    timeout-minutes: 300
 
     steps:
       - uses: actions/checkout@v4
@@ -115,15 +124,58 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           exit $st
 
+      # O que faltava para a automacao servir sozinha. Ate 10/09/2026 o job
+      # publicava so a LISTA de editais: quem entrasse no dia aparecia no site
+      # sem uma linha de especificacao, porque o texto do edital era extraido a
+      # mao depois. Agora o pipeline vai inteiro.
+      #
+      # Cada etapa baixa do PNCP, entao a rede pode falhar em uma sem que as
+      # outras percam o trabalho: por isso cada uma e um passo, e o dados.json
+      # so e commitado no fim.
+      - name: Extrair o texto dos editais
+        if: steps.guarda.outputs.rodar == 'sim'
+        run: node descritivos.mjs
+
+      - name: Embutir a lista de itens de cada edital
+        if: steps.guarda.outputs.rodar == 'sim'
+        run: node itens-embutidos.mjs
+
+      - name: Recortar o descritivo de cada item
+        if: steps.guarda.outputs.rodar == 'sim'
+        run: node descritivo-por-item.mjs
+
+      # As auditorias nao derrubam o job: elas contam. O numero fica no Summary
+      # do dia, e uma queda brusca aparece na comparacao com o dia anterior.
+      - name: Auditar os descritivos
+        if: steps.guarda.outputs.rodar == 'sim'
+        run: |
+          { echo '### Descritivos'; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          node confere-invasao.mjs | head -1 | tee -a "$GITHUB_STEP_SUMMARY"
+          node confere-posicao.mjs | head -2 | tee -a "$GITHUB_STEP_SUMMARY"
+          node confere-mistura.mjs | tail -1 | tee -a "$GITHUB_STEP_SUMMARY"
+          node audita-descritivos.mjs | grep -E 'conferidos|comeca|teto|embaralhado|letras|rodape|fim de|repete' | tee -a "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      # A CAPA DO EDITAL fica de fora deste job, de proposito.
+      #
+      # O pagina-abertura.mjs recorta a folha de rosto de cada edital e guarda
+      # em docs/aberturas.json, que tem 27 MB de PDF em base64. Versionar isso
+      # todo dia poe ~20 MB por dia no historico do repositorio — em tres meses,
+      # quase 2 GB, para um arquivo que o site nem consome (ele esta no
+      # .gitignore desde que passou a viajar so dentro do artefato).
+      #
+      # Como so os editais NOVOS precisam de capa, o "node pagina-abertura.mjs
+      # --faltantes" leva um ou dois minutos na maquina, e e rodado junto com o
+      # artefato.mjs quando se quer o arquivo do dia.
       - name: Publicar se houve mudança
         if: steps.guarda.outputs.rodar == 'sim'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- docs/dados.json; then
+          if git diff --quiet -- docs/dados.json docs/descritivos.json; then
             echo "Nada mudou hoje — nenhum commit."
           else
-            git add docs/dados.json
+            git add docs/dados.json docs/descritivos.json
             git commit -m "Varredura de $(TZ=America/Sao_Paulo date +%d/%m/%Y)"
             git push
           fi
