@@ -226,8 +226,11 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // da Digiplus e entraram por uma palavra solta:
 //   Francisco Beltrao/PR — "Conjunto de Bioterios completos para Ratos e
 //     Camundongos": gaiola de laboratorio que entrou por trazer bebedouro;
-//   Foz do Iguacu/PR — "material para laboratorio de enfermagem": calandra e
-//     forno de calibracao de sensores de temperatura;
+//   Foz do Iguacu/PR — "material para laboratorio de enfermagem": forno de
+//     calibracao de sensores e calandra rotativa. Cheguei a devolver a calandra
+//     em 10/09/2026, achando que maquina de passar roupa industrial fosse
+//     lavanderia; o usuario respondeu que calandra nao esta na lista de
+//     produtos dele. Fica vetada;
 //   Vale de Sao Domingos/MT — descascador de laranja MANUAL, de manivela;
 //   Campinas/SP item 14 — espremedor de alho, manual. Utensilio, nao aparelho.
 "gaiola cobaia","bioterio","camundongo","forno calibracao","calandra rotativa",
