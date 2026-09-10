@@ -127,7 +127,14 @@ catch { console.error('aviso: docs/aberturas.json nao encontrado — o resumo sa
 const ORCAMENTO_MB = 14;
 const LIMITE_FOLHA = 800 * 1024;
 {
+  // So as folhas dos editais que estao no radar HOJE. O aberturas.json e
+  // acumulativo — guarda a folha de todo edital que ja passou por aqui — e sem
+  // este filtro o orcamento era gasto com folha de edital encerrado, empurrando
+  // para fora a folha de edital vivo: eram 16 folhas mortas ocupando o lugar.
+  const iPath = dados.colunas.indexOf('path');
+  const noRadar = new Set(dados.editais.map(e => e[iPath]));
   const todas = Object.entries(aberturas.editais || {})
+    .filter(([k]) => noRadar.has(k))
     .map(([k, v]) => [k, v, Math.round((v.b64 || '').length * 0.75)])
     .sort((a, b) => a[2] - b[2]);
 

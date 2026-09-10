@@ -222,6 +222,22 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 //     documentos, nao o desumidificador de ambiente que a empresa vende.
 "reboque transporte animal","bebedouro bovino","tipo australiano",
 "ima de geladeira","ima geladeira","desumidificador de papel",
+// Revisao dos 70 editais em 10/09/2026, item a item. Mais quatro que nao sao
+// da Digiplus e entraram por uma palavra solta:
+//   Francisco Beltrao/PR — "Conjunto de Bioterios completos para Ratos e
+//     Camundongos": gaiola de laboratorio que entrou por trazer bebedouro;
+//   Foz do Iguacu/PR — "material para laboratorio de enfermagem": calandra e
+//     forno de calibracao de sensores de temperatura;
+//   Vale de Sao Domingos/MT — descascador de laranja MANUAL, de manivela;
+//   Campinas/SP item 14 — espremedor de alho, manual. Utensilio, nao aparelho.
+"gaiola cobaia","bioterio","camundongo","forno calibracao","calandra rotativa",
+"descascador manual","espremedor legume",
+// O usuario conferiu a lista em 10/09/2026 e disse que a Digiplus nao cota
+// lousa interativa (a tela, de 52 a 86 polegadas, que aparecia em cinco
+// editais), nem secadora de papeis, reservatorio de bebedouro solto ou balanca
+// veterinaria de pesagem de animais.
+"lousa interativa","lousa digital","secadora papeis","secadora de papeis",
+"reservatorio bebedouro","pesagem de animais",
 "equipamento medico","peca / acessorio","peca/acessorio","acessorio para equipamento",
 "protese","jateamento","agitacao de agua","aplicacao: laboratorio","uso laboratorial"];
 
