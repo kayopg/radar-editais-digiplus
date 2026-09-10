@@ -114,6 +114,15 @@ const TETO_ITEM = 6000;
 // nao casava quando a sobra ficava no FIM do texto — era o caso de Salto/SP,
 // que terminava em "...mínima, média e máxima. 2 165.6.205".
 const FIM_DE_LINHA = [
+  // Valor total e valor unitario GRUDADOS, que e como a tabela da UFPel
+  // (Pelotas/RS) fecha a linha: "...Sem instalacao. 211.875,002.118,75 CNPJ".
+  /\s[\d.]{1,12},\d{2}[\d.]{1,12},\d{2}(?=\s|$)/,
+  // A pesquisa de precos que vem depois de cada linha no termo de referencia
+  // do governo federal: tres fornecedores com CNPJ, razao social e o inciso da
+  // IN 65/2021. E orcamento, nao especificacao do produto.
+  /\s*CNPJ\s*[-–]\s*Raz\u00e3o\s*Social/i,
+  /\s*Par\u00e2metro\s+Utilizado/i,
+  /\s*(?:Painel de Pre\u00e7os|VALOR TOTAL M\u00c9DIO ESTIMADO|SOLICITA\u00c7\u00c3O DE COMPRA)/i,
   /R\$\s*[\d.,]+\s+R\$\s*[\d.,]+\s+\d{1,4}(?=\s|$)/,
   /\s\d{1,4}\s+\d{1,3}(?:\.\d{1,3}){2,}(?=\s|$)/,
   // "MINI SPLIT. 10 04 UND APARELHO AR CONDICIONADO..." — numero do item,
@@ -142,6 +151,23 @@ const FIM_DE_LINHA = [
   // nela: a mesa de futmesa de Rio Bom/PR seguia por "de um lado, a PREFEITURA
   // DO MUNICIPIO DE RIO BOM - PR, pessoa juridica de direito publico...".
   /\s(?:pessoa jur[íi]dica de direito|de um lado,?\s+[ao]\s+PREFEITURA|CL[ÁA]USULA\s+(?:PRIMEIRA|SEGUNDA|[IVX]+)|CONTRATANTE\b|CONTRATADA\b|doravante denominad)/i
+  ,
+  // O cabecalho da tabela reaparecendo: dali para baixo e a proxima pagina da
+  // planilha, nao a continuacao desta celula.
+  /Item\s+Especifica[\u00e7c][\u00e3a]o\s+Unidade/i,
+  /Unidade\s+Pre[\u00e7c]o\s+M[\u00e1a]ximo/i,
+  /Descri[\u00e7c][\u00e3a]o\s+do\s+(?:Objeto|Produto)\s+(?:Unidade|Quantidade|Und)/i,
+  // Volta ao clausulado do edital. O ultimo item de cada tabela nao tem um
+  // proximo para fechar a celula e seguia ate o teto: o bebedouro do item 37 de
+  // Santa Maria/RS levava junto a TV do 41, e a fritadeira do 8 de Vicosa/MG
+  // ia parar na lousa interativa.
+  /\s(?:Termo de Recebimento|requisitos estabelecidos neste documento|hor[\u00e1a]rio oficial de Bras[\u00edi]lia|Considerando as solu[\u00e7c][\u00f5o]es|contrata[\u00e7c][\u00e3a]o especifica)/i
+  ,
+  // Cabecalho do documento reaparecendo no rodape da pagina seguinte: o nome do
+  // orgao, o CNPJ solto e o "Anexo ao Termo de Referencia" fechavam a celula do
+  // item 37 de Santa Maria/RS com 3.300 caracteres de papel timbrado.
+  /Anexo ao Termo de Refer[\u00eae]ncia/i,
+  /\s\d{14}(?=\s)/
 ];
 
 // Rodape de pagina que cai no meio da celula quando o descritivo atravessa uma
@@ -386,6 +412,24 @@ function descritivosPorItem(secoes, itens) {
   // Mesmo comprimento do plano, so com o hifen valendo espaco: serve de
   // segunda tentativa para a ancora, sem deslocar posicao nenhuma.
   const planoH = plano.replace(/-/g, ' ');
+
+  // Recua a marca para incluir a palavra que o catalogo tirou do nome.
+  //
+  // A ancora encolhe ate "ar condicionado" porque o PNCP escreve "Aparelho Ar
+  // Condicionado" e o edital escreve "Aparelho de ar condicionado" — o "de" no
+  // meio impede o casamento da frase inteira. So que ai a marca cai no "ar", o
+  // recorte abre em minuscula e o comecaNoMeio() o recusa como se fosse meio de
+  // frase. Em Pelotas/RS os cinco aparelhos tinham a linha certa identificada e
+  // os cinco eram jogados fora por isso.
+  //
+  // Recua no maximo uma palavra capitalizada e a preposicao seguinte, e so
+  // quando ela esta colada na marca.
+  const PREFIXO = /([A-ZÀ-Ú][A-Za-zÀ-ÿ]{2,14}(?:\s+(?:de|da|do|DE|DA|DO)\s+|\s+)?)$/;
+  function recuaPrefixo(pos) {
+    const antes = secoes.slice(Math.max(0, pos - 26), pos);
+    const m = antes.match(PREFIXO);
+    return m ? pos - m[1].length : pos;
+  }
   // Uma marca por POSICAO, com todos os itens que casam ali. Guardar uma marca
   // por item dava marcas repetidas na mesma posicao quando dois itens sao o
   // mesmo produto, e o trecho entre duas marcas coladas tem tamanho zero: em
@@ -399,11 +443,12 @@ function descritivosPorItem(secoes, itens) {
     const { ancora: a, plano: onde } = achado;
     let de = 0;
     for (;;) {
-      const k = onde.indexOf(a, de);
-      if (k < 0) break;
+      const k0 = onde.indexOf(a, de);
+      if (k0 < 0) break;
+      const k = recuaPrefixo(k0);
       if (!porPos.has(k)) porPos.set(k, []);
       porPos.get(k).push(i);
-      de = k + a.length;
+      de = k0 + a.length;
     }
   });
 
@@ -417,8 +462,9 @@ function descritivosPorItem(secoes, itens) {
       const pos = marcaPorProximidade(tokens, palavrasDoItem(itens[i][1]),
                                      itens[i][0], numeroDaLinhaAntes);
       if (pos < 0) continue;
-      if (!porPos.has(pos)) porPos.set(pos, []);
-      porPos.get(pos).push(i);
+      const posL = recuaPrefixo(pos);
+      if (!porPos.has(posL)) porPos.set(posL, []);
+      porPos.get(posL).push(i);
     }
   }
   const posicoes = [...porPos.keys()].sort((a, b) => a - b);
