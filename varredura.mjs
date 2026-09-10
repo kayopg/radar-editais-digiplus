@@ -212,6 +212,16 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 "sobre reboque","aspirador urbano","recolhimento de folhas","alimentacao gasolina",
 "porca flange","valvula de servico","valvula de servicos","kit placa","bolsa coletora",
 "fita de pvc","micro motor","rede de gases",
+// Varredura de 10/09/2026. Tres editais novos que nao sao da Digiplus:
+//   Marechal Candido Rondon/PR — carreta reboque para equinos e bebedouro
+//     australiano de gado, catalogados como "Reboque Transporte Animal" e
+//     "Bebedouro Bovino";
+//   Conquista D'Oeste/MT — "IMA DE GELADEIRA, IMPRESSAO EM PAPEL", brinde
+//     personalizado que entrou pela palavra geladeira;
+//   Goiania/GO — "Desumidificador De Papel", aparelho de arquivo para
+//     documentos, nao o desumidificador de ambiente que a empresa vende.
+"reboque transporte animal","bebedouro bovino","tipo australiano",
+"ima de geladeira","ima geladeira","desumidificador de papel",
 "equipamento medico","peca / acessorio","peca/acessorio","acessorio para equipamento",
 "protese","jateamento","agitacao de agua","aplicacao: laboratorio","uso laboratorial"];
 
