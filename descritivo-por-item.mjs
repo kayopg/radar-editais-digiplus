@@ -365,7 +365,13 @@ function serve(rotulo, t, confirmado) {
   // nivel de ruido e facil instalacao", 85 caracteres, e recusa-la deixava o
   // item sem nada ou, pior, com a linha do ventilador de teto ao lado.
   const piso = confirmado ? 60 : 150;
-  const grande = t.length >= piso || t.length > rotulo.length + 40;
+  // Celula curta mas FECHADA tambem vale: o item 6 de Diamante D'Oeste/PR e
+  // "Liquidificador industrial de alta rotacao, capacidade minima 4 litros, copo
+  // em aco inoxidavel, motor potencia minima 0,5 cv." — 123 caracteres, o
+  // descritivo inteiro que o edital escreveu, recusado por um piso de 150. O
+  // ponto final no fim e o que separa a celula completa do fragmento.
+  const fechada = t.length >= 90 && /[.;]$/.test(t.trim());
+  const grande = t.length >= piso || fechada || t.length > rotulo.length + 40;
   // A prova de produto e para quando nao se sabe de quem e a linha. Confirmada
   // pelo numero do item, ela so atrapalha: o item 6 de Cubatao/SP e "Coifa
   // aplicacao: cozinha" no catalogo e "Coifa Industrial/Residencial: Material em

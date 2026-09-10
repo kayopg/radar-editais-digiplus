@@ -150,7 +150,21 @@ function achaAbertura(paginas, alvo, alvoObjeto) {
   // vetar por ele sozinho custou tres folhas boas (Itai/SP e as duas de Ponta
   // Grossa/PR). So e folha de assinatura a que traz o carimbo E nao diz nada
   // sobre este edital.
-  const proibida = i => NAO_E_CAPA.some(re => re.test(paginas[i] || '')) && !falaDoObjeto(i);
+  // Carimbo que aparece em QUASE TODA pagina e tarja de rodape, nao folha de
+  // assinatura.
+  //
+  // O sistema de assinatura carimba a lateral de cada folha do documento, e a
+  // capa vem digitalizada: o unico texto extraivel da pagina e o carimbo. Vetar
+  // por ele deixava o edital sem folha nenhuma — Valinhos/SP, Campinas/SP,
+  // Jaraguari/MS e Chapadao do Sul/MS tinham as 35, 66, 85 e 86 paginas todas
+  // carimbadas, e a pagina 1 era a capa que se queria.
+  const olhadas = Math.min(paginas.length, 4);
+  let carimbadas = 0;
+  for (let i = 0; i < olhadas; i++) if (NAO_E_CAPA.some(re => re.test(paginas[i] || ''))) carimbadas++;
+  const carimboEhRodape = olhadas >= 3 && carimbadas >= olhadas - 1;
+
+  const proibida = i => !carimboEhRodape
+    && NAO_E_CAPA.some(re => re.test(paginas[i] || '')) && !falaDoObjeto(i);
   // entre duas paginas com a mesma pontuacao, ganha a que fala DESTE edital
   const melhorQue = (n, i, bn, bi) => n > bn || (n === bn && bi >= 0 && relev(i) > relev(bi));
 

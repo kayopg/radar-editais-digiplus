@@ -73,10 +73,35 @@ const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLow
 // Contar so os caracteres estranhos nao bastava, porque "É" e legitimo em
 // "É necessario" e o limiar deixava passar Caceres/MT inteiro.
 const RUIM = /[a-z][ÁÉÍÓÚÂÊÎÔÛÀÈÌÒÙÃÕÇÆØ]|\$ü/g;
+// Densidade de palavra portuguesa comum. Texto de verdade tem varias por linha;
+// texto de fonte com codificacao propria nao tem nenhuma.
+const LEGIVEL = /\b(?:de|da|do|dos|das|para|com|que|nao|sera|deve|item|valor|unidade|conforme|sendo|pelo|pela)\b/gi;
+
+// Uma coisa e o texto embaralhado, que traz marca; outra e o texto que nao diz
+// nada. O edital de Aparecida do Taboado/MS entregava 250 mil caracteres de
+// tabulacoes e sinais de pontuacao soltos, sem nenhuma marca de RUIM: passava
+// direto e ocupava o teto inteiro sem servir para nada.
+function ehPortugues(t) {
+  if (!t || t.length < 500) return true;
+  return (t.match(LEGIVEL) || []).length / (t.length / 100) >= 0.5;
+}
+
 function embaralhado(t) {
   if (!t || t.length < 200) return false;
   const n = (t.match(RUIM) || []).length;
-  return n > 4 && n / t.length > 0.0012;
+  if (!(n > 4 && n / t.length > 0.0012)) return false;
+  // O limiar de RUIM e proporcional e, num documento longo, o acaso o alcanca:
+  // o .doc de Diamante D'Oeste/PR tem 270 mil caracteres perfeitamente legiveis
+  // e foi recusado inteiro, deixando os 8 itens sem descritivo. Texto que tem
+  // densidade normal de palavra portuguesa nao esta embaralhado, por mais
+  // marcas que junte.
+  const boas = (t.match(LEGIVEL) || []).length;
+  // 0,8 e o piso. Medido nos 48 textos que temos: os legitimos vao de 1,0
+  // (Santa Rita do Passa Quatro/SP) a 3,6, com mediana 2,3; o .doc de Diamante
+  // D'Oeste/PR fica em 1,48 porque a extracao de DOC junta as passagens de 8
+  // bits e as de 16 e deixa ruido entre as palavras. Texto de fonte com
+  // codificacao propria fica em zero.
+  return boas / (t.length / 100) < 0.8;
 }
 
 // A codificacao quebrada e por FONTE, nao por documento: em Caceres/MT o
@@ -115,7 +140,11 @@ function conserta(t) {
 }
 
 const limpaPaginas = paginas => paginas.map(p => {
-  if (!embaralhado(p)) return p;
+  // O conserto e sempre tentado, e nao so quando a pagina parece embaralhada:
+  // ele tem prova propria (so vale se produzir mais portugues) e, desde que o
+  // embaralhado() passou a exigir tambem baixa densidade de palavra comum, as
+  // paginas de acento deslocado deixaram de ser marcadas — e saiam sem conserto,
+  // com "Capacidade RefrigeraÆÂo" no descritivo de Governador Valadares/MG.
   const c = conserta(p);
   return embaralhado(c) ? '' : c;
 });
@@ -270,6 +299,7 @@ async function extrai(e) {
     const boas = limpaPaginas(paginas);
     const perdidas = boas.filter((p, i) => !p && paginas[i]).length;
     if (!textoUtil(paginas)) tropecos.push('PDF sem texto extraivel (imagem)');
+    else if (!ehPortugues(paginas.join(' '))) tropecos.push('texto do PDF nao e legivel (fonte com codificacao propria)');
     else if (!boas.some(p => p.length > 200)) tropecos.push('texto do PDF saiu embaralhado (fonte com codificacao propria)');
     else {
       paginas = boas;
