@@ -54,7 +54,13 @@ const TETO = 250000;
 const dados = JSON.parse(fs.readFileSync(path.join(DIR, 'docs', 'dados.json'), 'utf8'));
 const C = dados.colunas.reduce((o, n, i) => (o[n] = i, o), {});
 
+// --path: um edital so, pelo caminho do PNCP. A saida e mesclada no arquivo que
+// ja existe, entao rodar filtrado nao apaga o resto — e o jeito de conferir uma
+// correcao de extracao sem gastar dez minutos refazendo os sessenta.
+const SOPATH = arg('--path', '');
+
 let alvos = dados.editais;
+if (SOPATH) alvos = alvos.filter(e => e[C.path] === SOPATH);
 if (UF) alvos = alvos.filter(e => e[C.uf] === UF);
 if (LIMITE) alvos = alvos.slice(0, LIMITE);
 
