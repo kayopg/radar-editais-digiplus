@@ -136,6 +136,17 @@ jobs:
         if: steps.guarda.outputs.rodar == 'sim'
         run: node descritivos.mjs
 
+      # O PNCP devolve 502 de vez em quando, e o edital que tropeçou fica sem
+      # texto — sem texto, nenhum item dele ganha descritivo. Em 11/09/2026
+      # foram dois assim, Campina do Monte Alegre/SP e Santo Antônio do
+      # Caiuá/PR, e uma segunda passada recuperou os dois.
+      #
+      # O --faltantes só refaz quem está sem texto: não mexe no que já deu
+      # certo e custa poucos segundos quando não há o que recuperar.
+      - name: Repescar os editais que o PNCP recusou
+        if: steps.guarda.outputs.rodar == 'sim'
+        run: node descritivos.mjs --faltantes
+
       - name: Embutir a lista de itens de cada edital
         if: steps.guarda.outputs.rodar == 'sim'
         run: node itens-embutidos.mjs
@@ -154,6 +165,8 @@ jobs:
           node confere-posicao.mjs | head -2 | tee -a "$GITHUB_STEP_SUMMARY"
           node confere-mistura.mjs | tail -1 | tee -a "$GITHUB_STEP_SUMMARY"
           node audita-descritivos.mjs | grep -E 'conferidos|comeca|teto|embaralhado|letras|rodape|fim de|repete' | tee -a "$GITHUB_STEP_SUMMARY"
+          node confere-corte.mjs | head -1 | tee -a "$GITHUB_STEP_SUMMARY"
+          node confere-numeracao.mjs | head -3 | tee -a "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
 
       # A CAPA DO EDITAL fica de fora deste job, de proposito.

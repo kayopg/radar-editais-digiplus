@@ -9,20 +9,29 @@
 // anteriores e acusava 91 divergencias falsas — pegava "AISI 304", "340
 // litros", "24.000 BTU" do item de cima. Aqui so vale numero solto encostado
 // no comeco do descritivo, que e como a linha de tabela realmente abre.
-// As 9 divergencias que sobram em 09/09/2026 foram abertas uma a uma e nenhuma
-// e erro de numeracao:
+// As 7 divergencias que sobram na varredura de 11/09/2026 foram abertas uma a
+// uma e nenhuma e erro de numeracao:
 //
-//   Tres Coracoes/MG (6) — o Termo de Referencia traz a tabela CONSOLIDADA, com
-//     3 linhas (34, 3 e 5 unidades), enquanto a disputa tem 7 itens separados
-//     por secretaria. As quantidades fecham exatamente: 2+2+5+25 = 34,
-//     2+1 = 3, 5 = 5. Quem da lance usa o numero da plataforma, que e o nosso.
-//   Paraisopolis/MG (1) — o cabecalho e "ITEM UNID. QUANT. DESCRICAO" e a linha
-//     e "1 UN 10": item 1, unidade UN, quantidade 10. O verificador le o ultimo
-//     numero e enxerga 10.
-//   Salto/SP (2) — o edital imprime "47 165.6.260 BEBEDOURO INDUSTRIAL..." e
-//     "48 165.6.260 BEBEDOURO INDUSTRIAL...", que e o que mostramos; o que o
-//     verificador achou foi a tabela-resumo do inicio, com as colunas fora de
-//     ordem.
+//   Descalvado/SP (5) — o PNCP lista os mesmos produtos DUAS vezes, itens 1 a 8
+//     e de novo 9 a 14, uma vez por secretaria; a tabela do edital tem uma linha
+//     por produto. Entao o item 9 e o mesmo ar-condicionado de 12.000 BTU da
+//     linha 1, e assim por diante. Quem da lance usa o numero da plataforma,
+//     que e o nosso.
+//   Apiai/SP (2) — a tabela do edital nao numera o relogio de parede, que na
+//     plataforma e o item 9; dali para baixo a numeracao impressa fica uma
+//     atras. O tanquinho e o item 10 na disputa e "09" na tabela.
+//
+// Duas correcoes no proprio verificador tiraram dez divergencias falsas:
+//
+//   Ele lia o ULTIMO numero antes da celula. Onde o edital escreve
+//   "01 53 |UND APARELHO...", isso e a quantidade e nao o item — eram doze
+//   acusacoes falsas so em Descalvado/SP. Agora, quando a celula abre com a
+//   unidade, o primeiro dos dois numeros e que vale.
+//
+//   A agulha de busca tinha 45 caracteres, e itens do mesmo produto comecam
+//   iguais: "Ar-condicionado, Split, quente e frio, 220V," abre os itens 1 e 3
+//   de Pinhal Grande/RS, e o verificador media sempre pela primeira linha.
+//   Com 80 caracteres entra a capacidade, que separa os dois.
 //
 // O erro de numeracao de verdade estava em outro lugar e ja foi corrigido: em
 // 5 compras o PNCP publica o ID interno no lugar do numero do item (Santo
@@ -51,7 +60,22 @@ const ABERTURAS = [
   /(?:^|[\s|;])(\d{1,4})(?:\.\d{1,3})?\s+\d{3,9}\s*$/,
   /\bitem\s*n?[oº°]?\.?\s*(\d{1,4})\s*[-–:]?\s*$/i,
 ];
-function numeroDaLinha(antes) {
+// A linha "<item> <quantidade>" seguida da UNIDADE, que abre a celula:
+//
+//   "... Valor Total (R$) 01 53 |UND APARELHO AR CONDICIONADO ..."
+//
+// Aqui 01 e o item e 53 e a quantidade. Lendo o ultimo numero, como as
+// ABERTURAS fazem, o verificador acusava o item 1 de estar numerado 53 — e
+// repetia o engano nos doze itens de Descalvado/SP. A unidade no comeco da
+// celula e o que prova qual dos dois numeros e o item.
+const ITEM_QTD = /(?:^|[\s|;])(\d{1,4})\s+\d{1,4}\s*$/;
+const ABRE_COM_UNIDADE = /^(?:und|unid|unidades?|un|pc|pca|peca|cx|caixa|par|kit|kg|lt)\b/i;
+
+function numeroDaLinha(antes, celula) {
+  if (ABRE_COM_UNIDADE.test(String(celula).trim())) {
+    const m = antes.match(ITEM_QTD);
+    if (m) return +m[1];
+  }
   for (const re of ABERTURAS) { const m = antes.match(re); if (m) return +m[1]; }
   return null;
 }
@@ -66,11 +90,16 @@ for (const ed of dd.editais) {
   for (const it of ed[C.itens]) {
     const m = (v.itens || []).find(x => x[0] === it[5]);
     if (!m || !m[6]) continue;
-    const agulha = norm(m[6]).slice(0, 45);
+    // Oitenta caracteres, e nao quarenta e cinco. Itens do mesmo produto
+    // comecam igual — "Ar-condicionado, Split, quente e frio, 220V," e o inicio
+    // dos itens 1 e 3 de Pinhal Grande/RS — e a agulha curta achava sempre a
+    // PRIMEIRA linha, fazendo o verificador acusar divergencia onde a celula
+    // estava certa. Em oitenta ja entra a capacidade, que separa os dois.
+    const agulha = norm(m[6]).slice(0, 80);
     const k = plano.indexOf(agulha);
     if (k < 1) { semPista++; continue; }
     const antes = txt.slice(Math.max(0, k - 40), k);
-    const n = numeroDaLinha(norm(antes));
+    const n = numeroDaLinha(norm(antes), m[6]);
     if (n === null) { semPista++; continue; }
     if (n === it[5]) confere++;
     else diverge.push({
