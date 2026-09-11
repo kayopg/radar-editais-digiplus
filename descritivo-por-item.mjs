@@ -223,6 +223,11 @@ const FIM_DE_LINHA = [
   /Item\s+Especifica[\u00e7c][\u00e3a]o\s+Unidade/i,
   /Unidade\s+Pre[\u00e7c]o\s+M[\u00e1a]ximo/i,
   /Descri[\u00e7c][\u00e3a]o\s+do\s+(?:Objeto|Produto)\s+(?:Unidade|Quantidade|Und)/i,
+  // "Item Descricao Quantidade Unidade" e o cabecalho do pedido de compra da
+  // UFTM (Uberaba/MG). Sem ele o tripe do item 53 seguia pelo item 54 inteiro
+  // — um monitor interativo de dois mil caracteres — e ainda pelo bloco de
+  // assinaturas e pelo pedido seguinte.
+  /\bItem\s+Descri[\u00e7c][\u00e3a]o\s+(?:Quantidade|Unidade|Und|Qtd)/i,
   // Volta ao clausulado do edital. O ultimo item de cada tabela nao tem um
   // proximo para fechar a celula e seguia ate o teto: o bebedouro do item 37 de
   // Santa Maria/RS levava junto a TV do 41, e a fritadeira do 8 de Vicosa/MG
@@ -234,6 +239,13 @@ const FIM_DE_LINHA = [
   // item 37 de Santa Maria/RS com 3.300 caracteres de papel timbrado.
   /Anexo ao Termo de Refer[\u00eae]ncia/i,
   /\s\d{14}(?=\s)/
+  ,
+  // O RODAPE da tabela, que e onde a celula do ultimo item termina de verdade.
+  // O item 74 de Mariopolis/PR e o ultimo da planilha e seguia por "492,00
+  // 3.936,00 Total dos Itens R$ 592.908,71 2. CONDICOES GERAIS 2.1 As propostas
+  // deverao vir datados... 2.3 Na nota fiscal, os itens deverao estar com".
+  /\s(?:Total\s+d[oa]s\s+[Ii]tens|Total\s+[Gg]eral\s+d[oa])/i,
+  /\s(?:CONDI[\u00c7C][\u00d5O]ES\s+GERAIS|Condi[\u00e7c][\u00f5o]es\s+[Gg]erais)/
 ];
 
 // Rodape de pagina que cai no meio da celula quando o descritivo atravessa uma
@@ -551,10 +563,28 @@ function descritivosPorItem(secoes, itens) {
     return [...vistos.entries()].sort((x, y) => y[1] - x[1]).map(e => e[0]);
   };
 
+  // A mesma linha, quando o edital imprime a QUANTIDADE entre o numero do item
+  // e a unidade: "23 8,0 UND Forno micro-ondas 30 litros" (Mariopolis/PR).
+  //
+  // Vem antes da ABERTURA por ser mais exigente — pede numero, quantidade com
+  // decimal E unidade —, entao nunca rouba uma linha dela. E precisa vir antes:
+  // a ABERTURA, nessa linha, lia o "0" de "8,0" e devolvia item zero, que nao
+  // existe em edital nenhum. Eram onze itens de Mariopolis/PR, todos com a
+  // especificacao inteira no texto e o numero certo impresso ao lado.
+  // A unidade e opcional porque o recuo do prefixo pode te-la engolido: a marca
+  // do item 66 de Mariopolis/PR fica em "UND LIQUIDIFICADOR INDUSTRIAL", e o
+  // que sobra antes dela e "...7.014,60 66 6,0 " — sem a unidade, que ja esta
+  // dentro da celula. Sem isto o 66 nao se confirmava e ficava com a celula do
+  // 65: os dois sao "Liquidificador Industrial" no catalogo do PNCP e so o
+  // edital os separa, em baixa e alta rotacao.
+  const ABERTURA_QTD = /(?:^|[^0-9])(0*[0-9]{1,4})\s+[0-9]{1,4}[.,][0-9]{1,3}\s*(?:(?:un|und|unid|unidade|pc|pca|peca|cx|caixa|par|kit|conj|cj|servico|kg)\.?)?\s*$/i;
+
   const numeroDaLinhaAntes = (pos) => {
     const antes = plano.slice(Math.max(0, pos - 34), pos);
+    const q = antes.match(ABERTURA_QTD);
+    if (q && +q[1] > 0) return +q[1];
     const m = antes.match(ABERTURA);
-    if (m) return +m[1];
+    if (m && +m[1] > 0) return +m[1];
     // colado em outro numero, so vale com zero a esquerda: "75004" e o item 4,
     // "75" com o centavo nao e item nenhum
     const z = antes.match(/0{1,4}([1-9][0-9]{0,3})$/);
@@ -588,16 +618,35 @@ function descritivosPorItem(secoes, itens) {
   // mesmo produto, e o trecho entre duas marcas coladas tem tamanho zero: em
   // Salto/SP a geladeira do item 5 ficava sem descritivo e a do item 6, que e
   // identica, ficava com ele.
+  // Ancora de uma palavra so nao vale no MEIO de uma frase.
+  //
+  // O item 29 de Mariopolis/PR e so "Liquidificador" no catalogo do PNCP, sem
+  // nada antes do primeiro campo, e a ancora fica nessa palavra sozinha. Ela
+  // casava tambem dentro de "conter uma jarra de liquidificador e 6
+  // acessorios", no meio da celula do multiprocessador do item 72 — e como
+  // cada marca fecha a celula anterior, o 72 terminava em "uma jarra de".
+  //
+  // Linha de tabela nao comeca depois de "de": comeca depois de numero, de
+  // unidade ou de pontuacao. Vale so para a ancora de uma palavra; com duas ja
+  // e especifica o bastante para nao cair no meio de frase.
+  //
+  // "tipo" e "como" NAO entram: "Refrigerador tipo Frigobar" e o nome do
+  // produto, e nao uma mencao de passagem. Com eles na lista, o frigobar do
+  // item 30 de Santa Maria/RS perdia a propria celula.
+  const NO_MEIO = /(?:^|[^a-z])(?:de|da|do|das|dos|e|ou|com|sem|para|em|no|na)[ ]+$/i;
+
   const porPos = new Map();
   const semAncora = [];
   itens.forEach((it, i) => {
     const achado = ancoraDe(plano, planoH, it[1]);
     if (!achado) { semAncora.push(i); return; }
     const { ancora: a, plano: onde } = achado;
+    const umaPalavra = !a.includes(" ");
     let de = 0;
     for (;;) {
       const k0 = onde.indexOf(a, de);
       if (k0 < 0) break;
+      if (umaPalavra && NO_MEIO.test(onde.slice(Math.max(0, k0 - 14), k0))) { de = k0 + a.length; continue; }
       const k = recuaPrefixo(k0);
       if (!porPos.has(k)) porPos.set(k, []);
       porPos.get(k).push(i);
