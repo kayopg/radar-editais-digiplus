@@ -555,6 +555,14 @@ function descritivosPorItem(secoes, itens) {
   // caracteres, e refazer isso por item deixaria a rodada inviavel.
   if (semAncora.length) {
     const tokens = [];
+    // A forma colada NAO entra aqui.
+    //
+    // Tentei acrescenta-la para o item 80 de Quedas do Iguacu/PR ("FORNO
+    // MICROONDAS" no catalogo, "MICRO-ONDAS" no edital) e nao resolveu: o que
+    // falta ali e a palavra "forno", que o edital nao usa. Em compensacao, o
+    // token a mais por palavra hifenizada encurtava o alcance da janela de 45 e
+    // custou tres itens que estavam certos — os dois "AR CONDIONADO" de Campina
+    // do Monte Alegre/SP e o ventilador de Santa Rita do Passa Quatro/SP.
     for (const m of plano.matchAll(/[a-z]+|\d[\d.,]*\d|\d/g)) tokens.push({ p: m.index, w: limpaNum(m[0]) });
     for (const i of semAncora) {
       const pos = marcaPorProximidade(tokens, palavrasDoItem(itens[i][1]),

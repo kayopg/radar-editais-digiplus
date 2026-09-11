@@ -58,6 +58,15 @@ let alvos = dados.editais;
 if (UF) alvos = alvos.filter(e => e[C.uf] === UF);
 if (LIMITE) alvos = alvos.slice(0, LIMITE);
 
+// --faltantes: so os editais que estao sem texto. O PNCP devolve 502 de vez em
+// quando, e uma rodada de 10 minutos inteira para recuperar dois editais e
+// desperdicio — pior, mexe no que ja estava bom.
+if (process.argv.includes('--faltantes')) {
+  let jaTem = {};
+  try { jaTem = JSON.parse(fs.readFileSync(path.join(DIR, 'docs', 'descritivos.json'), 'utf8')).editais || {}; } catch {}
+  alvos = alvos.filter(e => !((jaTem[e[C.path]] || {}).secoes || []).length);
+}
+
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 // Texto que saiu embaralhado da extracao nao pode ser entregue como descritivo.
@@ -303,12 +312,36 @@ async function extrai(e) {
     else if (!boas.some(p => p.length > 200)) tropecos.push('texto do PDF saiu embaralhado (fonte com codificacao propria)');
     else {
       paginas = boas;
-      const sel = escolhePaginas(e, itens, paginas);
+      // Quantas paginas de tabela cabem na selecao: 40 e o padrao, e para o
+      // edital grande e pouco.
+      //
+      // Quedas do Iguacu/PR publica 265 paginas para uma ata de 100 itens, e o
+      // teto de 40 deixava de fora dois tercos da tabela — com eles, os
+      // cabecalhos dos lotes 12 a 49 e a continuacao de varios itens. Uma pagina
+      // e meia por item cobre a tabela de qualquer edital sem trazer o contrato
+      // junto, e o teto de 250 mil caracteres por edital continua valendo.
+      const teto = Math.max(40, Math.min(150, Math.ceil(itens.length * 1.5)));
+      const sel = escolhePaginas(e, itens, paginas, { maxTabela: teto });
       const cobre = coberturaItens(e, paginas, sel.escolhidas);
       // Mesma regra do anexo: selecao que nao cobre os itens nao serve, e ai
       // vale mais mandar o documento inteiro do que perder descritivo.
-      const quais = (cobre >= 0.6 && (sel.tabela.length || (sel.tr && sel.tr.length)))
+      const base = (cobre >= 0.6 && (sel.tabela.length || (sel.tr && sel.tr.length)))
         ? sel.escolhidas : paginas.map((_, i) => i);
+
+      // A pagina SEGUINTE de cada escolhida entra junto.
+      //
+      // A celula de um item nao respeita a folha: a descricao comeca no pe de
+      // uma pagina e termina no alto da outra. A selecao achava a pagina em que
+      // o item aparece e parava ali, entao o descritivo saia cortado no meio da
+      // frase — foi o que o usuario viu no item 79 de Quedas do Iguacu/PR, onde
+      // de 265 paginas so 42 entravam.
+      //
+      // A anterior tambem, pelo motivo simetrico: um item que comeca no fim da
+      // pagina 40 tem o nome la e o corpo na 41, e se a busca casou na 41 a
+      // linha abre sem o nome.
+      const vizinhas = new Set();
+      for (const i of base) { vizinhas.add(i); if (i > 0) vizinhas.add(i - 1); if (i + 1 < paginas.length) vizinhas.add(i + 1); }
+      const quais = [...vizinhas].sort((a, b) => a - b);
       return { fonte: 'PDF', paginas: quais.length, total: paginas.length,
                cobertura: +cobre.toFixed(2), ilegiveis: perdidas || undefined,
                secoes: limita(secoesPorPagina(paginas, quais, sel)) };
