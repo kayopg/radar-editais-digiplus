@@ -153,6 +153,17 @@ const FIM_DE_LINHA = [
   // "MINI SPLIT. 10 04 UND APARELHO AR CONDICIONADO..." — numero do item,
   // quantidade e unidade abrindo a linha seguinte, em Descalvado/SP.
   /\s\d{1,4}\s+\d{1,4}\s+(?:UND|UNID|UN|PCS|PC|CX|PAR|KG|LT)(?=\s|$)/,
+  // A mesma virada de linha com a unidade na FRENTE: "...PELO FABRICANTE.
+  // UNIDADE 04 09 BALCAO COZINHA EM ACO" fecha a batedeira do item 8 de Nova
+  // Tebas/PR — unidade, quantidade, numero do proximo item e o nome dele em
+  // caixa alta. Dentro de uma especificacao essa sequencia nao acontece.
+  /\s(?:UNIDADES?|UNID|UND|UN|PCS?|CX|PAR|KG|LT)\.?\s+\d{1,4}\s+\d{1,4}\s+[A-Z\u00c0-\u00da]{3,}/,
+  // A virada de linha SEM unidade nenhuma: quantidade, numero do proximo item e
+  // o nome dele em caixa alta com duas palavras. E como a planilha de Apiai/SP
+  // separa as linhas — "...EMEIEF ELISA 1 12 VENTILADOR COLUNA 110/220 v" fecha
+  // o tanquinho do item 10. Duas palavras em caixa alta, e nao uma, para nao
+  // confundir com "tensao 220 110 VOLTS" no meio de uma especificacao.
+  /\s\d{1,3}\s+\d{1,3}\s+[A-Z\u00c0-\u00da]{4,}\s+[A-Z\u00c0-\u00da]{3,}/,
   // Fonte com codificacao propria devolve o texto em letras soltas:
   // "& ¤ P D U D  1 D F L R Q D O  G H". Nao da para consertar, mas da para
   // nao arrastar o lixo para dentro do descritivo — corta onde comeca.
@@ -171,7 +182,12 @@ const FIM_DE_LINHA = [
   // descritivo de produto — aparecem em clausula: em Paranapoema/PR o
   // frigobar seguia por "1.3. DO PROSPECTO 1.4.1. A licitante classificada
   // provisoriamente em primeiro lugar devera encaminhar ao pregoeiro...".
-  /\s(?:o |a |ao |pelo |pela )?(?:pregoeir[oa]|licitantes?\b|desclassifica|fase de lances|assinatura do contrato|custo estimado|vedada a inclus)/i,
+  // A negativa na frente existe porque estas palavras tambem aparecem DENTRO da
+  // especificacao, citadas de passagem: "catalogo anexo com especificacao
+  // tecnica do produto, mediante solicitacao do pregoeiro" fechava o item 15 de
+  // Santa Maria/RS antes da potencia, da voltagem e do material. Clausula comeca
+  // depois de ponto ou de artigo, nunca depois de "do", "ao", "pelo".
+  /(?<!\b(?:d[eoa]|ao|[\u00e0a]|pel[oa]|junto|perante|contra))\s(?:o |a |ao |pelo |pela )?(?:pregoeir[oa]|licitantes?\b|desclassifica|fase de lances|assinatura do contrato|custo estimado|vedada a inclus)/i,
   // Depois da tabela costuma vir a minuta do contrato, e o ultimo item entrava
   // nela: a mesa de futmesa de Rio Bom/PR seguia por "de um lado, a PREFEITURA
   // DO MUNICIPIO DE RIO BOM - PR, pessoa juridica de direito publico...".
@@ -259,7 +275,38 @@ const FIM_DE_LINHA = [
   /\s_{4,}/,
   // "Local de Entrega (Quantidade):Belo Horizonte/MG (1)Grupo:G215" fecha cinco
   // celulas do edital de Belo Horizonte/MG.
-  /(?:Local|Endere[\u00e7c]o)\s+de\s+Entrega/i,
+  // Com dois pontos ou parentese logo depois, porque so ai e ROTULO de campo.
+  // Solto, "local de entrega" e parte da frase — "devidamente instalado no local
+  // de entrega" fecha a especificacao dos itens 4 e 44 de Mariopolis/PR.
+  /(?:Local|Endere[\u00e7c]o)\s+de\s+Entrega\s*[:(]/i,
+  // "VALOR TOTAL:" fecha a linha da planilha. O umidificador do item 7 de Lucas
+  // do Rio Verde/MT seguia por "UND 30 VALOR TOTAL: 1.2 O fornecimento do
+  // objeto...".
+  /\sVALOR\s+TOTAL\s*:/i,
+  // O cabecalho do LOTE seguinte, que e como a planilha de Londrina/PR vira a
+  // linha: "...CADERNO TECNICO FNDE 2017 DO LOTE:128.132,26 12.00Unidade
+  // GELADEIRA..." e "...110 volts.3437450Lote: 10 - Lote 10 - Preferencial
+  // ME/EPP". Nao ha espaco antes do "Lote:", por isso o padrao nao pede um.
+  /Lote:\s*\d{1,3}\s*-\s*Lote/i,
+  /DO\s+LOTE\s*:/i,
+  // O somatorio da planilha, colado no fim da ultima celula: o ventilador do
+  // item 14 de Vicosa/MG terminava em "Baixo nivel de ruidoTOTAL216.421,6011.
+  // Justificativa para o Parcelamento...". Dentro de uma especificacao a palavra
+  // TOTAL nao vem seguida de numero.
+  /[^A-Z\u00c0-\u00da]TOTAL\s*[\d.]{3,}/,
+  // Volta ao clausulado: numero de clausula logo depois de um PONTO, e o artigo
+  // seguido de palavra em minuscula. O ponto na frente e o que separa isto de
+  // uma medida ("potencia 12.5 A de corrente" nao casa, porque antes do numero
+  // ha letra e nao ponto). Fecha o ventilador do item 14 de Vicosa/MG, que
+  // seguia por "11.2 A licitacao sera dividida em 48 itens", e o fogao do item 3
+  // de Trabiju/SP, que seguia por "1.5 O prazo de vigencia do Contrato".
+  /(?:[.)]\s*|\d\s+)\d{1,2}\.\d{1,2}\.?\s+(?:O|A|Os|As|No|Na|Em|Para|Cada|Fica|Nos|Nas|Ser[\u00e1\u00e3]o?|Dever[\u00e1\u00e3]o?)\s+[a-z\u00e0-\u00ff]/,
+  // Cabecalho do artefato do Compras.gov.br colado na quantidade da linha:
+  // "...Em Portugues; 100ESP-CTO.ATENCAO INTEGRAL A SAUDE S.RITATermo de
+  // Referencia 45/2026Informacoes Basicas...". Corta no digito da quantidade,
+  // e so quando o que vem depois e mesmo esse cabecalho — a olhada a frente
+  // impede que um codigo de modelo seja confundido com ele.
+  /\d{1,5}(?=[A-Z\u00c0-\u00da]{3,}[-.][A-Z\u00c0-\u00da]{2,}[^a-z]{0,60}(?:Termo de Refer|Informa[\u00e7c][\u00f5o]es B))/,
   /\bGrupo\s*:\s*G\d{2,}/,
   // Rodape do modelo da AGU ("Atualizacao: DEZ/2025") e carimbo de versao do
   // Compras.gov.br ("(v 0.3) Status ASSINADO").
@@ -294,7 +341,41 @@ const RODAPE = [
   /\s*\S*pp-signer\/verify\?code=\S*/gi,
   /\s*Tramitado e Assinado Eletronicamente por\s+\S+/gi,
   /\s*SEI\s*n[ºo°]?\s*[\d/.\-]+/gi,
-  /\s*P[áa]gina\s+\d+(?:\s+de\s+\d+)?/gi
+  // Sem espaco obrigatorio depois de "Pagina" e com a barra como separador:
+  // o item 6 de Bela Vista do Paraiso/PR trazia "Pagina21 | 59" no meio da
+  // descricao, entre a aplicacao do equipamento e o painel digital dele.
+  /\s*P[áa]gina:?\s*\d+(?:\s*(?:de|\|)\s*\d+)?/gi,
+  // A VIRADA DE FOLHA no meio da celula: preco da linha e numero de pagina
+  // espremidos entre o fim de uma frase e a maiuscula que continua a outra, sem
+  // espaco nenhum — "...fixacao em parede.227,931.367,58 13 de 14Novo, sem uso,
+  // acompanhado de manual..." no ventilador do item 14 de Vicosa/MG.
+  //
+  // Some daqui em vez de virar fim de linha porque o descritivo CONTINUA depois
+  // dela: e o mesmo item, na folha seguinte. A assinatura e estreita de
+  // proposito — preco colado numa letra minuscula e maiuscula colada no fim so
+  // acontecem quando o PDF virou a pagina no meio da celula.
+  /(?<=[a-z\u00e0-\u00ff.,;])[\d.]{1,12},\d{2}[\d.]{1,12},\d{2}(?:\s*\d{1,3}\s+de\s+\d{1,3})?(?=[A-Za-z\u00c0-\u00ff])/g,
+  /(?<=[a-z\u00e0-\u00ff.,;])\s?\d{1,3}\s+de\s+\d{1,3}(?=[A-Za-z\u00c0-\u00ff])/g,
+  // O TIMBRE do orgao e o cabecalho da planilha, que reaparecem no alto de cada
+  // folha e caem no meio da celula quando o item atravessa a virada. Nenhum
+  // deles e descricao de produto, e nenhum fecha o item — o descritivo continua
+  // logo depois. Por isso saem daqui, e nao viram fim de linha.
+  /\s*PREFEITURA\s+(?:MUNICIPAL\s+)?(?:D[EO]\s+)?[A-Z\u00c0-\u00da][A-Z\u00c0-\u00da' .]{2,32}/g,
+  /\s*(?:GOVERNO\s+DO\s+)?ESTADO\s+D[EO]\s+[A-Z\u00c0-\u00da][A-Z\u00c0-\u00da' .]{2,24}/g,
+  /\s*CNPJ[:\s.]*[\d.\/-]{14,20}/gi,
+  /\s*Fone[s:\s]*\(?\d{2}\)?[\d\s.-]{6,}/gi,
+  /\s*e-?mail:?\s*\S+@\S+/gi,
+  /\s*Item\s*Descri[\u00e7c][\u00e3a]o\s*do\s*Produto\s*\/?\s*Servi[\u00e7c]o\s*Unidade/gi,
+  /\s*Pre[\u00e7c]o\s*M[\u00e1a]ximo(?:\s*Total)?/gi,
+  /\s*C[\u00f3o]d\.?\s*do\s*Produto/gi,
+  // Rodape de sistema de compras, que assina cada folha com quem emitiu, a
+  // versao e o numero da pagina. Cai no meio da celula dos itens 5 e 6 de
+  // Londrina/PR, entre a descricao do refrigerador e a garantia dele.
+  /\s*Emitido por:[\s\S]{0,60}?na vers[\u00e3a]o:\s*\d+/gi,
+  /\s*Prefeitura do Munic[\u00edi]pio de\s+[A-Z\u00c0-\u00da][A-Za-z\u00c0-\u00ff ]{2,24}\s*-?\s*\d{4}/gi,
+  /\s*P[\u00e1a]gina:\s*\d{1,3}/gi,
+  /\s*Anexo\s*\d{1,3}\s*-\s*Processo:\s*[\d\/.-]+/gi,
+  /\s*Processo\s*[\d\/]{4,12}\s*\d{2}\/\d{2}\/\d{4}\s*\d{2}:\d{2}(?::\d{2})?/gi
 ];
 
 function tiraRodape(txt) {
@@ -307,11 +388,29 @@ function tiraRodape(txt) {
 // "Especificacao:" repetindo o mesmo texto — fazia o recorte sair dobrado, com
 // 1.309 caracteres onde ha 650 de conteudo (Sabinopolis/MG). Voltando ao
 // proprio comeco, o descritivo acabou ali.
+// O rotulo de CAMPO repetido, que e como o edital de Sao Paulo/SP separa as
+// linhas: cada item e "MODELO: ... TIPO DE MATERIAL: ... REFERENCIA: ...
+// MEDIDAS: ...". Quando o "MODELO:" reaparece, comecou o item seguinte — o
+// controle remoto do item 2 seguia por seis mil caracteres de tubo de cobre.
+//
+// So rotulo em caixa alta e so a partir de 250 caracteres: dentro de uma mesma
+// especificacao o campo nao se repete, e o piso evita cortar um cabecalho que
+// o edital escreve duas vezes coladas.
+const CAMPO = /(?:^|[^A-Z\u00c0-\u00da])([A-Z\u00c0-\u00da][A-Z\u00c0-\u00da ]{2,24}):/;
+
 function cortaNaRepeticao(t) {
   if (t.length < 200) return t;
   const inicio = t.slice(0, 50);
   const k = t.indexOf(inicio, 100);
-  return k > 0 ? t.slice(0, k).trim().replace(/[\s.,;:-]+$/, '') : t;
+  let fim = k > 0 ? k : t.length;
+
+  const m = CAMPO.exec(t.slice(0, 200));
+  if (m) {
+    const rot = m[1] + ":";
+    const r = t.indexOf(rot, Math.max(250, m.index + rot.length));
+    if (r > 0 && r < fim) fim = r;
+  }
+  return fim === t.length ? t : t.slice(0, fim).trim().replace(/[\s.,;:-]+$/, '');
 }
 
 function cortaNaProximaLinha(txt) {
@@ -480,6 +579,20 @@ function marcaPorProximidade(tokens, alvo, numero, numeroDaLinha) {
 // esta sujo de assinatura digital e fala do mesmo produto do rotulo.
 function serve(rotulo, t, confirmado) {
   if (!t) return false;
+  // Celula que correu ate o TETO nao achou o proprio fim: dali para a frente e
+  // o resto do documento, nao a especificacao do produto. Seis mil caracteres
+  // nao sao a descricao de uma geladeira.
+  //
+  // O item 78 de Bento Goncalves/RS e um freezer, e a celula dele comecava numa
+  // PLANTA BAIXA ("Freezer 148x78 79 1,00 x 1,10 / peitoril ... Planta Baixa
+  // CAMPUS") e seguia por seis mil caracteres de estudo tecnico. A palavra
+  // "freezer" so aparece na planta nesse edital: a tabela de itens nao entrou no
+  // texto, e melhor o item sem descritivo do que com a legenda de uma planta.
+  //
+  // So vale quando o numero do item vem impresso abrindo a linha: ai a linha e
+  // dele por prova do edital, e o comprimento e so falta de um proximo item para
+  // fechar a celula — que e justamente para o que o teto existe.
+  if (!confirmado && t.length >= TETO_ITEM - 200) return false;
   // Especificacao de 150 caracteres para cima vale por si, sem comparar com o
   // rotulo. Comparar castigava justamente o item que o PNCP descreve por
   // extenso: o item 2 de Paranavai/PR tem 340 caracteres de rotulo de catalogo
@@ -659,7 +772,12 @@ function descritivosPorItem(secoes, itens) {
   // "tipo" e "como" NAO entram: "Refrigerador tipo Frigobar" e o nome do
   // produto, e nao uma mencao de passagem. Com eles na lista, o frigobar do
   // item 30 de Santa Maria/RS perdia a propria celula.
-  const NO_MEIO = /(?:^|[^a-z])(?:de|da|do|das|dos|e|ou|com|sem|para|em|no|na)[ ]+$/i;
+  //
+  // Nem dentro de parenteses: o item 11 de Londrina/PR e so "Freezer" no
+  // catalogo, e essa palavra sozinha casava dentro de "gabinete tipo duplex com
+  // duas portas (freezer e refrigerador)" — no meio da celula dos itens 5 e 6,
+  // que terminavam em "duas portas (".
+  const NO_MEIO = /(?:^|[^a-z])(?:de|da|do|das|dos|e|ou|com|sem|para|em|no|na)[ ]+$|[(\[/]$/i;
 
   const porPos = new Map();
   const semAncora = [];
