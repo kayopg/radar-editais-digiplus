@@ -451,6 +451,11 @@ function serve(rotulo, t, confirmado) {
 
 function descritivosPorItem(secoes, itens) {
   const plano = normIgual(secoes);
+
+  // Uma mencao solta a "LOTE 9" numa clausula nao faz o edital ser por lote —
+  // tres lotes distintos, sim.
+  const lotesVistos = new Set([...secoes.matchAll(/\bLOTE\s*(?:N?[\u00ba\u00b0o.]?\s*)?(\d{1,3})\b/gi)].map(m => m[1]));
+  const lotesDeVerdade = lotesVistos.size >= 3;
   // O numero do item, impresso logo antes da linha, decide antes das palavras.
   //
   // Em Santa Maria/RS a tabela sai colada — "...do produto.45Cafeteira eletrica
@@ -481,15 +486,47 @@ function descritivosPorItem(secoes, itens) {
   //
   // O lote e o ultimo anunciado ANTES da linha. A janela e de 4.000 caracteres:
   // um lote costuma ter poucos itens, e alem disso o cabecalho ja e outro.
+  // De que LOTE e o item.
+  //
+  // O PNCP nao tem campo de lote: a API entrega numeracao corrida de 1 a 100 e
+  // quem separa em lotes e o texto do edital. Em Quedas do Iguacu/PR o item 74
+  // da API e o "LOTE 37, ITEM 1" do edital, e e por esse par que se da lance.
+  //
+  // A busca NAO parte do descritivo, e sim do nome do produto — porque o mesmo
+  // item aparece duas vezes no edital: no termo de referencia, que descreve mas
+  // nao usa lote, e na planilha de lotes, que so lista. O recorte vem do termo,
+  // e ali o lote mais proximo estava a 20 e 33 mil caracteres de distancia: era
+  // o cabecalho de outra parte do documento, e teria sido lido como se fosse o
+  // do item.
+  //
+  // Na planilha o cabecalho fica colado na linha — nos itens que ja acertavam,
+  // a 90 e 117 caracteres. Por isso a janela e curta: 600 caracteres. Cabecalho
+  // longe nao e o do item.
   const RE_LOTE = /\bLOTE\s*(?:N?[\u00ba\u00b0o.]?\s*)?(\d{1,3})\b/gi;
-  const loteEm = (pos) => {
-    if (!lotesDeVerdade) return null;
-    const de = Math.max(0, pos - 4000);
-    const janela = secoes.slice(de, pos);
-    let achado = null;
+  const JANELA_LOTE = 600;
+  const posicoesDeLote = [];
+  if (lotesDeVerdade) {
     RE_LOTE.lastIndex = 0;
-    for (let m; (m = RE_LOTE.exec(janela));) achado = +m[1];
-    return achado;
+    for (let m; (m = RE_LOTE.exec(secoes));) posicoesDeLote.push({ p: m.index, n: +m[1] });
+  }
+  const loteDoItem = (rotulo) => {
+    if (!posicoesDeLote.length) return [];
+    // o nome do produto e o que vem antes da primeira virgula ou do primeiro
+    // par "campo: valor" — o resto e especificacao, que a planilha nao repete
+    const nome = normIgual(String(rotulo)).split(/[,;:]/)[0].trim().slice(0, 24);
+    if (nome.length < 8) return [];
+    const vistos = new Map();
+    for (let k = plano.indexOf(nome); k >= 0 && vistos.size < 30; k = plano.indexOf(nome, k + 1)) {
+      for (let j = posicoesDeLote.length - 1; j >= 0; j--) {
+        const L = posicoesDeLote[j];
+        if (L.p >= k) continue;
+        if (k - L.p <= JANELA_LOTE) vistos.set(L.n, (vistos.get(L.n) || 0) + 1);
+        break;
+      }
+    }
+    if (!vistos.size) return [];
+    // todos os candidatos, do mais frequente para o menos
+    return [...vistos.entries()].sort((x, y) => y[1] - x[1]).map(e => e[0]);
   };
 
   const numeroDaLinhaAntes = (pos) => {
@@ -506,10 +543,6 @@ function descritivosPorItem(secoes, itens) {
   // segunda tentativa para a ancora, sem deslocar posicao nenhuma.
   const planoH = plano.replace(/-/g, ' ');
 
-  // Uma mencao solta a "LOTE 9" numa clausula nao faz o edital ser por lote —
-  // tres lotes distintos, sim.
-  const lotesVistos = new Set([...secoes.matchAll(/\bLOTE\s*(?:N?[\u00ba\u00b0o.]?\s*)?(\d{1,3})\b/gi)].map(m => m[1]));
-  const lotesDeVerdade = lotesVistos.size >= 3;
 
   // Recua a marca para incluir a palavra que o catalogo tirou do nome.
   //
@@ -634,6 +667,7 @@ function descritivosPorItem(secoes, itens) {
 
   const numerosDoEdital = new Set(itens.map(it => it[0]).filter(Number.isInteger));
   const lotes = new Map();
+  const candidatosDeLote = new Map();
   const melhor = new Map();
   for (const [i, quais] of candidatos) {
     const rotulo = itens[i][1];
@@ -679,7 +713,7 @@ function descritivosPorItem(secoes, itens) {
     // porque a celula certa e curta e a do vizinho e longa.
     const achouMinhaLinha = numLinha.some(n => n === itens[i][0]);
 
-    let vencedor = '', nota = -1, venceuPeloNumero = false, loteVencedor = null, numeroVencedor = null;
+    let vencedor = '', nota = -1, venceuPeloNumero = false, numeroVencedor = null;
     cabecas.forEach(({ k, t, c, nums }, idx) => {
       if (!t) return;
       const confirmado = numLinha[idx] === itens[i][0];
@@ -703,7 +737,7 @@ function descritivosPorItem(secoes, itens) {
               + alvo.filter(w => c.has(w)).reduce((s, w) => s + (ehNumero(w) ? PESO_NUMERO : 1), 0);
       if (n > nota || (n === nota && t.length > vencedor.length)) {
         nota = n; vencedor = t; venceuPeloNumero = confirmado;
-        loteVencedor = loteEm(posicoes[k]); numeroVencedor = numLinha[idx];
+        numeroVencedor = numLinha[idx];
       }
     });
     // Abaixo de 1e6 nenhum trecho servia, ou o unico que servia era de outro
@@ -712,9 +746,28 @@ function descritivosPorItem(secoes, itens) {
     // item se chama no pregao, nao o que ele e. Em Londrina/PR so 4 dos 9 itens
     // tinham recorte aprovado, e a tabela saia com lote em uns e numero solto em
     // outros.
-    if (loteVencedor) lotes.set(i, { lote: loteVencedor, noLote: numeroVencedor });
-    if (vencedor && nota >= 1e6) melhor.set(i, { texto: vencedor, confirmado: venceuPeloNumero,
-                                                  lote: loteVencedor, noLote: numeroVencedor });
+    candidatosDeLote.set(i, loteDoItem(rotulo));
+    if (vencedor && nota >= 1e6) melhor.set(i, { texto: vencedor, confirmado: venceuPeloNumero });
+  }
+
+  // O lote cresce junto com o numero do item, e e isso que desempata.
+  //
+  // A planilha lista os lotes em ordem, e a API numera os itens na mesma ordem:
+  // em Quedas do Iguacu/PR os itens 71, 72, 75, 76 caem nos lotes 35, 36, 38,
+  // 39. Quando um item casa com mais de um cabecalho — "FREEZER VERTICAL"
+  // aparecia tambem na linha do lote 36, que e o horizontal — vale o candidato
+  // que nao faz a sequencia andar para tras.
+  {
+    const ordem = [...candidatosDeLote.keys()].sort((x, y) => (itens[x][0] || 0) - (itens[y][0] || 0));
+    let ultimo = 0;
+    for (const i of ordem) {
+      const cands = candidatosDeLote.get(i) || [];
+      const bom = cands.find(n => n > ultimo);
+      const escolhido = bom !== undefined ? bom : cands[0];
+      if (escolhido === undefined) continue;
+      if (escolhido > ultimo) ultimo = escolhido;
+      lotes.set(i, { lote: escolhido, noLote: null });
+    }
   }
 
   // Dois itens de rotulos diferentes nao podem sair com o MESMO descritivo.
