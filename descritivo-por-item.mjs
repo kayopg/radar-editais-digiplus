@@ -240,6 +240,23 @@ const FIM_DE_LINHA = [
   /Anexo ao Termo de Refer[\u00eae]ncia/i,
   /\s\d{14}(?=\s)/
   ,
+  // Cauda de formulario e de rodape. A especificacao do produto ja terminou; o
+  // que vem depois e o campo em branco para preencher, o endereco de entrega,
+  // o carimbo do sistema ou o cabecalho da folha seguinte.
+  //
+  // Linha de sublinhados e campo de formulario, nunca descricao: e assim que a
+  // planilha de Santa Maria/RS separa a celula do preco ("______ _____ 15,00
+  // 2.433,0000 29 Geladeira /").
+  /\s_{4,}/,
+  // "Local de Entrega (Quantidade):Belo Horizonte/MG (1)Grupo:G215" fecha cinco
+  // celulas do edital de Belo Horizonte/MG.
+  /(?:Local|Endere[\u00e7c]o)\s+de\s+Entrega/i,
+  /\bGrupo\s*:\s*G\d{2,}/,
+  // Rodape do modelo da AGU ("Atualizacao: DEZ/2025") e carimbo de versao do
+  // Compras.gov.br ("(v 0.3) Status ASSINADO").
+  /Atualiza[\u00e7c][\u00e3a]o\s*:\s*[A-Za-z]{3}\/\d{4}/,
+  /\(v\s*\d+\.\d+/
+  ,
   // O RODAPE da tabela, que e onde a celula do ultimo item termina de verdade.
   // O item 74 de Mariopolis/PR e o ultimo da planilha e seguia por "492,00
   // 3.936,00 Total dos Itens R$ 592.908,71 2. CONDICOES GERAIS 2.1 As propostas
