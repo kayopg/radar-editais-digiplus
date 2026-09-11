@@ -113,7 +113,23 @@ const TETO_ITEM = 6000;
 // O (?=\s|$) no fim e proposital: sem ele o padrao exigia um espaco depois e
 // nao casava quando a sobra ficava no FIM do texto — era o caso de Salto/SP,
 // que terminava em "...mínima, média e máxima. 2 165.6.205".
+// O carimbo de assinatura CORTA a celula, em vez de anular o descritivo.
+//
+// Cada sistema carimba de um jeito proprio — um deles sai ate sem espaco
+// ("StatusASSINADOOutrasinforma esCategoria") — e perseguir todos os formatos
+// nao acaba. So que descartar o trecho inteiro por causa do carimbo custa o
+// descritivo de itens cuja celula esta perfeita antes dele: em Ponta Grossa/PR
+// a cafeteira do item 6 e o fogao do 12 traziam mil e setecentos caracteres de
+// especificacao boa, seguidos do carimbo.
+//
+// Entao o carimbo entra no FIM_DE_LINHA, que corta ali, e o AINDA_SUJO fica
+// como ultima defesa para o caso de ele aparecer no COMECO — quando nao ha
+// celula a salvar e o item volta a mostrar a descricao do PNCP.
+const CARIMBO = /\s*[A-Za-z]?(?:assinad[oa]|assinatura eletr[oô]nica|pp-signer|tramitado e assinado|confira as assinatura|documento assinado|verifique pelo QRCode|verificar a autenticidade)/i;
+const AINDA_SUJO = /^.{0,80}(?:assinad[oa]|pp-signer|tramitado e assinado|confira as assinatura)/i;
+
 const FIM_DE_LINHA = [
+  CARIMBO,
   // Valor total e valor unitario GRUDADOS, que e como a tabela da UFPel
   // (Pelotas/RS) fecha a linha: "...Sem instalacao. 211.875,002.118,75 CNPJ".
   /\s[\d.]{1,12},\d{2}[\d.]{1,12},\d{2}(?=\s|$)/,
@@ -166,7 +182,19 @@ const FIM_DE_LINHA = [
   /PROCESSO ADMINISTRATIVO N/i,
   /ESTIMATIVA DO VALOR TOTAL/i,
   /DESCRI[\u00c7C][\u00c3A]O DOS PRODUTOS\s+ITEM/i,
-  /Natureza do objeto|FUNDAMENTA[\u00c7C][\u00c3A]O DA CONTRATA/i,
+  /Natureza do objeto|FUNDAMENTA[\u00c7C][\u00c3A]O\s+(?:DA|E)\b/i,
+  // O modelo de proposta que vem depois da tabela: o item 7 de Lucas do Rio
+  // Verde/MT seguia por "Local e data. Carimbo da Empresa/Assinatura do
+  // responsavel *(Elaborar em Papel Timbrado)".
+  /Carimbo da Empresa|Elaborar em Papel Timbrado|\sLocal e data\./i,
+  // A clausula de composicao de preco, que fecha a especificacao do item 7 de
+  // Lucas do Rio Verde/MT: "...tributos, encargos previdenciarios, fiscais e
+  // comerciais incidentes, taxa de administracao, frete, seguro... 1.5 Os precos
+  // ajustados nao sofrerao reajuste". A numeracao "1.5" sem o segundo ponto nao
+  // e pega pelo padrao de clausula, entao vao os termos inteiros.
+  /encargos previdenci[\u00e1a]rios|taxa de administra[\u00e7c][\u00e3a]o|n[\u00e3a]o sofrer[\u00e3a]o reajuste/i,
+  // A clausula de vigencia, que fecha a especificacao em Trabiju/SP.
+  /vig[\u00eae]ncia do Contrato ser[\u00e1a]|contados a partir da assinatura/i,
   /ser[\u00e1a] atestada a entrega|servidor designado pela administra/i
   ,
   // O formulario de proposta e o estudo tecnico, que vem logo depois da tabela
@@ -231,12 +259,6 @@ const RODAPE = [
   /\s*P[áa]gina\s+\d+(?:\s+de\s+\d+)?/gi
 ];
 
-// Ultima linha de defesa. Cada sistema de assinatura carimba de um jeito
-// proprio — um deles sai ate sem espaco nenhum ("StatusASSINADOOutrasinforma
-// esCategoria") — e perseguir todos os formatos nao acaba. Sobrando marca de
-// carimbo depois da limpeza, o descritivo e descartado e o item volta a mostrar
-// a descricao do PNCP: melhor uma descricao curta que uma suja.
-const AINDA_SUJO = /assinad[oa]|pp-signer|tramitado e assinado|confira as assinatura/i;
 function tiraRodape(txt) {
   let t = txt;
   for (const re of RODAPE) t = t.replace(re, ' ');
