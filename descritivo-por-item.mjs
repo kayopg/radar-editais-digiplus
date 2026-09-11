@@ -288,7 +288,7 @@ const CABECA = 160;
 function falaDoMesmoProduto(rotulo, texto) {
   const alvo = palavrasDoItem(rotulo);
   if (alvo.length < 2) return true;          // rotulo curto demais para julgar
-  const cabeca = new Set(fatia(texto.slice(0, CABECA)).map(limpaNum));
+  const cabeca = new Set(fatiaTexto(texto.slice(0, CABECA)).map(limpaNum));
   return alvo.filter(w => cabeca.has(w)).length >= 2;
 }
 
@@ -320,8 +320,38 @@ const REMISSAO = /\s*[,.;-]?\s*(?:conforme|vide|ver)\s+(?:o\s+|a\s+|as\s+|os\s+)
 // "000". Sem isso o ar-condicionado de 20.000 BTU casava com a celula do de
 // 30.000 — texto limpo, produto errado, e ninguem percebia porque a auditoria
 // de contaminacao so procura item dentro de item.
-const fatia = s => normIgual(String(s).replace(/-\s*/g, ''))
-  .match(/[a-z]+|\d[\d.,]*\d|\d/g) || [];
+// O hifen sai das DUAS maneiras, e os dois conjuntos de tokens valem.
+//
+// Tirar o hifen junta o que ele separava: "AR-CONDICIONADO" vira
+// "arcondicionado" e "BTUs- QUENTE" vira "btusquente". Nenhum dos dois casa com
+// o rotulo "AR CONDICIONADO 18.000 BTUS", e o item 74 de Quedas do Iguacu/PR
+// ficava sem descritivo com a celula certa recortada em maos — so faltava
+// reconhece-la.
+//
+// Juntar continua necessario para a palavra quebrada no fim da linha
+// ("ELETROCARDIO-GRAMA"), entao em vez de escolher, geram-se as duas formas: a
+// colada e a separada. Quem consome isto usa Set, e token repetido nao conta
+// duas vezes.
+const RE_TOKEN = /[a-z]+|\d[\d.,]*\d|\d/g;
+const fatia = s => normIgual(String(s).replace(/-\s*/g, '')).match(RE_TOKEN) || [];
+
+// No TEXTO do edital o hifen sai das duas maneiras; no rotulo, nao.
+//
+// Tirar o hifen junta o que ele separava: "AR-CONDICIONADO" vira
+// "arcondicionado" e "BTUs- QUENTE" vira "btusquente". O item 74 de Quedas do
+// Iguacu/PR — rotulo "AR CONDICIONADO 18.000 BTUS", sem hifen — nao se
+// reconhecia na propria celula por causa disso, e ficava sem descritivo com o
+// texto certo recortado em maos.
+//
+// Juntar continua necessario para a palavra quebrada no fim da linha
+// ("ELETROCARDIO-GRAMA"), entao o texto oferece as duas formas e o rotulo
+// escolhe qual casa. Fazer o mesmo no rotulo seria pior: ele ganharia um token
+// a mais, o minimo exigido subiria junto, e os itens 6 e 7 de Campina do Monte
+// Alegre/SP passariam a precisar de tres coincidencias onde ha duas.
+const fatiaTexto = s => [
+  ...(normIgual(String(s).replace(/-\s*/g, '')).match(RE_TOKEN) || []),
+  ...(normIgual(String(s).replace(/-/g, ' ')).match(RE_TOKEN) || []),
+];
 const util = w => (/^\d/.test(w) ? w.replace(/[.,]/g, '').length >= 3
                                  : w.length >= 4 && !VAZIAS.has(w));
 const limpaNum = w => (/^\d/.test(w) ? w.replace(/[.,]/g, '') : w);
@@ -443,6 +473,25 @@ function descritivosPorItem(secoes, itens) {
   // ao meio e lia "1" de "104740", dando o item 1 de Paranavai/PR como dono da
   // linha do 18.000 BTUs.
   const ABERTURA = /(?:^|[^0-9])(0*[0-9]{1,4})[.)\-]?(?:\s+[0-9]{5,9}[.,)\-]*){0,2}\s*(?:(?:un|und|unid|unidade|pc|pca|peca|cx|caixa|par|kit|servico|kg)\.?\s*)?$/i;
+  // De que LOTE e a linha que comeca aqui.
+  //
+  // O PNCP nao tem campo de lote: a API entrega numeracao corrida de 1 a 100 e
+  // quem separa em lotes e o texto do edital. Em Quedas do Iguacu/PR o item 74
+  // da API e o "LOTE 37, ITEM 1" do edital, e e por esse par que se da lance.
+  //
+  // O lote e o ultimo anunciado ANTES da linha. A janela e de 4.000 caracteres:
+  // um lote costuma ter poucos itens, e alem disso o cabecalho ja e outro.
+  const RE_LOTE = /\bLOTE\s*(?:N?[\u00ba\u00b0o.]?\s*)?(\d{1,3})\b/gi;
+  const loteEm = (pos) => {
+    if (!lotesDeVerdade) return null;
+    const de = Math.max(0, pos - 4000);
+    const janela = secoes.slice(de, pos);
+    let achado = null;
+    RE_LOTE.lastIndex = 0;
+    for (let m; (m = RE_LOTE.exec(janela));) achado = +m[1];
+    return achado;
+  };
+
   const numeroDaLinhaAntes = (pos) => {
     const antes = plano.slice(Math.max(0, pos - 34), pos);
     const m = antes.match(ABERTURA);
@@ -456,6 +505,11 @@ function descritivosPorItem(secoes, itens) {
   // Mesmo comprimento do plano, so com o hifen valendo espaco: serve de
   // segunda tentativa para a ancora, sem deslocar posicao nenhuma.
   const planoH = plano.replace(/-/g, ' ');
+
+  // Uma mencao solta a "LOTE 9" numa clausula nao faz o edital ser por lote —
+  // tres lotes distintos, sim.
+  const lotesVistos = new Set([...secoes.matchAll(/\bLOTE\s*(?:N?[\u00ba\u00b0o.]?\s*)?(\d{1,3})\b/gi)].map(m => m[1]));
+  const lotesDeVerdade = lotesVistos.size >= 3;
 
   // Recua a marca para incluir a palavra que o catalogo tirou do nome.
   //
@@ -571,6 +625,7 @@ function descritivosPorItem(secoes, itens) {
   }
 
   const numerosDoEdital = new Set(itens.map(it => it[0]).filter(Number.isInteger));
+  const lotes = new Map();
   const melhor = new Map();
   for (const [i, quais] of candidatos) {
     const rotulo = itens[i][1];
@@ -580,7 +635,7 @@ function descritivosPorItem(secoes, itens) {
     // Cabeca de cada candidato, uma vez so.
     const cabecas = quais.map(k => {
       const t = trechos[k] || '';
-      const c = new Set(fatia(t.slice(0, CABECA_ESCOLHA)).map(limpaNum));
+      const c = new Set(fatiaTexto(t.slice(0, CABECA_ESCOLHA)).map(limpaNum));
       return { k, t, c, nums: [...c].filter(ehNumero) };
     });
 
@@ -616,7 +671,7 @@ function descritivosPorItem(secoes, itens) {
     // porque a celula certa e curta e a do vizinho e longa.
     const achouMinhaLinha = numLinha.some(n => n === itens[i][0]);
 
-    let vencedor = '', nota = -1, venceuPeloNumero = false;
+    let vencedor = '', nota = -1, venceuPeloNumero = false, loteVencedor = null, numeroVencedor = null;
     cabecas.forEach(({ k, t, c, nums }, idx) => {
       if (!t) return;
       const confirmado = numLinha[idx] === itens[i][0];
@@ -638,11 +693,20 @@ function descritivosPorItem(secoes, itens) {
       const n = (serve(rotulo, t, confirmado) && !deOutro ? 1e6 : 0)
               + (confirmado ? 1e3 : 0)
               + alvo.filter(w => c.has(w)).reduce((s, w) => s + (ehNumero(w) ? PESO_NUMERO : 1), 0);
-      if (n > nota || (n === nota && t.length > vencedor.length)) { nota = n; vencedor = t; venceuPeloNumero = confirmado; }
+      if (n > nota || (n === nota && t.length > vencedor.length)) {
+        nota = n; vencedor = t; venceuPeloNumero = confirmado;
+        loteVencedor = loteEm(posicoes[k]); numeroVencedor = numLinha[idx];
+      }
     });
     // Abaixo de 1e6 nenhum trecho servia, ou o unico que servia era de outro
     // item. Melhor o item sem descritivo do que com a especificacao do vizinho.
-    if (vencedor && nota >= 1e6) melhor.set(i, { texto: vencedor, confirmado: venceuPeloNumero });
+    // O lote vale por si, mesmo quando o descritivo e recusado: ele diz COMO o
+    // item se chama no pregao, nao o que ele e. Em Londrina/PR so 4 dos 9 itens
+    // tinham recorte aprovado, e a tabela saia com lote em uns e numero solto em
+    // outros.
+    if (loteVencedor) lotes.set(i, { lote: loteVencedor, noLote: numeroVencedor });
+    if (vencedor && nota >= 1e6) melhor.set(i, { texto: vencedor, confirmado: venceuPeloNumero,
+                                                  lote: loteVencedor, noLote: numeroVencedor });
   }
 
   // Dois itens de rotulos diferentes nao podem sair com o MESMO descritivo.
@@ -667,7 +731,7 @@ function descritivosPorItem(secoes, itens) {
     if (rotulos.size < 2) { for (const i of quais) soTexto.set(i, melhor.get(i)); continue; }
     for (const i of quais) if (melhor.get(i).confirmado) soTexto.set(i, melhor.get(i));
   }
-  return soTexto;
+  return { textos: soTexto, lotes: lotes };
 }
 
 let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0;
@@ -680,7 +744,7 @@ for (const e of dados.editais) {
   if (!secoes) { semTexto++; continue; }
   comTexto++;
 
-  const recortes = descritivosPorItem(secoes, v.itens);
+  const { textos: recortes, lotes } = descritivosPorItem(secoes, v.itens);
   v.itens.forEach((it, i) => {
     itensTotal++;
     // it = [numero, descricao, quantidade, unidade, valor, beneficio]
@@ -691,8 +755,16 @@ for (const e of dados.editais) {
     // o rotulo de catalogo — o item ficava vazio com o texto certo em maos.
     if (completo && serve(it[1], completo.texto, completo.confirmado)) {
       it[6] = completo.texto;
+      // Lote e numero dentro dele, quando o edital e por lote: e assim que a
+      // linha e identificada no pregao ("Lote 37, item 1"), e nao pela
+      // numeracao corrida da API.
       itensRicos++;
     } else if (it.length > 6) it.length = 6;
+    // Lote e numero dentro dele, quando o edital e por lote: e assim que a
+    // linha e identificada no pregao ("Lote 37, item 1"), e nao pela
+    // numeracao corrida da API.
+    const L = lotes.get(i);
+    if (L) { it[7] = L.lote; it[8] = L.noLote || null; }
   });
 }
 

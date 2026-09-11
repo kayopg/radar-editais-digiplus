@@ -427,13 +427,14 @@ function secao(doc, titulo){
 var DESC_ATUAL = null;
 function indexaDescritivos(r, base){
   var d = base && base.editais ? base.editais[r[7]] : null;
-  var porNum = {}, porDesc = {};
+  var porNum = {}, porDesc = {}, loteNum = {};
   if(d && d.itens) d.itens.forEach(function(x){
     if(x[6]){ porNum[x[0]] = x[6]; porDesc[umaLinha(x[1]).toLowerCase()] = x[6]; }
+    if(x[7]) loteNum[x[0]] = { lote:x[7], item:x[8] || null };
   });
   // total vem gravado quando a lista de itens foi enxugada para o artefato;
   // no site, onde ela vai inteira, o tamanho da lista serve.
-  DESC_ATUAL = { porNum:porNum, porDesc:porDesc,
+  DESC_ATUAL = { porNum:porNum, porDesc:porDesc, loteNum:loteNum,
                  total: (d && (d.total || (d.itens ? d.itens.length : 0))) || 0,
                  outros: resumeOutros(r, d) };
 }
@@ -482,6 +483,27 @@ function resumeOutros(r, d){
   if(sobra > 0) tops.push("e mais " + sobra + " tipo(s) de item");
   return tops;
 }
+// Como o item se identifica na tabela.
+//
+// O PNCP numera corrido de 1 a 100 e o edital separa em lotes, reiniciando a
+// contagem: o item 74 da API e o "LOTE 37, ITEM 1" do edital de Quedas do
+// Iguacu/PR, e e por esse par que se da lance. Quando o texto do edital diz o
+// lote, e ele que aparece.
+//
+// So aparece onde o edital foi lido: em edital digitalizado o OCR costuma
+// perder o cabecalho do lote, e ai fica o numero da API, que e o que se tem.
+function rotuloNaTabela(it){
+  var L = DESC_ATUAL && DESC_ATUAL.loteNum ? DESC_ATUAL.loteNum[it[5]] : null;
+  if(!L) return String(it[5] || "");
+  // So o LOTE, e nao o item dentro dele.
+  //
+  // O numero do lote vem do cabecalho "LOTE N" que antecede a linha, e e
+  // confiavel. Ja o numero do item dentro do lote e lido da abertura da linha, e
+  // ali ele erra: em Londrina/PR saiu "item 40" para o item 8 da API. Numero
+  // errado na coluna que identifica a linha do pregao e pior que numero nenhum.
+  return "Lote " + L.lote;
+}
+
 // Casa pelo número do item; o descritivo serve de reserva porque o número nem
 // sempre existe no dados.json antigo.
 function descritivoDoItem(r, it){
@@ -534,13 +556,13 @@ async function montaResumo(r){
   // PAREDE", 20 caracteres com que não se cota; o edital diz "VENTILADOR DE
   // PAREDE, preto, 60 cm de diâmetro (mínimo), 03 níveis de velocidade...".
   doc.tabela(
-    [{ titulo:"Item", larg:0.07, alinha:"centro" },
+    [{ titulo:"Item", larg:0.10, alinha:"centro" },
      { titulo:"Qtd", larg:0.12 },
      { titulo:"Valor unit.", larg:0.13, alinha:"direita" },
      { titulo:"Benefício", larg:0.11 },
-     { titulo:"Descrição", larg:0.57 }],
+     { titulo:"Descrição", larg:0.54 }],
     r[8].map(function(it, k){
-      return [ String(it[5] || (k + 1)),
+      return [ rotuloNaTabela(it) || String(k + 1),
                qtdItem(it),
                it[2] ? moeda(it[2]) : "sigiloso",
                // O item exclusivo de ME/EPP nem pode ser disputado por quem não
