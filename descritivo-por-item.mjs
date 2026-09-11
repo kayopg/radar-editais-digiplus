@@ -66,6 +66,15 @@ function ancoraDe(plano, planoH, curto) {
       }
     }
   }
+  // O catalogo do PNCP cola o numero na unidade e o edital separa: "TANQUINHO
+  // 10KG" contra "TANQUINHO 10 KG". Sem a variante com espaco o item 10 de
+  // Apiai/SP nao marcava a propria linha, e o microondas do item 8 seguia por
+  // cima dela levando junto o ventilador do 11.
+  for (const t of [...tentativas]) {
+    const comEspaco = t.replace(/(\d)([A-Za-z])/g, "$1 $2");
+    if (comEspaco !== t && !tentativas.includes(comEspaco)) tentativas.push(comEspaco);
+  }
+
   // Procura primeiro no texto como ele e; so se nada casar, tenta de novo com
   // o hifen valendo espaco.
   //
