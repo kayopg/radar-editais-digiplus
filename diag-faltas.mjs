@@ -39,7 +39,7 @@ const total = Object.values(causas).reduce((a, b) => a + b, 0);
 console.log(total + ' itens sem descritivo:\n');
 for (const k of Object.keys(causas).sort()) console.log('   ' + String(causas[k]).padStart(3) + '  ' + k);
 console.log('\n--- B e C sao os recuperaveis ---');
-for (const k of ['B) nome COMPLETO esta no texto', 'C) so a primeira palavra esta no texto']) {
+for (const k of Object.keys(detalhe).sort()) {
   if (!detalhe[k]) continue;
   console.log('\n' + k + ':');
   for (const s of detalhe[k]) console.log('   ' + s);

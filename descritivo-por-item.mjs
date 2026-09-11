@@ -691,8 +691,14 @@ function descritivosPorItem(secoes, itens) {
   // ("...232,0000 46 Cafeteira automatica com capacidade minima de 6 litros"),
   // e o par numero-certo + primeira-palavra-do-produto nao acontece por acaso.
   //
-  // Exige cinco letras na primeira palavra: "ar", de "ar condicionado", casaria
-  // em qualquer lugar.
+  // Procura a primeira palavra do NOME do produto que tenha cinco letras ou
+  // mais. Nao e a primeira palavra e ponto: "Aparelho Ar Condicionado" perde o
+  // "aparelho" por ser generico e sobra "ar", que casaria em qualquer lugar do
+  // edital. Com esta regra sobra "condicionado", e os tres aparelhos de
+  // Mariopolis/PR — 12.000, 24.000 e 32.000 BTUs — acham a propria linha.
+  //
+  // So o nome, ate a primeira virgula ou o primeiro campo: dali para a frente e
+  // especificacao, e "inoxidavel" nao identifica produto nenhum.
   //
   // O numero sozinho nao basta, porque nem todo numero impresso antes de um
   // nome e numero de item. Em Descalvado/SP a lista de quantidades diz
@@ -708,16 +714,42 @@ function descritivosPorItem(secoes, itens) {
   for (const c of numsDoItem) for (const n of c) numsDoEdital.add(n);
 
   itens.forEach((it, i) => {
-    const nome = (normIgual(it[1]).replace(GENERICAS, '').match(/[a-z]+/) || [''])[0];
+    const nome = (normIgual(it[1]).replace(GENERICAS, '').split(/[,;:]/)[0].match(/[a-z]{5,}/) || [''])[0];
     if (nome.length < 5) return;
     const meus = numsDoItem[i];
     for (let k = plano.indexOf(nome); k >= 0; k = plano.indexOf(nome, k + 1)) {
-      if (numeroDaLinhaAntes(k) !== it[0]) continue;
-      const abre = new Set(fatiaTexto(secoes.slice(k, k + ABRE)).map(limpaNum));
+      // O numero e procurado em tres pontos: na palavra achada, no comeco da
+      // linha e UMA palavra atras.
+      //
+      // A palavra achada nem sempre e a primeira do nome: "Aparelho Ar
+      // Condicionado" perde o generico e sobra "ar", curto demais para procurar,
+      // entao a busca cai em "condicionado" e o numero do item fica antes do
+      // "Ar". O recuaPrefixo nao alcanca porque exige tres letras na palavra.
+      //
+      // Uma palavra, e nao tres: andando mais para tras o numero encontrado ja e
+      // o da celula anterior, ou um pedaco de preco que por acaso bate. Com tres
+      // passos Itaporanga/SP perdeu vinte itens de uma vez, por marcas plantadas
+      // no meio das celulas certas.
+      let inicio = k;
+      if (numeroDaLinhaAntes(inicio) !== it[0]) {
+        inicio = recuaPrefixo(k);
+        if (numeroDaLinhaAntes(inicio) !== it[0]) {
+          const antes = plano.slice(Math.max(0, k - 20), k).match(/(\S+\s*)$/);
+          if (!antes) continue;
+          inicio = k - antes[1].length;
+          if (numeroDaLinhaAntes(inicio) !== it[0]) continue;
+        }
+      }
+      // Recua o prefixo como a ancora recua, senao as duas vias marcam pontos
+      // vizinhos na MESMA linha e o trecho entre elas fica com tres caracteres:
+      // a ancora de Mariopolis/PR parava em "UND Ar condicionado" e esta via em
+      // "Ar condicionado", e o "UND" sozinho virava a celula de um dos dois.
+      inicio = recuaPrefixo(inicio);
+      const abre = new Set(fatiaTexto(secoes.slice(inicio, inicio + ABRE)).map(limpaNum));
       const alheio = [...abre].some(w => numsDoEdital.has(w) && !meus.has(w));
       const meu = [...abre].some(w => meus.has(w));
       if (alheio && !meu) continue;
-      const pos = recuaPrefixo(k);
+      const pos = inicio;
       if (!porPos.has(pos)) porPos.set(pos, []);
       if (!porPos.get(pos).includes(i)) porPos.get(pos).push(i);
     }
@@ -792,7 +824,19 @@ function descritivosPorItem(secoes, itens) {
     const meus = numsDe.get(i), fora = alheios.get(i);
 
     // Cabeca de cada candidato, uma vez so.
-    const cabecas = quais.map(k => {
+    // Trecho de uma duzia de caracteres nao e celula de nada: e a sobra entre
+    // duas marcas da MESMA linha, que as duas vias de busca marcam em pontos
+    // diferentes — a ancora para no nome do produto, a via do numero para antes
+    // da quantidade. O que fica entre elas e "UND", e "01".
+    //
+    // Tirar da lista resolve duas coisas de uma vez: a sobra nao ganha a escolha
+    // por ter o numero do item confirmado — a geladeira do item 2 de Trabiju/SP
+    // ficava com uma celula de dois caracteres — e tambem nao faz as candidatas
+    // de verdade parecerem do vizinho, o que custava o descritivo inteiro.
+    //
+    // A linha boa continua inteira na marca seguinte, entao nada se perde.
+    const MINIMO = 12;
+    const cabecas = quais.filter(k => (trechos[k] || "").length >= MINIMO).map(k => {
       const t = trechos[k] || '';
       const c = new Set(fatiaTexto(t.slice(0, CABECA_ESCOLHA)).map(limpaNum));
       return { k, t, c, nums: [...c].filter(ehNumero) };
