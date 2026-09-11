@@ -492,16 +492,37 @@ function resumeOutros(r, d){
 //
 // So aparece onde o edital foi lido: em edital digitalizado o OCR costuma
 // perder o cabecalho do lote, e ai fica o numero da API, que e o que se tem.
+// Agrupa por lote sem inventar ordem onde nao ha lote.
+//
+// O criterio e (lote, numero da API): itens do mesmo lote ficam juntos e, dentro
+// dele, na ordem em que a plataforma os numera. Sem lote conhecido, o item vai
+// para o fim — misturado no meio, ele quebraria o agrupamento sem ganhar nada.
+function ordenaPorLote(itens){
+  var L = DESC_ATUAL && DESC_ATUAL.loteNum ? DESC_ATUAL.loteNum : {};
+  // Reordena so quando a MAIORIA dos itens tem lote identificado.
+  //
+  // Com poucos, o agrupamento faz mais mal que bem: em Quedas do Iguacu/PR um
+  // unico item de 16 tem lote (o 100, do lote 60), e ele pulava para o topo,
+  // antes dos itens 71 a 86 — que estao em lotes anteriores, so nao lidos. A
+  // ordem da API ja e a do edital, e mexer nela sem saber e piorar.
+  var comLote = itens.filter(function(it){ return L[it[5]]; }).length;
+  if(comLote * 2 < itens.length) return itens;
+  return itens.slice().sort(function(a, b){
+    var la = L[a[5]] ? L[a[5]].lote : Infinity;
+    var lb = L[b[5]] ? L[b[5]].lote : Infinity;
+    return la - lb || (a[5] || 0) - (b[5] || 0);
+  });
+}
+
 function rotuloNaTabela(it){
   var L = DESC_ATUAL && DESC_ATUAL.loteNum ? DESC_ATUAL.loteNum[it[5]] : null;
   if(!L) return String(it[5] || "");
-  // So o LOTE, e nao o item dentro dele.
+  // O numero que acompanha o lote e o da API, nao o lido no texto.
   //
-  // O numero do lote vem do cabecalho "LOTE N" que antecede a linha, e e
-  // confiavel. Ja o numero do item dentro do lote e lido da abertura da linha, e
-  // ali ele erra: em Londrina/PR saiu "item 40" para o item 8 da API. Numero
-  // errado na coluna que identifica a linha do pregao e pior que numero nenhum.
-  return "Lote " + L.lote;
+  // O do texto erra: em Londrina/PR saiu "item 40" para o que a API chama de
+  // item 8. O da API e verificavel e e por ele que a plataforma identifica a
+  // linha, entao "Lote 4 · item 5" se le sem ambiguidade.
+  return "Lote " + L.lote + " · item " + it[5];
 }
 
 // Casa pelo número do item; o descritivo serve de reserva porque o número nem
@@ -561,7 +582,10 @@ async function montaResumo(r){
      { titulo:"Valor unit.", larg:0.13, alinha:"direita" },
      { titulo:"Benefício", larg:0.11 },
      { titulo:"Descrição", larg:0.54 }],
-    r[8].map(function(it, k){
+    // Em edital por lote, a tabela sai agrupada por lote — o lance e por lote, e
+    // ler os itens do mesmo lote juntos e o que permite montar a proposta. Quem
+    // nao tem lote identificado fica ao fim, na ordem da API.
+    ordenaPorLote(r[8]).map(function(it, k){
       return [ rotuloNaTabela(it) || String(k + 1),
                qtdItem(it),
                it[2] ? moeda(it[2]) : "sigiloso",
