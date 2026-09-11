@@ -628,6 +628,52 @@ function descritivosPorItem(secoes, itens) {
       porPos.get(posL).push(i);
     }
   }
+  // Terceira via: o NUMERO do item impresso na abertura da linha.
+  //
+  // A ancora e o nome que o catalogo do PNCP usa, e o edital nem sempre usa o
+  // mesmo. Em Santa Maria/RS o item 46 e "Cafeteira Eletrica" no PNCP e
+  // "Cafeteira automatica" no edital; o 28 e "Refrigerador Duplex" no PNCP e
+  // "Refrigerador domestico" no edital. A ancora entao nao achava a celula
+  // propria e casava na do VIZINHO, que por acaso usa a grafia do catalogo — e
+  // a regra que proibe dois rotulos com o mesmo texto zerava os dois. Eram oito
+  // itens so nesse edital, todos com a especificacao inteira ali no texto.
+  //
+  // So que o edital imprime o numero do item colado no nome do produto
+  // ("...232,0000 46 Cafeteira automatica com capacidade minima de 6 litros"),
+  // e o par numero-certo + primeira-palavra-do-produto nao acontece por acaso.
+  //
+  // Exige cinco letras na primeira palavra: "ar", de "ar condicionado", casaria
+  // em qualquer lugar.
+  //
+  // O numero sozinho nao basta, porque nem todo numero impresso antes de um
+  // nome e numero de item. Em Descalvado/SP a lista de quantidades diz
+  // "...Ar-condicionado 48.000 BTUs, tipo Split 06 Cortina de Ar 200cm,
+  // potencia 600w": o "06" ali e a QUANTIDADE da linha de cima, e a cortina que
+  // vem depois e a de 200cm, que e outro item. Entao a linha tambem precisa
+  // ABRIR falando deste item — nas primeiras palavras, nao em qualquer ponto
+  // dela, senao a propria lista de quantidades, que cita as tres cortinas em
+  // seguida, passaria no teste.
+  const ABRE = 48;
+  const numsDoItem = itens.map(x => new Set(palavrasDoItem(x[1]).filter(w => /^[0-9]/.test(w))));
+  const numsDoEdital = new Set();
+  for (const c of numsDoItem) for (const n of c) numsDoEdital.add(n);
+
+  itens.forEach((it, i) => {
+    const nome = (normIgual(it[1]).replace(GENERICAS, '').match(/[a-z]+/) || [''])[0];
+    if (nome.length < 5) return;
+    const meus = numsDoItem[i];
+    for (let k = plano.indexOf(nome); k >= 0; k = plano.indexOf(nome, k + 1)) {
+      if (numeroDaLinhaAntes(k) !== it[0]) continue;
+      const abre = new Set(fatiaTexto(secoes.slice(k, k + ABRE)).map(limpaNum));
+      const alheio = [...abre].some(w => numsDoEdital.has(w) && !meus.has(w));
+      const meu = [...abre].some(w => meus.has(w));
+      if (alheio && !meu) continue;
+      const pos = recuaPrefixo(k);
+      if (!porPos.has(pos)) porPos.set(pos, []);
+      if (!porPos.get(pos).includes(i)) porPos.get(pos).push(i);
+    }
+  });
+
   const posicoes = [...porPos.keys()].sort((a, b) => a - b);
 
   // Cada posicao vira um trecho: da marca ate a marca seguinte.
