@@ -100,6 +100,33 @@ const LETRAS = 'abcdefghijklmnopqrstuvwxyz';
 const COM_ACENTO = { a: ['á', 'à', 'â', 'ã'], e: ['é', 'ê'], i: ['í'], o: ['ó', 'ô', 'õ'], u: ['ú', 'ü'], c: ['ç'] };
 const PALAVRA = /[\p{L}\p{N}]+/gu;
 
+// Erro que o dicionario nao pega (a forma errada tambem e palavra, ou aparece
+// pouco para ter prova nos editais), sempre preso ao contexto:
+const REPAROS = [
+  // "Acompanha: Motor, Grades, Helice, Frontar, Suporte de Parede" (Salto/SP)
+  [/\b([Ff])rontar(?=,)/g, '$1rontal'],
+  // "descongelamento de carnes e pratos protos" (Saudade do Iguacu/PR)
+  [/\b(pratos|PRATOS|Pratos)\s+(protos|PROTOS)\b/g, (_, a, b) => a + ' ' + (b === 'PROTOS' ? 'PRONTOS' : 'prontos')],
+  // "TAMPA DE VIDRO TEMPERADA" (Renascenca/PR)
+  [/\b(VIDRO\s+)TEMPERADA\b/g, '$1TEMPERADO'],
+  [/\b([Vv]idro\s+)temperada\b/g, '$1temperado'],
+  // "termonetro de controle de temperatura" (Nova Esperanca/PR)
+  [/\btermonetro\b/g, 'termômetro'], [/\bTERMONETRO\b/g, 'TERMÔMETRO'],
+  // "APLICACAO: FLUXO LANIMAR" (Descalvado/SP)
+  [/\b(FLUXO\s+)LANIMAR\b/g, '$1LAMINAR'], [/\b([Ff]luxo\s+)lanimar\b/g, '$1laminar'],
+  // "SISTEMA COM LAMPARA UV" (Florianopolis/SC)
+  [/\bL[ÂA]MPARA(?=\s+UV\b)/g, 'LÂMPADA'], [/\bl[âa]mpara(?=\s+UV\b)/gi, 'lâmpada'],
+  // "motor Wegpainel Touch Screen vazao 57.000 m³h12 Velocidades" (Nova Esperanca/PR)
+  [/\bWegpainel\b/g, 'Weg painel'],
+  [/m³h(?=\d)/g, 'm³/h '],
+  // "Nivel Ruido: Maximo de 60 D em velocidade maxima" (UFSM, Santa Maria/RS)
+  [/(Ru[íi]do[^.;]{0,30}?\d)\s?D(?=\s)/g, '$1 dB'],
+  // "CAPACIDADE REFRIGERACAO: 18.000 BTU,H" (Minacu/GO)
+  [/\bBTU,H\b/g, 'BTU/H'],
+  // "...COPO COLETOR E PENEIRA EM": o catalogo do PNCP corta a frase (Minacu/GO)
+  [/\b(PENEIRA|peneira)\s+(?:EM|em)$/, '$1'],
+];
+
 // Cria o revisor a partir dos textos dos editais da varredura, que dao a
 // frequencia de cada palavra e os pares de palavras vizinhas.
 export function criaRevisor(textos) {
@@ -248,6 +275,9 @@ export function criaRevisor(textos) {
       // "Caracteristicas Adicionais: Fost Free" (Jaraguari/MS): quatro letras
       // sao curtas demais para a regra geral, e o termo e sempre o mesmo.
       .replace(/\b(F)(OST|ost)(?=\s+(?:FREE|Free|free)\b)/g, (_, a, b) => a + (b === 'OST' ? 'R' : 'r') + b);
+    // Erros que formam outra palavra, ou que a regra geral nao prova por serem
+    // raros demais nos editais. Cada um so no contexto em que e erro.
+    for (const [re, por] of REPAROS) t = t.replace(re, por);
     // Palavra colada no numero: "Automatico140 litros", "altura1,76 metros",
     // "GARANTIA MINIMA DE12 MESES", "timer 60minutos", "8litros".
     t = t.replace(/(?<![\p{L}\p{N}])(\p{L}{4,})(\d+(?:[.,]\d+)?)(?![\p{L}\p{N}])/gu, (tudo, l, n, pos) => {
@@ -270,6 +300,16 @@ export function criaRevisor(textos) {
       if (c) return c;
       return separa(w) || w;
     });
-    return t;
+    // Espaco que o edital esqueceu depois da pontuacao: "copo em aco
+    // inoxidavel,motor", "8 VELOCIDADES,3 BATEDORES,TRAVAS", "BRASILEIRO.FORNECIMENTO",
+    // "Capacidade Total:Minima", "(alp)com tecnologia". Numero decimal ("2,5"),
+    // endereco ("Compras.gov.br") e medida depois do parentese ("(96 x 135 x
+    // 78)cm") ficam como estao.
+    return t
+      .replace(/(?<=[\p{L}\d)])([,;])(?=\p{L})/gu, '$1 ')
+      .replace(/(?<=\p{L}),(?=\d)/gu, ', ')
+      .replace(/(?<=[\p{Ll}\d]|\p{Lu}{3}|\/h)\.(?=\p{Lu}\p{L}{2})/gu, '. ')
+      .replace(/(?<=\p{L}):(?=\p{L}{3})/gu, ': ')
+      .replace(/\)(?=\p{L}{2,})(?!(?:cm|mm|m|kg|g|l|L|V|W|Cm|CM|MM)\b)/gu, ') ');
   };
 }
