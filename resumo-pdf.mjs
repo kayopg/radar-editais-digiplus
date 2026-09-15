@@ -241,7 +241,10 @@ const ORDEM = { edital: 0, tr: 1, outro: 2 };
 
 // Transforma um arquivo publicado no que der para usar: PDFs para anexar as
 // paginas, ou texto quando o orgao so publicou Word.
-export async function fontesDe(c, tropecos) {
+// limiteZip: quantos PDFs de dentro de um zip abrir. O recorte de texto se
+// contenta com os tres primeiros; a folha de abertura precisa achar o edital
+// no meio dos anexos, e em Londrina/PR ele nao estava entre os tres.
+export async function fontesDe(c, tropecos, limiteZip = 3) {
   const bytes = await baixa(c.url);
   const tipo = farejaTipo(bytes);
 
@@ -254,7 +257,7 @@ export async function fontesDe(c, tropecos) {
     if (dentro.some(e => e.nome === 'word/document.xml')) {
       return { pdfs: [], texto: { blocos: blocosDocx(bytes), formato: 'DOCX', nome: c.titulo } };
     }
-    const pdfs = pdfsDoZip(bytes).slice(0, 3)
+    const pdfs = pdfsDoZip(bytes).slice(0, limiteZip)
       .map(p => ({ nome: p.nome.split('/').pop(), tipo: p.nome, bytes: p.abre(), zip: true }))
       .sort((a, b) => ORDEM[classe(a.nome, a.tipo)] - ORDEM[classe(b.nome, b.tipo)]);
     if (pdfs.length) return { pdfs, texto: null };

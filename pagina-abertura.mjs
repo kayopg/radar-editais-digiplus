@@ -18,6 +18,9 @@
 // Uso:
 //   node pagina-abertura.mjs                -> todos os editais
 //   node pagina-abertura.mjs --limite 5     -> so os cinco primeiros, para medir
+//   node pagina-abertura.mjs --faltantes    -> so quem ainda nao tem folha
+//   node pagina-abertura.mjs --so a/b/c,d/e/f -> refaz esses editais
+//   DEPURA=1 node pagina-abertura.mjs ...   -> mostra o topo das paginas de cada arquivo olhado
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -35,19 +38,22 @@ const LIMITE = Number(arg('--limite', 0));
 // em 09/09/2026 Coxim/MS e Foz do Iguacu/PR deram HTTP 504 do PNCP, e refazer
 // os 62 que ja estavam prontos custaria 40 minutos por causa de dois.
 const FALTANTES = process.argv.includes('--faltantes');
+// --so caminho1,caminho2 refaz so esses editais, juntando ao arquivo existente.
+const SO = arg('--so', '').split(',').filter(Boolean);
 
 const dados = JSON.parse(fs.readFileSync(path.join(DIR, 'docs', 'dados.json'), 'utf8'));
 const C = dados.colunas.reduce((o, n, i) => (o[n] = i, o), {});
 const arquivoSaida = path.join(DIR, 'docs', 'aberturas.json');
 
 let jaTem = {};
-if (FALTANTES) {
+if (FALTANTES || SO.length) {
   try { jaTem = JSON.parse(fs.readFileSync(arquivoSaida, 'utf8')).editais || {}; }
   catch { console.error('aviso: nao achei aberturas.json — vai processar todos'); }
 }
 
 let alvos = dados.editais;
 if (FALTANTES) alvos = alvos.filter(e => !jaTem[e[C.path]]);
+if (SO.length) alvos = alvos.filter(e => SO.includes(e[C.path]));
 if (LIMITE) alvos = alvos.slice(0, LIMITE);
 
 // Os campos que identificam a folha de abertura. Contam so em CAIXA ALTA: no
@@ -118,6 +124,40 @@ const NAO_E_CAPA = [
   /c[\u00f3o]digo verificador/i,
 ];
 
+// Folha de TERMO DE REFERENCIA ou de anexo nunca e capa, por mais que fale do
+// objeto.
+//
+// Em 15/09/2026 o usuario abriu o resumo do pregao 19/2026 da UNESPAR e a
+// "capa" era a pagina 20 de 61 — o Termo de Referencia com a tabela de
+// produtos, que o resumo ja traz logo depois: os produtos saiam duas vezes. O
+// PNCP publicava o TR como arquivo proprio, e o edital de verdade, chamado
+// "Anexo_1_Minuta...", perdia a vez pelo "minuta" no nome. O mesmo com
+// Londrina/PR (a folha era o "Anexo 01" da lista de itens) e com dois pregoes
+// da UFSM (a folha era o modelo de TR da AGU).
+//
+// O teste olha so o TOPO da pagina, onde fica o titulo: no corpo de uma capa
+// legitima e comum "conforme Anexo I – Termo de Referencia" (Birigui/SP). E
+// titulo de anexo so conta se o topo nao se anuncia como edital ou pregao.
+const topoDe = t => String(t || '').replace(/\s+/g, ' ').trim().slice(0, 400);
+const TITULO_ANEXO = /\bANEXO\s*(?:[IVXL]+|N?[º°o]?\s*0?\d{1,2})\b|TERMO\s+DE\s+REFER[ÊE]NCIA|ESTUDO\s+T[ÉE]CNICO\s+PRELIMINAR/i;
+const TOPO_DE_CAPA = /EDITAL|PREG[ÃA]O|DISPENSA|AVISO\s+DE|CONCORR[ÊE]NCIA|CONTRATA[ÇC][ÃA]O\s+DIRETA/i;
+// Titulos que nenhuma capa tem, nem com "pregao" do lado: a "RELACAO DE ITENS
+// - PREGAO ELETRONICO" que o Compras.gov gera (Belo Horizonte/MG), o mapa de
+// riscos (Caxias do Sul/RS), o sumario do edital (Chapadao do Sul/MS).
+const TITULO_NUNCA_CAPA = /Modelo\s+de\s+Termo\s+de\s+Refer|RELA[ÇC][ÃA]O\s+DE\s+ITENS|MAPA\s+DE\s+(?:GERENCIAMENTO\s+DE\s+)?RISCOS?|MATRIZ\s+DE\s+RISCOS?|ESTUDO\s+T[ÉE]CNICO\s+PRELIMINAR/i;
+function ehAnexo(t) {
+  const topo = topoDe(t);
+  if (TITULO_NUNCA_CAPA.test(topo.slice(0, 200))) return true;
+  if (/SUM[ÁA]RIO|[ÍI]NDICE/i.test(topo.slice(0, 250)) && /\.{8,}/.test(String(t || ''))) return true;
+  return TITULO_ANEXO.test(topo) && !TOPO_DE_CAPA.test(topo);
+}
+// Arquivo que comeca na "Pagina 20 de 61" e pedaco de um documento maior: a
+// capa, se existe, esta em outro arquivo.
+function ehPedaco(paginas) {
+  const m = String(paginas[0] || '').match(/P[áa]gina:?\s*(\d+)\s*(?:de|\/)\s*\d+/i);
+  return !!m && Number(m[1]) >= 2;
+}
+
 // O que a capa do edital certo tem e a de outro nao: as palavras do objeto e o
 // nome do orgao. Serve de desempate entre paginas que pontuam igual.
 const semAcento = s => String(s || '').toLowerCase().normalize('NFD')
@@ -163,8 +203,8 @@ function achaAbertura(paginas, alvo, alvoObjeto) {
   for (let i = 0; i < olhadas; i++) if (NAO_E_CAPA.some(re => re.test(paginas[i] || ''))) carimbadas++;
   const carimboEhRodape = olhadas >= 3 && carimbadas >= olhadas - 1;
 
-  const proibida = i => !carimboEhRodape
-    && NAO_E_CAPA.some(re => re.test(paginas[i] || '')) && !falaDoObjeto(i);
+  const proibida = i => ehAnexo(paginas[i]) || (!carimboEhRodape
+    && NAO_E_CAPA.some(re => re.test(paginas[i] || '')) && !falaDoObjeto(i));
   // entre duas paginas com a mesma pontuacao, ganha a que fala DESTE edital
   const melhorQue = (n, i, bn, bi) => n > bn || (n === bn && bi >= 0 && relev(i) > relev(bi));
 
@@ -184,7 +224,18 @@ function achaAbertura(paginas, alvo, alvoObjeto) {
     const n = MARCAS_CAPA.filter(re => re.test(paginas[i] || '')).length;
     if (melhorQue(n, i, capaN, capa)) { capaN = n; capa = i; }
   }
-  if (capaN >= MIN_MARCAS) return { pagina: capa, campos: capaN, via: 'capa' };
+  // Entre as folhas quase tao marcadas quanto a melhor, fica a PRIMEIRA. As
+  // marcas de capa sao palavras comuns, e o preambulo da pagina 2 junta mais
+  // delas que a capa: em Guimarania/MG a pagina 1 tinha processo, pregao,
+  // objeto e as datas de abertura, e perdia para o "torna publico" da seguinte.
+  if (capaN >= MIN_MARCAS) {
+    for (let i = 0; i < capa; i++) {
+      if (proibida(i)) continue;
+      const n = MARCAS_CAPA.filter(re => re.test(paginas[i] || '')).length;
+      if (n >= MIN_MARCAS && n >= capaN - 2) return { pagina: i, campos: n, via: 'capa' };
+    }
+    return { pagina: capa, campos: capaN, via: 'capa' };
+  }
 
   // 3. o mesmo, tolerando texto embaralhado
   let solta = -1, soltaN = 0;
@@ -220,6 +271,20 @@ function achaAbertura(paginas, alvo, alvoObjeto) {
   return null;
 }
 
+// De onde tirar a capa. 3: o arquivo que o PNCP chama de edital. 2: nome com
+// "edital". 1: o resto. 0: TR, estudo tecnico, planilha, anexo — nunca, porque
+// a folha deles repete no resumo o que a tabela de itens ja mostra.
+function prioridadeCapa(nome, tipo) {
+  const n = semAcento(nome).replace(/[_\s]+/g, ' '), t = semAcento(tipo);
+  if (/^edital|aviso de contratacao/.test(t)) return 3;
+  if (/termo de referencia|estudo tecnico/.test(t)) return 0;
+  // "Edital e anexos.pdf" e o edital; "Anexo I - minuta do edital" nao.
+  if (/edital/.test(n) && !/^\W*anexo|minuta d[eo] (?:contrato|ata)/.test(n)) return 2;
+  if (/termo de referencia|(^|[^a-z])tr[\s_.-]|estudo tecnico|(^|[^a-z])etp[\s_.-]|planilha|anexo|historico|quantitativ|estimativa|cotac|orcamento|relacao ?(?:de ?)?itens|mapa de riscos?|matriz de riscos?|(^|[^a-z])dfd[\s_.-]|parecer|portaria|decreto|autorizac|solicitac|memorando|publicac|minuta|contrato|ata de registro|pesquisa de preco/.test(n)) return 0;
+  return 1;
+}
+const FORCA = { quadro: 6, capa: 5, embaralhado: 4, imagem: 3, objeto: 2, primeira: 1 };
+
 async function pool(itens, n, fn) {
   let i = 0;
   await Promise.all(Array.from({ length: n }, async () => {
@@ -233,29 +298,43 @@ let com = 0, sem = 0, erros = 0, bytesTotal = 0;
 await pool(alvos, 2, async (e) => {
   const nome = e[C.municipio] + '/' + e[C.uf];
   try {
-    const cands = await arquivosPublicados(e);
-    let paginas = null, le = null;
-    for (const c of cands.slice(0, 3)) {
-      const f = await fontesDe(c, []);
-      if (!f.pdfs.length) continue;
-      le = await LE.abre(f.pdfs[0].bytes);
-      paginas = await textoDasPaginas(le);
-      break;
+    // O edital primeiro: a ordem do arquivosPublicados serve ao recorte dos
+    // itens, que quer o Termo de Referencia na frente.
+    const cands = [...await arquivosPublicados(e)]
+      .sort((a, b) => prioridadeCapa(b.titulo, b.tipo) - prioridadeCapa(a.titulo, a.tipo));
+    let melhor = null, abertos = 0;
+    procura: for (const c of cands.slice(0, 4)) {
+      if (prioridadeCapa(c.titulo, c.tipo) === 0) continue;
+      const f = await fontesDe(c, [], 12);
+      const pdfs = [...f.pdfs].sort((a, b) => prioridadeCapa(b.nome, '') - prioridadeCapa(a.nome, ''));
+      for (const p of pdfs) {
+        if (f.pdfs.length > 1 && prioridadeCapa(p.nome, '') === 0) continue;
+        if (abertos++ >= 5) break procura;
+        const le = await LE.abre(p.bytes);
+        const paginas = await textoDasPaginas(le);
+        const achado = achaAbertura(paginas, palavrasDoEdital(e, C), palavrasDoObjeto(e, C));
+        if (process.env.DEPURA) console.log(`    ${nome} · ${p.nome || c.titulo} · ${paginas.length} p · ${achado ? 'p' + (achado.pagina + 1) + ' ' + achado.via : 'nada'}`
+          + paginas.slice(0, 3).map((t, i) => `\n      p${i + 1}${ehAnexo(t) ? ' [anexo]' : ''}: ${topoDe(t).slice(0, 200)}`).join(''));
+        if (!achado) continue;
+        const nota = FORCA[achado.via] - (ehPedaco(paginas) ? 3 : 0);
+        if (!melhor || nota > melhor.nota) melhor = { achado, le, nota, arquivo: p.nome || c.titulo };
+        // na ordem de prioridade, a primeira folha boa encerra a busca
+        if (nota >= FORCA.imagem) break procura;
+      }
     }
-    if (!paginas) { sem++; console.log(`  ${nome} · sem PDF legivel`); return; }
-
-    const achado = achaAbertura(paginas, palavrasDoEdital(e, C), palavrasDoObjeto(e, C));
-    if (!achado) { sem++; console.log(`  ${nome} · sem folha de abertura`); return; }
+    if (!abertos) { sem++; console.log(`  ${nome} · sem PDF legivel`); return; }
+    if (!melhor) { sem++; console.log(`  ${nome} · sem folha de abertura`); return; }
+    const { achado, le } = melhor;
 
     // PDF de carona: a pagina original na frente, a branca do novo() atras.
     const carona = PDF.novo({ rodape: '' });
     carona.anexaExternas(await LE.extraiPaginas(le, [achado.pagina]), true);
     const bytes = carona.bytes();
-    saida[e[C.path]] = { pagina: achado.pagina + 1, campos: achado.campos, via: achado.via,
+    saida[e[C.path]] = { pagina: achado.pagina + 1, campos: achado.campos, via: achado.via, arquivo: melhor.arquivo,
                          b64: Buffer.from(bytes).toString('base64') };
     bytesTotal += bytes.length;
     com++;
-    console.log(`  ${nome} · pagina ${achado.pagina + 1} · ${achado.via} · ${(bytes.length / 1024).toFixed(0)} KB`);
+    console.log(`  ${nome} · pagina ${achado.pagina + 1} · ${achado.via} · ${melhor.arquivo} · ${(bytes.length / 1024).toFixed(0)} KB`);
   } catch (err) {
     erros++;
     console.log(`  [erro] ${nome}: ${err.message}`);

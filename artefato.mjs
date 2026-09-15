@@ -124,8 +124,21 @@ catch { console.error('aviso: docs/aberturas.json nao encontrado — o resumo sa
 // O limite por folha continua existindo, alto, so para uma capa escaneada
 // gigante nao comer o orcamento sozinha: a de Jaraguari/MS tem 3,5 MB, que
 // sozinha valeria por dez folhas com texto.
-const ORCAMENTO_MB = 14;
+// Desde 15/09/2026 o orcamento vale so para o que vai DENTRO da pagina. As
+// folhas que nao cabem nele viajam em arquivos ao lado (radar-capas/capas-N.js,
+// publicados junto com o artefato) e sao buscadas quando alguem baixa o resumo
+// daquele edital. Antes elas simplesmente ficavam de fora: 17 dos 73 editais
+// de 14/09 baixavam o resumo sem a capa, comecando direto pelos produtos.
+//
+// As mais leves continuam embutidas: se o visualizador um dia recusar o arquivo
+// ao lado, so as capas pesadas faltam, como era antes.
+const ORCAMENTO_MB = 8;
 const LIMITE_FOLHA = 800 * 1024;
+const PARTE_MB = 12;
+const saida = process.argv[2] || path.join(DIR, 'radar-artefato.html');
+const pastaCapas = path.join(path.dirname(saida), 'radar-capas');
+const mapaCapas = {};
+let partesCapas = [];
 {
   // So as folhas dos editais que estao no radar HOJE. O aberturas.json e
   // acumulativo — guarda a folha de todo edital que ja passou por aqui — e sem
@@ -135,28 +148,74 @@ const LIMITE_FOLHA = 800 * 1024;
   const noRadar = new Set(dados.editais.map(e => e[iPath]));
   const todas = Object.entries(aberturas.editais || {})
     .filter(([k]) => noRadar.has(k))
-    .map(([k, v]) => [k, v, Math.round((v.b64 || '').length * 0.75)])
+    // So o que o navegador usa. O nome do arquivo de origem fica de fora: nome
+    // de dentro de zip vem com acento quebrado ("Preg?o", com um caractere de substituicao no lugar do a), e o publicador
+    // recusa o arquivo inteiro por um caractere de substituicao.
+    .map(([k, v]) => [k, { pagina: v.pagina, via: v.via, b64: v.b64 }, Math.round((v.b64 || '').length * 0.75)])
     .sort((a, b) => a[2] - b[2]);
 
-  const dentro = {};
-  let usado = 0, fora = 0;
+  const dentro = {}, resto = [];
+  let usado = 0;
   for (const [k, v, bytes] of todas) {
     // base64 infla um terco: o orcamento e medido no tamanho que vai na pagina
     const naPagina = bytes * 4 / 3;
-    if (bytes > LIMITE_FOLHA || usado + naPagina > ORCAMENTO_MB * 1024 * 1024) { fora++; continue; }
+    if (bytes > LIMITE_FOLHA || usado + naPagina > ORCAMENTO_MB * 1024 * 1024) { resto.push([k, v, naPagina]); continue; }
     dentro[k] = v;
     usado += naPagina;
   }
+  let atual = null;
+  for (const [k, v, naPagina] of resto) {
+    if (!atual || atual.tam + naPagina > PARTE_MB * 1024 * 1024) {
+      atual = { n: partesCapas.length + 1, editais: {}, tam: 0 };
+      partesCapas.push(atual);
+    }
+    atual.editais[k] = v;
+    atual.tam += naPagina;
+    mapaCapas[k] = atual.n;
+  }
+  fs.rmSync(pastaCapas, { recursive: true, force: true });
+  if (partesCapas.length) fs.mkdirSync(pastaCapas, { recursive: true });
+  for (const p of partesCapas) {
+    fs.writeFileSync(path.join(pastaCapas, 'capas-' + p.n + '.js'),
+      'RADAR_CAPAS_PARTE(' + p.n + ',' + JSON.stringify(p.editais).replace(/</g, '\\u003c') + ');\n', 'utf8');
+  }
   aberturas = { ...aberturas, editais: dentro };
-  console.log(`folhas de abertura: ${Object.keys(dentro).length} embutidas (${(usado / 1024 / 1024).toFixed(1)} MB`
-    + ` de ${ORCAMENTO_MB} MB de orcamento), ${fora} fora`);
+  console.log(`folhas de abertura: ${Object.keys(dentro).length} embutidas (${(usado / 1024 / 1024).toFixed(1)} MB),`
+    + ` ${resto.length} em ${partesCapas.length} arquivo(s) ao lado`
+    + partesCapas.map(p => ` capas-${p.n}.js ${(p.tam / 1024 / 1024).toFixed(1)} MB`).join(','));
 }
 html = html.replace(ancora,
   'var RADAR_ABERTURAS = ' + JSON.stringify(aberturas).replace(/</g, '\\u003c') + ';\n' + ancora);
+// O carregaAberturas do index.html usa esta funcao quando ela existe. Cada
+// arquivo ao lado chama RADAR_CAPAS_PARTE ao carregar, e so o arquivo do edital
+// pedido e buscado. Se o arquivo nao vier, o resumo sai sem a capa, sem erro.
+html = html.replace(ancora, `var RADAR_CAPAS = (function(){
+  var MAPA = ${JSON.stringify(mapaCapas)}, base = RADAR_ABERTURAS, espera = {};
+  window.RADAR_CAPAS_PARTE = function(n, editais){
+    for (var k in editais) base.editais[k] = editais[k];
+    if (espera[n]) espera[n].pronto();
+  };
+  function parte(n){
+    if (!espera[n]) {
+      var pronto, p = new Promise(function(ok){ pronto = ok; });
+      espera[n] = { p: p, pronto: pronto };
+      var s = document.createElement("script");
+      s.src = "capas-" + n + ".js";
+      s.onload = s.onerror = function(){ pronto(); };
+      document.head.appendChild(s);
+    }
+    return espera[n].p;
+  }
+  return function(caminho){
+    var n = MAPA[caminho];
+    if (!n || base.editais[caminho]) return Promise.resolve(base);
+    return parte(n).then(function(){ return base; });
+  };
+})();
+` + ancora);
 html = html.replace(chamadaAber,
   'Promise.resolve({ ok:true, json:function(){ return RADAR_ABERTURAS; } })');
 
-const saida = process.argv[2] || path.join(DIR, 'radar-artefato.html');
 fs.writeFileSync(saida, html, 'utf8');
 const mb = html.length / 1024 / 1024;
 console.log('artefato: ' + saida + ' · ' + (html.length / 1024).toFixed(0) + ' KB · '
@@ -165,14 +224,20 @@ console.log('artefato: ' + saida + ' · ' + (html.length / 1024).toFixed(0) + ' 
 
 // O visualizador recusa acima de 16 MB, e a recusa vem na hora de publicar,
 // depois de todo o trabalho. Como as folhas de abertura crescem com a lista de
-// editais, o aviso fica aqui: baixar o TETO_FOLHA e o jeito de voltar a caber.
+// editais, o aviso fica aqui: baixar o ORCAMENTO_MB manda mais folhas para os
+// arquivos ao lado.
 const TETO_ARTEFATO = 16;
 if (mb > TETO_ARTEFATO) {
   console.error(`\nERRO: ${mb.toFixed(2)} MB passa do teto de ${TETO_ARTEFATO} MB do artefato.`);
-  console.error(`Baixe o TETO_FOLHA (hoje ${TETO_FOLHA / 1024} KB) e gere de novo.`);
+  console.error(`Baixe o ORCAMENTO_MB (hoje ${ORCAMENTO_MB} MB) e gere de novo.`);
   process.exit(1);
 }
 if (mb > TETO_ARTEFATO - 1.5) {
   console.error(`\naviso: ${mb.toFixed(2)} MB, a ${(TETO_ARTEFATO - mb).toFixed(2)} MB do teto.`
-    + ` Na proxima varredura com mais editais isso estoura — considere baixar o TETO_FOLHA.`);
+    + ` Na proxima varredura com mais editais isso estoura — considere baixar o ORCAMENTO_MB.`);
+}
+// Os arquivos ao lado tem o mesmo teto de 16 MB cada.
+for (const p of partesCapas) {
+  const t = fs.statSync(path.join(pastaCapas, 'capas-' + p.n + '.js')).size / 1024 / 1024;
+  if (t > TETO_ARTEFATO) { console.error(`\nERRO: capas-${p.n}.js tem ${t.toFixed(2)} MB. Baixe o PARTE_MB.`); process.exit(1); }
 }

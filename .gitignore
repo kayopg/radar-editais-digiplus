@@ -24,3 +24,6 @@ resumos.anterior/
 radar-artefato.html
 resumos.*/
 docs/aberturas.json
+
+# Capas que nao cabem na pagina do artefato, publicadas ao lado dela.
+radar-capas/

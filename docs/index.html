@@ -818,7 +818,10 @@ async function montaResumo(r){
 // Cada folha viaja como um PDF de carona em base64, com a página original na
 // frente e uma página em branco atrás; só a primeira é extraída.
 var ABERTURAS = null;
-function carregaAberturas(){
+function carregaAberturas(caminho){
+  // No artefato as folhas que não cabem na página viajam em arquivos ao lado,
+  // e o artefato.mjs define RADAR_CAPAS para buscar só a parte deste edital.
+  if(typeof RADAR_CAPAS === "function") return RADAR_CAPAS(caminho);
   if(ABERTURAS) return Promise.resolve(ABERTURAS);
   return fetch("aberturas.json?v=" + Date.now(), {cache:"no-store"})
     .then(function(resp){ return resp.ok ? resp.json() : null; })
@@ -834,7 +837,7 @@ function bytesDeBase64(b64){
 
 async function abrePelaPaginaOriginal(doc, r){
   var base;
-  try { base = await carregaAberturas(); } catch(e){ return; }
+  try { base = await carregaAberturas(r[7]); } catch(e){ return; }
   var a = base.editais[r[7]];
   if(!a || !a.b64) return;
   try{
