@@ -83,6 +83,21 @@ input[type=search]:focus{outline:2px solid var(--accent);outline-offset:-1px}
 .dl.d0{background:var(--hot-soft);color:var(--hot)}
 .dl.d1{background:var(--warn-soft);color:var(--warn)}
 .dl.d2{background:var(--ok-soft);color:var(--ok)}
+.dl.dx{background:var(--line2);color:var(--ink3);border:1px solid var(--line)}
+.card.fechado{opacity:.6}
+.card.fechado:hover,.card.fechado.open{opacity:1}
+.inum{font-size:10.5px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);margin-bottom:2px}
+.irot{color:var(--ink);font-weight:600;font-size:13px;line-height:1.45}
+.idesc{margin-top:6px}
+.idesc:empty{display:none}
+.irotulo{display:block;font-size:10.5px;font-weight:650;letter-spacing:.06em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:2px}
+.itexto{display:block;color:var(--ink2);font-size:12.5px;line-height:1.55;max-width:95ch}
+.idesc.longo .itexto{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.idesc.longo.inteiro .itexto{display:block}
+.imais{background:none;border:0;padding:3px 0 0;color:var(--accent);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.imais:hover{text-decoration:underline}
+.isem{font-size:12px;color:var(--ink3);font-style:italic}
+td.d{padding-right:16px}
 .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
 .tag{font-size:11.5px;padding:2px 8px;border-radius:5px;background:var(--line2);color:var(--ink2);border:1px solid var(--line)}
 .body{display:none;border-top:1px solid var(--line);padding:13px 16px 15px;background:var(--line2)}
@@ -107,7 +122,7 @@ td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .method code{background:var(--line2);padding:1px 5px;border-radius:4px;font-size:12.5px}
 .empty{text-align:center;padding:46px 20px;color:var(--ink3)}
 button.btn{font-family:inherit;cursor:pointer}
-@media(max-width:640px){.cside{text-align:left;flex:1 1 100%}.clabel{min-width:100%}}
+@media(max-width:640px){.cside{text-align:left;flex:1 1 100%}.clabel{min-width:100%}table{min-width:0}.itexto{font-size:12px}}
 </style>
 </head>
 <body>
@@ -189,12 +204,23 @@ function brl(n){
   if(n>=1e3) return "R$ "+Math.round(n/1e3)+" mil";
   return "R$ "+n;
 }
-function dias(iso){ return Math.floor((new Date(iso)-NOW)/864e5); }
+// Dias de CALENDARIO ate o encerramento, e nao blocos de 24 horas: as 13h de
+// 15/09 um edital que fecha 16/09 as 08h esta a 19 horas, e a conta antiga
+// (arredondada para baixo) dizia "fecha hoje". O artefato fica congelado na
+// varredura, entao o que ja fechou tambem precisa aparecer como encerrado.
+function dias(iso){
+  var a=new Date(iso), h=new Date(NOW);
+  a.setHours(0,0,0,0); h.setHours(0,0,0,0);
+  return Math.round((a-h)/864e5);
+}
+function encerrado(iso){ return new Date(iso) < NOW; }
+function horas(iso){ return (new Date(iso)-NOW)/36e5; }
 function prazo(iso){
   var d=dias(iso), dt=new Date(iso);
   var s=("0"+dt.getDate()).slice(-2)+"/"+("0"+(dt.getMonth()+1)).slice(-2);
   var hm=iso.slice(11,16);
   var t=(hm&&hm!=="00:00")?s+" às "+hm:s;
+  if(encerrado(iso)) return {c:"dx",t:"encerrado · "+t};
   if(d<=0) return {c:"d0",t:"fecha hoje · "+t};
   if(d===1) return {c:"d0",t:"fecha amanhã · "+t};
   if(d<=7) return {c:"d1",t:"em "+d+" dias · "+t};
@@ -205,7 +231,7 @@ function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&am
 function pass(r){
   if(fUF.length && fUF.indexOf(r[1])<0) return false;
   if(fCAT.length && !r[8].some(function(i){return fCAT.indexOf(i[0])>=0;})) return false;
-  if(fPZ!==null){ var d=dias(r[4]); if(d>fPZ) return false; }
+  if(fPZ!==null){ if(encerrado(r[4]) || dias(r[4])>fPZ) return false; }
   if(fQ){
     var h=(r[0]+" "+r[2]+" "+r[3]+" "+r[8].map(function(i){return i[3];}).join(" ")).toLowerCase();
     if(h.indexOf(fQ)<0) return false;
@@ -224,12 +250,16 @@ function render(){
     rows=rows.filter(function(r){ return r[6]>0; })
              .sort(function(a,b){ return (a[6]-b[6])*s; });
   }
-  document.getElementById("count").textContent=rows.length+" de "+D.length+" editais";
-  document.getElementById("k1").textContent=rows.length;
+  // Os encerrados vao para o fim, apagados, e ficam fora dos numeros do topo.
+  var abertos=rows.filter(function(r){ return !encerrado(r[4]); });
+  var fechados=rows.filter(function(r){ return encerrado(r[4]); });
+  rows=abertos.concat(fechados);
+  document.getElementById("count").textContent=rows.length+" de "+D.length+" editais"+(fechados.length?" · "+fechados.length+" encerrado"+(fechados.length>1?"s":""):"");
+  document.getElementById("k1").textContent=abertos.length;
   // sem resultado o total eh zero, e brl(0) diz "sigiloso" (certo para item, errado aqui)
-  document.getElementById("k2").textContent=rows.length?brl(rows.reduce(function(a,r){return a+r[6];},0)):"—";
-  document.getElementById("k3").textContent=rows.filter(function(r){return dias(r[4])<=1;}).length;
-  document.getElementById("k4").textContent=rows.filter(function(r){return dias(r[4])<=7;}).length;
+  document.getElementById("k2").textContent=abertos.length?brl(abertos.reduce(function(a,r){return a+r[6];},0)):"—";
+  document.getElementById("k3").textContent=abertos.filter(function(r){return horas(r[4])<=24;}).length;
+  document.getElementById("k4").textContent=abertos.filter(function(r){return dias(r[4])<=7;}).length;
   document.getElementById("k5").textContent=(function(){var s={};rows.forEach(function(r){s[r[0]+r[1]]=1;});return Object.keys(s).length;})();
   var el=document.getElementById("list");
   if(!rows.length){ el.innerHTML='<div class="empty">Nenhum edital com esses filtros.</div>'; return; }
@@ -237,19 +267,24 @@ function render(){
     var p=prazo(r[4]);
     var tg={}; r[8].forEach(function(i){ tg[i[0]]=(tg[i[0]]||0)+i[1]; });
     var tagh=Object.keys(tg).map(function(c){ return '<span class="tag">'+CAT[c]+" · "+tg[c]+"</span>"; }).join("");
+    // Cada item com o numero, o nome do PNCP e — quando o card abre — o
+    // descritivo do edital, que antes so aparecia no resumo em PDF.
     var itens=r[8].map(function(i){
-      return "<tr><td class='d'>"+esc(i[3])+"</td><td class='n'>"+i[1]+"</td><td class='n'>"+(i[2]?"R$ "+i[2].toLocaleString("pt-BR"):"—")+"</td></tr>";
+      return "<tr><td class='d'><div class='inum'>"+(i[5]?"Item "+i[5]+" · ":"")+(CAT[i[0]]||"")+"</div>"
+        +"<div class='irot'>"+esc(i[3])+"</div><div class='idesc' data-n='"+(i[5]||"")+"'></div></td>"
+        +"<td class='n'>"+i[1]+"</td><td class='n'>"+(i[2]?"R$ "+i[2].toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}):"—")+"</td></tr>";
     }).join("");
     var pp=r[7].split("/");
-    return '<div class="card'+(dias(r[4])<=1?" urg":"")+'">'
-      +'<div class="chead" onclick="this.parentNode.classList.toggle(\'open\')">'
+    var fechado=encerrado(r[4]);
+    return '<div class="card'+(fechado?" fechado":horas(r[4])<=24?" urg":"")+'" data-i="'+D.indexOf(r)+'">'
+      +'<div class="chead" onclick="abreCard(this.parentNode)">'
       +'<div class="cmain"><div class="mun">'+esc(r[0])+'<span class="uf">'+r[1]+'</span></div>'
       +'<div class="org">'+esc(r[2])+" · "+esc(r[3])+'</div>'
       +'<div class="tags">'+tagh+'</div></div>'
       +'<div class="cside"><div class="val">'+brl(r[6])+'</div>'
       +'<div class="qt">'+r[5].toLocaleString("pt-BR")+' un</div>'
       +'<div class="dl '+p.c+'">'+p.t+'</div></div></div>'
-      +'<div class="body"><div class="blabel">Itens solicitados</div>'
+      +'<div class="body"><div class="blabel">Itens cotados · '+r[8].length+'</div>'
       +'<div class="scroller"><table><thead><tr><th>Descritivo</th><th class="n">Qtd</th><th class="n">Valor unit. ref.</th></tr></thead><tbody>'+itens+'</tbody></table></div>'
       +'<div class="links">'
       +'<a class="btn" target="_blank" rel="noopener" href="https://pncp.gov.br/app/editais/'+r[7]+'">Abrir no PNCP</a>'
@@ -260,6 +295,28 @@ function render(){
 }
 
 
+
+// Abre ou fecha o card e, na primeira abertura, poe o descritivo do edital em
+// cada item. O descritivos.json tem alguns MB e so e buscado quando alguem abre
+// um card (no artefato ele ja vem embutido).
+function abreCard(card){
+  card.classList.toggle("open");
+  if(!card.classList.contains("open") || card.dataset.desc) return;
+  card.dataset.desc = "1";
+  var r = D[+card.dataset.i];
+  carregaDescritivos().then(function(base){
+    var d = base && base.editais ? base.editais[r[7]] : null;
+    var porNum = {};
+    if(d && d.itens) d.itens.forEach(function(x){ if(x[6]) porNum[x[0]] = x[6]; });
+    card.querySelectorAll(".idesc").forEach(function(el){
+      var t = porNum[el.dataset.n];
+      if(!t){ el.innerHTML = '<span class="isem">Sem descritivo no texto do edital — confira o arquivo oficial.</span>'; return; }
+      el.innerHTML = '<span class="irotulo">Descritivo do edital</span><span class="itexto">' + esc(t) + '</span>'
+        + (t.length > 320 ? '<button type="button" class="imais" onclick="this.parentNode.classList.toggle(\'inteiro\');this.textContent=this.parentNode.classList.contains(\'inteiro\')?\'ver menos\':\'ver completo\'">ver completo</button>' : '');
+      if(t.length > 320) el.classList.add("longo");
+    });
+  });
+}
 
 // ------------------------------------------------------------ PDF
 // Gera arquivo .pdf de verdade e dispara o download, via docs/pdf.js.
@@ -279,7 +336,7 @@ function dataBR(iso){
 function quandoTxt(iso){
   var d = dias(iso), hm = iso.slice(11,16);
   return dataBR(iso) + (hm && hm !== "00:00" ? " \u00e0s " + hm : "")
-       + " (" + (d <= 0 ? "hoje" : d === 1 ? "amanh\u00e3" : "em " + d + " dias") + ")";
+       + " (" + (encerrado(iso) ? "encerrado" : d <= 0 ? "hoje" : d === 1 ? "amanh\u00e3" : "em " + d + " dias") + ")";
 }
 function nomeArquivo(s){
   return s.replace(new RegExp("/","g"),"-")
