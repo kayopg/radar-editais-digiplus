@@ -196,11 +196,25 @@ function rotuloDaPagina(texto, i, sel) {
   return 'TRECHO DO EDITAL';
 }
 
+// Marca, no texto, o ponto em que duas folhas NAO seguidas do edital ficaram
+// lado a lado.
+//
+// A selecao pula paginas, e o texto das secoes emendava a pagina 25 na 31 como
+// se fossem uma so: a celula que atravessava a virada da 25 continuava no meio
+// de outro assunto. Em Luz/MG o bebedouro seguia de "compativel com o fluxo de"
+// direto para "de apoio. Dessa forma, a aplicacao do saldo remanescente...". O
+// descritivo-por-item corta a celula nesta marca; o texto das secoes nao vai
+// para a pagina publicada, entao ela nao aparece para ninguem.
+export const PULO_DE_PAGINA = '‖‖';
+
 function secoesPorPagina(paginas, quais, sel) {
   const secoes = [];
+  let anterior = null;
   for (const i of quais) {
-    const t = (paginas[i] || '').replace(/\s+/g, ' ').trim();
+    let t = (paginas[i] || '').replace(/\s+/g, ' ').trim();
     if (!t) continue;
+    if (anterior !== null && i !== anterior + 1) t = PULO_DE_PAGINA + ' ' + t;
+    anterior = i;
     const rotulo = rotuloDaPagina(paginas[i], i, sel);
     const ultima = secoes[secoes.length - 1];
     // Paginas seguidas com o mesmo papel viram uma secao so, para nao repetir
@@ -208,7 +222,17 @@ function secoesPorPagina(paginas, quais, sel) {
     if (ultima && ultima.rotulo === rotulo) ultima.texto += ' ' + t;
     else secoes.push({ rotulo, texto: t });
   }
-  return secoes.filter(s => s.texto.length > 120);
+  // Secao curta demais e descartada, e com ela sai um pedaco do texto: a
+  // seguinte ja nao continua a anterior, entao leva a marca.
+  const saida = [];
+  let pulou = false;
+  for (const s of secoes) {
+    if (s.texto.length <= 120) { pulou = true; continue; }
+    if (pulou && saida.length && !s.texto.startsWith(PULO_DE_PAGINA)) s.texto = PULO_DE_PAGINA + ' ' + s.texto;
+    pulou = false;
+    saida.push(s);
+  }
+  return saida;
 }
 
 function secoesDe(texto, rotuloInicial) {

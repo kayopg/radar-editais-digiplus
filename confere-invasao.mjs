@@ -14,7 +14,9 @@ const C = dd.colunas.reduce((o, n, i) => (o[n] = i, o), {});
 
 const INVASAO = [
   [/CL[ÁA]USULA\s+[A-ZÀ-Ú]{4,}/, 'clausula de contrato'],
-  [/\s\d{1,2}\.\d{1,2}\.\s+[A-ZÀ-Ú]/, 'numeracao de clausula'],
+  // Depois de dois-pontos e valor de campo, nao clausula: "Consumo Kw/h: 0.13.
+  // Cores: Branco e preto", "(KWH): 56.6. EFICIENCIA ENERGETICA".
+  [/(?<!:)\s\d{1,2}\.\d{1,2}\.\s+[A-ZÀ-Ú]/, 'numeracao de clausula'],
   [/Nota Fiscal|nota fiscal/, 'nota fiscal'],
   [/transfer[êe]ncia banc[áa]ria|dados banc[áa]rios|Ag[êe]ncia:/, 'dados bancarios'],
   [/pagamentos? ser[ãa]o efetuados|prazo de pagamento/i, 'pagamento'],

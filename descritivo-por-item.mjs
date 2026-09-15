@@ -47,7 +47,72 @@ const normIgual = s => String(s ?? '').toLowerCase()
 // Enquanto a ancora comecava por "aparelho", nada casava.
 const GENERICAS = /^(?:aparelho|equipamento|conjunto|kit|material|produto|item|maquina)\s+/i;
 
-function ancoraDe(plano, planoH, curto) {
+// A CLASSE do produto, com os sinonimos que o catalogo do PNCP e o edital usam
+// um no lugar do outro: "Refrigerador Duplex" no PNCP e "Geladeira dupex" no
+// edital, "Maquina Secar Roupa" e "Secadora de roupas", "Forno Microondas" e
+// "Micro-ondas". A ordem importa: "lavadora de alta pressao" e lava-jato antes
+// de ser lavadora de roupa, e "forno micro-ondas" e micro-ondas antes de ser
+// forno.
+const CLASSES = [
+  ['lavajato', /^(?:(?:lavadora|maquina)\s+(?:de\s+)?alta\s+press|lava\s?jato)/],
+  ['lavar', /^(?:(?:maquina\s+(?:de\s+|para\s+)?)?lavar\s+roupa|lavadora(?:\s+de)?\s+roupa|lavadora\s+automatica|tanquinho)/],
+  ['secar', /^(?:(?:maquina\s+(?:de\s+|para\s+)?)?secar\s+roupa|secadora)/],
+  ['microondas', /^(?:forno\s+(?:de\s+)?)?micro\s?ondas/],
+  ['forno', /^forno\b/],
+  ['refrigerador', /^(?:geladeira|refrigerador)\b/],
+  ['freezer', /^(?:freezer|congelador)\b/],
+  ['tv', /^(?:televisor|televisao)/],
+  ['fogao', /^(?:fogao|cooktop)\b/],
+  ['fritadeira', /^(?:fritadeira|air\s?fryer)\b/],
+  ['espremedor', /^(?:espremedor|extrator\s+de\s+sucos?)\b/],
+  ['arcondicionado', /^(?:ar\s+condicionado|condicionador de ar)\b/],
+];
+// Classe pelo comeco de um texto ja normalizado (sem acento, minusculo).
+const classeDoInicio = s => {
+  const t = String(s).replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
+  for (const [c, re] of CLASSES) if (re.test(t)) return c;
+  // Sem sinonimo conhecido, vale a propria palavra: "liquidificador",
+  // "chaleira", "espremedor". Cinco letras, para nao virar classe "de" ou "com".
+  const w = t.match(/^[a-z]{5,}/);
+  return w ? w[0] : null;
+};
+const classeDoRotulo = rotulo => classeDoInicio(normIgual(rotulo).replace(GENERICAS, ''));
+
+// Capacidades escritas como numero: "1.044" e mil e quarenta e quatro, "1,8" e
+// um e oito decimos.
+const valorDe = x => String(/^\d{1,3}(?:\.\d{3})+$/.test(x) ? +x.replace(/\./g, '') : +x.replace(',', '.'));
+// A capacidade do rotulo do PNCP: "capacidade: 17 a 18", "capacidade: 11".
+const capacidadesDoRotulo = rotulo => {
+  const s = new Set();
+  for (const m of normIgual(rotulo).matchAll(/capacidade[^:,;]{0,20}:\s*(\d+(?:[.,]\d+)*)(?:\s*(?:a|-)\s*(\d+(?:[.,]\d+)*))?/g))
+    for (const x of [m[1], m[2]]) if (x) s.add(valorDe(x));
+  return s;
+};
+// A capacidade anunciada na cabeca da celula: "capacidade minima de 17 kg",
+// "80 litros".
+const capacidadesDoTexto = texto => {
+  const s = new Set();
+  const t = normIgual(texto);
+  for (const m of t.matchAll(/capacidade[^0-9,;.]{0,30}?(\d+(?:[.,]\d+)*)/g)) s.add(valorDe(m[1]));
+  for (const m of t.matchAll(/(\d+(?:[.,]\d+)*)\s*(?:kg|l|lts?|litros?)\b/g)) s.add(valorDe(m[1]));
+  return s;
+};
+
+function ancoraDe(plano, planoH, curto, vale = () => true) {
+  // O catalogo cola os campos: "CATMAT: 619108.PDM: 13768.Tipo: Hi-WallModelo:
+  // Split Inverter" (Jaraguari/MS), e o edital os separa. Sem a versao
+  // descolada o ar-condicionado do item 4 nao achava a propria linha, e o
+  // numero de outra linha levava para ele a especificacao de um bebedouro.
+  // So quando o rotulo como veio nao casa nada: descolar muda o rotulo de quem
+  // ja achava a linha, e a ancora mais curta passava a cair em outro lugar.
+  const achado = ancoraDoRotulo(plano, planoH, curto, vale);
+  if (achado) return achado;
+  const descolado = curto.replace(/([a-zà-ÿ0-9.])([A-ZÀ-Ú][a-zà-ÿ])/g, '$1 $2')
+    .replace(/([.:])(?=[A-Za-zÀ-ÿ])/g, '$1 ').replace(/\s+/g, ' ');
+  return descolado !== curto ? ancoraDoRotulo(plano, planoH, descolado, vale) : null;
+}
+
+function ancoraDoRotulo(plano, planoH, curto, vale = () => true) {
   const tentativas = [curto];
   const antesDoCampo = curto.split(/\s+[A-Za-zÀ-ÿ]+:\s/)[0];
   if (antesDoCampo && antesDoCampo.length >= 6 && antesDoCampo !== curto) tentativas.push(antesDoCampo);
@@ -61,6 +126,10 @@ function ancoraDe(plano, planoH, curto) {
     const palavras = base.split(/\s+/);
     for (const n of [6, 4, 3, 2]) {
       if (palavras.length > n || (n === 2 && palavras.length === 2)) {
+        // Prefixo que termina num travessao solto nao e nome: "DE AR-CONDICIONADO
+        // -" casava so em "seis aparelhos de ar-condicionado -, razao pela qual",
+        // no meio do estudo tecnico de Luz/MG, e a linha da tabela ficava sem marca.
+        if (/^[-–—,;:.]+$/.test(palavras[n - 1])) continue;
         const t = palavras.slice(0, n).join(' ');
         if (t.length >= (n === 2 ? 12 : 6) && !tentativas.includes(t)) tentativas.push(t);
       }
@@ -92,7 +161,13 @@ function ancoraDe(plano, planoH, curto) {
       const a = normIgual(t).replace(/-/g, ' ').replace(/\s+/g, ' ').trim();
       const exata = normIgual(t).replace(/\s+/g, ' ').trim();
       const alvo = onde === plano ? exata : a;
-      if (alvo.length >= 6 && onde.includes(alvo)) return { ancora: alvo, plano: onde };
+      if (alvo.length < 6) continue;
+      // Vale a tentativa que casa em algum lugar FORA da pesquisa de precos: o
+      // rotulo inteiro do catalogo aparece palavra por palavra na compra de outro
+      // orgao, e o nome curto e que abre a linha do termo ("REFRESQUEIRA
+      // INDUSTRIAL", item 11 de Ponta Grossa/PR, edital 13).
+      for (let k = onde.indexOf(alvo); k >= 0; k = onde.indexOf(alvo, k + 1))
+        if (vale(k)) return { ancora: alvo, plano: onde };
     }
   }
   return null;
@@ -148,7 +223,10 @@ const FIM_DE_LINHA = [
   /\s*CNPJ\s*[-–]\s*Raz\u00e3o\s*Social/i,
   /\s*Par\u00e2metro\s+Utilizado/i,
   /\s*(?:Painel de Pre\u00e7os|VALOR TOTAL M\u00c9DIO ESTIMADO|SOLICITA\u00c7\u00c3O DE COMPRA)/i,
-  /R\$\s*[\d.,]+\s+R\$\s*[\d.,]+\s+\d{1,4}(?=\s|$)/,
+  // A quantidade que vem antes dos precos sai junto: cortando no "R$", o "9" de
+  // "...do item como 220V 9 R$ 9.386,05 R$ 84.474,45" ficava no fim da celula
+  // (Paranavai/PR).
+  /(?:\s\d{1,4}\s+(?:(?:UNIDADES?|UNID|UND|UN)\.?\s+)?)?R\$\s*[\d.,]+\s+R\$\s*[\d.,]+\s+\d{1,4}(?=\s|$)/,
   /\s\d{1,4}\s+\d{1,3}(?:\.\d{1,3}){2,}(?=\s|$)/,
   // "MINI SPLIT. 10 04 UND APARELHO AR CONDICIONADO..." — numero do item,
   // quantidade e unidade abrindo a linha seguinte, em Descalvado/SP.
@@ -157,7 +235,11 @@ const FIM_DE_LINHA = [
   // UNIDADE 04 09 BALCAO COZINHA EM ACO" fecha a batedeira do item 8 de Nova
   // Tebas/PR — unidade, quantidade, numero do proximo item e o nome dele em
   // caixa alta. Dentro de uma especificacao essa sequencia nao acontece.
-  /\s(?:UNIDADES?|UNID|UND|UN|PCS?|CX|PAR|KG|LT)\.?\s+\d{1,4}\s+\d{1,4}\s+[A-Z\u00c0-\u00da]{3,}/,
+  //
+  // O nome do produto seguinte pode vir so com a inicial maiuscula: "...garantia
+  // minima de fabrica de 12 meses. UND 3 5 Micro-ondas de bancada..." em Nova
+  // Tebas/PR, onde o forno do item 4 levava o micro-ondas inteiro.
+  /\s(?:UNIDADES?|UNID|UND|UN|Unidades?|Unid|Und|PCS?|CX|PAR|KG|LT)\.?\s+\d{1,4}\s+\d{1,4}\s+[A-Z\u00c0-\u00da](?:[A-Z\u00c0-\u00da]{2,}|[a-z\u00e0-\u00ff]{2,})/,
   // A virada de linha SEM unidade nenhuma: quantidade, numero do proximo item e
   // o nome dele em caixa alta com duas palavras. E como a planilha de Apiai/SP
   // separa as linhas — "...EMEIEF ELISA 1 12 VENTILADOR COLUNA 110/220 v" fecha
@@ -170,7 +252,14 @@ const FIM_DE_LINHA = [
   /(?:\s\S){8,}(?=\s|$)/,
   // Fim da linha sem o numero do proximo item, que fica fora do teto:
   // "...+/- 5% de tolerância. UN 2 R$ 37.963,33 R$ 75.926," em Catanduva/SP.
-  /\s(?:UNIDADES?|UNID|UND|UN|PCS|PC|CX|PAR|KG|LT)\.?\s+\d{1,4}\s+R\$/i,
+  // Nao quando os dois precos estao inteiros e a descricao continua depois: e
+  // como o termo de referencia de Bento Goncalves/RS monta a linha — titulo,
+  // "UNIDADE 45 R$ 2.013,00 R$ 90.585,00" e so entao a especificacao detalhada,
+  // que o corte aqui jogava fora, deixando o item so com o titulo.
+  // So nessa forma: "UNIDADE" em caixa alta logo depois do titulo em caixa alta.
+  // "220V. UNID 02 R$ 761,66 R$ 1.523,31" (Cubatao/SP) e "608748 Unidade 05 R$
+  // 579,97 R$ 2.899,85" (Botucatu/SP) continuam fechando a linha.
+  /\s(?:UNIDADES?|UNID|UND|UN|PCS|PC|CX|PAR|KG|LT)\.?\s+\d{1,4}\s+R\$(?!(?<=[A-ZÀ-Ú0-9\/]\s(?-i:UNIDADE)\s+\d{1,4}\s+R\$)\s*[\d.]+,\d{2}\s+(?:R\$\s*)+[\d.]+,\d{2}\s+(?-i:[A-ZÀ-Ú][a-zà-ÿ]))/i,
   // Linha que comeca com o numero do item e o codigo de catalogo GRUDADOS, sem
   // espaco: "...1080I E 1080P.0016248542CABO EXTENSOR TIPO: FLEXIVEL". E como
   // Sabinopolis/MG monta a tabela, e sem isto o item 15 vinha com o 16 dentro.
@@ -191,7 +280,7 @@ const FIM_DE_LINHA = [
   // Depois da tabela costuma vir a minuta do contrato, e o ultimo item entrava
   // nela: a mesa de futmesa de Rio Bom/PR seguia por "de um lado, a PREFEITURA
   // DO MUNICIPIO DE RIO BOM - PR, pessoa juridica de direito publico...".
-  /\s(?:pessoa jur[íi]dica de direito|de um lado,?\s+[ao]\s+PREFEITURA|CL[ÁA]USULA\s+(?:PRIMEIRA|SEGUNDA|[IVX]+)|CONTRATANTE\b|CONTRATADA\b|doravante denominad)/i
+  /\s(?:pessoa jur[íi]dica de direito|de um lado,?\s+[ao]\s+PREFEITURA|CL[ÁA]USULA\s+(?:PRIMEIRA|SEGUNDA|[IVX]+)|CONTRATANTE\b|(?<!-\s*A\s)CONTRATADA\b|doravante denominad)/i
   ,
   // A CLAUSULA que abre o contrato, com o ordinal por extenso. O padrao antigo
   // so listava PRIMEIRA e SEGUNDA, e os itens 7 e 14 de Descalvado/SP — as
@@ -202,7 +291,10 @@ const FIM_DE_LINHA = [
   // Numeracao de clausula: "5.1. A", "1.3. Natureza do objeto". Dentro de uma
   // especificacao a medida usa virgula (2,35 x 3,51), nunca ponto seguido de
   // ponto e maiuscula.
-  /\s\d{1,2}\.\d{1,2}\.\s+[A-ZÀ-Ú]/,
+  // Nunca depois de dois-pontos: ali e VALOR de campo, "CONSUMO APROXIMADO DE
+  // ENERGIA (KWH): 56.6. EFICIENCIA ENERGETICA: A+++" na geladeira do item 11
+  // de Renascenca/PR, que parava no "(KWH)".
+  /(?<!:)\s\d{1,2}\.\d{1,2}\.\s+[A-ZÀ-Ú]/,
   // Cabecalho do edital ou da tabela reaparecendo depois da celula.
   /PROCESSO ADMINISTRATIVO N/i,
   /ESTIMATIVA DO VALOR TOTAL/i,
@@ -231,7 +323,25 @@ const FIM_DE_LINHA = [
   // especificacao "1.2 Litros" e medida, e cortar ali comeria o descritivo.
   /VALOR TOTAL DA PROPOSTA/i,
   /Metodologia de Defini[\u00e7c][\u00e3a]o/i,
-  /LEVANTAMENTO DO MERCADO/i,
+  // "...garantia minima de 12 meses 5.2 Classificacao dos bens/servicos: ( x )
+  // Comuns" fecha a tabela do termo de referencia em Diamante D'Oeste/PR.
+  /(?:\s\d{1,2}\.\d{1,2}\.?)?\s*Classifica[\u00e7c][\u00e3a]o dos bens/i,
+  // As notas depois da tabela, na outra copia do mesmo termo: "...garantia
+  // minima de 12 meses Havendo qualquer discordancia entre a descricao e
+  // unidade de medida do CATMAT..." (Diamante D'Oeste/PR).
+  /\sHavendo qualquer discord[\u00e2a]ncia|\sOs bens objeto desta contrata[\u00e7c][\u00e3a]o s[\u00e3a]o/i,
+  // E o modelo de proposta na terceira copia: "...garantia minima de 12 meses
+  // VALIDADE DA PROPOSTA: Sessenta (60) dias".
+  /\sVALIDADE DA PROPOSTA\s*:/i,
+  // "DE MERCADO" tambem: o fogao do item 3 de Trabiju/SP seguia por "5.
+  // LEVANTAMENTO DE MERCADO E JUSTIFICATIVA DA ESCOLHA DO TIPO DE SOLUCAO" e o
+  // estudo tecnico inteiro, ate o teto.
+  /LEVANTAMENTO D[OE] MERCADO|JUSTIFICATIVA DA ESCOLHA DO TIPO DE SOLU/i,
+  // A distribuicao por campus e o cabecalho da planilha seguinte, em Bento
+  // Goncalves/RS: "...IDEM AO ITEM 38 Campus demandante Quantidade 1. Campus
+  // Alvorada..." e "ITEM CATMAT DESCRICAO UNIDADE QTD R$ UNIT ESTIMADO".
+  /\sCampus demandante\b/i,
+  /\sITEM\s+CATMAT\s+DESCRI[ÇC][ÃA]O/i,
   /ESTIMATIVA DE VALORES DA CONTRATA/i,
   /Mem[\u00f3o]ria de C[\u00e1a]lculo/i
   ,
@@ -306,7 +416,8 @@ const FIM_DE_LINHA = [
   // Referencia 45/2026Informacoes Basicas...". Corta no digito da quantidade,
   // e so quando o que vem depois e mesmo esse cabecalho — a olhada a frente
   // impede que um codigo de modelo seja confundido com ele.
-  /\d{1,5}(?=[A-Z\u00c0-\u00da]{3,}[-.][A-Z\u00c0-\u00da]{2,}[^a-z]{0,60}(?:Termo de Refer|Informa[\u00e7c][\u00f5o]es B))/,
+  /\d{1,5}\s?(?=[A-Z\u00c0-\u00da]{3,}[-.][A-Z\u00c0-\u00da]{2,}[^a-z]{0,60}(?:Termo de Refer|Informa[\u00e7c][\u00f5o]es B))/,
+  /\sInforma[\u00e7c][\u00f5o]es B[\u00e1a]sicas\s+N[\u00famu]mero do artefato/i,
   /\bGrupo\s*:\s*G\d{2,}/,
   // Rodape do modelo da AGU ("Atualizacao: DEZ/2025") e carimbo de versao do
   // Compras.gov.br ("(v 0.3) Status ASSINADO").
@@ -319,7 +430,608 @@ const FIM_DE_LINHA = [
   // deverao vir datados... 2.3 Na nota fiscal, os itens deverao estar com".
   /\s(?:Total\s+d[oa]s\s+[Ii]tens|Total\s+[Gg]eral\s+d[oa])/i,
   /\s(?:CONDI[\u00c7C][\u00d5O]ES\s+GERAIS|Condi[\u00e7c][\u00f5o]es\s+[Gg]erais)/
+  ,
+  // PULO DE PAGINA. O descritivos.mjs marca com "\u2016\u2016" o ponto em que duas folhas
+  // NAO seguidas do edital ficaram lado a lado no texto. A celula que chega ali
+  // nao continua na folha seguinte, porque a folha seguinte nao e a dela: em
+  // Luz/MG o bebedouro seguia de "compativel com o fluxo de" direto para "de
+  // apoio. Dessa forma, a aplicacao do saldo remanescente...", de outra pagina.
+  /\s*\u2016\u2016/,
+  // A clausula que vem depois da tabela, pelo titulo numerado: "2. VALIDADE DO
+  // OBJETO: De no Minimo 12 (doze) meses..." fechava o ar condicionado de
+  // Avare/SP, e "1. Validade da Proposta Minimo 60 (sessenta) Dias" a cortina de
+  // ar de Barra do Garcas/MT.
+  /\s\d{1,2}\.\s+(?:VALIDADE DO OBJETO|PRAZO DE VIG[\u00caE]NCIA|PRAZO E FORMA DE ENTREGA|PRAZO DE ENTREGA|CONDI[\u00c7C][\u00d5O]ES DE PAGAMENTO|Validade da Proposta)\b/i,
+  // A pesquisa de precos de Nova Tebas/PR, colada depois de cada descricao:
+  // "UND 3 450,87 R$ 405,98 R$ 500,00 R$ NAO COTADO NAO COTADO..." e o quadro
+  // "Consolidacao dos precos cotados Menor Preco Media Mediana ... Desvio
+  // Padrao". O mesmo quadro estatistico, com outro nome, em Chapadao do Sul/MS.
+  /\s(?:R\$\s*)?N[\u00c3A]O COTADO/,
+  /\s(?:Consolida[\u00e7c][\u00e3a]o dos pre[\u00e7c]os|Menor Pre[\u00e7c]o\s+M[\u00e9e]dia|Coeficiente de Varia[\u00e7c][\u00e3a]o|Desvio Padr[\u00e3a]o|M[\u00e9e]todo de c[\u00e1a]lculo adotado)/i,
+  /\sITEM\s+\d{1,3}\s+VALORES\s/,
+  // "COTA RESERVADA" abrindo o bloco seguinte da tabela, logo antes do
+  // cabecalho repetido (Descalvado/SP).
+  /\sCOTA\s+(?:RESERVADA|PRINCIPAL)(?=\s+Item\b)/i,
+  // Codigo de catalogo, unidade e quantidade fechando a linha: "...TENSAO: 220 V
+  // 618525 UN 20", em Chapadao do Sul/MS.
+  /\s\d{5,9}\s+(?:UNIDADES?|UNID|UND|UN)\.?\s+\d{1,4}(?=[\s,]|$)/,
+  // O relatorio de pesquisa de precos colado depois da especificacao, em Ponta
+  // Grossa/PR: "Consumo: 0,24 KW/H Fonte: Data: 04/12/2025 15:00 Modalidade:
+  // Dispensa SRP: NAO..." e dezenas de fornecedores com CNPJ.
+  /\sFonte:\s*(?:\S+\s+)?Data:|\sFonte:\s*(?::|https?:|www)|\sRelat[\u00f3o]rio gerado no dia|\*VENCEDOR\*|\sModalidade:\s*(?:Dispensa|Preg[\u00e3a]o)\b|\sCatMat:\s*\d{5,6}\s+-\s+\S/i,
+  // A pesquisa de precos do pedido de compra da UFTM (Uberaba/MG), colada na
+  // celula: "...MONDIAL DUAL FE-03 OU AGRATTO. 2 R$ 251,85 19/08/2026 0,0000%
+  // R$ 251,85 289,87 ..." \u2014 quantidade, preco, data da cotacao e percentual.
+  /\s(?:\d{1,4}\s+)?(?:R\$\s*)?[\d.]+,\d{2}\s+\d{2}\/\d{2}\/\d{4}\s+[\d.,]+%/,
+  // E a outra copia do mesmo pedido, com o codigo e a natureza da despesa:
+  // "...OU AGRATTO. CATMAT/CATSER: 617471 NDD: 344905212 2.00 UNIDADE 14".
+  /\s*CATMAT\/CATSER:\s*\d+/,
+  // Unidade e quantidade minima/maxima do registro de precos fechando a linha:
+  // "...220V, 12.000 BTUS UN 1/10 R$ 2.499,00 02 Ar-condicionado" (Pinhal
+  // Grande/RS), e a observacao sobre os precos logo depois da ultima linha.
+  /\s(?:UNIDADES?|UNID|UND|UN)\.?\s+\d{1,4}\/\d{1,4}(?=\s+R\$|\s*$)/,
+  /\sOBS:\s*Nos pre[çc]os propostos/i,
+  // A legenda da foto que fecha cada linha em Ponta Grossa/PR; o que vem depois
+  // e a linha seguinte ou, na ultima, "VALOR MAXIMO ESTIMADO R$ ... *Obs: Em
+  // estudo de mercado... 6. LOCAIS DE REALIZACAO DOS SERVICOS".
+  /\s*Imagem meramente ilustrativa\b/i,
+  // O total do grupo depois da ultima linha: "...Garantia 12 meses. Unidade 180
+  // VALOR TOTAL GRUPO 02 R$......" (Sao Paulo/SP, edital 1081), e o cabecalho
+  // do grupo seguinte: "Grupo 02 - Eletrodomestico Item Objeto".
+  /\sVALOR TOTAL (?:DO |DO\s+)?(?:GRUPO|LOTE)\b/i,
+  /\sGrupo\s+\d{1,2}\s+-\s+[A-ZÀ-Ú][a-zà-ÿ]+\s+Item\b/,
+  /\s(?:UNID\.?\s+\d{1,5}\s+)?LOTE\/GRUPO\s+\d{1,2}\s+[–-]/,
+  // Unidade, preco unitario e quantidade com quatro casas e o total, fechando a
+  // linha: "...CONTROLE REMOTO SEM FIO UN 3.193,9800 83,0000 265.100,3400"
+  // (Minacu/GO), o codigo do catalogo antes deles ("IC BASE: 64517") e o total
+  // geral depois da ultima linha.
+  /\s*IC BASE:\s*\d{3,8}/,
+  /\s(?:UNIDADES?|UNID\.?|UND|UN|PCT|CX|KG|PAR|JOGO)\s+[\d.]+,\d{4}\s+[\d.]+,\d{4}\s+[\d.]+,\d{2,4}(?=\s|$)/,
+  /\sTotal\s+[\d.]{5,},\d{2}(?=\s|$)/,
+  // O nome curto que fecha a descricao e a linha seguinte, com o numero de
+  // quatro digitos e o codigo: "...CATALOGO DO PRODUTO. - - REFRIGERADOR
+  // EXPOSITOR 0014 392706 - REFRIGERADOR EXPOSITOR" (Florianopolis/SC).
+  /(?<=[.;A-ZÀ-Ú0-9)])\s+-\s+-\s+(?=[A-ZÀ-Ú]{3,})/,
+  /\s\d{4}\s+\d{5,9}\s+-\s+[A-ZÀ-Ú]/,
+  // Quantidade com tres casas, preco com quatro e o total: "...Garantia minima:
+  // 12 meses. 1,000 7.601,2900 7.601,29" (Pinhalao/PR).
+  /\s\d{1,6},\d{3}\s+[\d.]+,\d{4}\s+[\d.]+,\d{2}(?=\s|$)/,
+  // Quantidade com quatro casas antes da unidade, e depois preco, total, cota,
+  // CATMAT e a linha seguinte: "...Conformidade do INMETRO. 40,0000 UN
+  // 3.426,2100 137.048,40 GERAL 627990 2 Geladeira Industrial" (Paranavai/PR).
+  // E o quadro de quantitativos por secretaria do mesmo edital: "...com prato
+  // giratorio. Un 2 Nao e possivel estimar...", "...Cor: Preta. Un 1 1 A definir
+  // 36 Lavadora".
+  /\s\d{1,6},\d{4}\s+(?:UN|UND|UNID|CX|PCT|KG|PAR|JG|CONJ)\b/,
+  /(?<=[.;])\s+Un\s+\d{1,3}\s+(?:\d{1,3}\s|N[ãa]o\s|Semestral|Pedido|[ÁA] definir|Conforme|De acordo|-\s)/,
+  // Os dois precos, o numero e a quantidade da linha seguinte e o nome em caixa
+  // alta: "...1 espatula. 937,88 937,88 14 3 ABAJUR" (Mariopolis/PR).
+  /\s[\d.]+,\d{2}\s+[\d.]+,\d{2}\s+\d{1,3}\s+\d{1,4}\s+[A-ZÀ-Ú]{4,}/,
+  // Numero da linha seguinte e o codigo de cinco ou seis digitos, depois do fim
+  // da frase ou do preco: "...especificacoes acima ou superior. 9 11139 Jogo de
+  // mesa com 4 cadeiras" (Pinhal de Sao Bento/PR).
+  /(?:(?<=[.;])|(?<=\d,\d{2}))\s+\d{1,3}\s+\d{5,6}\s+(?=[A-ZÀ-Ú][A-Za-zÀ-ÿ])/,
+  // A nota geral que Avare/SP poe depois da tabela, do objeto e da ata.
+  /\s*Os objetos dever[ãa]o ser de boa qualidade/i,
+  // Unidade, quantidade e precos fechando a linha, e a seguinte abrindo com
+  // numero, codigo e travessao: "...Coifa em aco inoxidavel (sob medida) Unidad
+  // e 1 21.800,00 21.800,00 6 48335 - ULTRACONGELADOR" (Joinville/SC).
+  /\s(?:Unidad\s?e|Unidade)\s+\d{1,4}\s+[\d.]+,\d{2}\s+[\d.]+,\d{2}\s+\d{1,3}\s+\d{4,6}\s+-\s/,
+  // Tres precos seguidos sao planilha de cotacao, nunca especificacao:
+  // "DEIONIZADOR DE AGUA 11 11 1.679,09 1.679,09 1.679,09..." (Chapadao do Sul/MS).
+  /(?:\s\d{1,3}(?:\.\d{3})*,\d{2}){3}(?=\s|$)/,
+  // A dotacao orcamentaria e as cotacoes do pedido de compra depois da
+  // especificacao: "...do equipamento. Dotacao:Acesso: 1375 | Projeto: 1050"
+  // (Sao Luiz Gonzaga/RS), e o total da planilha: "Total -> 200.602,85" (Jaraguari/MS).
+  /\sDota[çc][ãa]o:\s*Acesso:|\sTotal\s*->\s*[\d.]+,\d{2}/i,
+  // O titulo do anexo seguinte depois do fim da frase, as vezes com a rubrica
+  // de quem assina antes: "...diferentes tipos de ambientes. GK ANEXO I-A
+  // QUANTITATIVOS DO ORGAO GERENCIADOR" (Salto/SP).
+  /(?<=[.;])(?:\s[A-Z]{2,3})?\s+(?:AP[ÊE]NDICE\s+DO\s+)?ANEXO\s+[IVX]{1,4}(?:\s*-\s*[A-Z])?\s+(?:[–-]\s+)?[A-ZÀ-Ú]{4,}/,
+  // O rodape da planilha do SEI: "...Nbr- 14136/2012; 4823648 1 TOTAL MENSAL
+  // ESTIMADO" (Sao Paulo/SP).
+  /\sTOTAL MENSAL ESTIMADO/i,
+  // Codigo, unidade, quantidade, numero da linha seguinte e o codigo 8720 da
+  // planilha da Unicamp (Campinas/SP): "...SEM DECORACAO. 335114 Unidade 120 39
+  // 8720 TABUA P/MANIPULACAO".
+  /\s\d{5,9}\s+Unidade\s+\d{1,4}\s+\d{1,3}\s+\d{4}\s+[A-ZÀ-Ú]/,
+  // O carimbo do protocolo do governo do Parana no pe da folha: "...tensao do
+  // item como 220V GMS No 822/2026 Protocolo No. 25.999.934-0" (Paranavai/PR).
+  /\sGMS\s+N[ºo°]\.?\s*\d+\/\d{4}/,
+  // O formulario do Portal de Compras de Belo Horizonte/MG depois de cada item:
+  // "...Selo Procel Tratamento Diferenciado: Tipo I - Participacao Exclusiva de
+  // ME/EPP ... Intervalo Minimo entre Lances (%): 5,00".
+  /\sTratamento Diferenciado:/,
+  // "...voltagem 220V. 6 UN R$ 3.145,72 R$ 18.874,32 Total Geral R$ 25.916,43" (Luz/MG)
+  /\sTotal\s+Geral\s+R\$/i,
+  // Quantidade, unidade e a cota da linha: "...Garantia minima do fabricante de
+  // 01 (um) ano. 75 UN COTA RESERVADA PARA ME, EPP OU MEI" (Avare/SP).
+  /\s\d{1,4}\s+(?:UN|UND|UNID)\s+(?:R\$\s*[\d.]+,\d{2}\s+R\$\s*[\d.]+,\d{2}\s+)?COTA\s+(?:RESERVADA|PRINCIPAL)/,
+  // Numero da linha seguinte e os dois codigos (CATMAT e o do sistema do
+  // municipio) antes do nome: "...Imagem meramente ilustrativa 2) 121713 474330
+  // Carrinho plataforma para transporte de cargas" (Ponta Grossa/PR), onde o
+  // climatizador do item 8 levava o carrinho inteiro.
+  /\s\d{1,3}[).]?\s+\d{5,9}\s+\d{5,9}\s+[A-ZÀ-Ú][A-Za-zÀ-ÿ]{2,}/,
+  // A linha seguinte do catalogo de Jaraguari/MS: numero, nome em caixa alta e
+  // "(CATJAR)" — "...classificacao A. 31 FURADEIRA IMPACTO (CATJAR) PDM: 7868".
+  // Nunca a medida: "Profundidade: 46 CM 16 CADEIRA FIXA (CATJAR)" corta no 16.
+  /\s\d{1,3}\s+(?!(?:CM|MM|M|KG|G|L|ML|W|V|KW|MW|HP|CV|PSI|RPM|UN|UND|POL|LB|BTU|BTUS|HZ|A|FL|MIN)\b)[A-ZÀ-Ú][A-ZÀ-Ú0-9 \-–'"./,]{3,80}\(CATJAR\)/,
+  // A fonte do recurso depois da linha: "...Un - Unidade 18 Recursos: FUNDEB/
+  // COMPLEMENTACAO VAAT" (Apiai/SP).
+  /\sRecursos?:\s*(?:FUNDEB|PR[\u00d3O]PRIO|RECURSO|TESOURO|MDE|QSE|PNAE|VAAT)/i,
+  // Lista de distribuicao por escola, depois da linha: "...cor branca CEMAE -
+  // PINHEIROS 1 CEMEIEF DINA - ARACAIBA 1" (Apiai/SP).
+  /\s(?:CEMAE|CEMEIEF|EMEIEF|EMEF|EMEI|CMEI)\s+[-\u2013]\s+[A-Z\u00c0-\u00da]/,
+  // A justificativa do estudo tecnico, que repete o nome do item e segue pelas
+  // escolas atendidas: "4) Freezer Horizontal 309 Litros As unidades CEMEIEF
+  // Maria Garcia - Palmitalzinho ... nao foram contempladas no Processo" (Apiai/SP).
+  // Mais comprida que a linha da tabela, ganhava dela no desempate e ia para o
+  // resumo no lugar da especificacao do freezer e da maquina de lavar.
+  /\sAs unidades\s+(?:CEMAE|CEMEIEF|CEMEI|EMEIEF|EMEF|EMEI|CMEI)\b/,
+  // Quantidade, unidade, numero do proximo item e o nome dele em caixa alta:
+  // "...instalacao estavel do equipamento. 1 Unidade 7 DOCA MOVEL DE CARGA" em
+  // Joinville/SC, onde o ultracongelador do item 6 levava a doca inteira. Nao
+  // depois de "com": "Unidade (UN) com 1 Unidade 5 MICROSCOPIO" e a abertura da
+  // propria linha no modelo do Compras.gov.br.
+  /(?<!\bcom)\s\d{1,4}\s+(?:Unidades?|UNIDADES?|Und|UND|Unid|UNID|UN)\.?\s+\d{1,3}\s+[A-Z\u00c0-\u00da]{3,}/,
+  // A garantia da coluna ao lado e o numero do proximo item: "...CERTIFICACAO
+  // INMETRO. 12 MESES 26 PROCESSADOR DE ALIMENTO" (Campinas/SP).
+  /\s\d{1,2}\s+MESES\s+\d{1,3}\s+[A-Z\u00c0-\u00da]{4,}/,
+  // O proximo item numerado com ponto e o titulo em caixa alta com travessao:
+  // "...defeitos de fabricacao. 45. MICROONDAS (26 A 30L) \u2013 Aparelho novo"
+  // (Vicosa/MG), onde o bebedouro do item 44 levava o micro-ondas e o
+  // computador. Depois de fim de frase ou do preco da linha ("...fabricacao. 2
+  // UNIDADE R$ 1.055,33 R$ 2.110,66 45. MICROONDAS"), para nao pegar uma lista
+  // numerada dentro da especificacao.
+  /(?:(?<=[.;])|(?<=\d,\d{2}))\s+\d{1,3}\.\s+[A-Z\u00c0-\u00da]{4,}[A-Z\u00c0-\u00da0-9 /()]*\s[\u2013-]\s/,
+  // Titulo de ANEXO abrindo outra parte do edital. O ultimo item da tabela de
+  // Salto/SP seguia por "ANEXO II Cidades do Ambito Regional" e a lista inteira
+  // das regioes metropolitanas de Sao Paulo. So o titulo: "conforme anexo I" no
+  // meio da frase nao e seguido de palavra com maiuscula.
+  /\sANEXO\s+[IVX]{1,4}\s+(?=[A-Z\u00c0-\u00da][a-z\u00e0-\u00ff]|[A-Z\u00c0-\u00da]{4,}|\d{1,2}\s*[-\u2013.)])/,
+  // Subtitulo numerado do proximo item: "3.2.2. Item 02: Bebedouro de Coluna",
+  // em Valinhos/SP.
+  /\s\d{1,2}(?:\.\d{1,2})+\.?\s+Item\s+\d{1,3}\s*:/i,
+  // Fim de linha completo — unidade, quantidade, precos — seguido do numero e
+  // do codigo de catalogo da linha seguinte e do nome dela: "...garantia minima
+  // 12 meses. UNID 10 782,30 7.823,00 19 354608 Mesa branca em polipropileno",
+  // em Nova Esperanca/PR. Sem o numero e o codigo depois, os mesmos valores
+  // estao no MEIO da celula e saem sem cortar (VALORES_DA_LINHA).
+  /\s(?:UNIDADES?|UNID|UND|UN)\.?\s+\d{1,4}\s+[\d.]+,\d{2}\s+[\d.]+,\d{2}\s+\d{1,3}\s+\d{5,6}\s+[A-ZÀ-Ú]/,
+  /(?<=[.;])\s+\d{1,3}\s+\d{5,6}\s+[A-ZÀ-Ú][a-zà-ÿ]/,
+  // Numero do item, quantidade com decimal e unidade abrindo a linha seguinte:
+  // "...tensao: 127 v ou 220 v. 458,00 2.748,00 12 8,0 UND Bebedouro eletronico"
+  // em Mariopolis/PR. Os itens 12, 45 e 58 nao sao do radar, entao nao viram
+  // marca, e sem este corte a batedeira do item 11 levava os dois bebedouros e
+  // o ar-condicionado do 44 levava purificador, armario e balcao de pia.
+  /\s\d{1,3}\s+\d{1,4},\d{1,2}\s+(?:UNIDADES?|UNID|UND|UN)\.?\s+[A-ZÀ-Úa-zà-ÿ]/,
+  // Numero do item, codigo de catalogo, quantidade e unidade: "...290 X 600 X
+  // 680MM. 3.023,52 6.047,04 06 482244 2 UN FOGAO 05 BOCAS" em Renascenca/PR,
+  // onde o fogao industrial do item 5 levava o fogao de cinco bocas do 6.
+  /\s\d{1,3}\s+\d{4,9}\s+\d{1,5}\s+(?:UNIDADES?|UNID|UND|UN)\.?\s+[A-ZÀ-Ú]{3,}/
 ];
+
+// O modelo da Advocacia-Geral da Uniao carimba todas as folhas com o mesmo
+// cabecalho, em duas versoes no mesmo edital ("Modelo de Edital", "Modelo de
+// Termo de Referencia"), e cai no meio da celula na virada: Governador
+// Valadares/MG, Vicosa/MG, Botucatu/SP, Montes Claros/MG.
+const CABECALHO_AGU = /\s*(?:UASG\s+\d{5,6}\s+)?C[\u00e2a]mara Nacional de Modelos de Licita[\u00e7c][\u00f5o]es e Contratos da Consultoria-Geral da Uni[\u00e3a]o\s+Modelo de[\s\S]{0,200}?Identidade visual pela Secretaria de Gest[\u00e3a]o e Inova[\u00e7c][\u00e3a]o(?:\s+Atualiza[\u00e7c][\u00e3a]o:\s*[A-Z]{3}\/\d{4}\.?)?(?:\s+\d{1,3}\s+de\s+\d{1,3})?/gi;
+
+// O carimbo de assinatura e o cabecalho que o HU/USP (Sao Paulo/SP) repetem em
+// cada folha, e que caem no meio da especificacao do controle remoto: "Documento
+// assinado digitalmente - Por favor, verifique o HASH de autenticidade na pagina
+// 96 deste documento. PREGAO ELETRONICO No 102150-369/2026 - HU/USP ... Pagina 24
+// | 95 Aprovado pelo Parecer ... Edital de Pregao - Bens e Servicos - Lei no
+// 14.133, de 2021". Sai antes do timbre, que levava so as pontas.
+const CABECALHO_HASH = /\s*Documento assinado digitalmente\s*-\s*Por favor, verifique o HASH de autenticidade na p[áa]gina \d+ deste documento\.(?:\s*‖‖)?\s*PREG[ÃA]O ELETR[ÔO]NICO[\s\S]{0,400}?Lei n[ºo°] 14\.133, de 2021/g;
+
+// O QUE NAO E ESPECIFICACAO DENTRO DA CELULA, depois do corte.
+//
+// A tabela centraliza as outras colunas da linha na altura da celula, e o PDF
+// escreve linha por linha: a unidade, a quantidade e os precos caem NO MEIO da
+// descricao, e a descricao continua depois deles. Em Nova Esperanca/PR o fogao
+// do item 15 saia "...baixa pressao; em ferro fundido UNID 8 1.832,97
+// 14.663,76 30x30; bandeja coletora...". Cortar ali jogaria fora a segunda
+// metade da especificacao; entao sai o grupo de valores e fica o resto.
+const VALORES_DA_LINHA = [
+  // Unidade, quantidade e os dois precos da coluna da direita, que caem no meio
+  // da especificacao quando ela passa para a folha seguinte: "...Componentes
+  // plasticos atoxicos, proprios para Unid. 01 3.049,56 3.049,56 contato com
+  // alimentos" (Ponta Grossa/PR). Antes das outras, que levariam so os precos.
+  /\s(?-i:Unid)\.?\s+\d{1,4}\s+[\d.]+,\d{2}\s+[\d.]+,\d{2}(?=\s)/g,
+  // Unidade, quantidade e precos de quatro casas no meio da descricao, com a
+  // contagem de folhas: "...ARMAZENAMENTO DE PRODUTOS UN 3 6.500,3200 19.500,9600
+  // 5 de 16 TERMOLABEIS" (Florianopolis/SC).
+  /\s(?:UN|UND|UNID)\s+[\d,]{1,8}\s+[\d.]+,\d{4}\s+[\d.]+,\d{4}(?:\s+\d{1,3}\s+de\s+\d{1,3})?(?=\s)/g,
+  // Unidade, colunas numericas e os dois precos no meio da celula: "...ao redor
+  // da Un 1 1 1 3.219,31 3.219,31 mesa central" (Nova Fatima/PR).
+  /\s(?:Un|UN|Und|UND)\s+\d{1,4}(?:\s+\d{1,4}){0,3}\s+[\d.]+,\d{2}\s+[\d.]+,\d{2}(?=\s)/g,
+  // A unidade, a quantidade e os dois precos entre o titulo em caixa alta e a
+  // especificacao: "...SPLIT HI-WALL - 12.000 BTU/H UNIDADE 72 R$ 2.013,00 R$ R$
+  // 144.936,00 Aparelho de ar-condicionado..." (Bento Goncalves/RS). Vem antes
+  // das outras, que levariam os precos e deixariam o "UNIDADE" solto no meio.
+  /\s(?<=[A-ZÀ-Ú0-9\/]\s)UNIDADE\s+\d{1,4}\s+R\$\s*[\d.]+,\d{2}\s+(?:R\$\s*)+[\d.]+,\d{2}(?=\s+[A-ZÀ-Ú][a-zà-ÿ])/g,
+  // "01 R$ 4.000,00 R$ 4.000,00" (Santo Antonio do Caiua/PR)
+  // ... com a quantidade antes: "Diametro (mm): 1070 5 1 R$ 409,78 R$ 2.048,90"
+  // (Sao Jose da Boa Vista/PR), onde o "5" ficava no meio da especificacao.
+  /\s(?:\d{1,4}\s+)?\d{1,4}\s+R\$\s*[\d.]+,\d{2}\s+R\$\s*[\d.]+,\d{2}(?=[\s,.;]|$)/g,
+  // Quantidade, unidade e precos — com os precos em branco, como nos modelos
+  // de proposta: "04 UNID R$ 7.847,69" no meio do aparelho de Campina do Monte
+  // Alegre/SP, "10 UN R$ 677,31 R$ 6.773,10" e "20 UN R$ R$" em Birigui/SP.
+  // Como FIM de linha isto cortava a celula ao meio: a descricao continua
+  // depois dos valores.
+  /\s\d{1,4}\s+(?:UNIDADES?|UNID|UND|UN|P[ÇC]S?|CX)\.?\s+R\$\s*(?:[\d.]+,\d{2,4})?(?:\s+R\$\s*(?:[\d.]+,\d{2})?)?(?=[\s,.;:]|$)/g,
+  // "1 UNID 450,00 450,00" (Nova Esperanca/PR)
+  /\s\d{1,4}\s+(?:UNIDADES?|UNID|UND|UN)\.?\s+[\d.]+,\d{2}\s+[\d.]+,\d{2}(?=[\s,.;]|$)/g,
+  // Unidade, quantidade, preco com o R$ depois: "UNIDADE 174 111,25 R$
+  // 19.357,50", entre o nome e a descricao em Bento Goncalves/RS; "UND 3 450,87
+  // R$ 405,98" na pesquisa de precos de Nova Tebas/PR.
+  /\s(?:UNIDADES?|UNID|UND|UN)\.?\s+\d{1,4}\s+[\d.]+,\d{2,4}\s+R\$\s*(?:[\d.]+,\d{2})?(?=[\s,.;]|$)/g,
+  // CNPJ solto, sem a palavra, que o timbre deixa para tras (Chapadao do Sul/MS).
+  /\s*:?\s*\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}/g,
+  // Preco da linha e numero da pagina no meio da frase, na virada de folha: "...
+  // grade metalica de 227,93 1.367,58 13 de 15 protecao e suporte..." (Vicosa/MG).
+  /\s[\d.]{1,9},\d{2}\s+[\d.]{1,12},\d{2}\s+\d{1,3}\s+de\s+\d{1,3}(?=\s)/g,
+  /\s\d{1,3}\s+de\s+\d{1,3}(?=\s+(?:[A-ZÀ-Ú]|\d))/g,
+  // O modelo da Advocacia-Geral da Uniao carimba todas as folhas com o mesmo
+  // cabecalho, em duas versoes no mesmo edital ("Modelo de Edital", "Modelo de
+  // Termo de Referencia"), e cai no meio da celula na virada: Governador
+  // Valadares/MG, Vicosa/MG, Botucatu/SP, Montes Claros/MG.
+  CABECALHO_AGU,
+  // Com o numero do item logo depois: "...35 Litros UASG 90173 02 Especificacao
+  // Tecnica:" (Sao Paulo/SP, edital 89).
+  /\s*UASG\s+\d{5,6}(?:\s+\d{1,3})?(?=\s)/g,
+  // Codigo, unidade e quantidade da coluna ao lado, no meio da celula: "...do
+  // parque de climatizacao 390407 Unidade 15 hospitalar)" (Sao Paulo/SP, HU/USP).
+  /\s\d{6}\s+Unidade\s+\d{1,4}(?=\s)/g,
+  // Numero do item e codigo de catalogo, da coluna ao lado, no meio da
+  // descricao: "...Tipo: Split , 4 440747 Modelo: Split Inverter" (Governador
+  // Valadares/MG).
+  /\s\d{1,3}\s+\d{6}(?=\s+[A-Z\u00c0-\u00da][a-z\u00e0-\u00ff])/g,
+  // A unidade do catalogo e o numero da pagina, na virada de folha do termo de
+  // referencia de Vicosa/MG: "...cloro livre 4 de 14 2 306105 Unidade (UN) com
+  // 1 Unidade 1 e melhoria das caracteristicas...".
+  /\s*Unidade\s*\(UN\)\s*com\s*\d+(?:\s+Unidade(?:\s+\d{1,3})?)?/g,
+  // Quantidade, cota e unidade: "16 100% UN", "10 25% UN" (Jaraguari/MS)
+  /\s\d{1,4}\s+\d{1,3}%\s+UN\b/g,
+  // Quantidade e participacao: "5 Exclusivo ME/EPP" (Pompeia/SP)
+  /\s\d{1,4}\s+(?:Exclusivo|Ampla Concorr[êe]ncia|Cota Reservada)\s+ME\/EPP\b/gi,
+  // Quantidade e precos no meio da frase, depois de virgula: "...gas
+  // refrigerante R-32 ou R-410A, 5 2.840,00 14.200,00 alimentacao eletrica
+  // 220 V" (Pompeia/SP), onde a celula atravessa a virada de folha.
+  /(?<=[a-zà-ÿ,;])\s\d{1,4}\s+[\d.]{1,9},\d{2}\s+[\d.]{1,12},\d{2}(?=\s+[a-zà-ÿ])/g,
+  // Preco e quantidade no meio de texto em caixa alta: "...CLASSIFICACAO DE
+  // EFICIENCIA ENERGETICA 3.759,48 45 CONFORME LEGISLACAO VIGENTE" (Trabiju/SP).
+  /(?<=[A-ZÀ-Ú])\s[\d.]{1,9},\d{2}\s+\d{1,4}(?=\s+[A-ZÀ-Ú]{3,})/g,
+  // Rodape do relatorio do Compras Web: "Fiorilli Software - (Compras Web
+  // (9.50.29.2994)) 28/08/2026 14:44 Usuario: FULANO" (Jaraguari/MS)
+  /\s*Fiorilli Software[\s\S]{0,80}?Usu[áa]rio:\s*(?:[A-ZÀ-Ú]+\s?)+/g,
+  // Cabecalho de impressao do SEI: "01/09/2026, 08:12 SEI/PMJ - 30646472 -
+  // Edital https://sei.joinville...acao_retorno=procedi… 12/34" (Joinville/SC)
+  /\s*\d{2}\/\d{2}\/\d{4},\s*\d{2}:\d{2}\s+SEI\/[A-Z]+\s*-\s*\d+\s*-\s*[^h]{0,40}https?:\/\/\S+(?:\s+\d{1,3}\/\d{1,3})?/g,
+  // "UNID 8 1.832,97 14.663,76" (Nova Esperanca/PR), "UN 2 1.418,60 2.837,20"
+  // (Saudade do Iguacu/PR)
+  /\s(?:UNIDADES?|UNID|UND|UN)\.?\s+\d{1,4}(?:,\d{2})?\s+(?:R\$\s*)?[\d.]+,\d{2,4}\s+(?:R\$\s*)?[\d.]+,\d{2}(?=[\s,.;]|$)/g,
+  // "3,00 UNIDADE 36.714,71 110.144,13" (Pinhal de Sao Bento/PR)
+  /\s\d{1,4},\d{2}\s+(?:UNIDADES?|UNID|UND|UN)\.?\s+(?:R\$\s*)?[\d.]+,\d{2,4}\s+(?:R\$\s*)?[\d.]+,\d{2}(?=[\s,.;]|$)/g,
+  // Preco unitario e total soltos antes do timbre ou no fim: "...fixacao em
+  // parede. 227,93 1.367,58 Camara Nacional de Modelos" (Vicosa/MG).
+  /\s[\d.]{1,9},\d{2}\s+[\d.]{1,12},\d{2}(?=\s+[A-Z\u00c0-\u00da]|\s*$)/g,
+  // ... e no meio da frase, entre duas palavras: "altura do 499,50 7.492,50
+  // encosto: 77cm" (Mariopolis/PR). Seguido de unidade de medida e medida, e
+  // fica: "45,50 60,00 cm".
+  /(?<=[a-z\u00e0-\u00ff])\s[\d.]{1,9},\d{2}\s+[\d.]{1,12},\d{2}(?=\s+(?!(?:cm|mm|m|kg|g|l|ml|w|v|kw|kva|x|a|hz|mts?|litros?)\b)[a-z\u00e0-\u00ff])/g,
+  // Preco unitario e total sozinhos entre duas palavras, onde a coluna dos
+  // precos se intercala com a da especificacao: "...garantia 12 meses, 1.820,00
+  // 9.100,00 capacidade total 239l" (Mariopolis/PR), "...Multilaminado 512,19
+  // 20.487,60 - Tipo Base" (Jaraguari/MS). So valor com cara de preco \u2014 tres
+  // digitos ou milhar \u2014 para nao levar medida como "3,82 M". Depois das regras
+  // com unidade e quantidade, que levam a linha inteira: antes delas, "1 UNID
+  // 949,45 949,45" perdia so os precos e o "1 UNID" ficava (Nova Esperanca/PR).
+  /(?<=[A-Za-z\u00c0-\u00ff,;])\s(?:\d{1,3}(?:\.\d{3})+|\d{3}),\d{2}\s+(?:\d{1,3}(?:\.\d{3})+|\d{3}),\d{2}(?=\s+(?:[a-z\u00e0-\u00ff(]|-\s))/g,
+  // Linha de preencher do formulario: "\u23af\u23af\u23af\u23af\u23af\u23af" (Pinhal de Sao Bento/PR).
+  /\s*[\u23af\u2500\u2501_]{4,}/g,
+  // Carimbo de assinatura do 1Doc, inteiro ou nos pedacos em que a margem
+  // vertical cai no meio da linha: "Assinado por 3 pessoas: FULANO, BELTRANO e
+  // + 1. Para verificar a validade das assinaturas, acesse
+  // https://....1doc.com.br/verificacao/XXXX e informe o codigo XXXX".
+  /\s*Assinado por \d+ pessoas?:[\s\S]{0,700}?informe o c[\u00f3o]digo\s+[\w-]+/gi,
+  /,?\s*(?:[A-Z\u00c0-\u00da][A-Z\u00c0-\u00da'\u2019.\-]*(?:\s+(?:e\s+\+\s*\d+\.?|e\s+)?|\s*,\s*)){2,}(?=Para verificar a validade)/g,
+  /\s*Para verificar a validade das assinaturas,?\s*/gi,
+  /,?\s*acesse\s+https?:\/\/\S+\s+e\s+informe o c[\u00f3o]digo\s+[\w-]+/gi
+];
+
+// O TIMBRE de cada edital, aprendido do proprio edital.
+//
+// Perseguir o cabecalho de cada prefeitura com uma expressao nao acaba: "AVENIDA
+// SAO JOAO No 415 \u2013 CENTRO \u2013 CEP: 87.730-100 \u2013 SANTO ANTONIO DO CAIUA-PR
+// DISPENSA ELETRONICA No 30/2026 PARANA DEPARTAMENTO DE LICITACAO SITE:",
+// "Praca Juca Novaes, n\u00b0 1.169 \u2013 Centro \u2013 CEP 18.705-023 \u2013 Avare/SP",
+// "Estado de Sao Paulo Ladeira Manoel Augusto, 92, Apiai"... Mas o timbre tem uma
+// propriedade que a especificacao nao tem: REPETE-SE igual em toda folha, e
+// traz endereco, CEP, site, CNPJ, numero de pagina ou carimbo.
+//
+// Entao: sequencias de oito palavras que aparecem tres vezes ou mais no texto do
+// edital e contem um desses sinais sao semente; cada semente cresce para os
+// lados enquanto as ocorrencias concordam (e ai para, porque o texto da folha em
+// volta muda de pagina para pagina); o que sai e o timbre inteiro, e ele e
+// tirado de dentro das celulas. Numero vira "#", para que "2 de 25" e "3 de 25"
+// sejam a mesma coisa.
+//
+// So sinal FORTE, que nao aparece em especificacao. "Fone" sozinho casava a
+// "entrada de fone externo" da camera de Vicosa/MG, "# de #" casava qualquer
+// faixa de medida, e "secretaria" esta no objeto de todo edital: com eles o
+// detector tomava por timbre a tabela de itens que o termo de referencia repete,
+// e comia o comeco do liquidificador de Diamante D'Oeste/PR.
+//
+// Telefone e CEP pedem o numero FORMATADO, em dois grupos pelo menos: "AO
+// FONE. 40 UN" \u2014 o fone de ouvido de Birigui/SP, com a quantidade logo depois \u2014
+// vira "fone #" sem a pontuacao, e com o sinal frouxo a linha inteira do item,
+// que a tabela repete, foi tomada por timbre e apagada.
+const SINAL_DE_TIMBRE = /\bcep\s*#\s*#|\bcnpj\b|\bhttps?\b|\bwww\b|\bp[\u00e1a]gina\s*# de #|\b(?:fones?|telefone|tel|pabx)\s*#\s*#|\be-?mail\b|c[\u00e2a]mara nacional de modelos|identidade visual pela|assinado por #|\b1doc\b|verificar a validade|\b(?:rua|avenida|pra[\u00e7c]a|ladeira|rodovia|alameda)\s+(?:\S+\s+){1,5}(?:n\s*[\u00bao]?\s*)?#|\bbairro\b.{0,40}\bcep\b/i;
+const SINAIS_DE_TIMBRE = /\bcep\s*#\s*#|\bcnpj\b|\bhttps?\b|\bwww\b|\bp[\u00e1a]gina\s*# de #|\b(?:fones?|telefone|tel|pabx)\s*#\s*#|\be-?mail\b|c[\u00e2a]mara nacional de modelos|identidade visual pela|assinado por #|\b1doc\b|verificar a validade|\b(?:rua|avenida|pra[\u00e7c]a|ladeira|rodovia|alameda)\b|\bbairro\b|prefeitura|munic[\u00edi]pio de|estado d[eo]\b/gi;
+const TAM_SEMENTE = 8;
+const PESQUISA = /\b(?:fonte|modalidade|relat[óo]rio|raz[ãa]o|mediana|fornecedor|vencedor|cotado|consolida[çc][ãa]o)\b/;
+
+// O CABECALHO da tabela tambem se repete a cada folha e cai no meio da celula
+// que atravessa a virada: "Exclusivo ME/EPP ITEM OBJETO / DESCRICAO QUANTI DADE
+// VALOR UNITARIO VALOR TOTAL PARTICIPA CAO" no ar condicionado de Pompeia/SP.
+// Nao traz sinal de timbre, mas e feito quase so destas palavras.
+const DO_CABECALHO = new Set(('item itens objeto descricao descrição especificacao especificação ' +
+  'especificacoes especificações minimas mínimas minima mínima produtos produto quantidade quant ' +
+  'quanti dade qtd qtde unid unidade und un valor valores unitario unitário total r marca modelo ' +
+  'codigo código catmat catser lote participacao participação participa cao ção exclusivo cota ' +
+  'reservada principal preco preço maximo máximo estimado ref referencia referência me epp dos das ' +
+  'do da de #').split(' '));
+const FORTES_DE_CABECALHO = /\b(?:valor|unit[aá]rio|quantidade|quant|qtde?|descri[cç][aã]o|especifica[cç](?:[aã]o|[oõ]es))\b/g;
+const ehCabecalho = chave => {
+  const ws = chave.split(' ');
+  const dele = ws.filter(w => DO_CABECALHO.has(w)).length;
+  return dele >= 7 && (chave.match(FORTES_DE_CABECALHO) || []).length >= 2;
+};
+const tokensDe = t => {
+  const out = [];
+  for (const m of String(t).matchAll(/[\p{L}\p{N}]+/gu)) {
+    out.push({ n: m[0].toLowerCase().replace(/\d+/g, '#'), i: m.index, f: m.index + m[0].length });
+  }
+  return out;
+};
+function timbresDoEdital(texto) {
+  const toks = tokensDe(texto);
+  const N = toks.length;
+  const onde = new Map();
+  for (let k = 0; k + TAM_SEMENTE <= N; k++) {
+    let chave = toks[k].n;
+    for (let j = 1; j < TAM_SEMENTE; j++) chave += ' ' + toks[k + j].n;
+    if (!onde.has(chave)) onde.set(chave, []);
+    onde.get(chave).push(k);
+  }
+  const timbres = new Map();
+  const cobertos = new Set();
+  for (const [chave, pos] of onde) {
+    const cabecalho = !SINAL_DE_TIMBRE.test(chave) && ehCabecalho(chave);
+    if (pos.length < 3 || !(SINAL_DE_TIMBRE.test(chave) || cabecalho)) continue;
+    // Modelo de pesquisa de precos nao e timbre, mesmo com endereco de site
+    // dentro: "Fonte: https://pncp.gov.br/... Data: ... Modalidade:" se repete a
+    // cada cotacao em Ponta Grossa/PR, e tira-lo levava junto justamente as
+    // palavras em que o fim da celula e reconhecido.
+    if (PESQUISA.test(chave)) continue;
+    // Ocorrencias que se sobrepoem (texto repetido colado) contam uma vez.
+    const ocs = pos.filter((p, j) => j === 0 || p - pos[j - 1] >= TAM_SEMENTE);
+    if (ocs.length < 3 || cobertos.has(ocs[0])) continue;
+    const concorda = (desloc) => {
+      const cont = new Map();
+      for (const p of ocs) {
+        const q = p + desloc;
+        if (q < 0 || q >= N) continue;
+        cont.set(toks[q].n, (cont.get(toks[q].n) || 0) + 1);
+      }
+      let melhor = 0;
+      for (const v of cont.values()) melhor = Math.max(melhor, v);
+      if (melhor < Math.ceil(ocs.length * 0.8)) return null;
+      const w = [...cont].find(([, v]) => v === melhor)[0];
+      // O cabecalho so cresce sobre palavra de cabecalho: a primeira linha da
+      // tabela, que num edital com a tabela repetida vem igual depois dele,
+      // e especificacao e fica.
+      if (cabecalho && !DO_CABECALHO.has(w)) return null;
+      return PESQUISA.test(w) ? null : w;
+    };
+    let esq = 0, dir = TAM_SEMENTE - 1;
+    while (esq > -60 && concorda(esq - 1) !== null) esq--;
+    while (dir < 120 && concorda(dir + 1) !== null) dir++;
+    const seq = [];
+    for (let d = esq; d <= dir; d++) seq.push(concorda(d));
+    // Numero solto na ponta nao e do timbre, e o do vizinho: a borda que cresceu
+    // sobre "110.144,13" levava o "13" e deixava "110.144," na celula de Pinhal
+    // de Sao Bento/PR.
+    while (seq.length && seq[0] === '#') seq.shift();
+    while (seq.length && seq[seq.length - 1] === '#') seq.pop();
+    if (seq.length < 5) continue;
+    // Timbre de verdade junta varios sinais — endereco, CEP, telefone, site —
+    // num trecho curto. Sequencia comprida com um sinal so e texto repetido que
+    // por acaso tem uma palavra dessas: foi assim que a linha inteira de um item
+    // de Birigui/SP entrou como timbre.
+    if (!cabecalho && seq.length > 40) {
+      const sinais = new Set((seq.join(' ').match(SINAIS_DE_TIMBRE) || []).map(x => x.toLowerCase().replace(/[^a-z]/g, '')));
+      if (sinais.size < 2) continue;
+    }
+    for (const p of ocs) for (let d = 0; d < TAM_SEMENTE; d++) cobertos.add(p + d);
+    timbres.set(seq.join(' '), seq);
+  }
+  // O mais comprido primeiro: o carimbo inteiro sai de uma vez, e nao aos pedacos.
+  return [...timbres.values()].sort((x, y) => y.length - x.length);
+}
+
+function tiraTimbre(txt, timbres) {
+  if (!timbres || !timbres.length) return txt;
+  let t = txt;
+  for (let volta = 0; volta < 4; volta++) {
+    const toks = tokensDe(t);
+    let corte = null;
+    for (const seq of timbres) {
+      const L = seq.length;
+      // inteiro, em qualquer lugar
+      for (let k = 0; k + L <= toks.length && !corte; k++) {
+        let ok = true;
+        for (let j = 0; j < L && ok; j++) if (toks[k + j].n !== seq[j]) ok = false;
+        if (ok) corte = [toks[k].i, toks[k + L - 1].f];
+      }
+      if (corte) break;
+      // A PONTA FINAL: celula que termina no meio do timbre. So a final — a
+      // celula comeca no nome do produto, nunca no fim de um timbre — e so se
+      // o pedaco que sai tiver, ele mesmo, um sinal forte.
+      for (let m = Math.min(L - 1, toks.length); m >= 8 && !corte; m--) {
+        let ok = true;
+        for (let j = 0; j < m && ok; j++) if (toks[toks.length - m + j].n !== seq[j]) ok = false;
+        if (ok && SINAL_DE_TIMBRE.test(seq.slice(0, m).join(' '))) corte = [toks[toks.length - m].i, t.length];
+      }
+      if (corte) break;
+    }
+    if (!corte) break;
+    t = (t.slice(0, corte[0]) + ' ' + t.slice(corte[1])).replace(/\s{2,}/g, ' ');
+  }
+  // Separadores que o timbre deixa pendurados: " \u2013 ", " | ", ":".
+  return t.replace(/(?:\s*[|\u2013\u2014]\s*){2,}/g, ' ').replace(/\s{2,}/g, ' ').trim();
+}
+
+// Frase que termina pendurada: virgula, hifen, ou preposicao/artigo no fim.
+const ACABA_NO_MEIO = /(?:[,\-–(]|\s(?:de|da|do|das|dos|com|e|ou|para|em|a|o|as|os|que|por|no|na|nos|nas|ao|aos|à|às|sem|sob|entre|até|um|uma|pelo|pela|pelos|pelas|seu|sua|cujo|cuja))$/i;
+
+function limpaCelula(txt, timbres) {
+  let t = ' ' + txt;
+  for (const re of VALORES_DA_LINHA) t = t.replace(re, ' ');
+  t = tiraTimbre(t.replace(/\s{2,}/g, ' ').trim(), timbres);
+  // O numero do PROXIMO item, que fica para tras quando a marca dele cai logo
+  // depois: "...Peso Liquido: 31 kg 02", "...garantia minima 12 meses. 16
+  // 451451". So com zero a esquerda, depois de fim de frase ou depois do grupo
+  // unidade/quantidade \u2014 nunca depois de uma palavra, porque "capacidade 12" e
+  // medida.
+  for (let volta = 0; volta < 4; volta++) {
+    const antes = t;
+    // Nenhuma destas regras age depois de dois-pontos: "Portas: 02",
+    // "Capacidade: 120000" e "consumo: 0,24" sao a propria especificacao.
+    // O travessao solto no fim sai antes, senao nada abaixo casa: "...12 (doze)
+    // meses. 5.1 –" (Itai/SP), onde o titulo da clausula foi cortado.
+    t = t.replace(/[\s–—-]+$/, '').replace(/(?<=[.;)\d]|\b(?:kg|KG|g|L|l|V|W|cm|mm|m|UN|UND|UNID|Unid|Und))\s+0\d{1,2}(?:\s+\d{5,9})?$/, '')
+         .replace(/([.;)])\s+\d{1,3}(?:\s+\d{5,9})?$/, '$1')
+         // unidade e quantidade da coluna ao lado, nas duas ordens: "UNID 03",
+         // "1 Unid.", e a unidade sozinha depois do ponto final: "...de 1 ano. Und"
+         .replace(/\s(?:Un\s*-\s*)?(?:UNIDADES?|UNID|UND|UN|Unid|Und|Unidade|Unidad\s?e|UNIDAD\s?E)\.?\s+\d{1,4}(?:,\d{2})?$/, '')
+         // codigo de catalogo, quantidade e numero do proximo item depois do
+         // ponto: "...Eficiencia Energetica Letra "a"; 625244 4 2" (Sao Paulo/SP)
+         .replace(/([.;])\s+\d{5,9}\s+\d{1,4}(?:\s+\d{1,3})?$/, '$1')
+         // unidade, preco unitario com quatro casas e quantidade com duas:
+         // "...Marchesoni 6 Litros CF-1692 (220V) Unidade 964,1400 3,00" (Santa
+         // Maria/RS), as vezes com o codigo do catalogo antes
+         .replace(/\s(?:\d{5,9}\s+)?(?:Unidade|UNIDADE|Und|UND|Un|UN)\s+[\d.]+,\d{2,4}\s+[\d.]+,\d{2}$/, '')
+         .replace(/\s\d{1,4}(?:,\d{2})?\s+(?:UNIDADES?|UNID|UND|UN|Unid|Und)\.?$/, '')
+         // quantidade, unidade e numero do proximo item: "...12 (doze) meses. 5 UN 2."
+         .replace(/\s\d{1,4}\s+(?:UNIDADES?|UNID|UND|UN|Unid|Und)\.?\s+\d{1,3}\.?$/, '')
+         .replace(/([.;)])\s+(?:UNIDADES?|UNID|UND|UN|Unid|Und|UNIDAD\s?E)\.?$/, '$1')
+         // preco solto depois do ponto final: "...CONTROLE REMOTO. 855,27 14"
+         .replace(/([.;)])\s+[\d.]+,\d{2}(?:\s+\d{1,3})?$/, '$1')
+         // preco unitario e total no fim, com o comeco da linha seguinte:
+         // "...suporte para ate 50kg. 685,00 4.110,00 32 25,0" (Mariopolis/PR)
+         // O total pode vir com virgula no milhar: "-TENSAO:127 V 994,89 3,979,56"
+         // (Renascenca/PR).
+         .replace(/\s[\d.]{1,9},\d{2}\s+[\d.,]{1,12},\d{2}(?:\s+\d{1,3}(?:\s+[\d.,]+)?)?$/, '')
+         // preco com R$ sobrando no fim, depois do corte da pesquisa de precos
+         .replace(/\sR\$\s*[\d.]+,\d{2,4}$/, '')
+         // unidade, quantidade e numero do proximo item: "...INMETRO UND 3 8"
+         .replace(/\s(?:UNIDADES?|UNID|UND|UN|Unid|Und)\.?\s+\d{1,4}\s+\d{1,3}$/, '')
+         // codigo de catalogo solto no fim: "...TENSAO: 220 V 618525"
+         .replace(/(?<=[A-Za-zÀ-ÿ])\s\d{6}$/, '')
+         .replace(/([.;)])\s+\d{6}$/, '$1')
+         // numero do proximo item com os codigos: "...ilustrativa 7. 424374 142027"
+         .replace(/\s\d{1,3}\.?\s+\d{5,9}(?:\s+\d{5,9})?$/, '')
+         // "...cor branca Un - Unidade 3 9" (Apiai/SP)
+         // e com mais numeros da linha seguinte: "...cesto acoinoxidavel Un -
+         // Unidade 4 13 8"
+         .replace(/\s(?:Un\s*-\s*)?Unidade\s+\d{1,4}(?:\s+\d{1,3}){0,2}$/, '')
+         // quantidade com a unidade entre parenteses: "...12 (doze) meses. 10
+         // (unidades)" (Sao Paulo/SP)
+         .replace(/\s\d{1,4}\s+\((?:unidades?|un|und|unid)\)$/i, '')
+         // uma ou duas maiusculas soltas depois do ponto final: "...MINI SPLIT. DE"
+         .replace(/([.;])\s+[A-ZÀ-Ú]{1,2}$/, '$1')
+         // numero da clausula seguinte: "...12 (doze) meses. 5.1"
+         .replace(/([.;)])\s+\d{1,2}\.\d{1,2}\.?$/, '$1')
+         // numero do item seguinte com ponto: "...defeitos de fabricacao. 33."
+         .replace(/([.;)])\s+\d{1,3}\.$/, '$1')
+         // numero e quantidade da linha seguinte: "...Preto/Prata. 110V. 66 6,0"
+         .replace(/([.;)])\s+\d{1,3}\s+\d{1,4},\d{1,2}$/, '$1')
+         // quantidade e numero de outra linha soltos depois do ponto: "...220V. 02 6"
+         // (Cubatao/SP, onde a tabela nao segue a ordem dos itens)
+         .replace(/([.;])\s+\d{1,4}\s+\d{1,3}$/, '$1')
+         // preco, numero e quantidade da linha seguinte: "...TIPO: MINI SPLIT.
+         // 2.757,44 02 36" (Descalvado/SP), e o preco numa fonte que nao se le,
+         // que sai como duas letras: "...CONTROLE REMOTO. DG 01"
+         .replace(/([.;])\s+[\d.]+,\d{2}\s+\d{1,4}\s+\d{1,4}$/, '$1')
+         .replace(/([.;])\s+(?!NR|IP|CE)[A-Z]{2}\s+\d{1,3}$/, '$1')
+         // o "ITEM" do subtitulo seguinte: "...recebimento definitivo do
+         // equipamento. ITEM" (Sao Luiz Gonzaga/RS)
+         .replace(/([.;])\s+ITEM$/, '$1')
+         // a garantia da coluna ao lado: "...CERTIFICACAO INMETRO. 12 MESES" (Campinas/SP)
+         .replace(/([.;])\s+\d{1,2}\s+MESES$/, '$1')
+         // numero e os dois codigos da linha seguinte, cuja marca cai no nome:
+         // "...recebimento definitivo. Imagem meramente ilustrativa 5) 451454
+         // 110727" (Ponta Grossa/PR)
+         .replace(/\s\d{1,3}[).]\s+\d{5,9}\/?\s+\d{5,9}$/, '')
+         // a linha seguinte inteira, com numero e codigo, quando o rodape da
+         // folha estava entre as duas e so saiu na limpeza: "...acima ou
+         // superior. 9 11139 Jogo de mesa com 4 cadeiras..." (Pinhal de Sao
+         // Bento/PR). Codigo terminado em 000 e capacidade, nao codigo.
+         .replace(/([.;])\s+\d{1,3}\s+(?!\d*000\s)\d{5,6}\s+[A-ZÀ-Ú][a-zà-ÿ][^]*$/, '$1')
+         // o preco unitario que sobra no fim, depois da tensao ou de palavra em
+         // caixa alta: "...-TENSAO:127 V 994,89" e "...EM COR CLARA 948,65"
+         // (Renascenca/PR), "...NBR 14136, 220 V, 747,49" (Florianopolis/SC)
+         .replace(/(?:(?<=\d\s?V,?)|(?<=[A-ZÀ-Ú]{3}))\s+(?:\d{1,3}(?:\.\d{3})+|\d{3}),\d{2}$/, '')
+         // numero, quantidade e unidade da linha seguinte: "...12 (DOZE) MESES. 03
+         // 01 un" (Trabiju/SP), e o preco partido: "...(DOZE) MESES. 2.102,8"
+         .replace(/([.;])\s+\d{1,3}\s+\d{1,4}\s+(?:un|und|unid)\.?$/i, '$1')
+         .replace(/([.;])\s+[\d.]+,\d{1,2}$/, '$1')
+         // unidade, quantidade e as colunas de cota: "...Garantia 12 meses. Unidade
+         // 55 Nao SIM" (Sao Paulo/SP)
+         .replace(/\sUnidade\s+\d{1,5}(?:\s+(?:N[ãa]o|Sim|SIM|N[ÃA]O)){1,2}$/, '')
+         // unidade e numeros da planilha: "...cobertura integral. Un 1 2 11" (Nova Fatima/PR)
+         .replace(/\s(?:Un|UN|Und|UND)\s+\d{1,4}(?:\s+\d{1,4}){1,3}$/, '')
+         // numero e codigo da linha seguinte: "...Voltagem 110V ou Bivolt. 12 9623"
+         .replace(/([.;])\s+\d{1,3}\s+\d{4,9}$/, '$1')
+         // quantidade e participacao, que sobram quando os precos saem depois:
+         // "...12 (doze) meses. 4 Exclusivo ME/EPP" (Pompeia/SP)
+         .replace(/\s\d{1,4}\s+(?:Exclusivo|Ampla Concorr[êe]ncia|Cota Reservada)(?:\s+(?:para\s+)?ME\/EPP)?(?:\s+\d{1,3})?$/i, '')
+         .trim();
+    if (t === antes) break;
+  }
+  // A unidade da coluna ao lado abrindo a celula: "UND CORTINA DE AR, MATERIAL:
+  // METAL E PLASTICO..." (Descalvado/SP).
+  t = t.replace(/^(?:UNIDADES?|UNID|UND|UN)\.?\s+(?=[A-Z\u00c0-\u00da]{3,})/, '');
+  // A quantidade da coluna ao lado abrindo a celula: "3 SANDUICHEIRA - Sanduicheira/Grill"
+  // e "1 BATEDEIRA PLANETARIA: Especificacoes" (Mariopolis/PR, edital 25).
+  t = t.replace(/^\d{1,3}\s+(?=[A-Z\u00c0-\u00da]{5,}[\s:\u2013-])/, '');
+  // E a abreviatura antes do nome com so a inicial maiuscula: "UND Batedeira
+  // planetaria...", "UND Ar condicionado..." \u2014 todas as celulas de
+  // Mariopolis/PR. "UNIDADE" por extenso nao entra: "Unidade condensadora" e
+  // nome de produto.
+  t = t.replace(/^(?:UNID|UND|UN|Unid|Und)\.?\s+(?=[A-Z\u00c0-\u00da][a-z\u00e0-\u00ff])/, '');
+  // O codigo 8720 da planilha da Unicamp antes do nome: "8720 LIQUIDIFICADOR;
+  // TIPO INDUSTRIAL" (Campinas/SP).
+  t = t.replace(/^\d{4}\s+(?=[A-Z\u00c0-\u00da]{4,}[A-Z\u00c0-\u00da /.]*;)/, '');
+  // A participacao da linha antes do nome: "EXCLUSIVO - CAFETEIRA ELETRICA EM
+  // INOX" (Birigui/SP). Diz quem pode disputar, e isso o resumo ja mostra.
+  t = t.replace(/^(?:EXCLUSIVO(?:\s+ME\/EPP)?|COTA RESERVADA(?:\s+ME\/EPP)?|COTA PRINCIPAL|AMPLA CONCORR[\u00caE]NCIA)\s*[-\u2013]?\s+(?=[A-Z\u00c0-\u00da])/, '');
+  // Lixo depois do ultimo ponto final: valores da linha escritos numa fonte que
+  // nao foi decodificada. "...PELO FABRICANTE. UNIDAD E IE f8 EBFDL@MI f8
+  // JEBJIJ@HI" em Barra do Garcas/MT \u2014 o "IE f8" e "51 R$" com 20 somado em
+  // cada letra. So sai rabo curto com arroba entre letras, ou com duas pecas
+  // de letra-e-digito como "f8" \u2014 sigla tecnica ("HDMI USB") fica.
+  const rabo = /([.;])((?:\s+\S+){1,8})$/.exec(t);
+  if (rabo && rabo[2].length <= 60) {
+    const r = rabo[2];
+    const pecas = (r.match(/(?:^|\s)(?:[A-Za-z]\d|\d[A-Za-z])(?=\s|$)/g) || []).length;
+    if (/[A-Za-z]@[A-Za-z]/.test(r) || pecas >= 2) t = t.slice(0, rabo.index + 1);
+  }
+  return t.replace(/[\s,;:\u2013-]+$/, '').trim();
+}
 
 // Rodape de pagina que cai no meio da celula quando o descritivo atravessa uma
 // quebra: "Rua Jose Quirino Ribeiro, 55, Jardim Belem - Descalvado (SP) - PABX
@@ -327,7 +1039,19 @@ const FIM_DE_LINHA = [
 // vez de cortar: cortar jogaria fora a continuacao da especificacao, que vem
 // logo depois do rodape e e justamente o que se quer.
 const RODAPE = [
+  // A VIRADA DE FOLHA no meio da linha da planilha da UFSM (Santa Maria/RS): a
+  // unidade, o preco, a quantidade e os campos em branco da linha, e o
+  // cabecalho da folha seguinte — e a descricao CONTINUA: "...Deve possuir
+  // controle de temperatura Unidade 167,0000 15,00 ____ ____ UNIVERSIDADE
+  // FEDERAL DE SANTA MARIA - UFSM ... Preco Total independente para cada boca".
+  // Quando o que vem depois e o numero da linha seguinte, o bloco fica: ai ele
+  // e o fim da linha, e o corte pelos sublinhados continua valendo.
+  /\s*Unidade\s+[\d.]+,\d{2,4}\s+[\d.]+,\d{2}\s+_{4,}\s+_{4,}\s+[A-ZÀ-Ú][^_]{0,80}?\d{14}\s+Anexo ao Termo de Refer[êe]ncia\s+Item\s+Especifica[çc][ãa]o\s+Cat[áa]logo\s+Unidade\s+Pre[çc]o\s+M[áa]ximo\s+Quantidade\s+Pre[çc]o\s+Unit[áa]rio\s+Pre[çc]o\s+Total(?=\s+(?!\d{1,3}\s)\S)/g,
   /\s*www\.[^\s]+/gi,
+  // Cabecalho de impressao do sistema de compras no alto de cada folha, no meio
+  // da celula: "...Tecnologia: Inverter; 17 Impressao: 01/09/2026 COMPRAS Hora:
+  // 15:10:49 TERMO DE REFERENCIA Tipo: Split Hi-Wall" (Sao Luiz Gonzaga/RS).
+  /\s*(?:\d{1,3}\s+)?(?:[A-Z\u00c0-\u00da][A-Za-z\u00c0-\u00ff]*(?:\s+[A-Za-z\u00c0-\u00ff]+){0,4}\s+-\s+[A-Z]{2}\s+)?Impress[\u00e3a]o:\s*\d{2}\/\d{2}\/\d{4}\s+COMPRAS\s+Hora:\s*\d{2}:\d{2}:\d{2}\s+(?:TERMO DE REFER[\u00caE]NCIA|ESTUDO T[\u00c9E]CNICO PRELIMINAR)/g,
   /\s*CEP[:\s]*\d{5}-?\d{3}/gi,
   /\s*PABX[^A-Za-zÀ-ú]*(?:\(\d{2}\))?[\d\s.\-]{6,}/gi,
   /\s*(?:Rua|Avenida|Av\.|Praça)\s+[^,]{3,45},\s*n?º?\s*\d+[^,]{0,30},?/gi,
@@ -340,6 +1064,15 @@ const RODAPE = [
   /\s*Confira as assinaturas? no link:?\s*\S*/gi,
   /\s*\S*pp-signer\/verify\?code=\S*/gi,
   /\s*Tramitado e Assinado Eletronicamente por\s+\S+/gi,
+  // Rodape do SEI com o nome do documento e o numero da folha: "Termo de
+  // Referencia 0117933622 SEI 015.00368467/2026-23 / pg. 1" (Sao Paulo/SP),
+  // "Licitacao - ETP 0190220 SEI 0007.0.000007242/2026-6 / pg. 5" (Vicosa/MG).
+  // Vem antes da regra do "SEI n", que levava so o numero do processo e deixava
+  // "Termo de Referencia 0117933622 / pg." no fim de tres celulas.
+  /\s*(?:Termo de Refer[êe]ncia|Licita[çc][ãa]o\s*-\s*ETP|Edital de Preg[ãa]o[^/]{0,40}?)\s+\d{6,10}\s+SEI\s+[\d.]+\/\d{4}-\d{1,2}\s*\/\s*pg\.(?:\s*\d{1,3}(?=\s|$))?/gi,
+  // O cabecalho da tabela repetido no alto da folha seguinte, no meio da celula:
+  // "Item Descricao Quant. Unidade Valor Unit. Valor Total" (Vicosa/MG).
+  /\s*(?:Item\s+Descri[çc][ãa]o\s+Quant\.\s+Unidade\s+Valor\s+)?Unit\.\s+Valor\s+Total/g,
   /\s*SEI\s*n[ºo°]?\s*[\d/.\-]+/gi,
   // Sem espaco obrigatorio depois de "Pagina" e com a barra como separador:
   // o item 6 de Bela Vista do Paraiso/PR trazia "Pagina21 | 59" no meio da
@@ -416,7 +1149,14 @@ function cortaNaRepeticao(t) {
 function cortaNaProximaLinha(txt) {
   const limpo = cortaNaRepeticao(tiraRodape(txt));
   let fim = limpo.length;
-  for (const re of FIM_DE_LINHA) {
+  for (const re0 of FIM_DE_LINHA) {
+    // A busca continua DEPOIS dos primeiros vinte caracteres. Com exec simples
+    // so a primeira ocorrencia era vista, e se ela caisse no comeco — onde a
+    // trava a ignora — as seguintes nao eram procuradas: a celula do item 4 de
+    // Itapirapua/GO abria com "Und 02 04 Cadeira" e por isso "Und 15 05
+    // Armario", o item 5 inteiro, ficava dentro dela.
+    const re = new RegExp(re0.source, re0.flags.includes('g') ? re0.flags : re0.flags + 'g');
+    re.lastIndex = 21;
     const m = re.exec(limpo);
     // A trava so existe para o caso de o trecho ABRIR com o preco da linha
     // anterior; 20 basta. Estava em 60 e por isso deixou passar o item 34 de
@@ -448,7 +1188,16 @@ function falaDoMesmoProduto(rotulo, texto) {
   const alvo = palavrasDoItem(rotulo);
   if (alvo.length < 2) return true;          // rotulo curto demais para julgar
   const cabeca = new Set(fatiaTexto(texto.slice(0, CABECA)).map(limpaNum));
-  return alvo.filter(w => cabeca.has(w)).length >= 2;
+  // O sinonimo conhecido vale uma palavra: "Maquina Secar Roupa" no PNCP e
+  // "Secadora de roupas eletrica" no edital (Diamante D'Oeste/PR) nao tem
+  // palavra nenhuma igual no nome, e so o cesto em comum no resto.
+  const classe = classeDoRotulo(rotulo);
+  const sinonimo = CLASSES.some(([c]) => c === classe) && classeDoInicio(normIgual(texto)) === classe ? 1 : 0;
+  // O plural e a mesma palavra: "Ventilador ... tipo: coluna" no PNCP e
+  // "Ventiladores de Coluna - 50cm, 3 Velocidades" no edital de Sao Paulo/SP
+  // (edital 1081), que so tinha o "coluna" em comum ao pe da letra.
+  const tem = w => cabeca.has(w) || cabeca.has(w + 's') || cabeca.has(w + 'es') || (/s$/.test(w) && cabeca.has(w.slice(0, -1)));
+  return alvo.filter(tem).length + sinonimo >= 2;
 }
 
 // Recorta o descritivo de cada item cortando no comeco do PROXIMO item.
@@ -515,8 +1264,15 @@ const util = w => (/^\d/.test(w) ? w.replace(/[.,]/g, '').length >= 3
                                  : w.length >= 4 && !VAZIAS.has(w));
 const limpaNum = w => (/^\d/.test(w) ? w.replace(/[.,]/g, '') : w);
 
+// E os avisos que o orgao cola no fim do rotulo, que falam do edital e nao do
+// produto: "Os descritivos e as unidades a serem considerados na elaboracao da
+// proposta sao os que constam no Termo de Referencia..." (UFSM, Santa
+// Maria/RS). Com "descritivos" e "termo" contando como palavras do item, a frase
+// "Termo, exceto para os itens em que consta no descritivo do item..." passava
+// por especificacao do filtro de agua do item 13.
+const AVISO_NO_ROTULO = /\s*(?:Os descritivos e as unidades a serem considerados|Maiores informa[çc][õo]es sobre a descri[çc][ãa]o|Considerar itens descritos no Anexo|ATEN[ÇC][ÃA]O,? LICITANTES|ATEN[ÇC][ÃA]O: Considerar a descri[çc][ãa]o|O item ser[áa] solicitado conforme)[^]*$/i;
 const palavrasDoItem = rotulo => [...new Set(
-  fatia(String(rotulo).replace(REMISSAO, ' ')).filter(util).map(limpaNum))];
+  fatia(String(rotulo).replace(AVISO_NO_ROTULO, ' ').replace(REMISSAO, ' ')).filter(util).map(limpaNum))];
 
 // Segunda passada, para o item cujo rotulo nao aparece LITERAL no edital.
 //
@@ -530,14 +1286,14 @@ const palavrasDoItem = rotulo => [...new Set(
 // distintas do rotulo. A segmentacao continua igual depois disso, entao um
 // item nunca invade o outro mesmo que a janela erre.
 const JANELA_TOKENS = 45;
-function marcaPorProximidade(tokens, alvo, numero, numeroDaLinha) {
+function marcaPorProximidade(tokens, alvo, numero, numeroDaLinha, vale = () => true) {
   if (alvo.length < 2) return -1;
   const querido = new Set(alvo);
   let melhorPos = -1, melhorN = 0, melhorNota = -1;
   for (let i = 0; i < tokens.length; i++) {
     // A janela so vale se comecar numa palavra do item: comecando no meio, a
     // marca cairia antes do nome do produto e o recorte abriria fora de lugar.
-    if (!querido.has(tokens[i].w)) continue;
+    if (!querido.has(tokens[i].w) || !vale(tokens[i].p)) continue;
     const vistas = new Set();
     for (let j = i; j < tokens.length && j < i + JANELA_TOKENS; j++) {
       if (querido.has(tokens[j].w)) vistas.add(tokens[j].w);
@@ -618,7 +1374,14 @@ function serve(rotulo, t, confirmado) {
   // aplicacao: cozinha" no catalogo e "Coifa Industrial/Residencial: Material em
   // aco inox..." no edital — uma palavra em comum, e a linha e inequivocamente
   // dele, aberta com o 6 depois do total da linha 5.
-  if (confirmado) return grande && !comecaNoMeio(t) && !AINDA_SUJO.test(t);
+  // Confirmada pelo numero, a linha curta e fechada tambem vale quando diz algo
+  // que o rotulo nao diz: o item 74 de Mariopolis/PR e "Multiprocessador
+  // Alimentos ... potencia: 420/600" no catalogo, e a linha 74 do edital e
+  // "Multiprocessador 9 Em 1 C/ Batedeira 1700w Turbo." — outro aparelho que o
+  // usuario so ve pelo edital. O titulo que repete o rotulo continua de fora.
+  const curtaPropria = t.length >= 30 && /\.$/.test(t.trim())
+    && !normIgual(rotulo).replace(/[^a-z0-9]+/g, ' ').includes(normIgual(t).replace(/[^a-z0-9]+/g, ' ').trim());
+  if (confirmado) return (grande || curtaPropria) && !comecaNoMeio(t) && !AINDA_SUJO.test(t);
   return grande && !comecaNoMeio(t) && !AINDA_SUJO.test(t) && falaDoMesmoProduto(rotulo, t);
 }
 
@@ -650,7 +1413,20 @@ function descritivosPorItem(secoes, itens) {
   // O separador antes do codigo e obrigatorio: sem ele o motor partia o codigo
   // ao meio e lia "1" de "104740", dando o item 1 de Paranavai/PR como dono da
   // linha do 18.000 BTUs.
-  const ABERTURA = /(?:^|[^0-9])(0*[0-9]{1,4})[.)\-]?(?:\s+[0-9]{5,9}[.,)\-]*){0,2}\s*(?:(?:un|und|unid|unidade|pc|pca|peca|cx|caixa|par|kit|servico|kg)\.?\s*)?$/i;
+  // O codigo tambem pode vir com pontos, "34 165.6.198 ASPIRADOR DE PO" em
+  // Salto/SP. Sem essa forma a leitura parava no "198" do codigo e nenhuma linha
+  // de Salto se confirmava pelo numero.
+  // O meio do codigo tem uma ou duas casas: "014.001.167" (Jaraguari/MS) e
+  // "368.001.969" (Chapadao do Sul/MS) sao outra coisa e ficam de fora.
+  // E com travessao depois do codigo: "0007 414334 - OSMOSE REVERSA PARA
+  // PURIFICACAO DE AGUA" (Florianopolis/SC).
+  // Nunca colado numa virgula: "R$ 17.864,76 Refresqueira" e o centavo do preco, e
+  // lido como item fazia a linha da cota 77 de Bento Goncalves/RS passar pela do
+  // item 76.
+  // So depois do codigo: "10 - Sera adotado para o envio de lances" e clausula
+  // (Diamante D'Oeste/PR), e com o travessao logo depois do numero ela passava
+  // por abertura da linha do item 10.
+  const ABERTURA = /(?:^|[^0-9,])(0*[0-9]{1,4})[.)\-]?(?:(?:\s+(?:[0-9]{5,9}|[0-9]{3}\.[0-9]{1,2}\.[0-9]{1,3})[.,)\-]*){1,2}\s*[-–]\s*|(?:\s+(?:[0-9]{5,9}|[0-9]{3}\.[0-9]{1,2}\.[0-9]{1,3})[.,)\-]*){0,2}\s*)(?:(?:un|und|unid|unidade|pc|pca|peca|cx|caixa|par|kit|servico|kg)\.?\s*)?$/i;
   // De que LOTE e a linha que comeca aqui.
   //
   // O PNCP nao tem campo de lote: a API entrega numeracao corrida de 1 a 100 e
@@ -718,10 +1494,56 @@ function descritivosPorItem(secoes, itens) {
   // edital os separa, em baixa e alta rotacao.
   const ABERTURA_QTD = /(?:^|[^0-9])(0*[0-9]{1,4})\s+[0-9]{1,4}[.,][0-9]{1,3}\s*(?:(?:un|und|unid|unidade|pc|pca|peca|cx|caixa|par|kit|conj|cj|servico|kg)\.?)?\s*$/i;
 
+  // Numero do item, codigo de catalogo, quantidade e unidade: "08 368956 6 UN
+  // FORNO MICRO-ONDAS" (Renascenca/PR). A ABERTURA lia o "6 UN" — a quantidade
+  // — como numero da linha, e o fogao do item 6, que tem "forno autolimpante"
+  // no rotulo do PNCP, se confirmava na linha do micro-ondas e ficava com ela.
+  // Codigo de quatro digitos para cima: "parafuso com bucha n 6 200 83 Unid" em
+  // Sao Jose da Boa Vista/PR tem a medida e a quantidade antes do item 83.
+  // Com dois codigos tambem: "1 119497 360770 10 unid BALANCA ELETRONICA" em
+  // Campo Largo/PR (codigo interno e CATMAT).
+  const ABERTURA_CAT_QTD = /(?:^|[^0-9.,])(0*[0-9]{1,4})(?:\s+[0-9]{4,9}){1,2}\s+[0-9]{1,5}\s*(?:un|und|unid|unidade|unidades)\.?\s*$/i;
+
   const numeroDaLinhaAntes = (pos) => {
     const antes = plano.slice(Math.max(0, pos - 34), pos);
+    // O item seguido da referencia interna: "7 REF (CTI2288) Desumidificador de
+    // ar" (UFSM, Santa Maria/RS). Lido o 2288, a linha do desumidificador do
+    // item 18 parecia tao boa quanto a do 7.
+    const rf = antes.match(/(?:^|[^0-9.,])(0*[0-9]{1,4})\s+ref\s+\([a-z]{2,5}[0-9]{2,6}\)\s*$/);
+    if (rf && +rf[1] > 0) return +rf[1];
+    // O item seguido do codigo de quatro digitos, com o nome em caixa alta
+    // fechado por ponto e virgula: "; 26 8720 PROCESSADOR DE ALIMENTO;"
+    // (Campinas/SP). Sem isso o numero lido era o 8720.
+    const c4 = antes.match(/(?:^|[^0-9.,])(0*[0-9]{1,3})\s+[0-9]{4}\s+$/);
+    if (c4 && +c4[1] > 0 && /^[A-ZÀ-Ú]{4,}[A-ZÀ-Ú ]*;/.test(secoes.slice(pos, pos + 60))) return +c4[1];
+    // Item e quantidade, nessa ordem, quando a quantidade e a que o PNCP da para
+    // aquele item: "ITEM QUANT. DESCRICAO ... 406,40 3 1 ASPIRADOR DE PO"
+    // (Mariopolis/PR, edital 25). Lido o ultimo numero, a linha 3 passava por 1.
+    // So logo depois do preco da linha de cima ou do cabecalho "VALOR TOTAL", e
+    // com o nome em caixa alta em seguida.
+    const iq = antes.match(/(?:,[0-9]{2}|total)\s+(0*[0-9]{1,3})\s+(0*[0-9]{1,4})\s+$/);
+    if (iq && /^[A-ZÀ-Ú]{4,}/.test(secoes.slice(pos, pos + 10))
+        && itens.some(it => it[0] === +iq[1] && Number(it[2]) === +iq[2])) return +iq[1];
     const q = antes.match(ABERTURA_QTD);
     if (q && +q[1] > 0) return +q[1];
+    const c = antes.match(ABERTURA_CAT_QTD);
+    if (c && +c[1] > 0) return +c[1];
+    // O subtitulo "3.2.2. Item 02: Bebedouro de Coluna" (Valinhos/SP).
+    const it = antes.match(/\bitem\s+(0*[0-9]{1,4})\s*:\s*$/);
+    if (it && +it[1] > 0) return +it[1];
+    // Numero, codigo, unidade e quantidade: "1 57651 UN 6 AR CONDICIONADO"
+    // (Guimarania/MG) — o item e o primeiro.
+    const cu = antes.match(/(?:^|[^0-9.,])(0*[0-9]{1,4})(?:\s+[0-9]{4,9}){1,2}\s+(?:un|und|unid|unidade|unidades)\.?\s+[0-9]{1,5}\s*$/i);
+    if (cu && +cu[1] > 0) return +cu[1];
+    // A unidade seguida de numero logo depois do nome entre parenteses e a
+    // QUANTIDADE: "BEBEDOURO - 03 TORNEIRAS (CATJAR) UN 4 CATMAT: 618960"
+    // (Jaraguari/MS). Lido como item, o 4 confirmava a linha do bebedouro para o
+    // ar-condicionado do item 4. Fora dessa forma a mesma sequencia e o item: "4
+    // Unid. 6 Impressora" (Guararapes/SP) e quantidade, unidade e item, e
+    // "Quantidade Unid. 1 Notebook" e o cabecalho seguido do item 1.
+    if (/\)\s*(?:un|und|unid|unidade|unidades)\.?\s+[0-9]{1,5}(?:,[0-9]{1,2})?\s*$/i.test(antes)) return null;
+    // ... e no modelo do Compras.gov.br: "Unidade (UN) com 1 Unidade 6".
+    if (/\bcom\s+1\s+unidade\s+[0-9]{1,5}\s*$/i.test(antes)) return null;
     const m = antes.match(ABERTURA);
     if (m && +m[1] > 0) return +m[1];
     // colado em outro numero, so vale com zero a esquerda: "75004" e o item 4,
@@ -746,11 +1568,27 @@ function descritivosPorItem(secoes, itens) {
   //
   // Recua no maximo uma palavra capitalizada e a preposicao seguinte, e so
   // quando ela esta colada na marca.
-  const PREFIXO = /([A-ZÀ-Ú][A-Za-zÀ-ÿ]{2,14}(?:\s+(?:de|da|do|DE|DA|DO)\s+|\s+)?)$/;
+  // "AR" entra mesmo com duas letras: "06 AR CONDIONADO 9.000 BTUS" em Campina do
+  // Monte Alegre/SP abria a celula em "CONDIONADO" e deixava o "AR" no fim da
+  // celula de cima.
+  // E o outro nome antes da barra: "28 Geladeira / Refrigerador domestico" e "47
+  // Jarra eletrica/ Chaleira eletrica" (Santa Maria/RS). Com a marca depois da
+  // barra o numero da linha nao era lido, e os itens ficavam sem descritivo.
+  const PREFIXO = /([A-ZÀ-Ú][A-Za-zÀ-ÿ]{2,14}(?:\s+[a-zà-ÿ]{3,14})?\s*\/\s*|[A-ZÀ-Ú][A-Za-zÀ-ÿ]{2,14}(?:\s+(?:de|da|do|DE|DA|DO)\s+|\s+)?|(?:AR|Ar)(?:\s+|-\s*))$/;
   function recuaPrefixo(pos) {
-    const antes = secoes.slice(Math.max(0, pos - 26), pos);
+    const antes = secoes.slice(Math.max(0, pos - 30), pos);
     const m = antes.match(PREFIXO);
-    return m ? pos - m[1].length : pos;
+    // "Item" e cabecalho da tabela, nao nome de produto: em Diamante D'Oeste/PR
+    // a celula abria "Item Maquina de lavar roupas..." e, com a palavra na
+    // frente, o cortaNaRepeticao nao reconhecia a segunda maquina de lavar,
+    // que comeca igual, e as duas linhas saiam numa celula so.
+    if (m && /^item\b/i.test(m[1])) return pos;
+    let p = m ? pos - m[1].length : pos;
+    // A busca por proximidade marca no primeiro numero do rotulo ("9.000") e o
+    // recuo acima volta so ate "CONDIONADO"; o "AR" antes dele e parte do nome.
+    const ar = /^(?:AR|Ar)/.test(m ? m[1] : '') ? null : secoes.slice(Math.max(0, p - 4), p).match(/(?<![A-Za-zÀ-ÿ])(?:AR|Ar)(?:\s+|-\s*)$/);
+    if (ar) p -= ar[0].length;
+    return p;
   }
   // Uma marca por POSICAO, com todos os itens que casam ali. Guardar uma marca
   // por item dava marcas repetidas na mesma posicao quando dois itens sao o
@@ -779,10 +1617,33 @@ function descritivosPorItem(secoes, itens) {
   // que terminavam em "duas portas (".
   const NO_MEIO = /(?:^|[^a-z])(?:de|da|do|das|dos|e|ou|com|sem|para|em|no|na)[ ]+$|[(\[/]$/i;
 
+  // A pesquisa de precos do Compras.gov.br anexada ao termo de referencia traz a
+  // descricao do item COMPRADO POR OUTRO ORGAO: "Orgao: MINISTERIO DA DEFESA ...
+  // Objeto: ... Descricao: Refresqueira material estrutura: ... capacidade: 16,
+  // tensao: 220". O item 11 de Ponta Grossa/PR (edital 13) pede 15 litros e
+  // 110 V e ficava com os 16 litros e 220 V do Exercito, porque o texto do
+  // catalogo casava palavra por palavra. A marca ali continua fechando a celula
+  // de cima, mas nao e candidata de item nenhum.
+  // As zonas sao achadas uma vez por edital: a busca por proximidade pergunta
+  // isso para cada palavra do texto.
+  const zonasDePesquisa = [];
+  for (const m of secoes.matchAll(/\bDescri[çc][ãa]o:\s/gi)) {
+    if (!/[ÓO]rg[ãa]o:\s[^]{0,600}?\bObjeto:\s[^]{0,900}?$/i.test(secoes.slice(Math.max(0, m.index - 1600), m.index))) continue;
+    const ini = m.index + m[0].length, fonte = secoes.indexOf('Fonte:', ini);
+    // Ate o "Fonte:" que fecha a compra citada, que traz ainda a descricao do
+    // CATMAT ("CatMat: 445212 - Refresqueira - Material Estrutura: ...").
+    zonasDePesquisa.push([ini, fonte < 0 || fonte - ini > 8000 ? ini + 300 : fonte]);
+  }
+  const naPesquisaDePreco = p => zonasDePesquisa.some(([a, b]) => p >= a && p <= b);
   const porPos = new Map();
   const semAncora = [];
+  // Marcas de pouca prova — a da busca por proximidade e a do nome de uma
+  // palavra so logo depois de ponto e virgula —, que saem se o item acha a
+  // linha confirmada pelo numero (logo antes da quinta via).
+  const fracas = [];
+  const marcaFraca = (pos, i) => fracas.push([pos, i]);
   itens.forEach((it, i) => {
-    const achado = ancoraDe(plano, planoH, it[1]);
+    const achado = ancoraDe(plano, planoH, it[1], k => !naPesquisaDePreco(k));
     if (!achado) { semAncora.push(i); return; }
     const { ancora: a, plano: onde } = achado;
     const umaPalavra = !a.includes(" ");
@@ -791,9 +1652,15 @@ function descritivosPorItem(secoes, itens) {
       const k0 = onde.indexOf(a, de);
       if (k0 < 0) break;
       if (umaPalavra && NO_MEIO.test(onde.slice(Math.max(0, k0 - 14), k0))) { de = k0 + a.length; continue; }
+      // Nem como NOME DE CAMPO: "Faixa de temperatura: Modo refrigerador:
+      // aproximadamente 0°C a +8°C; Modo freezer: ate, no minimo, -18°C" e o
+      // meio da especificacao do freezer do item 13 de Ponta Grossa/PR (edital
+      // 13), que terminava ali, cortado pela propria marca.
+      if (umaPalavra && /^\s*(?:\([^)]{0,12}\)\s*)?:/.test(onde.slice(k0 + a.length, k0 + a.length + 18))) { de = k0 + a.length; continue; }
       const k = recuaPrefixo(k0);
       if (!porPos.has(k)) porPos.set(k, []);
       porPos.get(k).push(i);
+      if (umaPalavra && /;\s+$/.test(secoes.slice(Math.max(0, k - 3), k))) marcaFraca(k, i);
       de = k0 + a.length;
     }
   });
@@ -814,11 +1681,16 @@ function descritivosPorItem(secoes, itens) {
     for (const m of plano.matchAll(/[a-z]+|\d[\d.,]*\d|\d/g)) tokens.push({ p: m.index, w: limpaNum(m[0]) });
     for (const i of semAncora) {
       const pos = marcaPorProximidade(tokens, palavrasDoItem(itens[i][1]),
-                                     itens[i][0], numeroDaLinhaAntes);
+                                     itens[i][0], numeroDaLinhaAntes, p => !naPesquisaDePreco(p));
       if (pos < 0) continue;
       const posL = recuaPrefixo(pos);
       if (!porPos.has(posL)) porPos.set(posL, []);
       porPos.get(posL).push(i);
+      // Depois de ponto final a marca abre linha de verdade, mesmo que de outra
+      // copia da tabela: "...assistencia tecnica autorizada. | Lavadora de alta
+      // pressao" (Diamante D'Oeste/PR). Tirada, a chaleira do item 11 levava a
+      // lavadora do 12 junto.
+      if (!/[.!?]\s+$/.test(secoes.slice(Math.max(0, posL - 3), posL))) marcaFraca(posL, i);
     }
   }
   // Terceira via: o NUMERO do item impresso na abertura da linha.
@@ -899,13 +1771,328 @@ function descritivosPorItem(secoes, itens) {
     }
   });
 
-  const posicoes = [...porPos.keys()].sort((a, b) => a - b);
+  // Quarta via: a abertura de linha COMPLETA, com o numero do item.
+  //
+  // Quando o edital chama o produto por outro nome, nenhuma das vias acima acha
+  // a linha: o item 11 de Renascenca/PR e "Refrigerador Duplex" no PNCP e
+  // "GELADEIRA FRENCH DOOR" no edital, o 26 de Mariopolis/PR e "Refrigerador
+  // Domestico" no PNCP e "Geladeira / refrigerador" no edital. So que a linha
+  // abre com o numero do item, o codigo ou a quantidade e a unidade — "11 470946
+  // 1 UN GELADEIRA", "26 5,0 UND Geladeira" —, e essa sequencia inteira nao
+  // acontece por acaso. Mesmo assim a cabeca da linha precisa ter uma palavra
+  // do rotulo, para que um desencontro de numeracao entre o PNCP e o edital nao
+  // ponha a especificacao de outro produto no item.
+  // Tambem numero e dois codigos antes do nome em caixa alta: "01 633460 121720
+  // FOGAO GAS 04 BOCAS" em Ponta Grossa/PR, onde o PNCP chama o item 1 de "Forno
+  // A Gas Para Cozinha".
+  // E numero e codigo de quatro digitos antes do nome em caixa alta fechado por
+  // ponto e virgula: "26 8720 PROCESSADOR DE ALIMENTO; INDUSTRIAL,
+  // MULTIPROCESSADOR DE ALIMENTOS" em Campinas/SP.
+  // E numero e um codigo de catalogo antes do nome com inicial maiuscula, logo
+  // depois do fim da linha de cima (ponto ou preco): "...7.526,80 13 274935
+  // Extrator de suco; corpo em aco inoxidavel" (Nova Esperanca/PR), o
+  // "Espremedor Fruta" do PNCP. Nunca depois da contagem de folhas: "15 de 24 2
+  // 306105 Unidade (UN) com 1 Unidade" e a coluna do modelo do Compras.gov.br
+  // quebrando a pagina no meio da especificacao (Vicosa/MG).
+  const LINHA_NUMERADA = n => new RegExp('(?:(?:^|\\s)0*' + n + '\\s+(?:\\d{4,9}\\s+\\d{1,5}\\s+(?:UNIDADES?|UNID|UND|UN)\\.?\\s+|\\d{1,4},\\d{1,2}\\s+(?=(?:UNIDADES?|UNID|UND|UN)\\.?\\s)|\\d{5,9}\\s+\\d{5,9}\\s+(?=[A-Z\\u00c0-\\u00da]{3,})|\\d{4}\\s+(?=[A-Z\\u00c0-\\u00da]{4,}[A-Z\\u00c0-\\u00da ]*;))|(?:(?<=[.;]\\s)|(?<=\\d,\\d{2}\\s))0*' + n + '\\s+\\d{5,9}\\s+(?!Unidade\\b)(?=[A-Z\\u00c0-\\u00da][a-z\\u00e0-\\u00ff]{3,}))(?=[A-Z\\u00c0-\\u00da])', 'g');
+  itens.forEach((it, i) => {
+    if (!Number.isInteger(it[0])) return;
+    if ([...porPos].some(([p, l]) => l.includes(i) && numeroDaLinhaAntes(p) === it[0])) return;
+    const alvo = palavrasDoItem(it[1]).filter(w => !/^[0-9]/.test(w));
+    for (const m of secoes.matchAll(LINHA_NUMERADA(it[0]))) {
+      const pos = m.index + m[0].length;
+      if (numeroDaLinhaAntes(pos) !== it[0]) continue;
+      const cab = new Set(fatiaTexto(secoes.slice(pos, pos + CABECA)).map(limpaNum));
+      // Com o plural: "Maquina Lavar Roupa" no PNCP e "30 13440 Lavadora
+      // semiautomatica de roupas tipo tanquinho" (Pinhal de Sao Bento/PR).
+      if (!alvo.some(w => cab.has(w) || cab.has(w + 's') || cab.has(w + 'es'))) continue;
+      if (!porPos.has(pos)) porPos.set(pos, []);
+      if (!porPos.get(pos).includes(i)) porPos.get(pos).push(i);
+    }
+  });
+
+  // Via da QUANTIDADE: numero do item, codigo, titulo em caixa alta, unidade e a
+  // quantidade que o PNCP informa para o item. "85 601114 REFRIGERADOR - MINI
+  // CAMARA PARA CONGELADOS - 02 PORTAS - CAPACIDADE APROXIMADA DE 1.900 LITROS
+  // UNIDADE 10 R$ 19.263,27" (Bento Goncalves/RS) e o item 85, que o catalogo do
+  // PNCP chama de "Conjunto Camara Fria" — nenhuma palavra em comum para as
+  // outras vias, mas numero e quantidade juntos nao coincidem por acaso.
+  itens.forEach((it, i) => {
+    if (!Number.isInteger(it[0]) || !Number.isInteger(it[2])) return;
+    if ([...porPos].some(([p, l]) => l.includes(i) && numeroDaLinhaAntes(p) === it[0])) return;
+    const re = new RegExp('(?:^|\\s)0*' + it[0] + '\\s+\\d{4,9}\\s+(?=[A-Z\\u00c0-\\u00da][^a-z\\u00e0-\\u00ff]{3,200}?\\s(?:UNIDADES?|UNID|UND|UN|CONJUNTO|CONJ|PAR|KIT|JOGO)\\s+0*' + it[2] + '\\s+R\\$)', 'g');
+    for (const m of secoes.matchAll(re)) {
+      const pos = m.index + m[0].length;
+      if (!porPos.has(pos)) porPos.set(pos, []);
+      if (!porPos.get(pos).includes(i)) porPos.get(pos).push(i);
+    }
+  });
+
+  // A mesma prova pela quantidade, sem numero de linha: o nome do produto e, logo
+  // depois da descricao, a unidade com a quantidade do PNCP. Em Sao Paulo/SP
+  // (edital 1081) os grupos recomecam a numeracao, e o ventilador do item 5 e o
+  // "1 Ventiladores de Coluna - 50cm ... Unidade 180" do Grupo 02. So para quem
+  // nao tem marca nenhuma, e com duas palavras do rotulo na descricao.
+  {
+    const comMarca = new Set();
+    for (const l of porPos.values()) for (const j of l) comMarca.add(j);
+    itens.forEach((it, i) => {
+      if (comMarca.has(i) || !Number.isInteger(it[2]) || it[2] < 2) return;
+      const nome = (normIgual(it[1]).replace(GENERICAS, '').split(/[,;:]/)[0].match(/[a-z]{5,}/) || [''])[0];
+      if (nome.length < 5) return;
+      const alvo = palavrasDoItem(it[1]).filter(w => !/^[0-9]/.test(w));
+      // Todas as palavras do NOME, antes do primeiro campo, tem de estar na
+      // descricao: "Carrinho Distribuicao material bandeja: ..." nao e o
+      // "Carrinho plataforma para transporte de cargas" de Ponta Grossa/PR, por
+      // mais que os dois sejam de chapa de aco e venham em 6 unidades.
+      const nomeInteiro = normIgual(it[1]).split(/\s+(?:material|tipo|capacidade|caracteristicas|cor|potencia|tensao|voltagem|aplicacao|modelo|largura|altura|comprimento|diametro|quantidade|acabamento|funcionamento|componentes|sistema|frequencia|temperatura|peso|dimensoes|vazao|consumo|acionamento|rotacao|garantia|normas|funcoes|faixa|acessorios)\b[^:]{0,30}:\s/)[0].replace(GENERICAS, '');
+      const doNome = (nomeInteiro.match(/[a-z]{4,}/g) || []).filter(w => !VAZIAS.has(w));
+      const QTD = new RegExp('(?:^|\\s)(?:Unidade|UNIDADE|UNID\\.?|Unid\\.?|UN|Un|UND|Und)\\s+0*' + it[2] + '(?=\\s|$)');
+      for (let k = plano.indexOf(nome); k >= 0; k = plano.indexOf(nome, k + 1)) {
+        if (k > 0 && /[a-z0-9]/.test(plano[k - 1])) continue;
+        if (!/[A-ZÀ-Ú]/.test(secoes[k])) continue;
+        const trecho = secoes.slice(k, k + 700);
+        const q = QTD.exec(trecho);
+        if (!q) continue;
+        const cab = new Set(fatiaTexto(trecho.slice(0, q.index)).map(limpaNum));
+        if (alvo.filter(w => cab.has(w)).length < 2) continue;
+        if (!doNome.every(w => [...cab].some(c => c.startsWith(w)))) continue;
+        const pos = recuaPrefixo(k);
+        if (!porPos.has(pos)) porPos.set(pos, []);
+        if (!porPos.get(pos).includes(i)) porPos.get(pos).push(i);
+      }
+    });
+  }
+
+  // A mesma abertura de linha nas outras copias da tabela. Diamante D'Oeste/PR
+  // publica a especificacao tres vezes; a lavadora de alta pressao do item 12 so
+  // tinha marca na primeira copia, e nas outras duas a chaleira do item 11
+  // seguia por cima da linha dela — e, mais comprida, ganhava. Sessenta
+  // caracteres iguais do comeco da linha nao se repetem por acaso.
+  {
+    // So entre aberturas depois de ponto final, que e como essas copias sem
+    // numero de linha separam um produto do outro; em tabela com colunas o
+    // mesmo comeco repetido leva preco e quantidade da copia de baixo.
+    const depoisDePonto = p => /[.]\s+$/.test(secoes.slice(Math.max(0, p - 3), p));
+    const ja = new Set(porPos.keys());
+    for (const [p, l] of [...porPos]) {
+      const cabeca = secoes.slice(p, p + 60);
+      if (cabeca.length < 60 || !/^[A-ZÀ-Ú][a-zà-ÿ]/.test(cabeca) || !depoisDePonto(p) || naPesquisaDePreco(p)) continue;
+      for (let k = secoes.indexOf(cabeca); k >= 0; k = secoes.indexOf(cabeca, k + 1)) {
+        // Na copia o ponto pode ter caido: "...assistencia tecnica autorizada
+        // Lavadora de alta pressao" (a segunda copia de Diamante D'Oeste/PR).
+        if (k === p || ja.has(k) || naPesquisaDePreco(k)
+            || !(depoisDePonto(k) || /[a-zà-ÿ]\s+$/.test(secoes.slice(Math.max(0, k - 3), k)))) continue;
+        porPos.set(k, [...l]);
+        ja.add(k);
+      }
+    }
+  }
+
+  // A marca fraca de quem ja tem a linha confirmada pelo numero sai. Em
+  // Campinas/SP a busca por proximidade pos o multiprocessador do item 26 em
+  // "...CAPACIDADE DA TIGELA DE 4,7 A 7 | LITROS APROXIMADAMENTE", e o nome
+  // "TIGELA" dos itens 31 e 42 marcava "...ALUMINIO FUNDIDO; | TIGELA EM ACO
+  // INOX" — as duas no meio da linha da batedeira do item 2, que saia cortada.
+  // As linhas "26 8720 PROCESSADOR DE ALIMENTO;" e "42 8720 TIGELA;" existem.
+  for (const [pos, i] of fracas) {
+    const l = porPos.get(pos);
+    if (!l || !l.includes(i) || numeroDaLinhaAntes(pos) === itens[i][0]) continue;
+    if (![...porPos].some(([p, m]) => p !== pos && m.includes(i) && numeroDaLinhaAntes(p) === itens[i][0])) continue;
+    l.splice(l.indexOf(i), 1);
+    if (!l.length) porPos.delete(pos);
+  }
+
+  // Quinta via: a linha que ABRE com o nome do produto, sem numero nenhum.
+  //
+  // Em Diamante D'Oeste/PR a tabela saiu sem a coluna do numero e da
+  // quantidade, e as descricoes vem uma atras da outra: "...garantia minima de
+  // 12 meses contra defeitos de fabricacao Geladeira dupex, Frost Free,
+  // capacidade minima 480 litros..." e "...material equivalente. Televisor
+  // Smart TV LED...". O catalogo do PNCP chama a geladeira de "Refrigerador
+  // Duplex" e a secadora de "Maquina Secar Roupa", entao nenhuma ancora achava
+  // essas linhas, e o forno do item 3 saia com a geladeira e a secadora dentro.
+  //
+  // A abertura e o nome com a inicial maiuscula depois de fim de frase ou de
+  // palavra minuscula — a linha anterior termina sem ponto —, e o nome tem de
+  // ser da CLASSE de algum item do edital. Marca para todos os itens daquela
+  // classe que nao tem a linha confirmada pelo numero: a escolha entre as
+  // candidatas continua com as regras de sempre, e a capacidade decide entre
+  // duas maquinas de lavar iguais.
+  const classeDoItem = itens.map(it => classeDoRotulo(it[1]));
+  const classesDoEdital = new Set(classeDoItem.filter(Boolean));
+  // Depois de palavra toda minuscula ("fabricacao Geladeira dupex"): "Unid Caixa
+  // de Ferramentas" (Sao Jose da Boa Vista/PR) nao abre linha. E ai, quando o
+  // nome nao e de uma classe conhecida, ele tambem segue em minuscula.
+  // Tambem depois do subtitulo numerado: "3.2.4. Item 04: Micro-ondas 30 litros
+  // Prata" (Valinhos/SP), em que o catalogo diz "Forno Microondas".
+  const ABRE_NOME = /(?:(?<=[.;])|(?<=\bItem)|(?<=\bItem\s+\d{1,3}\s*:)|(?<=(?:^|\s)[a-zà-ÿ]+))\s+(?=[A-ZÀ-Ú][a-zà-ÿ])/g;
+  const CONHECIDAS = new Set(CLASSES.map(x => x[0]));
+  const aberturasPorClasse = new Map();
+  for (const m of secoes.matchAll(ABRE_NOME)) {
+    const pos = m.index + m[0].length;
+    const c = classeDoInicio(plano.slice(pos, pos + 40));
+    // So as classes com sinonimo conhecido. A palavra solta como classe marcava
+    // "...condensacao da porta; Camara com isolamento termico" para a camara fria
+    // de Bento Goncalves/RS e cortava a especificacao do forno combinado ali.
+    if (!c || !classesDoEdital.has(c) || !CONHECIDAS.has(c)) continue;
+    // Nome citado no meio da frase nao abre linha: "jarra de Liquidificador",
+    // "Refrigerador tipo Frigobar".
+    if (/(?:^|[^a-z])(?:de|da|do|das|dos|e|ou|com|sem|para|em|no|na|um|uma|o|a|os|as|ao|tipo|como|pelo|pela)\s+$/.test(plano.slice(Math.max(0, pos - 14), pos))) continue;
+    if (!aberturasPorClasse.has(c)) aberturasPorClasse.set(c, []);
+    aberturasPorClasse.get(c).push(pos);
+  }
+  // So para o item que nao tem marca NENHUMA. Cada marca nova fecha a celula de
+  // quem vem antes, e dar marca por classe a itens que ja tinham a sua linha
+  // cortava celulas certas pelo meio em nove editais — "Split Hi-Wall" no meio
+  // da especificacao de um ar-condicionado, "Caixa" no meio de uma lista.
+  // Marca no meio de frase nao conta: ela cai no filtro logo abaixo, e o item de
+  // Diamante D'Oeste/PR que so tinha uma dessas ficava sem marca nenhuma.
+  // Tambem depois de travessao: "1 Bebedouro Industrial — bebedouro industrial
+  // de coluna, com 2 saidas" (Luz/MG) e o nome repetido na descricao, e a marca
+  // ali deixava a linha com as duas palavras do titulo e mais nada.
+  // E dentro de lista: depois de marcador ("Caracteristicas minimas: ● Balanca
+  // eletronica digital de plataforma") ou, em minuscula, depois de dois-pontos
+  // ("• Tipo: aquecedor de agua a gas de passagem"), ambos em Bento
+  // Goncalves/RS. A marca ali partia a especificacao do proprio item, que saia
+  // terminando em "Caracteristicas minimas: ●".
+  // Minuscula tambem depois de numero solto no meio da frase ("Possuir, no
+  // minimo, 02 bicos/torneiras", "Acompanhar, no minimo, 01 grelha") e depois
+  // de artigo ("OBS.: A grelha devera possuir"); e depois de ponto e virgula,
+  // mesmo em maiuscula, e o proximo elemento da lista ("...alimentos
+  // refrigerados; Freezer capaz de operar"). Todos em Bento Goncalves/RS, onde
+  // cada uma dessas marcas cortava a especificacao de outro item no meio.
+  const noMeioDaFrase = p => {
+    const antes = secoes.slice(Math.max(0, p - 16), p);
+    if (/^[a-zà-ÿ]/.test(secoes.slice(p, p + 1)) && (/(?:[a-zà-ÿ,:]|[—–])\s+$/.test(antes)
+        || /[a-zà-ÿ,:]\s+\d{1,3}\s+$/.test(antes) || /(?:^|[\s.:;])[AO]\s+$/.test(antes))) return true;
+    // O ponto e virgula nao vale para a abertura pelo nome da classe: em Diamante
+    // D'Oeste/PR a linha da poltrona termina em "...para o piso;" e a da
+    // fritadeira comeca logo depois.
+    return /[●•]\s*$/.test(antes) || (/[a-zà-ÿ)];\s+$/.test(antes) && !marcasDeClasse.has(p));
+  };
+  const temMarca = new Set();
+  const marcasDeClasse = new Set();
+  for (const [p, l] of porPos) if (!noMeioDaFrase(p)) for (const i of l) temMarca.add(i);
+  itens.forEach((it, i) => {
+    const c = classeDoItem[i];
+    if (!c || !aberturasPorClasse.has(c) || temMarca.has(i)) return;
+    for (const pos of aberturasPorClasse.get(c)) {
+      if (!porPos.has(pos)) porPos.set(pos, []);
+      if (!porPos.get(pos).includes(i)) porPos.get(pos).push(i);
+      marcasDeClasse.add(pos);
+    }
+  });
+  // Sexta via, para o item que continua sem marca valida: o NOME do produto, a
+  // primeira palavra do rotulo, em caixa alta logo depois do codigo de catalogo
+  // — "4) 295556 142029 REFRESQUEIRA INDUSTRIAL, nova, de primeiro uso". O item
+  // 11 de Ponta Grossa/PR (edital 13) so casava na pesquisa de precos, e o termo
+  // numera a segunda tabela a partir de 1. Vale so com uma ocorrencia assim no
+  // edital inteiro e com a palavra de nenhum outro rotulo.
+  const comMarcaValida = new Set();
+  for (const [p, l] of porPos) if (!noMeioDaFrase(p) && !naPesquisaDePreco(p)) for (const i of l) comMarcaValida.add(i);
+  itens.forEach((it, i) => {
+    if (comMarcaValida.has(i)) return;
+    const w = (normIgual(String(it[1])).match(/[a-z]+/) || [''])[0];
+    if (w.length < 6 || /^(?:aparelho|equipamento|conjunto|maquina|material|produto)$/.test(w)) return;
+    if (itens.some((jt, j) => j !== i && normIgual(String(jt[1])).includes(w))) return;
+    const achados = [];
+    for (const m of plano.matchAll(new RegExp('(?<=\\b\\d{5,9}\\s+)' + w + '\\b', 'g'))) {
+      const original = secoes.slice(m.index, m.index + w.length);
+      if (original === original.toUpperCase() && !naPesquisaDePreco(m.index)) achados.push(m.index);
+    }
+    if (achados.length !== 1) return;
+    if (!porPos.has(achados[0])) porPos.set(achados[0], []);
+    if (!porPos.get(achados[0]).includes(i)) porPos.get(achados[0]).push(i);
+  });
+
+  // Marca no MEIO DE UMA FRASE nao abre celula: minuscula logo depois de palavra
+  // ou virgula e continuacao do texto de cima. A busca por proximidade marcou o
+  // item 38 de Bento Goncalves/RS em "...adequada ao uso continuo em | cozinha
+  // profissional; ● Filtros metalicos", e essa marca cortava a propria celula
+  // verdadeira ao meio. O serve() ja recusaria o trecho que comeca assim; o
+  // estrago era so o corte que ela fazia no vizinho.
+  const posicoes = [...porPos.keys()].sort((a, b) => a - b).filter(p => {
+    const meioDeFrase = noMeioDaFrase(p);
+    if (meioDeFrase) porPos.delete(p);
+    return !meioDeFrase;
+  }).filter((p, k, lista) => {
+    // O titulo da linha e a especificacao dela, separados so pela unidade e pelos
+    // precos: "04 618525 APARELHO DE AR-CONDICIONADO TIPO SPLIT HI-WALL - 12.000
+    // BTU/H UNIDADE 72 R$ 2.013,00 R$ R$ 144.936,00 | Aparelho de
+    // ar-condicionado tipo Split Hi-Wall, com capacidade..." (Bento
+    // Goncalves/RS). A marca no comeco da especificacao partia a linha em duas, o
+    // titulo ficava confirmado pelo numero e ganhava, e os aparelhos saiam so com
+    // o titulo. Sendo do mesmo item, a segunda marca sai e a linha fica inteira.
+    // A anterior e a ultima que FICOU: se o titulo ja engoliu uma marca, a
+    // especificacao se junta a ele, e nao a marca que saiu ("78 601112
+    // REFRIGERADOR - | FREEZER HORIZONTAL 02 PORTAS - 530 LITROS UNIDADE 18 R$...
+    // | Freezer horizontal de grande capacidade", Bento Goncalves/RS).
+    const ant = lista.slice(0, k).reverse().find(q => porPos.has(q));
+    if (ant === undefined) return true;
+    const entre = secoes.slice(ant, p);
+    // Tambem o titulo em caixa alta logo antes da especificacao, sem unidade
+    // nem preco no meio: "1 11127 AR CONDICIONADO SPLIT 12.000 BTUS QUENTE/FRIO
+    // | Ar Condicionado. Sistema de geracao quente/frio..." e "2 11128 AR
+    // CONDICIONADO SPLIT 18.000 BTUS QUENTE/FRIO Especificacoes: | Ar
+    // Condicionado." (Pinhal de Sao Bento/PR). Partida, a linha saia "FRIO Ar
+    // Condicionado..." num item e so com o titulo no outro. So quando o titulo
+    // abre com o numero do item e a especificacao nao tem numero proprio.
+    // Nem quando a especificacao repete o titulo: ai o titulo e so a primeira
+    // copia do mesmo texto ("BLOCO DIGESTOR, TEMPERATURA: ... | BLOCO DIGESTOR,
+    // TEMPERATURA: ...", Montes Claros/MG).
+    const soLetras = x => normIgual(x).replace(/[^a-z0-9]+/g, ' ').trim();
+    const tituloSo = /^[^a-zà-ÿ]{3,100}(?:Especifica[çc][õo]es\s*:?\s*)?$/.test(entre)
+      && porPos.get(ant).some(i => numeroDaLinhaAntes(ant) === itens[i][0]) && numeroDaLinhaAntes(p) === null
+      && !(soLetras(entre).length >= 40 && soLetras(secoes.slice(p, p + 400)).includes(soLetras(entre)));
+    if (!tituloSo && !/^[^a-zà-ÿ]{3,160}UNIDADE\s+\d{1,4}\s+R\$\s*[\d.]+,\d{2}\s+(?:R\$\s*)+[\d.]+,\d{2}\s*$/.test(entre)) return true;
+    if (!porPos.get(p).some(i => porPos.get(ant).includes(i))) return true;
+    porPos.delete(p);
+    return false;
+  });
 
   // Cada posicao vira um trecho: da marca ate a marca seguinte.
+  //
+  // O timbre sai ANTES dos cortes. As regras de rodape antigas tiram pedacos
+  // dele — o CEP, o CNPJ, o "PREFEITURA MUNICIPAL DE" —, e o que sobra ja nao
+  // casa com o timbre aprendido: em Santo Antonio do Caiua/PR o endereco
+  // inteiro ficava na celula depois de a regra do CEP levar so o numero.
+  const timbres = timbresDoEdital(secoes);
+  // A primeira palavra do rotulo de cada item, para reconhecer a LINHA SEGUINTE
+  // quando o numero dela nao bate com o do PNCP: em Apiai/SP o edital numera
+  // "09 TANQUINHO", "10 VENTILADOR" e o PNCP 9 relogio, 10 tanquinho, e o
+  // micro-ondas do item 8 seguia pelos tres.
+  const GENERICAS_DE_ROTULO = new Set(['aparelho', 'equipamento', 'conjunto', 'maquina', 'material', 'produto']);
+  const primeiras = new Set(itens.map(it => (normIgual(String(it[1])).match(/[a-z0-9]+/) || [''])[0])
+    .filter(w => w.length >= 4 && !/^\d/.test(w) && !GENERICAS_DE_ROTULO.has(w)));
+  const cortaNoVizinho = t => {
+    const minha = (normIgual(t).match(/[a-z]{3,}/) || [''])[0];
+    // Em caixa alta, com seis letras ou mais: "...cor branca 09 TANQUINHO".
+    // Com so a inicial maiuscula, so logo depois de fim de frase: "...garantia
+    // minima 12 meses. 19 Mesa branca em polipropileno" (Nova Esperanca/PR).
+    const re = /(?:\s\d{1,3}\s+([A-ZÀ-Ú]{6,})|(?<=[.;])\s+\d{1,3}\s+([A-ZÀ-Ú][a-zà-ÿ]{3,}))(?![A-Za-zÀ-ÿ])/g;
+    for (const m of t.matchAll(re)) {
+      if (m.index < 40) continue;
+      const w = normIgual(m[1] || m[2]);
+      if (m[1] && w.length < 6) continue;
+      if (primeiras.has(w) && w !== minha) return t.slice(0, m.index + (t[m.index] === '.' || t[m.index] === ';' ? 1 : 0));
+    }
+    return t;
+  };
   const trechos = posicoes.map((pos, k) => {
     const proxima = k + 1 < posicoes.length ? posicoes[k + 1] : secoes.length;
     const fim = Math.min(proxima, pos + TETO_ITEM, secoes.length);
-    return cortaNaProximaLinha(secoes.slice(pos, fim).replace(/\s+/g, ' ').trim());
+    // O cabecalho da AGU sai antes do timbre aprendido: ele vem em duas versoes,
+    // o detector aprende as pontas de cada uma e deixaria o miolo para tras.
+    const cru = tiraTimbre(secoes.slice(pos, fim).replace(/\s+/g, ' ').replace(CABECALHO_AGU, ' ').replace(CABECALHO_HASH, ' ').trim(), timbres);
+    const t = limpaCelula(cortaNoVizinho(cortaNaProximaLinha(cru)), timbres);
+    // Celula que para no PULO DE PAGINA no meio da frase esta cortada: a folha
+    // seguinte, onde ela continuava, nao entrou no texto. Melhor sem descritivo
+    // — ou com outra copia inteira da mesma linha — do que com "...compativel
+    // com o fluxo de", como ficava o bebedouro de Luz/MG.
+    const iPulo = cru.indexOf('‖‖');
+    if (iPulo >= 0 && t && cru.indexOf(t.slice(-30)) + 30 >= iPulo - 40 && ACABA_NO_MEIO.test(t)) return '';
+    return t;
   });
 
   // Entre os trechos que sobraram para o item, ganha o que FALA DELE — nao o
@@ -980,7 +2167,7 @@ function descritivosPorItem(secoes, itens) {
     //
     // A linha boa continua inteira na marca seguinte, entao nada se perde.
     const MINIMO = 12;
-    const cabecas = quais.filter(k => (trechos[k] || "").length >= MINIMO).map(k => {
+    const cabecas = quais.filter(k => (trechos[k] || "").length >= MINIMO && !naPesquisaDePreco(posicoes[k])).map(k => {
       const t = trechos[k] || '';
       const c = new Set(fatiaTexto(t.slice(0, CABECA_ESCOLHA)).map(limpaNum));
       return { k, t, c, nums: [...c].filter(ehNumero) };
@@ -1000,6 +2187,22 @@ function descritivosPorItem(secoes, itens) {
     const meusSo = new Set([...meus].filter(w => !fora.has(w)));
     const alguemTemMeu = meusSo.size > 0 && cabecas.some(x => x.nums.some(w => meusSo.has(w)));
 
+    // A CAPACIDADE pequena, que nao vira token por ter dois digitos: as duas
+    // maquinas de lavar de Diamante D'Oeste/PR sao "capacidade: 17 a 18" e
+    // "capacidade: 11" no PNCP, e as linhas do edital dizem "capacidade minima
+    // de 17 kg" e "de 10 kg". Pelas palavras as duas empatam. Vale como veto
+    // entre produtos da MESMA classe: a linha que anuncia a capacidade de outro
+    // item — ou uma capacidade diferente, quando outra candidata anuncia a
+    // deste — e do outro.
+    const capMinhas = capacidadesDoRotulo(rotulo);
+    const capAlheias = new Set();
+    itens.forEach((jt, j) => {
+      if (j === i || classeDoItem[j] !== classeDoItem[i]) return;
+      for (const v of capacidadesDoRotulo(jt[1])) if (!capMinhas.has(v)) capAlheias.add(v);
+    });
+    const capCab = cabecas.map(x => capacidadesDoTexto(x.t.slice(0, CABECA_ESCOLHA)));
+    const alguemCapMeu = capMinhas.size > 0 && capCab.some(cs => [...cs].some(v => capMinhas.has(v)));
+
     // "Forte" e o numero que so pode ser capacidade: 9.000, 18.000, 48.000 —
     // mil para cima e redondo. Codigo de catalogo nao passa (165.6.260 vira
     // 1656260, 104740 tambem nao e redondo) e a voltagem tambem nao: 220 esta
@@ -1018,7 +2221,7 @@ function descritivosPorItem(secoes, itens) {
     // porque a celula certa e curta e a do vizinho e longa.
     const achouMinhaLinha = numLinha.some(n => n === itens[i][0]);
 
-    let vencedor = '', nota = -1, venceuPeloNumero = false, numeroVencedor = null;
+    let vencedor = '', nota = -1, venceuPeloNumero = false, numeroVencedor = null, kVencedor = -1;
     cabecas.forEach(({ k, t, c, nums }, idx) => {
       if (!t) return;
       const confirmado = numLinha[idx] === itens[i][0];
@@ -1027,8 +2230,12 @@ function descritivosPorItem(secoes, itens) {
       const temMeu = nums.some(w => meusSo.has(w));
       // Se o edital imprime o numero deste item abrindo a linha, e a linha
       // dele — nenhuma heuristica de palavra ou de capacidade desmente isso.
+      const capMeu = [...capCab[idx]].some(v => capMinhas.has(v));
+      const capDeOutro = capMinhas.size > 0 && capCab[idx].size > 0 && !capMeu
+        && (alguemCapMeu || [...capCab[idx]].some(v => capAlheias.has(v)));
       const deOutro = confirmado ? false : (doVizinho
         || (!temMeu && alguemTemMeu)
+        || capDeOutro
         || (meusFortes.size > 0 && !nums.some(w => meusFortes.has(w))
             && nums.some(w => fora.has(w) && forte(w))));
       // Ordem de peso: primeiro o trecho que SERVE (as mesmas regras que o
@@ -1040,11 +2247,44 @@ function descritivosPorItem(secoes, itens) {
       const n = (serve(rotulo, t, confirmado) && !deOutro ? 1e6 : 0)
               + (confirmado ? 1e3 : 0)
               + alvo.filter(w => c.has(w)).reduce((s, w) => s + (ehNumero(w) ? PESO_NUMERO : 1), 0);
-      if (n > nota || (n === nota && t.length > vencedor.length)) {
+      // Desempate pelo CONTEUDO, sem contar espaco, e com o mesmo conteudo fica a
+      // copia de menos espacos. Vicosa/MG publica o termo de referencia em dois
+      // PDFs, e num deles o gerador poe espaco no meio da palavra: "c
+      // onfeccionadas", "equival ente". Pelo tamanho bruto essa copia ganhava,
+      // justamente por ter um caractere a mais.
+      // So quando as duas copias sao o MESMO texto sem os espacos: copias de
+      // conteudo diferente seguem pelo tamanho, como sempre.
+      // Numero solto tambem nao conta: "PORTA COM VIDRO DUPLO, 45 VALVULA" e a
+      // copia de Trabiju/SP em que o timbre caiu no meio da linha e deixou para
+      // tras o numero da folha; a outra copia, sem ele, e a boa.
+      const semSolto = x => x.replace(/(?<![\w.,\/])\d{1,4}(?![\w.,\/])/g, '').replace(/\s+/g, '');
+      const mesmoTexto = vencedor && semSolto(t) === semSolto(vencedor);
+      if (n > nota || (n === nota && (mesmoTexto ? t.length < vencedor.length : t.length > vencedor.length))) {
         nota = n; vencedor = t; venceuPeloNumero = confirmado;
-        numeroVencedor = numLinha[idx];
+        numeroVencedor = numLinha[idx]; kVencedor = k;
       }
     });
+    // O numero que ABRE a linha seguinte fica antes da marca dela, e portanto no
+    // fim desta celula: "...ligado manualmente e com regulador de potencia 35 |
+    // 165.16.27 SOPRADOR" (Salto/SP). Pelo texto ele nao pode sair — "potencia
+    // 35" poderia ser a potencia —, mas quando a marca seguinte se confirmou
+    // exatamente por esse numero, ele e da linha de baixo.
+    if (vencedor && kVencedor + 1 < posicoes.length) {
+      const p = posicoes[kVencedor + 1];
+      const nProx = numeroDaLinhaAntes(p);
+      // Nunca depois de "item": "IDEM AO ITEM 6" (Bento Goncalves/RS) e remissao.
+      if (nProx !== null && porPos.get(p).some(j => itens[j][0] === nProx)) {
+        if (!new RegExp('\\bitem\\s+0*' + nProx + '$', 'i').test(vencedor))
+          vencedor = vencedor.replace(new RegExp('\\s0*' + nProx + '$'), '');
+        // e o numero solto de um ou dois digitos que sobra no fim, quando nao e
+        // medida — o numero da folha: "...Plastico/Aco Inoxidavel 47 | 55
+        // 165.6.265 FOGAO" (Salto/SP). Quatro digitos, nao: "Desidrat Plus 1000"
+        // e o modelo.
+        const solto = /(\S+)\s+\d{1,2}$/.exec(vencedor);
+        if (solto && !MEDIDA_ANTES.test(solto[1]) && !/^(?:item|itens|lote)$/i.test(solto[1]) && /[A-Za-zÀ-ÿ).;]$/.test(solto[1]))
+          vencedor = vencedor.slice(0, solto.index + solto[1].length);
+      }
+    }
     // Abaixo de 1e6 nenhum trecho servia, ou o unico que servia era de outro
     // item. Melhor o item sem descritivo do que com a especificacao do vizinho.
     // O lote vale por si, mesmo quando o descritivo e recusado: ele diz COMO o
@@ -1086,18 +2326,229 @@ function descritivosPorItem(secoes, itens) {
   // demais ficam sem, e o resumo mostra o rotulo do PNCP, que ao menos traz a
   // capacidade certa. Descritivo faltando o usuario percebe; descritivo do
   // vizinho, nao.
+  // A comparacao e pelo COMECO da celula, e nao pelo texto inteiro.
+  //
+  // Duas celulas que abrem com as mesmas cento e cinquenta letras sao a mesma
+  // linha da tabela: o que muda depois e so ate onde cada uma foi. Em
+  // Botucatu/SP o edital descreve UM multiprocessador e o PNCP lista dois, o
+  // item 1 e o 6, com potencias diferentes; as duas celulas comecavam iguais e
+  // seguiam por comprimentos diferentes, entao a chave pelo texto inteiro nao
+  // as via como repetidas e o item 6 saia com a especificacao do item 1.
+  const inicioDe = t => normIgual(t).replace(/[^a-z0-9]+/g, " ").trim().slice(0, 150);
   const porTexto = new Map();
   for (const [i, v] of melhor) {
-    if (!porTexto.has(v.texto)) porTexto.set(v.texto, []);
-    porTexto.get(v.texto).push(i);
+    const chave = inicioDe(v.texto);
+    if (!porTexto.has(chave)) porTexto.set(chave, []);
+    porTexto.get(chave).push(i);
   }
   const soTexto = new Map();
-  for (const [texto, quais] of porTexto) {
+  for (const quais of porTexto.values()) {
     const rotulos = new Set(quais.map(i => normIgual(itens[i][1]).replace(/[^a-z0-9]+/g, ' ').trim()));
     if (rotulos.size < 2) { for (const i of quais) soTexto.set(i, melhor.get(i)); continue; }
     for (const i of quais) if (melhor.get(i).confirmado) soTexto.set(i, melhor.get(i));
   }
   return { textos: soTexto, lotes: lotes };
+}
+
+// A PLANILHA POR LOTE do sistema de compras de Londrina/PR, em que o texto sai
+// fora de ordem: o cabecalho "Lote: 3 - Lote 3" vem DEPOIS da descricao do lote,
+// e a quantidade, o preco e o titulo aparecem embaralhados antes dela —
+// "...PRECO MAXIMO DO LOTE: 126.320,62 Subgrupo Cod. do Produto Quantidade 1 52
+// FORNO DE MICROONDAS 30 LITROS 200.00 Unidade 647,41 129.482,00 Descricao: ...
+// 12 26126 Lote: 3 - Lote 3". Nenhuma via por marca separa isso: a marca cai no
+// meio, a celula leva o cabecalho do lote seguinte, e os dois refrigeradores de
+// 410 L (lotes 5 e 6) saiam com a mesma linha.
+//
+// Aqui cada lote vai do fim do cabecalho anterior ate o seu "Lote: N", e so vale
+// quando o PNCP numera os itens pelos lotes e a quantidade dele esta no bloco:
+// "200.00 Unidade" no lote 3 e o item 3, de 200 unidades.
+const FIM_DO_LOTE = /\s\d{1,3}\s+\d{4,6}\s+Lote:\s*(\d{1,3})\s*-\s*Lote\s*\d{1,3}/g;
+const CABECALHO_DO_LOTE = /PRE[ÇC]O M[ÁA]XIMO DO LOTE:\s*[\d.]+,\d{2}(?:\s+Subgrupo\s+Cod\.\s+do\s+Produto\s+Quantidade)?/g;
+const FOLHA_DO_LOTE = /P[áa]gina:\s*\d+\s+Anexo\s+\d+\s*-\s*Processo:\s*[\d\/]+/;
+function celulasPorLote(secoes, itens, timbres) {
+  const fins = [...secoes.matchAll(FIM_DO_LOTE)];
+  const saida = new Map();
+  if (fins.length < 3 || !/PRE[ÇC]O M[ÁA]XIMO DO LOTE/.test(secoes)) return saida;
+  const blocos = new Map();
+  let inicio = 0, sobraDoAnterior = null;
+  for (const m of fins) {
+    let bloco = secoes.slice(inicio, m.index);
+    inicio = m.index + m[0].length;
+    // O cabecalho do lote anterior e a folha nova: o que sobra entre a folha e
+    // o "PRECO MAXIMO DO LOTE" e a continuacao do lote anterior (a garantia do
+    // lote 5 fica na folha 2, antes do cabecalho do lote 6).
+    const cabecalhos = [...bloco.matchAll(CABECALHO_DO_LOTE)];
+    if (cabecalhos.length) {
+      const ultimo = cabecalhos[cabecalhos.length - 1];
+      const antes = bloco.slice(0, ultimo.index);
+      const folha = FOLHA_DO_LOTE.exec(antes);
+      if (folha && sobraDoAnterior !== null) blocos.set(sobraDoAnterior, blocos.get(sobraDoAnterior) + ' ' + antes.slice(folha.index + folha[0].length));
+      bloco = bloco.slice(ultimo.index + ultimo[0].length);
+    }
+    const n = +m[1];
+    blocos.set(n, bloco);
+    sobraDoAnterior = n;
+  }
+  itens.forEach((it, i) => {
+    const bloco = blocos.get(it[0]);
+    if (!bloco || !Number.isInteger(it[2])) return;
+    if (!new RegExp('(?:^|\\s)0*' + it[2] + '\\.00\\s+Unidade\\b').test(bloco)) return;
+    let t = bloco
+      .replace(/\s*\d{1,4}\.00\s+Unidade(?:\s+[\d.]+,\d{2,4}\s+[\d.]+,\d{2})?/g, ' ')
+      .replace(/(?:^|\s)\d{1,3}\s+\d{2}\s+(?=[A-ZÀ-Ú]{3,})/, ' ')
+      .replace(/\s\d{2}\s+1\s+(?=-\s)/g, ' ');
+    t = limpaCelula(cortaNaProximaLinha(tiraTimbre(t.replace(/\s+/g, ' ').trim(), timbres)), timbres);
+    if (t) saida.set(i, t);
+  });
+  return saida;
+}
+
+// O numero da linha SEGUINTE colado no fim da celula, depois de uma palavra:
+// "...tensao alimentacao 110/127 v, tipo vertical 6" no item 5 de Apiai/SP.
+// Aqui ja se sabe o numero do proximo item, e so ele sai — e nunca depois de
+// palavra de medida, porque "capacidade 12" no item 11 e a capacidade.
+const MEDIDA_ANTES = /(?:capacidade|pot[eê]ncia|voltagem|tens[aã]o|garantia|bocas|portas|velocidades?|litros|quantidade|m[ií]nim[oa]|m[aá]xim[oa]|com|de|at[eé]|di[aâ]metro|altura|largura|comprimento|profundidade|peso|cor|n[oº]|modelo|classe|nivel|n[ií]vel|gavetas|prateleiras|queimadores|x)$/i;
+// A QUANTIDADE da linha pode vir antes dele, quando o edital a imprime no fim
+// da descricao: "...Cores: Branco e preto. 5 109" e "...Nas cores preto ou
+// branco . 135wts 20 108" em Sao Jose da Boa Vista/PR — 5 e 20 unidades, 109 e
+// 108 os itens seguintes.
+function tiraNumeroDoProximo(t, prox) {
+  if (!Number.isInteger(prox)) return t;
+  const m = new RegExp('(\\S+)\\s+(?:\\d{1,4}\\s+)?0*' + prox + '$').exec(t);
+  if (!m || !/[A-Za-zÀ-ÿ).;]$/.test(m[1]) || MEDIDA_ANTES.test(m[1])) return t;
+  return t.slice(0, m.index + m[1].length).trim();
+}
+
+// PALAVRA PARTIDA pelo proprio PDF: um dos termos de referencia de Vicosa/MG
+// escreve um espaco no meio da palavra — "preparo de alime ntos", "controle
+// rem oto", "capacidade minim a" — e o outro, com o mesmo texto, nao. Quando so
+// a copia partida tem a linha do item, o resumo mostrava as palavras quebradas.
+//
+// Junta dois pedacos quando a palavra inteira existe no vocabulario dos editais
+// e pelo menos um dos pedacos NAO existe como palavra: "alime" e "ntos" nao sao
+// palavras, "alimentos" e. "com o" nao vira "como", porque "com" e "o" sao.
+const vocabulario = new Map();
+for (const v of Object.values(base.editais)) {
+  for (const s of v.secoes || []) for (const w of String(s.texto).toLowerCase().match(/[a-zà-ÿ]+/g) || []) vocabulario.set(w, (vocabulario.get(w) || 0) + 1);
+}
+//
+// E so com PROVA no proprio edital: a outra copia do mesmo trecho, com a palavra
+// inteira ao lado da mesma vizinha ("de alimentos", "controle remoto"). Sem
+// isso, "aplicacao de correntes terapeuticas" (Itaporanga/SP) virava
+// "decorrentes" — "correntes" e palavra rara, mas e palavra.
+// A LIGADURA que a fonte nao traduziu: o edital 1081 de Sao Paulo/SP escreve
+// "ti" com um glifo so, sem correspondencia de texto, e sai "Garan a 12 meses",
+// "desligamento automa co", "base an derrapante". Recoloca as letras quando a
+// palavra inteira existe e os pedacos nao — e so no edital em que isso acontece
+// varias vezes, que e a prova de que a fonte dele perdeu a ligadura.
+const LIGADURAS = ['ti', 'tt', 'ft', 'fi', 'fl', 'ff'];
+const PAR_SOLTO = /(?<![A-Za-zÀ-ÿ])([A-Za-zÀ-ÿ][a-zà-ÿ]{0,13}) (?=([a-zà-ÿ]{1,14})(?![A-Za-zÀ-ÿ]))/g;
+const resolveLigadura = (a, b) => {
+  if ((vocabulario.get((a + b).toLowerCase()) || 0) >= 5) return null;
+  for (const L of LIGADURAS) {
+    const n = vocabulario.get((a + L + b).toLowerCase()) || 0;
+    if (n < 10) continue;
+    // Pedaco que so existe como sobra da propria copia partida nao e palavra:
+    // "an" e "derrapante" aparecem seis vezes cada, "antiderrapante" 67 (Sao
+    // Paulo/SP, edital 1081).
+    const palavra = x => { const f = vocabulario.get(x.toLowerCase()) || 0; return f >= 3 && f * 5 >= n; };
+    if (palavra(a) && palavra(b)) continue;
+    return L;
+  }
+  return null;
+};
+const semLigadura = new Map();
+function editalSemLigadura(textoDoEdital) {
+  if (!semLigadura.has(textoDoEdital)) {
+    const vistos = new Set();
+    for (const m of textoDoEdital.matchAll(PAR_SOLTO)) if (resolveLigadura(m[1], m[2])) vistos.add(m[1] + ' ' + m[2]);
+    semLigadura.set(textoDoEdital, vistos.size >= 3);
+  }
+  return semLigadura.get(textoDoEdital);
+}
+
+const PREFIXO_COM_HIFEN = /^(?:ar|pr[ée]|p[óo]s|anti|semi|auto|micro|multi|super|ultra|extra|inter|sub|mini|frost|hi|bi|tri|porta|guarda|lava|air|eco|termo|hidro|eletro)$/i;
+function juntaPartidas(texto, textoDoEdital) {
+  // O contrario tambem: a palavra colada na seguinte, sem o espaco da quebra de
+  // linha — "ciclo quente/frio, tecnologiaInverter, composto" (Bento
+  // Goncalves/RS). So quando as duas metades sao palavras comuns do edital;
+  // nome de marca como "MaxxiClean" nao passa.
+  texto = String(texto).replace(/(?<![A-Za-zÀ-ÿ])([a-zà-ÿ]{4,})([A-ZÀ-Ú][a-zà-ÿ]{3,})(?![A-Za-zÀ-ÿ])/g, (tudo, a, b) =>
+    (vocabulario.get(a) || 0) >= 3 && (vocabulario.get(b.toLowerCase()) || 0) >= 3 ? a + ' ' + b : tudo);
+  // Hifenizacao do fim de linha que ficou no meio do texto: "garantia minima 12
+  // me- ses", "acabamen- to em pintura" (Nova Esperanca/PR).
+  texto = String(texto).replace(/(?<![A-Za-zÀ-ÿ])([a-zà-ÿ]{1,15})- ([a-zà-ÿ]{1,15})(?![A-Za-zÀ-ÿ])/g, (tudo, a, b) =>
+    (vocabulario.get((a + b).toLowerCase()) || 0) >= 5 ? a + b : tudo);
+  // A palavra composta partida NO hifen fica com ele: "Funcoes pre- programadas"
+  // (Valinhos/SP), "Tratamento Anti- ferrugem" (Santa Rita do Passa Quatro/SP),
+  // "Ar- condicionado" (Campina do Monte Alegre/SP), "admitindo- se" (Bento
+  // Goncalves/RS).
+  texto = texto.replace(/(?<![A-Za-zÀ-ÿ])([A-Za-zÀ-ÿ]{2,15})- ([a-zà-ÿ]{2,15})(?![A-Za-zÀ-ÿ])/g, (tudo, a, b) =>
+    PREFIXO_COM_HIFEN.test(a) || /^(?:se|lo|la|los|las|lhe|lhes)$/.test(b) ? a + '-' + b : tudo);
+  const freq = x => vocabulario.get(x.toLowerCase()) || 0;
+  if (editalSemLigadura(textoDoEdital)) {
+    texto = texto.replace(PAR_SOLTO, (tudo, a, b) => { const L = resolveLigadura(a, b); return L ? a + L : tudo; });
+  } else {
+    // Sem o edital inteiro sem ligadura, so a palavra que o conjunto dos
+    // editais conhece bem e cujos dois pedacos quase nao existem sozinhos:
+    // "base an derrapante" (Sao Paulo/SP, edital 1081), onde o "ti" sumiu uma
+    // vez so.
+    texto = texto.replace(PAR_SOLTO, (tudo, a, b) => {
+      if (freq(a + b) >= 5) return tudo;
+      for (const L of LIGADURAS) {
+        const n = freq(a + L + b);
+        if (n >= 50 && freq(a) * 5 < n && freq(b) * 5 < n) return a + L;
+      }
+      return tudo;
+    });
+  }
+  // A letra acentuada que a fonte do PDF nao traz e vira espaco: "VISUALIZACAO
+  // DA TEMPERATURA A DIST NCIA" (Florianopolis/SC), "Pot ncia 41.2 KW". Mesma
+  // prova da ligadura: a palavra inteira e conhecida e os pedacos quase nao
+  // existem sozinhos. A letra sai na caixa do pedaco da esquerda.
+  texto = texto.replace(/(?<![A-Za-zÀ-ÿ])([A-Za-zÀ-ÿ]{2,14}) (?=([A-Za-zÀ-ÿ]{2,14})(?![A-Za-zÀ-ÿ]))/g, (tudo, a, b) => {
+    if (freq(a + b) >= 5) return tudo;
+    for (const l of ['â', 'ã', 'á', 'ç', 'é', 'ê', 'í', 'ó', 'ô', 'õ', 'ú']) {
+      const n = freq(a + l + b);
+      if (n >= 30 && freq(a) * 5 < n && freq(b) * 5 < n) return a + (a === a.toUpperCase() ? l.toUpperCase() : l);
+    }
+    return tudo;
+  });
+  // O segundo pedaco fica numa olhada a frente, sem ser consumido: em "controle
+  // rem oto" o par "controle rem" nao junta, e o "rem oto" seguinte ainda precisa
+  // ser visto.
+  return String(texto).replace(/(?<![A-Za-zÀ-ÿ])([a-zà-ÿ]{1,12}) (?=([a-zà-ÿ]{1,12})(?![A-Za-zÀ-ÿ]))/g, (tudo, a, b, pos, todo) => {
+    const n = vocabulario.get((a + b).toLowerCase()) || 0;
+    if (n < 5) return tudo;
+    // Pedaco que aparece de vez em quando — "alime", da propria copia partida —
+    // nao conta como palavra: tem de ser comum perto da palavra inteira. Letra
+    // sozinha tambem nao: "plataforma e m aco" (Vicosa/MG) e "em".
+    const palavra = x => { const f = vocabulario.get(x) || 0; return x.length >= 2 && f >= 3 && f * 20 >= n; };
+    if (palavra(a) && palavra(b)) return tudo;
+    // A palavra muito conhecida cujo primeiro pedaco nao existe sozinho, com o
+    // segundo curto ou raro, dispensa a prova no texto: "capacidade maxi ma."
+    // (Vicosa/MG), que o edital nao escreve inteiro em lugar nenhum.
+    if (n >= 100 && a.length >= 3 && b.length >= 2 && freq(a) * 20 < n && (freq(b) * 20 < n || b.length <= 3)) return a;
+    const antes = (todo.slice(0, pos).match(/(\S+)\s*$/) || [])[1];
+    const resto = todo.slice(pos + tudo.length + b.length);
+    const depois = (resto.match(/^\s*(\S+)/) || [])[1];
+    // A pontuacao colada tambem serve de vizinha: "capacidade maxi ma."
+    const colada = (resto.match(/^[^\sA-Za-zÀ-ÿ0-9]+/) || [])[0];
+    const provaAntes = antes && textoDoEdital.includes(antes + ' ' + a + b);
+    const provaDepois = depois && textoDoEdital.includes(a + b + ' ' + depois);
+    const provaColada = colada && textoDoEdital.includes(' ' + a + b + colada);
+    // Artigo ou conjuncao de uma letra no fim do par precisa das duas provas:
+    // "e com o espaco" nao e "e como espaco" so porque o edital diz "e como".
+    // No comeco do par, a prova e a palavra seguinte: "a traves de" e "atraves
+    // de" (Saudade do Iguacu/PR), "manual e m portugues" e "em portugues".
+    // Palavra muito comum com a palavra seguinte provada tambem serve: "de um a
+    // ou duas portas" e "uma ou" (Vicosa/MG), e "com o espaco" continua de fora
+    // porque o edital nao diz "como espaco".
+    if (/^[aeoàé]$/.test(b)) return (provaAntes || n >= 300) && (provaDepois || provaColada) ? a : tudo;
+    if (/^[aeoàé]$/.test(a)) return provaDepois || provaColada ? a : tudo;
+    const prova = provaAntes || provaDepois || provaColada;
+    return prova ? a : tudo;
+  });
 }
 
 let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0;
@@ -1111,6 +2562,8 @@ for (const e of dados.editais) {
   comTexto++;
 
   const { textos: recortes, lotes } = descritivosPorItem(secoes, v.itens);
+  for (const [i, texto] of celulasPorLote(secoes, v.itens, timbresDoEdital(secoes))) recortes.set(i, { texto, confirmado: true });
+  const textoPlano = secoes.replace(/\s+/g, ' ');
   v.itens.forEach((it, i) => {
     itensTotal++;
     // it = [numero, descricao, quantidade, unidade, valor, beneficio]
@@ -1120,7 +2573,25 @@ for (const e of dados.editais) {
     // Paranavai/PR e a gravacao a recusava logo depois, por ser mais curta que
     // o rotulo de catalogo — o item ficava vazio com o texto certo em maos.
     if (completo && serve(it[1], completo.texto, completo.confirmado)) {
-      it[6] = completo.texto;
+      // Sem o numero, sobra a letra solta que vinha antes dele: "...Apresentar
+      // catalogo. I 1 2" (Saudade do Iguacu/PR) ficava "...catalogo. I".
+      it[6] = juntaPartidas(tiraNumeroDoProximo(completo.texto, v.itens[i + 1] ? v.itens[i + 1][0] : it[0] + 1)
+        .replace(/([.;])\s+[A-ZÀ-Ú]{1,2}$/, '$1')
+        .replace(/([.;])\s+ITEM$/, '$1')
+        // a garantia da coluna ao lado, que so aparece no fim depois de sair o
+        // numero da linha seguinte: "...CERTIFICACAO INMETRO. 12 MESES 24"
+        // (Campinas/SP, quadro de garantias)
+        .replace(/([.;])\s+\d{1,2}\s+MESES$/, '$1')
+        // e a unidade, a quantidade e as colunas de cota, pelo mesmo motivo:
+        // "...Garantia 12 meses. Unidade 55 Nao SIM 2" (Sao Paulo/SP, edital 1081)
+        .replace(/\sUnidade\s+\d{1,5}(?:\s+(?:N[ãa]o|Sim|SIM|N[ÃA]O)){1,2}$/, '')
+        // "...contra defeitos de fabricacao. Imagem meramente ilustrativa" e a
+        // legenda da foto que o termo de Ponta Grossa/PR poe em cada linha
+        .replace(/\.?\s*Imagem meramente ilustrativa\.?$/i, '.')
+        .replace(/\s+(?:UN|UND|UNID)?\s*CatMat:\s*\d{5,6}$/i, '')
+        // O "U" acentuado que o gerador do catalogo da Prefeitura de Sao Paulo
+        // grava como interrogacao: "Com Capacidade ? til Minima de 540 Litros".
+        .replace(/(?<=\bcapacidade\s)\?\s?til\b/gi, 'Útil'), textoPlano);
       // Lote e numero dentro dele, quando o edital e por lote: e assim que a
       // linha e identificada no pregao ("Lote 37, item 1"), e nao pela
       // numeracao corrida da API.
@@ -1132,6 +2603,31 @@ for (const e of dados.editais) {
     const L = lotes.get(i);
     if (L) { it[7] = L.lote; it[8] = L.noLote || null; }
   });
+
+  // A cota reservada que remete a cota principal: "...COTA RESERVADA DE ATE 25%
+  // PARA ME/EPP, CONFORME ART. 48, III, DA LC No 123/2006 - DO ITEM: 4 DESCRICAO
+  // DETALHADA: IDEM AO ITEM 4" (Bento Goncalves/RS). O edital diz que a
+  // especificacao e a mesma do item 4, entao o item leva a do item 4. Sem a do
+  // item 4, fica sem nada: a remissao sozinha nao descreve produto nenhum.
+  //
+  // O bloco da remissao sai do texto em todo caso — o que fica antes dele e a
+  // primeira frase da especificacao, que o termo repete na linha da cota. Quando
+  // a folha com a linha principal nao entrou no texto (o fogao do item 50 de
+  // Bento Goncalves/RS), essa frase e tudo o que o edital da sobre o produto.
+  const REMISSAO_DA_COTA = /\s*COTA\s+RESERVADA\s+DE\s+AT[ÉE][\s\S]{0,200}?IDEM\s+AO\s+ITEM\s+0*(\d{1,4})\b\.?/i;
+  const remete = new Map();
+  for (const it of v.itens) {
+    const m = REMISSAO_DA_COTA.exec(it[6] || '');
+    if (!m) continue;
+    remete.set(it, +m[1]);
+    it[6] = it[6].replace(REMISSAO_DA_COTA, '').trim();
+  }
+  for (const [it, n] of remete) {
+    const principal = n !== it[0] ? v.itens.find(x => x[0] === n) : null;
+    const texto = principal && principal[6] && principal[6].length > it[6].length ? principal[6] : it[6];
+    if (texto && texto.length >= 60) it[6] = texto;
+    else { itensRicos--; if (it.length > 7) it[6] = null; else it.length = 6; }
+  }
 }
 
 fs.writeFileSync(arquivo, JSON.stringify(base), 'utf8');
