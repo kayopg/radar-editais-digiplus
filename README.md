@@ -10,27 +10,40 @@ Estados atendidos: PR, RS, SP, MG, GO, MT, MS, SC.
 
 ## Como funciona
 
-O GitHub Actions roda a varredura de segunda a sexta às 6h23 (horário de Brasília), grava
-`docs/dados.json` e commita. A página busca esse JSON toda vez que alguém abre — não é
-preciso republicar nada, e o link nunca muda.
+O GitHub Actions roda o pipeline inteiro de segunda a sexta, a partir das 6h23 (horário de
+Brasília), com repescagem às 8h23 e 10h23 se a fila do Actions atrasar. Ele grava
+`docs/dados.json` e `docs/descritivos.json` e commita. A página busca esses JSON toda vez
+que alguém abre — não é preciso republicar nada, e o link nunca muda.
 
 Antes de commitar, o `conferir.mjs` checa se o resultado faz sentido: lista vazia,
 encolhimento maior que 40% em relação ao dia anterior, ou mais de 10% das buscas falhando
 derrubam o job. Nesse caso o `dados.json` de ontem continua no ar e o GitHub avisa por
 e-mail — dado velho e inteiro é melhor que dado novo pela metade.
 
+O job leva mais de duas horas. Se alguém empurrar código para o `main` nesse meio tempo, o
+passo de publicar pula para o `main` atual e refaz o recorte com o código novo antes do push.
+
 ```
-varredura.mjs  →  dados/ultima.json  →  publicar.mjs  →  docs/dados.json  →  docs/index.html
+varredura.mjs → publicar.mjs → docs/dados.json
+descritivos.mjs → itens-embutidos.mjs → descritivo-por-item.mjs → docs/descritivos.json
+                                                     ↓
+                                              docs/index.html
 ```
 
 | Arquivo | O que faz |
 |---|---|
-| `varredura.mjs` | 32 termos × 8 UFs × 2 páginas no PNCP, lê os itens de cada processo e aplica os filtros. ~12 min. |
+| `varredura.mjs` | 32 termos × 8 UFs × 2 páginas no PNCP, lê os itens de cada processo e aplica os filtros. ~100 min. |
 | `publicar.mjs` | Converte a saída bruta no `docs/dados.json` que a página consome. |
 | `delta.mjs` | Compara duas versões do `dados.json` e imprime o que entrou, o que saiu e o que fecha em 48 h. |
 | `conferir.mjs` | Trava de sanidade: derruba o job antes do commit se o resultado do dia parecer degradado. |
-| `docs/index.html` | A página. Sem dependência externa, sem build. |
-| `docs/pdf.js` | Gerador de PDF próprio, ~12 KB, sem biblioteca. "Baixar edital resumido" baixa um arquivo por edital; "Baixar lista em PDF" baixa a lista inteira que o filtro está mostrando, com índice na frente. |
+| `descritivos.mjs` | Baixa o edital de cada processo e extrai o texto das seções que descrevem os produtos. `--faltantes` refaz só quem ficou sem texto. ~50 min. |
+| `itens-embutidos.mjs` | Junta a lista de itens do PNCP a cada edital do `docs/descritivos.json`. |
+| `descritivo-por-item.mjs` | Recorta do texto do edital o descritivo de cada item. Na dúvida deixa o item sem descritivo: nenhum é melhor que um errado. |
+| `ortografia.mjs` | Revisão ortográfica dos descritivos (acentos que o edital não escreveu, letras perdidas na extração do PDF), com os dicionários de `ortografia/` (pt-BR e en-US, LGPL). |
+| `confere-*.mjs`, `audita-descritivos.mjs` | Auditorias do recorte: texto de um item invadindo outro, cortes, numeração, mistura. Contam no Summary do job, não derrubam. |
+| `artefato.mjs` | Monta a página num arquivo só, com dados e PDF embutidos, para publicar como artefato. |
+| `docs/index.html` | A página, com a identidade da Loja DigiPlus. Sem build; as fontes vêm do Google Fonts, com fonte do sistema de reserva. |
+| `docs/pdf.js` | Gerador de PDF próprio, sem biblioteca. "Baixar resumo + edital" baixa um arquivo por edital, com a tabela de itens e o edital oficial anexado. |
 | `docs/pdf-le.js` | Leitor de PDF: abre o edital oficial do órgão e copia páginas dele para dentro do PDF gerado. Entende xref clássico e xref stream, object stream e FlateDecode. |
 | `testa-pdf.mjs` | Gera os dois PDFs pelo Node com dados reais, para conferir layout e paginação sem abrir o navegador. |
 | `testa-descritivo.mjs` | Prova que o PDF não altera o descritivo de nenhum produto. |
@@ -39,7 +52,7 @@ varredura.mjs  →  dados/ultima.json  →  publicar.mjs  →  docs/dados.json  
 Rodar na mão:
 
 ```bash
-node varredura.mjs && node publicar.mjs
+node varredura.mjs && node publicar.mjs && node descritivos.mjs && node descritivos.mjs --faltantes && node itens-embutidos.mjs && node descritivo-por-item.mjs
 ```
 
 Para conferir antes de publicar, sirva a pasta `docs/` (`python -m http.server 8765 --directory docs`)
