@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { extraiDescritivo } from './paginas-uteis.mjs';
+import { criaRevisor } from './ortografia.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const arquivo = path.join(DIR, 'docs', 'descritivos.json');
@@ -1574,9 +1575,12 @@ function descritivosPorItem(secoes, itens) {
   // E o outro nome antes da barra: "28 Geladeira / Refrigerador domestico" e "47
   // Jarra eletrica/ Chaleira eletrica" (Santa Maria/RS). Com a marca depois da
   // barra o numero da linha nao era lido, e os itens ficavam sem descritivo.
-  const PREFIXO = /([A-ZÀ-Ú][A-Za-zÀ-ÿ]{2,14}(?:\s+[a-zà-ÿ]{3,14})?\s*\/\s*|[A-ZÀ-Ú][A-Za-zÀ-ÿ]{2,14}(?:\s+(?:de|da|do|DE|DA|DO)\s+|\s+)?|(?:AR|Ar)(?:\s+|-\s*))$/;
+  // "30 Geladeira / Refrigerador tipo | Frigobar, capacidade total entre 80 a
+  // 122 litros" (Santa Maria/RS, edital 227): o nome da linha vem antes da
+  // palavra do rotulo e tambem e do item.
+  const PREFIXO = /((?<=\d\s)[A-ZÀ-Ú][a-zà-ÿ]{2,14}\s*\/\s*[A-ZÀ-Ú][a-zà-ÿ]{2,14}\s+tipo\s+|[A-ZÀ-Ú][A-Za-zÀ-ÿ]{2,14}(?:\s+[a-zà-ÿ]{3,14})?\s*\/\s*|[A-ZÀ-Ú][A-Za-zÀ-ÿ]{2,14}(?:\s+(?:de|da|do|DE|DA|DO)\s+|\s+)?|(?:AR|Ar)(?:\s+|-\s*))$/;
   function recuaPrefixo(pos) {
-    const antes = secoes.slice(Math.max(0, pos - 30), pos);
+    const antes = secoes.slice(Math.max(0, pos - 40), pos);
     const m = antes.match(PREFIXO);
     // "Item" e cabecalho da tabela, nao nome de produto: em Diamante D'Oeste/PR
     // a celula abria "Item Maquina de lavar roupas..." e, com a palavra na
@@ -1966,6 +1970,11 @@ function descritivosPorItem(secoes, itens) {
     const antes = secoes.slice(Math.max(0, p - 16), p);
     if (/^[a-zà-ÿ]/.test(secoes.slice(p, p + 1)) && (/(?:[a-zà-ÿ,:]|[—–])\s+$/.test(antes)
         || /[a-zà-ÿ,:]\s+\d{1,3}\s+$/.test(antes) || /(?:^|[\s.:;])[AO]\s+$/.test(antes))) return true;
+    // Em caixa alta, o artigo ou a preposicao entre duas palavras: "PERMITE
+    // ADICIONAR INGREDIENTES A | TIGELA DURANTE O PREPARO" (Campinas/SP) e a
+    // batedeira falando da tigela, nao a linha da tigela dos itens 31 e 42.
+    if (/^[A-ZÀ-Ú]{3}/.test(secoes.slice(p, p + 3))
+        && /[A-ZÀ-Ú]{3,}\s+(?:A|O|AS|OS|AO|DE|DA|DO|DAS|DOS|NA|NO|EM|COM|SEM|PARA|PELA|PELO)\s+$/.test(secoes.slice(Math.max(0, p - 30), p))) return true;
     // O ponto e virgula nao vale para a abertura pelo nome da classe: em Diamante
     // D'Oeste/PR a linha da poltrona termina em "...para o piso;" e a da
     // fritadeira comeca logo depois.
@@ -2084,7 +2093,16 @@ function descritivosPorItem(secoes, itens) {
     const fim = Math.min(proxima, pos + TETO_ITEM, secoes.length);
     // O cabecalho da AGU sai antes do timbre aprendido: ele vem em duas versoes,
     // o detector aprende as pontas de cada uma e deixaria o miolo para tras.
-    const cru = tiraTimbre(secoes.slice(pos, fim).replace(/\s+/g, ' ').replace(CABECALHO_AGU, ' ').replace(CABECALHO_HASH, ' ').trim(), timbres);
+    const cru = tiraTimbre(secoes.slice(pos, fim).replace(/\s+/g, ' ').replace(CABECALHO_AGU, ' ').replace(CABECALHO_HASH, ' ').trim(), timbres)
+      // A folha que vira DEPOIS dos valores da linha, com o fim da celula na
+      // folha seguinte: "...Garantia minima de 12 meses 608748 Unidade 05 R$
+      // 579,97 R$ 2.899,85 UASG 102315 [cabecalho da AGU] Marca/Modelo de
+      // Referencia ou equivalente: Batedeira Planetaria Oster Bowl Inox III,
+      // OBAT641" (Botucatu/SP, item 2). Os valores fecham a linha e a referencia
+      // ficava de fora; ela toma o lugar deles, sem o numero do item seguinte
+      // que fecha o trecho. So no FIM do trecho e curta: numa copia sem a marca
+      // do item 3 o "fim" seria a linha inteira do mixer.
+      .replace(/\s\d{5,6}\s+Unidade\s+\d{1,5}\s+R\$\s*[\d.]*,\d{2}\s+R\$\s*[\d.]*,\d{2}\s+(?:UASG\s+\d{4,6}\s+)?(?:\d{1,3}\s+)?(Marca\/Modelo\s+de\s+refer[êe]ncia\b[^]{0,200}?)(?:\s+\d{1,3})?$/i, ' $1');
     const t = limpaCelula(cortaNoVizinho(cortaNaProximaLinha(cru)), timbres);
     // Celula que para no PULO DE PAGINA no meio da frase esta cortada: a folha
     // seguinte, onde ela continuava, nao entrou no texto. Melhor sem descritivo
@@ -2222,6 +2240,7 @@ function descritivosPorItem(secoes, itens) {
     const achouMinhaLinha = numLinha.some(n => n === itens[i][0]);
 
     let vencedor = '', nota = -1, venceuPeloNumero = false, numeroVencedor = null, kVencedor = -1;
+    const avaliados = [];
     cabecas.forEach(({ k, t, c, nums }, idx) => {
       if (!t) return;
       const confirmado = numLinha[idx] === itens[i][0];
@@ -2259,11 +2278,44 @@ function descritivosPorItem(secoes, itens) {
       // tras o numero da folha; a outra copia, sem ele, e a boa.
       const semSolto = x => x.replace(/(?<![\w.,\/])\d{1,4}(?![\w.,\/])/g, '').replace(/\s+/g, '');
       const mesmoTexto = vencedor && semSolto(t) === semSolto(vencedor);
+      avaliados.push({ k, t, n, confirmado, idx });
       if (n > nota || (n === nota && (mesmoTexto ? t.length < vencedor.length : t.length > vencedor.length))) {
         nota = n; vencedor = t; venceuPeloNumero = confirmado;
         numeroVencedor = numLinha[idx]; kVencedor = k;
       }
     });
+    // A COPIA MAIS COMPLETA do mesmo texto. A contagem de palavras olha so a
+    // cabeca do trecho, e duas copias da mesma linha podem diferir mais adiante:
+    // em Paranavai/PR (edital 178) a planilha do edital diz "Caracteristicas
+    // adicionais: tampa de vidro temperado" e as quatro tabelas do termo de
+    // referencia dizem "autolimpante, automatico, tampa de vidro temperado",
+    // como o rotulo do PNCP. A planilha ganhava porque a palavra "tampa" caia
+    // dentro da cabeca dela e fora da cabeca das outras. Vale a copia que tem
+    // quase todas as palavras da vencedora, pelo menos duas palavras do rotulo
+    // a mais no texto inteiro e a mesma confirmacao pelo numero.
+    if (vencedor && nota >= 1e6) {
+      const tokens = x => new Set(fatiaTexto(x).map(limpaNum));
+      const cobre = c => alvo.filter(w => c.has(w)).length;
+      const tv = tokens(vencedor), cv = cobre(tv);
+      let troca = null, melhorCobre = cv;
+      for (const a of avaliados) {
+        if (a.t === vencedor || a.n < 1e6 || (venceuPeloNumero && !a.confirmado)) continue;
+        if (a.t.length > vencedor.length * 1.6) continue;
+        const ta = tokens(a.t);
+        let comuns = 0;
+        for (const w of tv) if (ta.has(w)) comuns++;
+        if (comuns < tv.size * 0.9) continue;
+        const ca = cobre(ta);
+        // Duas palavras a mais, pelo menos: uma so pode ser a palavra que a
+        // outra copia parte ao meio ("e xigem", "nivel adores" em Vicosa/MG).
+        if (ca < cv + 2) continue;
+        if (ca > melhorCobre || (troca && ca === melhorCobre && a.t.length < troca.t.length)) { troca = a; melhorCobre = ca; }
+      }
+      if (troca) {
+        vencedor = troca.t; nota = troca.n; venceuPeloNumero = troca.confirmado;
+        numeroVencedor = numLinha[troca.idx]; kVencedor = troca.k;
+      }
+    }
     // O numero que ABRE a linha seguinte fica antes da marca dela, e portanto no
     // fim desta celula: "...ligado manualmente e com regulador de potencia 35 |
     // 165.16.27 SOPRADOR" (Salto/SP). Pelo texto ele nao pode sair — "potencia
@@ -2551,6 +2603,8 @@ function juntaPartidas(texto, textoDoEdital) {
   });
 }
 
+const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v.secoes || []).map(s => s.texto)));
+
 let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0;
 
 for (const e of dados.editais) {
@@ -2628,6 +2682,36 @@ for (const e of dados.editais) {
     if (texto && texto.length >= 60) it[6] = texto;
     else { itensRicos--; if (it.length > 7) it[6] = null; else it.length = 6; }
   }
+
+  // Cota principal e cota reservada com o MESMO rotulo no PNCP sao o mesmo
+  // produto, e cada uma pode ter saido de uma copia diferente da linha: o item
+  // 34 de Paranavai/PR (edital 178) saiu do termo de referencia, com
+  // "autolimpante, automatico, tampa de vidro temperado", e a cota dele, o item
+  // 51, so tem a linha da planilha, que diz "tampa de vidro temperado". Fica a
+  // copia mais completa nas duas, com as mesmas travas da escolha entre copias.
+  {
+    const tokens = x => new Set(fatiaTexto(x).map(limpaNum));
+    const porRotulo = new Map();
+    for (const it of v.itens) if (it[6]) { const r = String(it[1]).trim(); if (!porRotulo.has(r)) porRotulo.set(r, []); porRotulo.get(r).push(it); }
+    for (const [r, lista] of porRotulo) {
+      if (lista.length < 2) continue;
+      const alvo = palavrasDoItem(r);
+      const cobre = c => alvo.filter(w => c.has(w)).length;
+      const rico = lista.reduce((a, b) => cobre(tokens(b[6])) > cobre(tokens(a[6])) ? b : a);
+      const tr = tokens(rico[6]), cr = cobre(tr);
+      for (const it of lista) {
+        if (it === rico || it[6] === rico[6] || rico[6].length > it[6].length * 1.6) continue;
+        const ti = tokens(it[6]);
+        let comuns = 0;
+        for (const w of ti) if (tr.has(w)) comuns++;
+        if (comuns >= ti.size * 0.9 && cr >= cobre(ti) + 2) it[6] = rico[6];
+      }
+    }
+  }
+
+  // Por ultimo, o erro de digitacao e a palavra colada que vieram do proprio
+  // edital: "na cor brnca", "Atraves Dechave Seletora". Ver ortografia.mjs.
+  for (const it of v.itens) if (it[6]) it[6] = revisaOrtografia(it[6]);
 }
 
 fs.writeFileSync(arquivo, JSON.stringify(base), 'utf8');

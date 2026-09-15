@@ -27,6 +27,12 @@ const FECHADA = /[.;:)\]]\s*$/;
 // entao nada disso e confundido com o item seguinte.
 const CONTINUA = /^[a-zà-ÿ(]/;
 
+// Ou a celula acaba num artigo ou numa preposicao, e ai nao importa como o
+// texto segue: "...PERMITE ADICIONAR INGREDIENTES A | TIGELA DURANTE O
+// PREPARO" (Campinas/SP, item 2) continua em caixa alta e escapava da regra
+// acima.
+const ACABA_SOLTA = /\s(?:a|o|as|os|ao|de|da|do|das|dos|e|ou|em|na|no|com|sem|para|por|pelo|pela|que|um|uma)$/i;
+
 // Marca de rodape e de cabecalho de pagina. Quando ela aparece bem no ponto do
 // corte, a causa e a virada de folha e nao o fim do item.
 const VIRADA = /p[áa]gina\s+\d|www\.|cep[:\s]*\d{5}|assinad|prefeitura|munic[íi]pio|estado de|cnpj|termo de refer|anexo\s+[ivx]/i;
@@ -56,7 +62,7 @@ for (const ed of dd.editais) {
     const a = achado(cel, fonte);
     if (!a) continue;
     const depois = fonte.slice(a.fim, a.fim + 160).replace(/^\s+/, '');
-    if (!CONTINUA.test(depois)) continue;
+    if (!CONTINUA.test(depois) && !(ACABA_SOLTA.test(cel) && /^[A-ZÀ-Ú]{3}/.test(depois))) continue;
     cortados++;
     linhas.push('  ' + (ed[C.municipio] + '/' + ed[C.uf]).padEnd(28) + 'item ' + String(it[5]).padStart(3) +
       (VIRADA.test(depois.slice(0, 90)) ? '  [virada de folha]' : '') +

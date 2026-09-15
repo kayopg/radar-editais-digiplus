@@ -156,7 +156,11 @@ for (const ed of dd.editais) {
     const grupoRecomeca = n !== it[5] && k >= 0
       && /\bgrupo\s*0?\d{1,2}\b/i.test(txt.slice(Math.max(0, k - 300), k))
       && new RegExp('(?:unidade|unid\\.?|und|un)\\s+0*' + it[1] + '(?!\\d)', 'i').test(txt.slice(k, k + m[6].length + 80));
-    if (n === it[5] || grupoRecomeca) confere++;
+    // Cota reservada com o mesmo rotulo da cota principal leva a copia mais
+    // completa da linha, que pode ser a da principal: o item 51 de Paranavai/PR
+    // (edital 178) e a cota do 34, e o termo de referencia so imprime o 34.
+    const cotaDoMesmo = n !== it[5] && ed[C.itens].some(x => x[5] === n && String(x[3]) === String(it[3]));
+    if (n === it[5] || grupoRecomeca || cotaDoMesmo) confere++;
     else diverge.push({
       onde: ed[C.municipio] + '/' + ed[C.uf], path: ed[C.path],
       mostramos: it[5], edital: n,
