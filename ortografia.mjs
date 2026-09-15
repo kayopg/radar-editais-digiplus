@@ -168,17 +168,18 @@ export function criaRevisor(textos) {
   };
   // Uma edicao de letra. A primeira letra so pode faltar ("estinada" ->
   // "destinada") ou estar dobrada ("IImpressora"); troca-la e o que separa
-  // marca de palavra ("Kobra", "Minipa"). A ULTIMA letra nao se tira, nao se
-  // troca e nao se acrescenta: palavra que acaba antes e abreviatura ou pedaco
-  // — "Sem Paraf," nao e "Sem Para,", "1,90M DE COMPR." nao e "COMPRA", e
-  // "contra poeir a." e a palavra partida, nao "poeira a.".
+  // marca de palavra ("Kobra", "Minipa"). A ULTIMA letra nao se tira e nao se
+  // acrescenta, so se troca ("COM MANUAM DE OPERACOES", Florianopolis/SC):
+  // palavra que acaba antes e abreviatura ou pedaco — "Sem Paraf," nao e "Sem
+  // Para,", "1,90M DE COMPR." nao e "COMPRA", e "contra poeir a." e a palavra
+  // partida, nao "poeira a.".
   const edicoes = s => {
     const r = new Set();
     for (let i = 0; i < s.length; i++) {
       if (i < s.length - 1 && (i > 0 || s[1] === s[0])) r.add(s.slice(0, i) + s.slice(i + 1));
       if (i > 0 && i < s.length - 1) r.add(s.slice(0, i) + s[i + 1] + s[i] + s.slice(i + 2));
       for (const c of LETRAS) {
-        if (i > 0 && i < s.length - 1) r.add(s.slice(0, i) + c + s.slice(i + 1));
+        if (i > 0 && i < s.length) r.add(s.slice(0, i) + c + s.slice(i + 1));
         r.add(s.slice(0, i) + c + s.slice(i));
       }
     }
@@ -203,6 +204,9 @@ export function criaRevisor(textos) {
     for (const e of edicoes(s)) {
       const c = porChave.get(e);
       if (!c || forca(e) < 12 || forca(e) < 10 * f(w)) continue;
+      // o termo em ingles entre parenteses depois da palavra em portugues:
+      // "TECNOLOGIA DE IMAGEM (IMAGER)" (Birigui/SP)
+      if (e === ant) continue;
       const prova = (ant && pares.get(ant + ' ' + e) || 0) + (dep && pares.get(e + ' ' + dep) || 0);
       // palavra de quatro letras precisa das duas vizinhas: "com faxa minima"
       if (w.length === 4 && !((ant && pares.get(ant + ' ' + e)) && (dep && pares.get(e + ' ' + dep)))) continue;
@@ -239,6 +243,8 @@ export function criaRevisor(textos) {
       // "De 0 °C A -25 °C°C", "Tensao Alimentacao: 110/220vV" (Belo Horizonte/MG).
       .replace(/°C\s?°C\b/g, '°C')
       .replace(/(\d)vV\b/g, '$1V')
+      // o acento agudo solto no lugar do apostrofo: "24.000 BTU´s" (Nova Fatima/PR)
+      .replace(/([A-Za-z])´([sS])\b/g, "$1'$2")
       // "Caracteristicas Adicionais: Fost Free" (Jaraguari/MS): quatro letras
       // sao curtas demais para a regra geral, e o termo e sempre o mesmo.
       .replace(/\b(F)(OST|ost)(?=\s+(?:FREE|Free|free)\b)/g, (_, a, b) => a + (b === 'OST' ? 'R' : 'r') + b);
