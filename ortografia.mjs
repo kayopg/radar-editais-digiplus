@@ -125,6 +125,10 @@ const REPAROS = [
   [/\bBTU,H\b/g, 'BTU/H'],
   // "...COPO COLETOR E PENEIRA EM": o catalogo do PNCP corta a frase (Minacu/GO)
   [/\b(PENEIRA|peneira)\s+(?:EM|em)$/, '$1'],
+  // grafia do acordo ortografico e o termo de catalogo colado:
+  // "Microondas", "FrostFree" (Londrina/PR)
+  [/\b([Mm])icroondas\b/g, '$1icro-ondas'], [/\bMICROONDAS\b/g, 'MICRO-ONDAS'],
+  [/\bFrostFree\b/g, 'Frost Free'], [/\bFROSTFREE\b/g, 'FROST FREE'],
 ];
 
 // Cria o revisor a partir dos textos dos editais da varredura, que dao a
@@ -173,6 +177,50 @@ export function criaRevisor(textos) {
     return false;
   };
   const conhecida = w => pt(w) || acentoResolve(w) || en(w) || en(w.toLowerCase());
+  // O ACENTO que o edital nao escreveu: o catalogo da Prefeitura de Sao Paulo
+  // grava tudo sem acento ("Com Acabamento Em Aco Esmaltado", "No Balcao",
+  // "Cesto Removivel", "Potencia Minima"), e Diamante D'Oeste/PR escreve
+  // "alimentacao eletrica", "regulavel". Poe o acento quando a forma acentuada
+  // e a unica do dicionario e aparece nos editais — e, se a forma sem acento
+  // tambem e palavra ("potencia", verbo; "maquina"), so quando a acentuada e
+  // pelo menos cinco vezes mais comum: "acompanha" e "fluido" ficam como estao.
+  const restauraAcento = w => {
+    if (!/^[A-Za-z]{3,}$/.test(w)) return null;
+    const s = w.toLowerCase(), valida = pt(s);
+    if (valida && s.length < 4) return null;
+    const pos = [...s].map((c, i) => COM_ACENTO[c] ? i : -1).filter(i => i >= 0);
+    const troca = (str, i, c) => str.slice(0, i) + c + str.slice(i + 1);
+    const achadas = new Set();
+    // A palavra que nao existe sem acento pode ganhar a forma do dicionario
+    // mesmo rara nos editais ("homogenea", "cilindrica", "laticinios"), salvo
+    // quando e ingles ou nome proprio: "Consul" nao vira "Cônsul".
+    const minimo = valida || s.length < 5 || en(s) || (w[0] !== w[0].toLowerCase() && w.slice(1) !== w.slice(1).toUpperCase()) ? 5 : 1;
+    const olha = x => { if (f(x) >= minimo && pt(x)) achadas.add(x); };
+    for (let x = 0; x < pos.length; x++) {
+      for (const cx of COM_ACENTO[s[pos[x]]]) {
+        if (cx === 'ü') continue;
+        const um = troca(s, pos[x], cx);
+        olha(um);
+        for (let y = x + 1; y < pos.length; y++) for (const cy of COM_ACENTO[s[pos[y]]]) if (cy !== 'ü') olha(troca(um, pos[y], cy));
+      }
+    }
+    if (!achadas.size) return null;
+    const ordem = [...achadas].sort((a, b) => f(b) - f(a));
+    if (ordem.length > 1 && f(ordem[0]) < 5 * f(ordem[1])) return null;
+    if (valida && f(ordem[0]) < 5 * Math.max(1, f(s))) return null;
+    // "complementa" nao e "complementá", que so existe antes do pronome
+    // ("complementá-lo"): palavra valida nao ganha acento na ultima letra.
+    if (valida && /[À-ÿ]$/.test(ordem[0])) return null;
+    return caixa(w, ordem[0]);
+  };
+  // Nem a palavra presa por hifen a sigla ou a ingles: "MEDIA-SD", "Li-ion",
+  // "gas-ballast".
+  const presaAEstrangeira = (texto, ini, fim) => {
+    const a = texto.slice(Math.max(0, ini - 20), ini).match(/(\p{L}+)-$/u);
+    const d = texto.slice(fim, fim + 20).match(/^-(\p{L}+)/u);
+    return [a, d].some(m => m && (m[1].length <= 2 || (en(m[1].toLowerCase()) && !pt(m[1].toLowerCase()))));
+  };
+  const acentuaNoTexto = (w, texto, pos) => presaAEstrangeira(texto, pos, pos + w.length) ? null : restauraAcento(w);
   // Palavra com acento pela metade: "alimentaçao" (Diamante D'Oeste/PR),
   // "freqüência" do trema que caiu. Texto todo sem acento fica como esta — so
   // mexe na palavra que ja tem acento e tem a forma certa comum nos editais.
@@ -242,8 +290,7 @@ export function criaRevisor(textos) {
     if (!cands.length || conhecida(w)) return null;
     cands.sort((a, b) => b.prova - a.prova || b.n - a.n);
     if (cands.length > 1 && cands[0].prova < 3 * cands[1].prova) return null;
-    const escolhida = /[À-ÿ]/.test(texto) ? cands[0].forma : cands[0].chave;
-    return caixa(w, escolhida);
+    return caixa(w, cands[0].forma);
   }
   const FUNCIONAIS = ['de', 'do', 'da', 'dos', 'das', 'ou', 'o', 'a', 'e', 'em', 'com', 'para', 'no', 'na', 'sem'];
   // Palavra curta colada na seguinte: "Dechave" -> "De chave", "OUMECANICO" ->
@@ -296,10 +343,14 @@ export function criaRevisor(textos) {
     t = t.replace(/(?<![\p{L}])(\p{L}{4,})p\/(?=\p{L})/gu, (tudo, l) => pt(l) && !pt(l + 'p') ? l + ' p/' : tudo);
     // Palavra curta colada e erro de digitacao.
     t = t.replace(/(?<![\p{L}\p{N}])\p{L}{4,}(?![\p{L}\p{N}])/gu, (w, pos) => {
-      const c = acentua(w) || corrige(w, t, pos, pos + w.length);
+      const c = acentua(w) || acentuaNoTexto(w, t, pos) || corrige(w, t, pos, pos + w.length);
       if (c) return c;
       return separa(w) || w;
     });
+    // O acento nas palavras de tres letras, que a passada acima nao olha: "Aco
+    // Inox", "gas GLP", "Pes Com Sapatas", "Nao". E o "pre-" dos compostos.
+    t = t.replace(/(?<![\p{L}\p{N}])\p{L}{3}(?![\p{L}\p{N}])/gu, (w, pos) => acentuaNoTexto(w, t, pos) || w)
+      .replace(/(?<![\p{L}])(P|p)re-(?=\p{L})/gu, '$1ré-').replace(/(?<![\p{L}])PRE-(?=\p{L})/gu, 'PRÉ-');
     // Espaco que o edital esqueceu depois da pontuacao: "copo em aco
     // inoxidavel,motor", "8 VELOCIDADES,3 BATEDORES,TRAVAS", "BRASILEIRO.FORNECIMENTO",
     // "Capacidade Total:Minima", "(alp)com tecnologia". Numero decimal ("2,5"),
