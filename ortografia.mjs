@@ -128,7 +128,60 @@ const REPAROS = [
   // grafia do acordo ortografico e o termo de catalogo colado:
   // "Microondas", "FrostFree" (Londrina/PR)
   [/\b([Mm])icroondas\b/g, '$1icro-ondas'], [/\bMICROONDAS\b/g, 'MICRO-ONDAS'],
-  [/\bFrostFree\b/g, 'Frost Free'], [/\bFROSTFREE\b/g, 'FROST FREE'],
+  [/\bFrostFree\b/g, 'Frost Free'], [/\bFROSTFREE\b/g, 'FROST FREE'], [/\bfrostfree\b/g, 'frost free'],
+  [/\b([Uu])ltrasônico\b/g, '$1ltrassônico'], [/\bULTRASÔNICO\b/g, 'ULTRASSÔNICO'],
+  [/\bsemi-rápidos\b/g, 'semirrápidos'],
+  [/\b([Aa])ntirespingos\b/g, '$1ntirrespingos'], [/\bANTIRESPINGOS\b/g, 'ANTIRRESPINGOS'],
+  // da releitura de 15/09/2026, item por item:
+  // "Lamina Em Aco Inox" (Sao Paulo/SP), "LAMINAS DE ACO INOX" (Campinas/SP)
+  [/\b([Ll])amina(s?)\b/g, '$1âmina$2'], [/\bLAMINA(S?)\b/g, 'LÂMINA$1'],
+  // "COPO REMOVIVEL COM DUAS ALCAS" (Campinas/SP)
+  [/\balcas\b/g, 'alças'], [/\bAlcas\b/g, 'Alças'], [/\bALCAS\b/g, 'ALÇAS'],
+  // "(FOUET, PA PLANA E GANCHO)" (Campinas/SP)
+  [/\bPA PLANA\b/g, 'PÁ PLANA'], [/\bpa plana\b/g, 'pá plana'],
+  // "Camara Isolada Em La de Vidro" (Sao Paulo/SP)
+  [/\b([Ll])a (de [Vv]idro)\b/g, '$1ã $2'], [/\bLA DE VIDRO\b/g, 'LÃ DE VIDRO'],
+  // "AJUSTE DE INTENSIDADE DE NEVOA" (Lucas do Rio Verde/MT)
+  [/\b(DE\s+)NEVOA\b/g, '$1NÉVOA'], [/\b(de\s+)nevoa\b/g, '$1névoa'],
+  // "Normas Tecnicas: In Metro" (Belo Horizonte/MG)
+  [/\bIn Metro\b/g, 'Inmetro'],
+  // "nao podendo considera-las como itens adicionais" (Chapadao do Sul/MS)
+  [/\bconsidera-las\b/g, 'considerá-las'],
+  // "contem 1 prateleira de grade" (Nova Esperanca/PR)
+  [/\b([Cc])ontem(?=\s+\d)/g, '$1ontém'],
+  // "Funcoes: ... auto limpante" (Sao Paulo/SP)
+  [/\b([Aa])uto limpante\b/g, '$1utolimpante'], [/\bAUTO LIMPANTE\b/g, 'AUTOLIMPANTE'],
+  // "COM AS SEGUINTE ESPECIFICACOES", "MESA ESMALTADA A FOGO" com crase (Minacu/GO)
+  [/\bSEGUINTE ESPECIFICAÇÕES\b/g, 'SEGUINTES ESPECIFICAÇÕES'],
+  [/(?<!\p{L})À FOGO\b/gu, 'A FOGO'], [/(?<!\p{L})à fogo\b/gu, 'a fogo'],
+  // "VOLTAGEM: 110,220 V" (Minacu/GO): e 110/220
+  [/\b(110|127),(220)\s?V\b/g, '$1/$2 V'],
+  // "Aco Inox Aisi304" (Sao Paulo/SP)
+  [/\b(AISI|Aisi|aisi)(\d{3})\b/g, '$1 $2'],
+  // o ordinal no lugar da letra: "R-134ª" (Salto/SP), "CORRENTE: 5,5ª" (Descalvado/SP)
+  // (so em gas e corrente: "10ª geracao" e ordinal de verdade)
+  [/\b(R-?134)ª/g, '$1a'], [/(\d,\d)ª(?=[\s,.;]|$)/g, '$1A'], [/((?:CORRENTE|[Cc]orrente)[^.;]{0,20}?\d)ª/g, '$1A'],
+  // o grau: "+2 OC E +10 OC" (Florianopolis/SC), "250ºc", "50°c e 320°c"
+  // (Paranavai/PR, Mariopolis/PR), "160° C Á 300º C" (Renascenca/PR), "0,1C",
+  // "+1 e +5° °C" (Paranavai/PR)
+  [/(\d)\s+OC\b/g, '$1 °C'], [/(\d,\d)C\b/g, '$1 °C'],
+  [/[º°]\s°C/g, '°C'],
+  [/(\d)(\s?)([º°])(\s?)([cC])(?![\p{L}])/gu, (m, d, s1, g, s2, c) => g === '°' && !s2 && c === 'C' ? m : d + s1 + '°C'], [/(?<!\p{L})Á(?=\s+\d)/gu, 'A'],
+  // "atingir temperatura minima de - 18°C" (Pinhal de Sao Bento/PR)
+  [/\b(de )- (?=\d)/g, '$1-'],
+  // decimal partido pela virgula com espaco: "(52 x 32, 5 x 42, 2) cm" (Sao Paulo/SP)
+  // (um digito so: "Furacao vesa 50 x 50, 75 x 75" e lista)
+  [/(\d), (\d)(?=\s*(?:x|X|×|\)))/g, '$1,$2'],
+  // "BTU''S/H" (Chapadao do Sul/MS), "Dimensoes aproximadas: : (LxAxP)" (Londrina/PR)
+  [/\bBTU''S\b/g, "BTU'S"], [/:\s+:/g, ':'],
+  // "VENTILADOR DE TETO/PAREDE – : Equipamento novo" (Vicosa/MG)
+  [/–\s*:\s*/g, '– '],
+  // "destinado ao preparo de alimentos. ]Caracteristicas minimas" (Diamante D'Oeste/PR)
+  [/\.\s*\](?=\p{L})/gu, '. '],
+  // "dreno frontal*," (Ponta Grossa/PR): a nota de rodape que ficou sem rodape
+  [/(?<=\p{L})\*(?=[,;.\s])/gu, ''],
+  // "Com Selo Procel Com Selo Procel Letra a" (Santa Rita do Passa Quatro/SP)
+  [/(?<![\p{L}\p{N}])((?:[\p{L}\p{N}]+ ){2,6}[\p{L}\p{N}]+) \1(?![\p{L}\p{N}])/gu, '$1'],
 ];
 
 // Cria o revisor a partir dos textos dos editais da varredura, que dao a
@@ -194,7 +247,7 @@ export function criaRevisor(textos) {
     // A palavra que nao existe sem acento pode ganhar a forma do dicionario
     // mesmo rara nos editais ("homogenea", "cilindrica", "laticinios"), salvo
     // quando e ingles ou nome proprio: "Consul" nao vira "Cônsul".
-    const minimo = valida || s.length < 5 || en(s) || (w[0] !== w[0].toLowerCase() && w.slice(1) !== w.slice(1).toUpperCase()) ? 5 : 1;
+    const minimo = valida || s.length < 5 || en(s) || (w[0] !== w[0].toLowerCase() && w.slice(1) !== w.slice(1).toUpperCase()) ? 5 : s.length >= 10 ? 0 : 1;
     const olha = x => { if (f(x) >= minimo && pt(x)) achadas.add(x); };
     for (let x = 0; x < pos.length; x++) {
       for (const cx of COM_ACENTO[s[pos[x]]]) {
@@ -210,7 +263,7 @@ export function criaRevisor(textos) {
     if (valida && f(ordem[0]) < 5 * Math.max(1, f(s))) return null;
     // "complementa" nao e "complementá", que so existe antes do pronome
     // ("complementá-lo"): palavra valida nao ganha acento na ultima letra.
-    if (valida && /[À-ÿ]$/.test(ordem[0])) return null;
+    if (valida && /[À-ÿ]$/.test(ordem[0]) && (f(ordem[0]) < 50 || f(ordem[0]) < 20 * Math.max(1, f(s)))) return null;
     return caixa(w, ordem[0]);
   };
   // Nem a palavra presa por hifen a sigla ou a ingles: "MEDIA-SD", "Li-ion",
@@ -345,7 +398,13 @@ export function criaRevisor(textos) {
     t = t.replace(/(?<![\p{L}\p{N}])\p{L}{4,}(?![\p{L}\p{N}])/gu, (w, pos) => {
       const c = acentua(w) || acentuaNoTexto(w, t, pos) || corrige(w, t, pos, pos + w.length);
       if (c) return c;
-      return separa(w) || w;
+      const sep = separa(w);
+      if (!sep) return w;
+      // No meio da frase a palavra curta vai em minuscula: "Atraves de chave
+      // Seletora", "Que Proteja o produto" — e nao "De chave", "O produto".
+      const [cur, resto] = sep.split(' ');
+      const meio = /[\p{L}\p{N},]\s*$/u.test(t.slice(Math.max(0, pos - 3), pos));
+      return meio && w !== w.toUpperCase() ? cur.toLowerCase() + ' ' + resto : sep;
     });
     // O acento nas palavras de tres letras, que a passada acima nao olha: "Aco
     // Inox", "gas GLP", "Pes Com Sapatas", "Nao". E o "pre-" dos compostos.
@@ -361,6 +420,22 @@ export function criaRevisor(textos) {
       .replace(/(?<=\p{L}),(?=\d)/gu, ', ')
       .replace(/(?<=[\p{Ll}\d]|\p{Lu}{3}|\/h)\.(?=\p{Lu}\p{L}{2})/gu, '. ')
       .replace(/(?<=\p{L}):(?=\p{L}{3})/gu, ': ')
-      .replace(/\)(?=\p{L}{2,})(?!(?:cm|mm|m|kg|g|l|L|V|W|Cm|CM|MM)\b)/gu, ') ');
+      .replace(/\)(?=\p{L}{2,})(?!(?:cm|mm|m|kg|g|l|L|V|W|Cm|CM|MM)\b)/gu, ') ')
+      // "tensao:127V", "Potencia: 850W;12 Velocidades" (Nova Tebas/PR)
+      .replace(/(?<=\p{L}):(?=\d)/gu, ': ')
+      .replace(/(?<=\p{L});(?=\d)/gu, '; ')
+      // "VENTILADOR DE PAREDE.diametro de grade: 50 a 60 cm;.numero de pas"
+      // (Londrina/PR), "Air Fryer.15 Litros" (Mariopolis/PR), "RPM.." e "alta resistencia,."
+      .replace(/,\./g, '.')
+      .replace(/;\.(?=\p{L})/gu, '; ')
+      .replace(/;\.(?=\s|$)/g, '.')
+      .replace(/(?<!\.)\.\.(?!\.)/g, '.')
+      .replace(/(?<=\p{Lu}{3})\.(?=\p{Ll}{3})/gu, '. ')
+      .replace(/(?<=\p{Ll}{3})\.(?=\d)/gu, '. ')
+      // parentese colado na palavra: "evaporadora(dba)", "42 CM(CONSUMO",
+      // "MICRO-ONDAS(26 A 30L)". O plural entre parenteses fica: "grade(s)".
+      .replace(/(?<=\p{L}{3})\((?!(?:[sS]|[eEiInNaAoO][sS]|[aAoO])\))/gu, ' (')
+      // "( CODIGO DE DEFESA DO CONSUMIDOR)" (Renascenca/PR)
+      .replace(/\(\s+/g, '(').replace(/\s+\)/g, ')');
   };
 }
