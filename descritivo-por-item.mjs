@@ -943,6 +943,10 @@ function limpaCelula(txt, timbres) {
          // codigo de catalogo solto no fim: "...TENSAO: 220 V 618525"
          .replace(/(?<=[A-Za-zÀ-ÿ])\s\d{6}$/, '')
          .replace(/([.;)])\s+\d{6}$/, '$1')
+         // e depois do modelo de referencia que termina em numero: "...Marca/Modelo
+         // de Referencia ou equivalente: Centrifuga de alimentos Britania Juicer
+         // 1000 486489" (Botucatu/SP)
+         .replace(/(Marca\/Modelo\s+de\s+refer[êe]ncia[^]{0,200}?\S)\s\d{6}$/i, '$1')
          // numero do proximo item com os codigos: "...ilustrativa 7. 424374 142027"
          .replace(/\s\d{1,3}\.?\s+\d{5,9}(?:\s+\d{5,9})?$/, '')
          // "...cor branca Un - Unidade 3 9" (Apiai/SP)
@@ -1798,7 +1802,13 @@ function descritivosPorItem(secoes, itens) {
   // "Espremedor Fruta" do PNCP. Nunca depois da contagem de folhas: "15 de 24 2
   // 306105 Unidade (UN) com 1 Unidade" e a coluna do modelo do Compras.gov.br
   // quebrando a pagina no meio da especificacao (Vicosa/MG).
-  const LINHA_NUMERADA = n => new RegExp('(?:(?:^|\\s)0*' + n + '\\s+(?:\\d{4,9}\\s+\\d{1,5}\\s+(?:UNIDADES?|UNID|UND|UN)\\.?\\s+|\\d{1,4},\\d{1,2}\\s+(?=(?:UNIDADES?|UNID|UND|UN)\\.?\\s)|\\d{5,9}\\s+\\d{5,9}\\s+(?=[A-Z\\u00c0-\\u00da]{3,})|\\d{4}\\s+(?=[A-Z\\u00c0-\\u00da]{4,}[A-Z\\u00c0-\\u00da ]*;))|(?:(?<=[.;]\\s)|(?<=\\d,\\d{2}\\s))0*' + n + '\\s+\\d{5,9}\\s+(?!Unidade\\b)(?=[A-Z\\u00c0-\\u00da][a-z\\u00e0-\\u00ff]{3,}))(?=[A-Z\\u00c0-\\u00da])', 'g');
+  // E o numero depois das linhas de preencher da proposta: "Unidade 2.721,3800
+  // 1,00 _______________ _____________ 19 Estufa eletrica para aquecimento de
+  // marmitas" (UFSM, Santa Maria/RS, edital 235), o "Aquecedor De Marmita" do
+  // PNCP. E o numero com zeros, o codigo e um travessao: "0007 414334 - OSMOSE
+  // REVERSA PARA PURIFICACAO DE AGUA - APARELHO..." (Florianopolis/SC, edital
+  // 149), o "Aparelho Purificador De Agua" do PNCP.
+  const LINHA_NUMERADA = n => new RegExp('(?:(?:^|\\s)0*' + n + '\\s+(?:\\d{4,9}\\s+\\d{1,5}\\s+(?:UNIDADES?|UNID|UND|UN)\\.?\\s+|\\d{1,4},\\d{1,2}\\s+(?=(?:UNIDADES?|UNID|UND|UN)\\.?\\s)|\\d{5,9}\\s+\\d{5,9}\\s+(?=[A-Z\\u00c0-\\u00da]{3,})|\\d{4}\\s+(?=[A-Z\\u00c0-\\u00da]{4,}[A-Z\\u00c0-\\u00da ]*;))|(?:(?<=[.;]\\s)|(?<=\\d,\\d{2}\\s))0*' + n + '\\s+\\d{5,9}\\s+(?!Unidade\\b)(?=[A-Z\\u00c0-\\u00da][a-z\\u00e0-\\u00ff]{3,})|(?<=_{5,}\\s)0*' + n + '\\s+(?=[A-Z\\u00c0-\\u00da][a-z\\u00e0-\\u00ff]{3,})|(?:^|\\s)0*' + n + '\\s+\\d{5,9}\\s+-\\s+(?=[A-Z\\u00c0-\\u00da]{3,}))(?=[A-Z\\u00c0-\\u00da])', 'g');
   itens.forEach((it, i) => {
     if (!Number.isInteger(it[0])) return;
     if ([...porPos].some(([p, l]) => l.includes(i) && numeroDaLinhaAntes(p) === it[0])) return;
@@ -1827,6 +1837,30 @@ function descritivosPorItem(secoes, itens) {
     const re = new RegExp('(?:^|\\s)0*' + it[0] + '\\s+\\d{4,9}\\s+(?=[A-Z\\u00c0-\\u00da][^a-z\\u00e0-\\u00ff]{3,200}?\\s(?:UNIDADES?|UNID|UND|UN|CONJUNTO|CONJ|PAR|KIT|JOGO)\\s+0*' + it[2] + '\\s+R\\$)', 'g');
     for (const m of secoes.matchAll(re)) {
       const pos = m.index + m[0].length;
+      if (!porPos.has(pos)) porPos.set(pos, []);
+      if (!porPos.get(pos).includes(i)) porPos.get(pos).push(i);
+    }
+  });
+
+  // A quantidade no FIM da linha, como no modelo da AGU: "6 Juicer
+  // Especificacoes: Centrifuga de Alimentos tipo juicer... 486489 Unidade 01 R$
+  // 709,90" (Botucatu/SP). O PNCP chama o item 6 de "Multiprocessador
+  // Alimentos" e o edital de "Juicer", entao nenhuma via por palavra acha a
+  // linha; e o numero dela vem logo depois dos valores da linha de cima — ou do
+  // cabecalho da folha, quando a folha vira entre as duas. Vale com o numero
+  // do item abrindo e, no fim da mesma linha, a quantidade que o PNCP informa.
+  itens.forEach((it, i) => {
+    if (!Number.isInteger(it[0]) || !Number.isInteger(it[2])) return;
+    if ([...porPos].some(([p, l]) => l.includes(i) && numeroDaLinhaAntes(p) === it[0])) return;
+    const re = new RegExp('(?:R\\$\\s*[\\d.]+,\\d{2}|Inova[\\u00e7c][\\u00e3a]o\\s+\\d{1,3}\\s+de\\s+\\d{1,3})\\s+0*' + it[0] + '\\s+(?=[A-Z\\u00c0-\\u00da][a-z\\u00e0-\\u00ff]{2,})', 'g');
+    for (const m of secoes.matchAll(re)) {
+      const pos = m.index + m[0].length;
+      if (numeroDaLinhaAntes(pos) !== it[0]) continue;
+      // e o preco unitario do PNCP logo depois da quantidade: numero e quantidade
+      // coincidem por acaso numa tabela comprida, os tres juntos nao.
+      const fimDaLinha = secoes.slice(pos, pos + 3000).match(/\s\d{4,9}\s+(?:Unidades?|UNIDADES?|Und|UND|Un|UN)\s+0*(\d{1,5})\s+R\$\s*([\d.]+,\d{2})/);
+      if (!fimDaLinha || +fimDaLinha[1] !== it[2]) continue;
+      if (typeof it[4] !== 'number' || Math.abs(+fimDaLinha[2].replace(/\./g, '').replace(',', '.') - it[4]) > 0.011) continue;
       if (!porPos.has(pos)) porPos.set(pos, []);
       if (!porPos.get(pos).includes(i)) porPos.get(pos).push(i);
     }
