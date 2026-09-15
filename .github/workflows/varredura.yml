@@ -71,11 +71,17 @@ jobs:
       # Se o dados.json que está no ar já é de hoje, não há o que fazer: sai antes de
       # gastar os 35 minutos da varredura. O disparo manual ignora a trava de
       # propósito — é o botão de "roda de novo mesmo assim".
+      #
+      # O dados.json lido é o do main de AGORA, não o do checkout. O job que
+      # espera na fila guarda o commit de quando foi agendado: em 14/09/2026 a
+      # repescagem partiu de um commit anterior à publicação do dia, leu a data
+      # velha, refez as duas horas de varredura e caiu no push.
       - name: A varredura de hoje já está publicada?
         id: guarda
         run: |
           hoje=$(TZ=America/Sao_Paulo date +%F)
-          pub=$(grep -o '"varredura":"[0-9-]\{10\}"' docs/dados.json | head -1 | cut -d'"' -f4)
+          git fetch --depth=1 origin +refs/heads/main:refs/remotes/origin/main
+          pub=$(git show origin/main:docs/dados.json | grep -o '"varredura":"[0-9-]\{10\}"' | head -1 | cut -d'"' -f4)
           echo "no ar: ${pub:-nenhuma} · hoje: $hoje · evento: ${{ github.event_name }}"
           if [ "$pub" = "$hoje" ] && [ "${{ github.event_name }}" = "schedule" ]; then
             echo "rodar=nao" >> "$GITHUB_OUTPUT"
@@ -91,7 +97,7 @@ jobs:
 
       - name: Guardar a versão anterior para comparar
         if: steps.guarda.outputs.rodar == 'sim'
-        run: git show HEAD:docs/dados.json > /tmp/anterior.json 2>/dev/null || echo '{}' > /tmp/anterior.json
+        run: git show origin/main:docs/dados.json > /tmp/anterior.json 2>/dev/null || echo '{}' > /tmp/anterior.json
 
       - name: Varrer o PNCP
         if: steps.guarda.outputs.rodar == 'sim'
@@ -147,9 +153,13 @@ jobs:
         if: steps.guarda.outputs.rodar == 'sim'
         run: node descritivos.mjs --faltantes
 
+      # A copia do texto antes do recorte serve ao passo de publicar, que refaz
+      # o recorte se o codigo mudar no main durante o job.
       - name: Embutir a lista de itens de cada edital
         if: steps.guarda.outputs.rodar == 'sim'
-        run: node itens-embutidos.mjs
+        run: |
+          cp docs/descritivos.json /tmp/textos.json
+          node itens-embutidos.mjs
 
       - name: Recortar o descritivo de cada item
         if: steps.guarda.outputs.rodar == 'sim'
@@ -180,15 +190,43 @@ jobs:
       # Como so os editais NOVOS precisam de capa, o "node pagina-abertura.mjs
       # --faltantes" leva um ou dois minutos na maquina, e e rodado junto com o
       # artefato.mjs quando se quer o arquivo do dia.
+      #
+      # O job leva mais de duas horas, e nesse meio tempo o main pode andar.
+      # Ate 15/09/2026 este passo fazia so "git push", que o GitHub recusa
+      # quando o main ja nao e o commit de onde o job partiu: em 14/09 e 15/09
+      # a varredura rodou inteira e se perdeu no ultimo passo.
+      #
+      # Agora ele guarda o que gerou, pula para o main atual e, se o codigo do
+      # recorte mudou no caminho, refaz o recorte com o codigo novo — se o
+      # codigo novo quebrar, publica o recorte do codigo antigo. Tenta tres
+      # vezes, para outro push que caia entre o fetch e o push.
       - name: Publicar se houve mudança
         if: steps.guarda.outputs.rodar == 'sim'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet -- docs/dados.json docs/descritivos.json; then
-            echo "Nada mudou hoje — nenhum commit."
-          else
+          mkdir -p /tmp/gerado
+          cp docs/dados.json docs/descritivos.json /tmp/gerado/
+          for tentativa in 1 2 3; do
+            git fetch --depth=1 origin +refs/heads/main:refs/remotes/origin/main
+            git reset --hard origin/main
+            cp /tmp/gerado/dados.json /tmp/gerado/descritivos.json docs/
+            if ! git diff --quiet "$GITHUB_SHA" origin/main -- '*.mjs' ortografia; then
+              echo "O codigo mudou no main durante o job: refazendo o recorte."
+              cp /tmp/textos.json docs/descritivos.json
+              if ! { node itens-embutidos.mjs && node descritivo-por-item.mjs; }; then
+                echo "O recorte novo falhou: publicando o do codigo antigo."
+                cp /tmp/gerado/descritivos.json docs/
+              fi
+            fi
+            if git diff --quiet -- docs/dados.json docs/descritivos.json; then
+              echo "Nada mudou hoje — nenhum commit."
+              exit 0
+            fi
             git add docs/dados.json docs/descritivos.json
             git commit -m "Varredura de $(TZ=America/Sao_Paulo date +%d/%m/%Y)"
-            git push
-          fi
+            if git push origin HEAD:main; then exit 0; fi
+            echo "O push foi recusado (tentativa $tentativa); tentando de novo."
+            sleep 20
+          done
+          exit 1
