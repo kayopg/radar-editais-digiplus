@@ -1372,7 +1372,13 @@ function serve(rotulo, t, confirmado) {
   // em aco inoxidavel, motor potencia minima 0,5 cv." — 123 caracteres, o
   // descritivo inteiro que o edital escreveu, recusado por um piso de 150. O
   // ponto final no fim e o que separa a celula completa do fragmento.
-  const fechada = t.length >= 90 && /[.;]$/.test(t.trim());
+  // Quando o rotulo so remete ao Termo de Referencia ("VENTILADOR DE PAREDE DE
+  // 60 CM - conforme termo de referencia", Serrana/SP), a linha do TR e a unica
+  // especificacao que existe, e a curta tambem vale: "Ventilador de Parede,
+  // 170W. Cor: Preto. Dimensoes: 60cm." A remissao nao conta no tamanho do
+  // rotulo, e a prova de produto continua valendo abaixo.
+  const remete = /conforme\s+(?:o\s+)?(?:termo\s+de\s+refer|edital|anexo)|de\s+acordo\s+com\s+o\s+termo/i.test(rotulo);
+  const fechada = t.length >= (remete ? 40 : 90) && /[.;]$/.test(t.trim());
   const grande = t.length >= piso || fechada || t.length > rotulo.length + 40;
   // A prova de produto e para quando nao se sabe de quem e a linha. Confirmada
   // pelo numero do item, ela so atrapalha: o item 6 de Cubatao/SP e "Coifa
@@ -2137,7 +2143,10 @@ function descritivosPorItem(secoes, itens) {
       // que fecha o trecho. So no FIM do trecho e curta: numa copia sem a marca
       // do item 3 o "fim" seria a linha inteira do mixer.
       .replace(/\s\d{5,6}\s+Unidade\s+\d{1,5}\s+R\$\s*[\d.]*,\d{2}\s+R\$\s*[\d.]*,\d{2}\s+(?:UASG\s+\d{4,6}\s+)?(?:\d{1,3}\s+)?(Marca\/Modelo\s+de\s+refer[êe]ncia\b[^]{0,200}?)(?:\s+\d{1,3})?$/i, ' $1');
-    const t = limpaCelula(cortaNoVizinho(cortaNaProximaLinha(cru)), timbres);
+    // cortaOrcamento aqui tambem, e nao so no fim: a celula e julgada pelo
+    // tamanho e pelo fecho, e o preco e a dotacao grudados atrapalhavam o
+    // julgamento (o ventilador de Serrana/SP terminava em "Atencao Basica 13")
+    const t = cortaOrcamento(limpaCelula(cortaNoVizinho(cortaNaProximaLinha(cru)), timbres));
     // Celula que para no PULO DE PAGINA no meio da frase esta cortada: a folha
     // seguinte, onde ela continuava, nao entrou no texto. Melhor sem descritivo
     // — ou com outra copia inteira da mesma linha — do que com "...compativel
@@ -2297,9 +2306,14 @@ function descritivosPorItem(secoes, itens) {
       // mais. Sem a primeira camada o numero levava a escolha para um trecho
       // que ia ser recusado adiante, e o item, que tinha uma celula boa entre
       // as candidatas, acabava sem nada: foram quatro assim em Bueno Brandao/MG.
+      // Meio ponto contra o trecho que diz "inverter" quando o rotulo nao diz
+      // (e vice-versa). So desempata: em Serrana/SP o ar de 48.000 BTUs comum e
+      // o inverter tem o mesmo rotulo fora essa palavra, os dois pegavam a
+      // linha do inverter, a mais longa, e o conflito deixava os dois vazios.
       const n = (serve(rotulo, t, confirmado) && !deOutro ? 1e6 : 0)
               + (confirmado ? 1e3 : 0)
-              + alvo.filter(w => c.has(w)).reduce((s, w) => s + (ehNumero(w) ? PESO_NUMERO : 1), 0);
+              + alvo.filter(w => c.has(w)).reduce((s, w) => s + (ehNumero(w) ? PESO_NUMERO : 1), 0)
+              - (/inverter/i.test(t) !== /inverter/i.test(rotulo) ? 0.5 : 0);
       // Desempate pelo CONTEUDO, sem contar espaco, e com o mesmo conteudo fica a
       // copia de menos espacos. Vicosa/MG publica o termo de referencia em dois
       // PDFs, e num deles o gerador poe espaco no meio da palavra: "c
@@ -2637,11 +2651,84 @@ function juntaPartidas(texto, textoDoEdital) {
   });
 }
 
+// O Termo de Referencia de Serrana/SP (anexo da BLL, 16/09/2026) poe na linha
+// do item, depois da especificacao, o preco, a dotacao e as secretarias que
+// recebem: "... 1200 Watts (127V). 172,63 1.208,41 Despesa 318 - 08.310.0000 -
+// Emenda Impositiva n° 11/2025 ... Atenção Básica 2 03 - Unid. GELADEIRA". A
+// especificacao acaba onde comeca o dinheiro ou a dotacao, e a linha seguinte
+// ("2 03 - Unid.") leva junto o destino que a precede.
+//
+// O preco sozinho NAO encerra: em Renascenca/PR ele cai no meio da frase ("NO
+// MINIMO 15 142,52 285,04 (QUINZE) METROS, DESTINADO..."). So conta quando vem
+// seguido da dotacao ou da secretaria que recebe.
+const PRECOS = /\s\d{1,3}(?:\.\d{3})*,\d{2}\s*[•·]?\s*\d{1,3}(?:\.\d{3})*,\d{2}(?!\d)/g;
+const DOTACAO = /\s(?:Valor\s+total\s+estimado|ITEM\s+CATMAT\s+IMAGEM|Despesa\s+\d|Emenda\s+(?:Impositiva|de\s+Bancada|Bancada)|Tesouro\b|Rec\.\s*Fin\.|\(\d{2}\s*[—–-]\s*Unid\.\)|\d{3}\s*[-—–]\s*\d{2}\.\d{3}\.\d{4}|\d{4}\.\d{2}\.\d{3}(?!\d))/;
+const DESTINO = /^\s*(?:Secretaria\s+(?:Municipal\s+)?d[eao]s?\s+[A-ZÀ-Ú]|Aten[çc][ãa]o\s+B[áa]sica|Fundo\s+Municipal)/;
+function cortaOrcamento(t) {
+  for (const m of t.matchAll(PRECOS)) {
+    const depois = t.slice(m.index + m[0].length, m.index + m[0].length + 160);
+    if (m.index > 40 && (DOTACAO.test(' ' + depois) || DESTINO.test(depois))) { t = t.slice(0, m.index); break; }
+  }
+  const m = t.match(DOTACAO);
+  if (m && m.index > 15) t = t.slice(0, m.index);
+  // "... do produto. UN 01 2.680, 88 2.680, 88": unidade, quantidade e preco
+  // em texto de PDF escaneado, com o espaco que o reconhecimento poe na virgula
+  // (Guia Lopes da Laguna/MS)
+  // e "Largura: 1m « 52 3 Unidades 394,00" (Cascavel/PR): numero da linha
+  // seguinte, quantidade, unidade por extenso e preco
+  const u = t.match(/\s(?:UN|UND|Unid\.?)\s+\d{1,4}\s+\d{1,3}(?:[.\s]?\d{3})*,\s?\d{2}|\s\d{1,3}\s+\d{1,4}\s+Unidades?\s+\d{1,3}(?:\.\d{3})*,\d{2}/);
+  if (u && u.index > 40) t = t.slice(0, u.index);
+  const prox = t.match(/\s\d{1,3}\s+\d{2,3}\s*[-—–]?\s*Unid\.?(?:\s+[A-ZÀ-Ú][^a-z]{3,}.*)?\s*$/);
+  if (prox && prox.index > 40) {
+    t = t.slice(0, prox.index)
+      .replace(/([.;:)])\s+(?:\d+\s*[-—–]\s*)?[A-ZÀ-Ú][\p{L}.]*(?:\s+[A-ZÀ-Ú][\p{L}.]*){0,3}$/u, '$1');
+  }
+  // O que sobra depois do ultimo ponto e nao e especificacao: o preco ("meses.
+  // 4.715,00 -6 9.430,00", "Cor Branca. v i.Q78,88 ' 5.636,65"), a conta da
+  // emenda ou numero solto sem letra nenhuma ("meses. 4. 715 00, 4 0 0.").
+  //
+  // O corte e no dinheiro ou na marca, nao no ponto: na UNESPAR a especificacao
+  // e o total estao na mesma frase ("UNID. DE MEDIDA: Unitario ... Monofasico
+  // TOTAL 53 R$ 598.676,02"). O que fica entre o ponto e o corte so sai junto
+  // quando quase nao tem letra ("v i.Q78,88 '").
+  const LIXO = /(?:TOTAL\s+\d+\s+)?R\$\s*\d|\d{1,3}\.\s?\d{3},\s?\d{2}(?!\d)|Emenda\s|Conta\s+CEF|Plano\s+de\s+A[çc][ãa]o|Inc\.\s*Fin\.|Pa[çc]o\s+M|Secretaria\s+(?:Municipal\s+)?d[eao]s?\s+[A-ZÀ-Ú]/i;
+  const poucaLetra = s => (s.match(/\p{L}/gu) || []).length < s.replace(/\s/g, '').length * 0.4;
+  for (let k = 0; k < 4; k++) {
+    const p = Math.max(t.lastIndexOf('. '), t.lastIndexOf('; '));
+    if (p < 40) break;
+    const rabo = t.slice(p + 1);
+    if (rabo.length > 200) break;
+    const lx = rabo.match(LIXO);
+    if (lx) {
+      const antes = rabo.slice(0, lx.index);
+      t = t.slice(0, p + 1) + (antes.trim() && !poucaLetra(antes) ? antes : '');
+      continue;
+    }
+    // numero solto sem letra: "meses. 4. 715 00, 4 0 0.", "garantia. 3 100%"
+    // — mas nao o codigo inteiro de "COD. 1.010"
+    // e o codigo de catalogo sozinho no fim ("panela. 1018898", Uberlândia/MG)
+    const soNumero = !/\p{L}/u.test(rabo) && (/\d\S*\s+\S*\d/.test(rabo.trim()) || /^\s*(?:\d{1,2}\.?|\d{5,})\s*$/.test(rabo));
+    if (!soNumero) break;
+    t = t.slice(0, p + 1);
+  }
+  // "Unid BEBEDOURO INDUSTRIAL 50 LITROS: ...": a coluna da unidade na frente
+  t = t.replace(/^(?:Unid|UN|UND)\.?\s+(?=[A-ZÀ-Ú]{3})/, '');
+  // pontuacao solta no fim; aspa so quando solta ("... meses. '"), nunca a que
+  // fecha 'Letra "A"'
+  return t.replace(/\s+['"•·*«»]+$/, '').replace(/[\s•·,;:\-«»]+$/, '').trim();
+}
+
 // As capacidades em BTU citadas num texto: "9000 BTUs", "12.000 BTU/h",
 // "18 000 btus". Abaixo de 5.000 nao e capacidade de aparelho.
 function btusDe(s) {
   const out = new Set();
   for (const m of String(s || '').matchAll(/(\d{1,3}(?:[.\s]\d{3})|\d{4,6})\s*BTU/gi)) {
+    const n = Number(m[1].replace(/[.\s]/g, ''));
+    if (n >= 5000) out.add(n);
+  }
+  // o catalogo do PNCP escreve sem a unidade: "capacidade refrigeração: 9000"
+  // (Viçosa/MG, onde o item de 9.000 levava o texto do aparelho de 30.000)
+  for (const m of String(s || '').matchAll(/capacidade\s+(?:de\s+)?refrigera[çc][ãa]o:?\s*(\d{1,3}(?:[.\s]\d{3})|\d{4,6})(?![\d.,])/gi)) {
     const n = Number(m[1].replace(/[.\s]/g, ''));
     if (n >= 5000) out.add(n);
   }
@@ -2763,7 +2850,16 @@ for (const e of dados.editais) {
   //   do ar-condicionado, o produto que mais aparece no radar.
   for (const it of v.itens) {
     if (!it[6]) continue;
+    it[6] = cortaOrcamento(it[6]);
     if (/SUM[ÁA]RIO/i.test(it[6]) && /\.{20,}\s*\d/.test(it[6])) { it[6] = ''; continue; }
+    // justificativa do Termo de Referencia no lugar da especificacao: "VENTILADOR
+    // DE PAREDE - 60 CM 06 unidades As quantidades foram definidas..." (Guia
+    // Lopes da Laguna/MS)
+    if (/As\s+quantidades\s+foram\s+definidas|JUSTIFICATIVA\s+D[AO]\s|FUNDAMENTA[ÇC][ÃA]O\s+E\s+DESCRI/i.test(it[6])) { it[6] = ''; continue; }
+    // a pesquisa de precos colada na especificacao: "LTDA 2.981,69 2.981,69
+    // 06/08/2026 Lançado por: ...", "Metodologia Menor Valor Valor Estimado"
+    // (Viçosa/MG). O que ficou antes nao da para separar com seguranca.
+    if (/Lan[çc]ado\s+por:|Metodologia\s+Menor\s+Valor|Menor\s+Valor\s+Valor\s+Estimado/i.test(it[6])) { it[6] = ''; continue; }
     const btuRot = btusDe(it[1]), btuDesc = btusDe(it[6]);
     if (btuRot.size && btuDesc.size && ![...btuRot].some(b => btuDesc.has(b))) it[6] = '';
   }

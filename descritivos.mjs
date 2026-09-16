@@ -24,6 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { textoDasPaginas, escolhePaginas, textoUtil, coberturaItens, CABECALHOS } from './paginas-uteis.mjs';
 import { arquivosPublicados, fontesDe, buscaTodosItens } from './resumo-pdf.mjs';
 import { textoDocx, textoDoc } from './arquivo-oficial.mjs';
+import { ehPlataformaComAnexos, anexosDaPlataforma } from './anexos-plataforma.mjs';
 import { createRequire } from 'node:module';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -331,6 +332,18 @@ async function extrai(e) {
         textoWord = f.texto.formato === 'DOC' ? textoDoc(bytes) : textoDocx(bytes);
         formato = f.texto.formato;
       } catch (err) { tropecos.push(err.message); }
+    }
+  }
+
+  // O que o PNCP nao tem, a plataforma da disputa pode ter. Em Serrana/SP o
+  // PNCP trazia so o corpo do edital, e todos os itens diziam "conforme termo
+  // de referencia"; o Anexo I estava so na BLL. Quando os arquivos do PNCP nao
+  // cobrem os itens, entram os anexos da BLL/BNC (ver anexos-plataforma.mjs).
+  const link = e[C.linkPortal];
+  if (link && ehPlataformaComAnexos(link) && coberturaItens(e, paginas, paginas.map((_, i) => i)) < 0.6) {
+    for (const a of await anexosDaPlataforma(link, tropecos)) {
+      try { paginas = paginas.concat(await textoDasPaginas(await LE.abre(a.bytes))); }
+      catch (err) { tropecos.push(err.message); }
     }
   }
 

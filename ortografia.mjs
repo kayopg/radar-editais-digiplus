@@ -103,6 +103,15 @@ const PALAVRA = /[\p{L}\p{N}]+/gu;
 // Erro que o dicionario nao pega (a forma errada tambem e palavra, ou aparece
 // pouco para ter prova nos editais), sempre preso ao contexto:
 const REPAROS = [
+  // "feito em ago inox", "Armario de ago com 4 gavetas", "ago carbono": o "ç" do
+  // aço que a extracao do PDF trocou por "g" (anexos da BLL de Serrana/SP e
+  // Guia Lopes da Laguna/MS, 16/09/2026). "ago" nao e palavra em portugues.
+  [/(?<!\p{L})(de|em|DE|EM)\s+ago(?!\p{L})/gu, '$1 aço'],
+  [/(?<!\p{L})ago(?=\s+(?:inox|INOX|Inox|carbono|CARBONO|galvanizad|escovad|pintad|esmaltad|cromad|\d))/gu, 'aço'],
+  [/(?<!\p{L})AGO(?=\s+(?:INOX|CARBONO|GALVANIZAD|ESCOVAD|PINTAD|\d))/gu, 'AÇO'],
+  // e o "inox" que o reconhecimento leu como "!fox", "'fox" ou "— fox"
+  [/(?<=(?:[Aa]ço|AÇO)\s)['!]fox(?!\p{L})/gu, 'inox'],
+  [/(?<=\s[—–-]\s)fox(?=,)/g, 'inox'],
   // "Acompanha: Motor, Grades, Helice, Frontar, Suporte de Parede" (Salto/SP)
   [/\b([Ff])rontar(?=,)/g, '$1rontal'],
   // "descongelamento de carnes e pratos protos" (Saudade do Iguacu/PR)
@@ -348,6 +357,41 @@ export function criaRevisor(textos) {
   const FUNCIONAIS = ['de', 'do', 'da', 'dos', 'das', 'ou', 'o', 'a', 'e', 'em', 'com', 'para', 'no', 'na', 'sem'];
   // Palavra curta colada na seguinte: "Dechave" -> "De chave", "OUMECANICO" ->
   // "OU MECANICO". Uma separacao so, e a segunda parte comum nos editais.
+  // Cedilha que a extracao trocou por "g" ou "q": "ESPECIFICAQAO", "SERVIQO",
+  // "Atengão", "trituragao" (mesmos anexos da BLL). So troca quando a palavra
+  // nao existe e a trocada existe: "fogao" vira "fogão" pelo acento, nunca
+  // "foção".
+  function cedilha(w) {
+    const lw = w.toLowerCase();
+    // no meio da palavra: "avangadas" -> "avançadas" (Guia Lopes da Laguna/MS)
+    if (lw.length >= 6 && /[gq][aou]/.test(lw) && !pt(lw) && !/[gq](?:ão|ao|ões|oes|o)$/.test(lw)) {
+      for (let i = 1; i < lw.length - 1; i++) {
+        if (!/[gq]/.test(lw[i]) || !/[aou]/.test(lw[i + 1])) continue;
+        const c = lw.slice(0, i) + 'ç' + lw.slice(i + 1);
+        if (!(pt(c) || f(c) >= 2)) continue;
+        if (w === w.toUpperCase()) return c.toUpperCase();
+        return w[0] === w[0].toUpperCase() ? c[0].toUpperCase() + c.slice(1) : c;
+      }
+      return null;
+    }
+    if (!/[gq](?:ão|ao|ões|oes|o)$/.test(lw) || pt(lw)) return null;
+    // com o til a palavra ja existe ("fogao" -> "fogão", "pregao"): o erro e
+    // so o acento, e quem resolve e o acentua
+    if (pt(lw.replace(/ao$/, 'ão')) || pt(lw.replace(/oes$/, 'ões'))) return null;
+    const alta = w === w.toUpperCase();
+    const cands = [
+      lw.replace(/[gq](ão|ao)$/, 'ção'),
+      lw.replace(/[gq](ões|oes)$/, 'ções'),
+      lw.replace(/[gq]o$/, 'ço'),
+    ];
+    for (const c of cands) {
+      if (c === lw || !pt(c)) continue;
+      if (alta) return c.toUpperCase();
+      return w[0] === w[0].toUpperCase() ? c[0].toUpperCase() + c.slice(1) : c;
+    }
+    return null;
+  }
+
   function separa(w) {
     if (w.length < 6 || pt(w) || f(w) > 3) return null;
     if (/\p{Ll}\p{Lu}/u.test(w)) return null;
@@ -396,7 +440,7 @@ export function criaRevisor(textos) {
     t = t.replace(/(?<![\p{L}])(\p{L}{4,})p\/(?=\p{L})/gu, (tudo, l) => pt(l) && !pt(l + 'p') ? l + ' p/' : tudo);
     // Palavra curta colada e erro de digitacao.
     t = t.replace(/(?<![\p{L}\p{N}])\p{L}{4,}(?![\p{L}\p{N}])/gu, (w, pos) => {
-      const c = acentua(w) || acentuaNoTexto(w, t, pos) || corrige(w, t, pos, pos + w.length);
+      const c = cedilha(w) || acentua(w) || acentuaNoTexto(w, t, pos) || corrige(w, t, pos, pos + w.length);
       if (c) return c;
       const sep = separa(w);
       if (!sep) return w;

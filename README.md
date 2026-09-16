@@ -40,6 +40,7 @@ descritivos.mjs → itens-embutidos.mjs → descritivo-por-item.mjs → docs/des
 | `delta.mjs` | Compara duas versões do `dados.json` e imprime o que entrou, o que saiu e o que fecha em 48 h. |
 | `conferir.mjs` | Trava de sanidade: derruba o job antes do commit se o resultado do dia parecer degradado. |
 | `descritivos.mjs` | Baixa o edital de cada processo e extrai o texto das seções que descrevem os produtos. `--faltantes` refaz só quem ficou sem texto. ~50 min. |
+| `anexos-plataforma.mjs` | Quando os arquivos do PNCP não descrevem os itens, busca os anexos (Termo de Referência, Anexo I) na página do processo na BLL ou na BNC. |
 | `itens-embutidos.mjs` | Junta a lista de itens do PNCP a cada edital do `docs/descritivos.json`. |
 | `descritivo-por-item.mjs` | Recorta do texto do edital o descritivo de cada item. Na dúvida deixa o item sem descritivo: nenhum é melhor que um errado. |
 | `ortografia.mjs` | Revisão ortográfica dos descritivos (acentos que o edital não escreveu, letras perdidas na extração do PDF), com os dicionários de `ortografia/` (pt-BR e en-US, LGPL). |
