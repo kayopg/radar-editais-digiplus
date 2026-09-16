@@ -1340,6 +1340,15 @@ function marcaPorProximidade(tokens, alvo, numero, numeroDaLinha, vale = () => t
 // esta sujo de assinatura digital e fala do mesmo produto do rotulo.
 function serve(rotulo, t, confirmado) {
   if (!t) return false;
+  // A copia da pesquisa de precos nao serve, nem confirmada pelo numero: em
+  // Viçosa/MG (pregao 97) ela abre com "Item Quantidade 1", vencia a copia
+  // limpa do Termo de Referencia e depois era descartada, e o item ficava sem
+  // descritivo (16/09/2026).
+  if (/Lan[çc]ado\s+por:|Metodologia\s+Menor\s+Valor/i.test(t)) return false;
+  // nem a pagina de loja virtual copiada na pesquisa: "Ar Condicionado Split
+  // Agratto ... Política de Privacidade", "Hisense Eco Plus 12.000 Btus Frio
+  // 220v R-32 4.8 (18)" (mesmo edital)
+  if (/Pol[íi]tica\s+de\s+Privacidade|Adicionar\s+ao\s+carrinho|Frete\s+gr[áa]tis|\s\d\.\d\s+\(\d{1,5}\)\s/i.test(t)) return false;
   // Celula que correu ate o TETO nao achou o proprio fim: dali para a frente e
   // o resto do documento, nao a especificacao do produto. Seis mil caracteres
   // nao sao a descricao de uma geladeira.
@@ -2256,6 +2265,7 @@ function descritivosPorItem(secoes, itens) {
     // item — ou uma capacidade diferente, quando outra candidata anuncia a
     // deste — e do outro.
     const capMinhas = capacidadesDoRotulo(rotulo);
+    const btuMeu = btusDe(rotulo);
     const capAlheias = new Set();
     itens.forEach((jt, j) => {
       if (j === i || classeDoItem[j] !== classeDoItem[i]) return;
@@ -2286,7 +2296,13 @@ function descritivosPorItem(secoes, itens) {
     const avaliados = [];
     cabecas.forEach(({ k, t, c, nums }, idx) => {
       if (!t) return;
-      const confirmado = numLinha[idx] === itens[i][0];
+      // O numero confirma a linha, mas a capacidade pode desmenti-lo: em
+      // Palmeiras de Goiás/GO a quantidade da linha de cima ("UN 02") parecia o
+      // numero do item 2, e o ar de 12.000 BTUs levava o texto do de 18.000.
+      // So BTU: litros e faixas ("400 a 480") nao desmentem nada.
+      const btuCab = btusDe(t.slice(0, CABECA_ESCOLHA));
+      const confirmado = numLinha[idx] === itens[i][0]
+        && !(btuMeu.size > 0 && btuCab.size > 0 && ![...btuCab].some(v => btuMeu.has(v)));
       const doVizinho = achouMinhaLinha && !confirmado
                      && numLinha[idx] !== null && numerosDoEdital.has(numLinha[idx]);
       const temMeu = nums.some(w => meusSo.has(w));
@@ -2678,9 +2694,23 @@ const PRECOS = /\s\d{1,3}(?:\.\d{3})*,\d{2}\s*[•·]?\s*\d{1,3}(?:\.\d{3})*,\d{
 const DOTACAO = /\s(?:Valor\s+total\s+estimado|ITEM\s+CATMAT\s+IMAGEM|Despesa\s+\d|Emenda\s+(?:Impositiva|de\s+Bancada|Bancada)|Tesouro\b|Rec\.\s*Fin\.|\(\d{2}\s*[—–-]\s*Unid\.\)|\d{3}\s*[-—–]\s*\d{2}\.\d{3}\.\d{4}|\d{4}\.\d{2}\.\d{3}(?!\d))/;
 const DESTINO = /^\s*(?:Secretaria\s+(?:Municipal\s+)?d[eao]s?\s+[A-ZÀ-Ú]|Aten[çc][ãa]o\s+B[áa]sica|Fundo\s+Municipal)/;
 function cortaOrcamento(t) {
+  // rodape do SEI que o timbre nao pega, porque muda o numero da folha: "DMT -
+  // Termo de Referência e Anexos 2056045 SEI 23114.914207/2026-29 / pg. 12"
+  t = t.replace(/\s*\b[A-Z]{2,8}\s+-\s+[^.]{3,60}?\s+\d{6,8}\s+SEI\s+\d{5}\.\d{6}\/\d{4}-\d{2}\s*\/\s*pg\.?(?:\s*\d+)?/g, ' ').trim();
+  // rodape de telefone no meio da celula, com o preco da linha na frente:
+  // "...com o copo 1.194,57 1.194,57 : (46) 3525-8100 / 99135-0488 mal
+  // encaixado" (Marmeleiro/PR) — a frase continua depois dele
+  t = t.replace(/(?:\s\d{1,3}(?:\.\d{3})*,\d{2}){0,2}\s*:\s*\(\d{2}\)\s*\d{4,5}-\d{4}(?:\s*\/\s*\d{4,5}-\d{4})*/g, ' ').replace(/\s{2,}/g, ' ').trim();
+  // secao seguinte do Termo de Referencia ou do estudo tecnico: "6. DA
+  // ESTIMATIVA DO VALOR DA CONTRATAÇÃO", "7. DA JUSTIFICATIVA..." (Alcinópolis/MS)
+  const secao = /\s\d{1,2}(?:\.\d{1,2})?\.?\s+D[AOE]S?\s+(?:ESTIMATIVA|JUSTIFICATIVA|FUNDAMENTA|REQUISITOS|MODELO\s+DE|CRIT[ÉE]RIOS|OBRIGA[ÇC]|PAGAMENTO|VIG[ÊE]NCIA|DEMONSTRATIVO|ADEQUA[ÇC][ÃA]O|LEVANTAMENTO|DESCRI[ÇC][ÃA]O\s+DA\s+SOLU|PRAZO|SAN[ÇC][ÕO]ES)/.exec(t);
+  if (secao && secao.index > 150) t = t.slice(0, secao.index);
   for (const m of t.matchAll(PRECOS)) {
     const depois = t.slice(m.index + m[0].length, m.index + m[0].length + 160);
-    if (m.index > 40 && (DOTACAO.test(' ' + depois) || DESTINO.test(depois))) { t = t.slice(0, m.index); break; }
+    // e o preco seguido da linha do proximo item: "luz interna. 3.659,93
+    // 3.659,93 9 Unid. 1 Casinha Plástica..." (Marmeleiro/PR)
+    const proxLinha = /^\s*\d{1,3}\s+(?:Unid\.?|UN|UND|Unidades?)\s+\d/.test(depois);
+    if (m.index > 40 && (proxLinha || DOTACAO.test(' ' + depois) || DESTINO.test(depois))) { t = t.slice(0, m.index); break; }
   }
   const m = t.match(DOTACAO);
   if (m && m.index > 15) t = t.slice(0, m.index);
@@ -2739,12 +2769,11 @@ function btusDe(s) {
     const n = Number(m[1].replace(/[.\s]/g, ''));
     if (n >= 5000) out.add(n);
   }
-  // o catalogo do PNCP escreve sem a unidade: "capacidade refrigeração: 9000"
-  // (Viçosa/MG, onde o item de 9.000 levava o texto do aparelho de 30.000)
-  for (const m of String(s || '').matchAll(/capacidade\s+(?:de\s+)?refrigera[çc][ãa]o:?\s*(\d{1,3}(?:[.\s]\d{3})|\d{4,6})(?![\d.,])/gi)) {
-    const n = Number(m[1].replace(/[.\s]/g, ''));
-    if (n >= 5000) out.add(n);
-  }
+  // A capacidade do CATALOGO do PNCP ("capacidade refrigeração: 16.000", sem
+  // "BTU") fica de fora de proposito: o catalogo so tem capacidades padrao e o
+  // orgao escolhe a mais proxima, entao o edital de 12.000 BTUs aparece com
+  // rotulo de 16.000 (São Luiz Gonzaga/RS, Bento Gonçalves/RS) — e o edital e
+  // que vale.
   return out;
 }
 
