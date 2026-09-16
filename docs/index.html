@@ -169,6 +169,8 @@ td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-
 @keyframes dicaRecarga{to{opacity:1}}
 button.btn{font-family:inherit;cursor:pointer}
 .note{font-size:12px;color:var(--ink3);margin-top:9px;font-style:italic}
+.copia{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 14px;padding:10px 14px;border-radius:12px;background:var(--brand-soft);color:var(--ink2);font-size:13px}
+.empty .btn{display:inline-block;margin-top:14px}
 .empty{text-align:center;padding:46px 20px;color:var(--ink3);background:var(--panel);border:1px dashed var(--line);border-radius:16px}
 
 /* ------------------------------------------------------------ rodape */
@@ -274,6 +276,7 @@ button.btn{font-family:inherit;cursor:pointer}
 </div>
 
 <div id="painelAgenda" role="tabpanel" aria-labelledby="vAgenda" hidden></div>
+<div id="avisoCopia" class="copia" role="status" hidden></div>
 <div id="list"><div class="empty carregando">Carregando editais…</div></div>
 
 <div class="method">
@@ -1020,7 +1023,9 @@ function carregaDescritivos(){
 
 function multi(host,items,arr){
   var e=document.getElementById(host);
-  e.innerHTML=items.map(function(i){return '<button class="chip" aria-pressed="false" data-v="'+i.v+'">'+i.l+"</button>";}).join("");
+  e.innerHTML=items.map(function(i){return '<button class="chip" aria-pressed="'+(arr.indexOf(i.v)>=0)+'" data-v="'+i.v+'">'+i.l+"</button>";}).join("");
+  if(e.dataset.ligado) return;
+  e.dataset.ligado="1";
   e.addEventListener("click",function(ev){
     var b=ev.target.closest(".chip"); if(!b) return;
     var v=b.dataset.v, k=arr.indexOf(v);
@@ -1176,46 +1181,95 @@ document.getElementById("clear").addEventListener("click",function(){
 // A página não precisa ser republicada: basta o JSON mudar.
 function aviso(html){ document.getElementById("list").innerHTML='<div class="empty">'+html+"</div>"; }
 
-fetch("dados.json?v=" + Date.now(), {cache:"no-store"})
-  .then(function(r){
-    if(!r.ok) throw new Error("HTTP " + r.status);
-    return r.json();
-  })
-  .then(function(j){
-    D = j.editais || [];
-    var m = j.meta || {};
+// Quem volta do portal de participacao recarrega a pagina, e se a conexao
+// falhar bem nessa hora ficava so o aviso de erro, sem edital nenhum. Agora a
+// pagina tenta de novo sozinha; se ainda assim nao der, mostra a ultima lista
+// que este aparelho carregou, avisando que e copia, e volta a tentar quando a
+// internet voltar.
+var COPIA = "radar-dados-copia", usandoCopia = false;
 
-    var ufs = m.ufs || [];
-    document.getElementById("listaUf").textContent = ufs.join(" ");
-    multi("uf", ufs.map(function(u){ return {l:u, v:u}; }), fUF);
+function usaDados(j){
+  D = j.editais || [];
+  var m = j.meta || {};
 
-    // So as categorias que existem na varredura de hoje viram filtro, e por isso
-    // isto mora aqui: a lista de CAT e fixa e cobre tudo que o radar ja
-    // classificou, entao "Lousa digital" e "Geradores" continuavam na tela
-    // depois de a lousa deixar de ser cotada — filtro que, clicado, nao mostra
-    // edital nenhum. Montado antes do fetch, D ainda esta vazio e nao sobra
-    // categoria nenhuma.
-    var catsUsadas = {};
-    D.forEach(function(r){ r[8].forEach(function(it){ catsUsadas[it[0]] = 1; }); });
-    multi("cat", Object.keys(CAT).filter(function(k){ return catsUsadas[k]; })
-      .map(function(k){ return {l:CAT[k], v:k}; }), fCAT);
+  var ufs = m.ufs || [];
+  document.getElementById("listaUf").textContent = ufs.join(" ");
+  multi("uf", ufs.map(function(u){ return {l:u, v:u}; }), fUF);
 
-    if(m.varredura){
-      var p = m.varredura.split("-");
-      document.getElementById("dataVarredura").textContent = p[2]+"/"+p[1]+"/"+p[0];
-    }
-    document.getElementById("nTermos").textContent    = m.termos || 32;
-    document.getElementById("nEstados").textContent   = ufs.length || 8;
-    document.getElementById("nCandidatos").textContent =
-      (m.candidatos || 0).toLocaleString("pt-BR");
+  // So as categorias que existem na varredura de hoje viram filtro, e por isso
+  // isto mora aqui: a lista de CAT e fixa e cobre tudo que o radar ja
+  // classificou, entao "Lousa digital" e "Geradores" continuavam na tela
+  // depois de a lousa deixar de ser cotada — filtro que, clicado, nao mostra
+  // edital nenhum. Montado antes do fetch, D ainda esta vazio e nao sobra
+  // categoria nenhuma.
+  var catsUsadas = {};
+  D.forEach(function(r){ r[8].forEach(function(it){ catsUsadas[it[0]] = 1; }); });
+  multi("cat", Object.keys(CAT).filter(function(k){ return catsUsadas[k]; })
+    .map(function(k){ return {l:CAT[k], v:k}; }), fCAT);
 
-    pronto = true;
-    render();
-  })
-  .catch(function(e){
-    aviso("Não consegui carregar os editais (" + e.message + ").<br>" +
-          "Recarregue a página; se continuar, a varredura do dia pode ter falhado.");
-  });
+  if(m.varredura){
+    var p = m.varredura.split("-");
+    document.getElementById("dataVarredura").textContent = p[2]+"/"+p[1]+"/"+p[0];
+  }
+  document.getElementById("nTermos").textContent    = m.termos || 32;
+  document.getElementById("nEstados").textContent   = ufs.length || 8;
+  document.getElementById("nCandidatos").textContent =
+    (m.candidatos || 0).toLocaleString("pt-BR");
+
+  pronto = true;
+  render();
+}
+
+function avisoCopia(html){
+  var el = document.getElementById("avisoCopia");
+  el.innerHTML = html || "";
+  el.hidden = !html;
+}
+
+var BOTAO_TENTAR = '<button type="button" class="btn alt" data-tentar>Tentar de novo</button>';
+
+function carregaDados(tentativa){
+  fetch("dados.json?v=" + Date.now(), {cache:"no-store"})
+    .then(function(r){
+      if(!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    })
+    .then(function(j){
+      usaDados(j);
+      usandoCopia = false;
+      avisoCopia("");
+      try{ localStorage.setItem(COPIA, JSON.stringify(j)); }catch(e){}
+    }, function(e){
+      if(tentativa < 3){ setTimeout(function(){ carregaDados(tentativa + 1); }, tentativa * 2000); return; }
+      if(pronto && !usandoCopia) return;
+      var j = null;
+      try{ j = JSON.parse(localStorage.getItem(COPIA) || "null"); }catch(x){}
+      if(j && j.editais){
+        var v = ((j.meta || {}).varredura || "").split("-");
+        if(!usandoCopia) usaDados(j);
+        usandoCopia = true;
+        avisoCopia("<span>Sem conexão agora: esta é a lista " + (v.length === 3 ? "de " + v[2] + "/" + v[1] + " " : "") +
+                   "guardada neste aparelho.</span>" + BOTAO_TENTAR);
+        return;
+      }
+      aviso("Não consegui carregar os editais (" + e.message + ").<br>" +
+            "Confira a internet e tente de novo; se continuar, a varredura do dia pode ter falhado.<br>" + BOTAO_TENTAR);
+    })
+    .catch(function(e){
+      aviso("Não consegui montar a lista de editais (" + e.message + ").<br>Recarregue a página (F5).");
+    });
+}
+
+function tentaDeNovo(){
+  if(!pronto) aviso("Carregando editais…");
+  carregaDados(1);
+}
+document.addEventListener("click", function(ev){
+  if(ev.target.closest("[data-tentar]")) tentaDeNovo();
+});
+window.addEventListener("online", function(){ if(!pronto || usandoCopia) tentaDeNovo(); });
+
+carregaDados(1);
 </script>
 
 
