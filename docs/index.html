@@ -182,6 +182,53 @@ button.btn{font-family:inherit;cursor:pointer}
 @media(max-width:640px){.cside{text-align:left;flex:1 1 100%}.clabel{min-width:100%}table{min-width:0}.itexto{font-size:12px}.controls{position:static}.chead::after{display:none}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 @media(prefers-reduced-motion:reduce){.empty.carregando::after{opacity:1}}
+[hidden]{display:none!important}
+/* ---------- Lista | Agenda */
+.vistas{display:flex;gap:6px;margin:0 0 14px}
+.vistas button{font:inherit;font-size:13px;font-weight:700;padding:8px 18px;border-radius:99px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink2);cursor:pointer;transition:border-color .15s,background .15s,color .15s}
+.vistas button:hover{border-color:var(--brand);color:var(--brand-ink)}
+.vistas button[aria-selected="true"]{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 4px 12px rgba(31,95,191,.28)}
+.vistas button:focus-visible,.ag-nav button:focus-visible,.ag-ev:focus-visible,.ag-nota button:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.ag-topo{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-bottom:10px}
+.ag-mes{font-family:var(--display);font-style:italic;font-weight:800;font-size:24px;line-height:1.1;color:var(--ink);margin:0 auto 0 0}
+.ag-mes small{display:block;font-family:var(--text);font-style:normal;font-weight:600;font-size:12.5px;color:var(--ink2);text-transform:none;margin-top:2px}
+.ag-nav{display:flex;gap:6px}
+.ag-nav button{font:inherit;font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:10px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink2);cursor:pointer}
+.ag-nav button:hover{border-color:var(--brand);color:var(--brand-ink)}
+.ag-nota{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-bottom:12px;padding:10px 14px;border-radius:12px;background:var(--brand-soft);color:var(--ink2);font-size:13px;line-height:1.45}
+.ag-nota span{flex:1 1 260px}
+.ag-nota strong{color:var(--ink)}
+.ag-nota button{font:inherit;font-size:12.5px;font-weight:700;padding:7px 14px;border-radius:10px;border:1.5px solid var(--brand);background:var(--panel);color:var(--brand-ink);cursor:pointer;white-space:nowrap}
+.ag-grade{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.ag-sem{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);text-align:center;padding:2px 0 4px}
+.ag-dia{display:flex;flex-direction:column;gap:4px;min-width:0;min-height:96px;padding:6px;border-radius:12px;background:var(--panel);border:1px solid var(--line)}
+.ag-dia.fora{background:transparent;border-style:dashed;opacity:.45}
+.ag-dia.passado .ag-num{color:var(--ink3)}
+.ag-dia.hoje{border-color:var(--brand);box-shadow:inset 0 0 0 1.5px var(--brand)}
+.ag-num{display:flex;justify-content:space-between;align-items:baseline;gap:4px;font-size:12.5px;font-weight:800;color:var(--ink2);font-variant-numeric:tabular-nums}
+.ag-num em{font-style:normal;font-size:10.5px;font-weight:700;color:var(--brand-ink)}
+.ag-num .sem{display:none}
+.ag-ev{display:block;width:100%;text-align:left;font:inherit;font-size:11.5px;line-height:1.3;padding:4px 6px;border:0;border-left:3px solid var(--brand);border-radius:7px;background:var(--brand-soft);color:var(--ink);cursor:pointer;overflow-wrap:anywhere}
+.ag-ev b{font-weight:800;color:var(--brand-ink);font-variant-numeric:tabular-nums}
+.ag-ev i{font-style:normal;color:var(--ink2)}
+.ag-ev:hover{background:color-mix(in srgb,var(--brand-soft) 70%,var(--brand) 30%)}
+.ag-ev.urg{border-left-color:var(--hot);background:var(--hot-soft)}
+.ag-ev.urg b{color:var(--hot)}
+.ag-ev.fech{border-left-color:var(--ink3);background:var(--line2);opacity:.7}
+.ag-ev.fech b{color:var(--ink3)}
+.ag-vazio{padding:28px 16px;text-align:center;color:var(--ink3)}
+.card.destaque{animation:destaque 1.8s ease}
+@keyframes destaque{0%,45%{box-shadow:0 0 0 3px var(--brand),var(--shadow)}100%{box-shadow:var(--shadow)}}
+/* no celular o mes vira lista: so os dias com edital, um embaixo do outro */
+@media(max-width:720px){
+  .ag-grade{grid-template-columns:1fr;gap:8px}
+  .ag-sem,.ag-dia.fora,.ag-dia.vazio{display:none}
+  .ag-dia{min-height:0;padding:8px 10px}
+  .ag-num{font-size:13.5px}
+  .ag-num .sem{display:inline;font-weight:600;color:var(--ink3);margin-left:6px}
+  .ag-num .n{margin-right:auto}
+  .ag-ev{font-size:13px;padding:7px 9px}
+}
 </style>
 </head>
 <body>
@@ -221,6 +268,12 @@ button.btn{font-family:inherit;cursor:pointer}
   <div class="crow"><span class="clabel">Preço</span><div id="pr" style="display:flex;flex-wrap:wrap;gap:6px"></div><span class="count" id="count" style="margin-left:auto"></span></div>
 </div>
 
+<div class="vistas" role="tablist" aria-label="Como ver os editais">
+  <button type="button" role="tab" id="vLista" aria-selected="true" aria-controls="list">Lista</button>
+  <button type="button" role="tab" id="vAgenda" aria-selected="false" aria-controls="painelAgenda">Agenda</button>
+</div>
+
+<div id="painelAgenda" role="tabpanel" aria-labelledby="vAgenda" hidden></div>
 <div id="list"><div class="empty carregando">Carregando editais…</div></div>
 
 <div class="method">
@@ -230,6 +283,7 @@ button.btn{font-family:inherit;cursor:pointer}
   <p><strong>Falsos positivos cortados:</strong> vans, caminhões e tratores com ar-condicionado de fábrica, leilões de veículo sucateado, diárias de hotel &ldquo;com ar-condicionado e frigobar&rdquo;, ventilador pulmonar, conector &ldquo;split bolt&rdquo;, cooler de PC, torre de micro-ondas em MDF, tubo de cobre para instalação, filtro e placa eletrônica de ar-condicionado, fórmula infantil (casa com &ldquo;liquidificador&rdquo; no descritivo), projeto executivo de climatização, sabão em pó, e itens com preço unitário incompatível com o equipamento real.</p>
   <p><strong>Ressalvas:</strong> os valores são estimativas do órgão, não referência de mercado — vários vêm zerados porque o orçamento é sigiloso. Sobram cerca de 4% de falsos positivos residuais. Confira o edital antes de cotar.</p>
   <p><strong>Filtros:</strong> estado e categoria aceitam várias opções ao mesmo tempo; prazo e preço, uma de cada vez. Nenhuma opção marcada significa "todas". Editais que já encerraram ficam no fim da lista, apagados, e não entram nos números do topo.</p>
+  <p><strong>Agenda:</strong> os mesmos editais da lista, com os mesmos filtros, num calendário pelo dia da disputa. Clicar num edital da agenda abre o card dele na lista, onde ficam os botões para baixar e imprimir.</p>
   <p><strong>Descritivo:</strong> ao abrir um edital, cada item mostra o texto do próprio edital (Termo de Referência ou lista de itens). Quando não dá para recortar esse texto com segurança, o item fica só com o nome do PNCP — nenhum descritivo é melhor que um errado.</p>
 </div>
 </div>
@@ -385,6 +439,7 @@ function render(){
   anima("k3",abertos.filter(function(r){return horas(r[4])<=24;}).length);
   anima("k4",abertos.filter(function(r){return dias(r[4])<=7;}).length);
   anima("k5",(function(){var s={};abertos.forEach(function(r){s[r[0]+r[1]]=1;});return Object.keys(s).length;})());
+  if(vista==="agenda") renderAgenda(rows);
   var el=document.getElementById("list");
   if(!rows.length){ el.innerHTML='<div class="empty">Nenhum edital com esses filtros.</div>'; return; }
   el.innerHTML=rows.map(function(r,ordem){
@@ -1001,6 +1056,114 @@ pe.addEventListener("click",function(ev){
 });
 
 document.getElementById("q").addEventListener("input",function(e){ fQ=e.target.value.trim().toLowerCase(); render(); });
+// ------------------------------------------------------------------ agenda
+// A mesma lista filtrada, em calendario: cada edital no dia da disputa (o fim
+// do prazo das propostas, que e quando a sessao comeca). Clicar leva ao card
+// na Lista, onde ficam "Baixar resumo + edital" e "Baixar edital" para
+// imprimir (pedido do usuario em 16/09/2026).
+var vista="lista", agMes=null;
+try{ if(localStorage.getItem("radar-vista")==="agenda") vista="agenda"; }catch(e){}
+if(location.hash==="#agenda") vista="agenda";
+var MESES=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+var SEMANA=["dom","seg","ter","qua","qui","sex","sáb"];
+var pad2=function(n){ return ("0"+n).slice(-2); };
+var chaveDia=function(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); };
+
+function mostraVista(v){
+  vista=v;
+  document.getElementById("vLista").setAttribute("aria-selected", v==="lista"?"true":"false");
+  document.getElementById("vAgenda").setAttribute("aria-selected", v==="agenda"?"true":"false");
+  document.getElementById("list").hidden = v!=="lista";
+  document.getElementById("painelAgenda").hidden = v!=="agenda";
+  try{ localStorage.setItem("radar-vista", v); }catch(e){}
+  render();
+}
+
+function renderAgenda(rows){
+  var el=document.getElementById("painelAgenda");
+  var porDia={};
+  rows.forEach(function(r){ var k=String(r[4]).slice(0,10); (porDia[k]=porDia[k]||[]).push(r); });
+  Object.keys(porDia).forEach(function(k){ porDia[k].sort(function(a,b){ return String(a[4]).localeCompare(String(b[4])); }); });
+  // Abre no mes de hoje se ele tem edital; senao no mes do proximo edital aberto.
+  if(!agMes){
+    var hojeMes=NOW.getFullYear()+"-"+pad2(NOW.getMonth()+1);
+    var base=NOW;
+    if(!Object.keys(porDia).some(function(k){ return k.slice(0,7)===hojeMes; })){
+      var prox=rows.filter(function(r){ return !encerrado(r[4]); }).map(function(r){ return r[4]; }).sort()[0];
+      if(prox) base=new Date(prox);
+    }
+    agMes={a:base.getFullYear(), m:base.getMonth()};
+  }
+  var ini=new Date(agMes.a, agMes.m, 1), fimMes=new Date(agMes.a, agMes.m+1, 0);
+  var noMes=0, diasCom=0;
+  for(var d=1; d<=fimMes.getDate(); d++){
+    var lista=porDia[chaveDia(new Date(agMes.a, agMes.m, d))];
+    if(lista){ noMes+=lista.length; diasCom++; }
+  }
+  var hojeK=chaveDia(NOW);
+  var h='<div class="ag-topo"><h2 class="ag-mes">'+MESES[agMes.m].charAt(0).toUpperCase()+MESES[agMes.m].slice(1)+' de '+agMes.a
+    +'<small>'+(noMes? noMes+' edita'+(noMes>1?'is':'l')+' em '+diasCom+' dia'+(diasCom>1?'s':'')+' · com os filtros de cima' : 'nenhum edital neste mês com os filtros de cima')+'</small></h2>'
+    +'<div class="ag-nav"><button type="button" data-nav="-1" aria-label="Mês anterior">‹ anterior</button>'
+    +'<button type="button" data-nav="0">hoje</button>'
+    +'<button type="button" data-nav="1" aria-label="Próximo mês">próximo ›</button></div></div>'
+    +'<div class="ag-nota"><span>Cada edital aparece no <strong>dia da disputa</strong>, com a hora em que as propostas fecham. Clique num edital para abri-lo na lista: lá ficam <strong>Baixar resumo + edital</strong> e <strong>Baixar edital</strong>, para imprimir.</span>'
+    +'<button type="button" data-lista="1">Ver a lista de editais</button></div>'
+    +'<div class="ag-grade">'+SEMANA.map(function(s){ return '<div class="ag-sem">'+s+'</div>'; }).join("");
+  var cursor=new Date(agMes.a, agMes.m, 1-ini.getDay());
+  var fimGrade=new Date(agMes.a, agMes.m, fimMes.getDate()+(6-fimMes.getDay()));
+  for(; cursor<=fimGrade; cursor.setDate(cursor.getDate()+1)){
+    var k=chaveDia(cursor), evs=porDia[k]||[];
+    var cls="ag-dia"+(cursor.getMonth()!==agMes.m?" fora":"")+(k===hojeK?" hoje":"")+(k<hojeK?" passado":"")+(evs.length?"":" vazio");
+    h+='<div class="'+cls+'"><div class="ag-num"><span class="n">'+cursor.getDate()+'<span class="sem">'+SEMANA[cursor.getDay()]+(cursor.getMonth()!==agMes.m?' · '+MESES[cursor.getMonth()]:'')+'</span></span>'
+      +(k===hojeK?'<em>hoje</em>':'')+'</div>';
+    evs.forEach(function(r){
+      var fech=encerrado(r[4]), urg=!fech && horas(r[4])<=24;
+      var hm=String(r[4]).slice(11,16);
+      h+='<button type="button" class="ag-ev'+(fech?' fech':urg?' urg':'')+'" data-i="'+D.indexOf(r)+'" title="'+esc(r[2]+' · '+r[3])+'">'
+        +'<b>'+(hm&&hm!=="00:00"?hm:"—")+'</b> '+esc(r[0])+'/'+r[1]+' <i>· '+(r[6]?brl(r[6]):'sigiloso')+(fech?' · encerrado':'')+'</i></button>';
+    });
+    h+='</div>';
+  }
+  el.innerHTML=h+'</div>';
+}
+
+// Da agenda para o card: troca para a Lista, abre o card e rola ate ele.
+function irParaEdital(i){
+  mostraVista("lista");
+  var card=document.querySelector('.card[data-i="'+i+'"]');
+  if(!card) return;
+  if(!card.classList.contains("open")) abreCard(card);
+  // Rolagem direta, e de novo logo depois: a lista acabou de aparecer no lugar
+  // da agenda e o card esta abrindo, entao a posicao ainda muda um pouco.
+  var alinha=function(){
+    var c=document.querySelector(".controls");
+    var folga=(c && getComputedStyle(c).position==="sticky") ? c.offsetHeight+24 : 16;
+    window.scrollTo(0, card.getBoundingClientRect().top + window.scrollY - folga);
+  };
+  alinha(); setTimeout(alinha, 120); setTimeout(alinha, 600);
+  card.classList.remove("destaque"); void card.offsetWidth; card.classList.add("destaque");
+}
+
+document.getElementById("vLista").addEventListener("click",function(){ mostraVista("lista"); });
+document.getElementById("vAgenda").addEventListener("click",function(){ mostraVista("agenda"); });
+document.getElementById("painelAgenda").addEventListener("click",function(ev){
+  var alvo=ev.target.closest("button"); if(!alvo) return;
+  if(alvo.dataset.i!==undefined) return irParaEdital(+alvo.dataset.i);
+  if(alvo.dataset.lista) { mostraVista("lista"); window.scrollTo({top: document.getElementById("list").getBoundingClientRect().top + window.scrollY - 120}); return; }
+  if(alvo.dataset.nav!==undefined){
+    var n=+alvo.dataset.nav;
+    if(n===0) agMes={a:NOW.getFullYear(), m:NOW.getMonth()};
+    else { var t=new Date(agMes.a, agMes.m+n, 1); agMes={a:t.getFullYear(), m:t.getMonth()}; }
+    render();
+  }
+});
+if(vista==="agenda"){
+  document.getElementById("vLista").setAttribute("aria-selected","false");
+  document.getElementById("vAgenda").setAttribute("aria-selected","true");
+  document.getElementById("list").hidden=true;
+  document.getElementById("painelAgenda").hidden=false;
+}
+
 document.getElementById("clear").addEventListener("click",function(){
   fUF.length=0; fCAT.length=0; fPZ=null; fQ=""; fORD=null;
   document.getElementById("q").value="";
