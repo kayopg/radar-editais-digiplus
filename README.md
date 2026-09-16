@@ -35,6 +35,7 @@ descritivos.mjs → itens-embutidos.mjs → descritivo-por-item.mjs → docs/des
 | `varredura.mjs` | 32 termos × 8 UFs × 2 páginas no PNCP, lê os itens de cada processo e aplica os filtros. ~100 min. |
 | `publicar.mjs` | Converte a saída bruta no `docs/dados.json` que a página consome. |
 | `links-portal.mjs` | Completa o link do edital dentro do portal da disputa (Compras.gov.br, BLL, BNC, Licitanet), usado pelo botão "Participar" de cada card. |
+| `participar.mjs` | Monta o link do Compras.gov.br (UASG + modalidade + número + ano) quando o PNCP não informa; a página avisa que o link foi montado. |
 | `delta.mjs` | Compara duas versões do `dados.json` e imprime o que entrou, o que saiu e o que fecha em 48 h. |
 | `conferir.mjs` | Trava de sanidade: derruba o job antes do commit se o resultado do dia parecer degradado. |
 | `descritivos.mjs` | Baixa o edital de cada processo e extrai o texto das seções que descrevem os produtos. `--faltantes` refaz só quem ficou sem texto. ~50 min. |

@@ -30,7 +30,9 @@ const linhas = editais.map(e => [e.mun, e.uf, e.org, e.ed, e.fecha, e.qtd, e.val
   // continua na lista — cabe conferencia humana.
   Array.isArray(e.exige) ? '' : (e.exige || ''),
   // 20: o endereco do edital dentro do portal, para o botao "Participar" (15/09/2026)
-  e.link || '']);
+  e.link || '',
+  // 21: 1 quando o link acima foi montado pelo Radar e nao veio do PNCP
+  e.linkMontado ? 1 : '']);
 
 const saida = {
   meta: {
@@ -57,7 +59,7 @@ const saida = {
   colunas: ['municipio', 'uf', 'orgao', 'edital', 'encerramento', 'quantidade',
             'valorEstimado', 'path', 'itens', 'objeto', 'unidade', 'modalidade',
             'publicacao', 'arquivoSeq', 'arquivoExtensao',
-            'aberturaPropostas', 'esfera', 'situacao', 'portal', 'naoAvaliado', 'linkPortal'],
+            'aberturaPropostas', 'esfera', 'situacao', 'portal', 'naoAvaliado', 'linkPortal', 'linkMontado'],
   colunasItem: ['categoria', 'quantidade', 'valorUnitario', 'descricao',
                 'unidadeMedida', 'numeroItem', 'beneficio'],
   editais: linhas,

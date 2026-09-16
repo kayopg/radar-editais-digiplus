@@ -9,6 +9,7 @@ import { createRequire } from 'node:module';
 import { textoDasPaginas, textoUtil } from './paginas-uteis.mjs';
 import { analisaExigencias } from './exigencias.mjs';
 import { devedorDe } from './devedores.mjs';
+import { linkDoPortal, ehComprasGov, montaLinkComprasGov } from './participar.mjs';
 
 // fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
 // entao uma pasta de usuario com acento no nome virava Usu%C3%A1rio e o
@@ -129,11 +130,6 @@ const portalOk = nome => {
 // A API de consulta e outra: tem o portal, mas com cota curta — seis requisicoes
 // em paralelo derrubam tudo por 30 s. Por isso roda serializada, e so sobre a
 // lista final (uns 250), nao sobre os 1500 candidatos.
-const linkDoPortal = u => {
-  const s = String(u || '').trim();
-  return /^https?:\/\/[^\s"'<>]+$/i.test(s) ? s : '';
-};
-
 async function buscaPortal(e) {
   const [c, a, s] = e.path.split('/');
   for (let t = 0; t < 5; t++) {
@@ -146,6 +142,12 @@ async function buscaPortal(e) {
       // pagina: no Compras.gov.br e o acompanhamento da compra, na BLL e na
       // BNC a pagina do processo, onde o fornecedor entra na disputa.
       e.link = linkDoPortal(j.linkSistemaOrigem);
+      // Sem link no PNCP, o do Compras.gov.br e montado (ver participar.mjs).
+      if (!e.link && ehComprasGov(j.usuarioNome)) {
+        e.link = montaLinkComprasGov({ uasg: (j.unidadeOrgao && j.unidadeOrgao.codigoUnidade) || e.uasg,
+          modId: j.modalidadeId || e.modId, numero: j.numeroCompra || e.ed, ano: j.anoCompra });
+        e.linkMontado = !!e.link;
+      }
       return limpa(j.usuarioNome || '');
     } catch {
       await new Promise(x => setTimeout(x, 3000));
@@ -563,6 +565,8 @@ for (const o of cands) {
     // encerramento sozinho nao contava metade da historia.
     abre: o.data_inicio_vigencia || null, esfera: limpa(o.esfera_nome),
     sit: limpa(o.situacao_nome), portal: null, exige: null,
+    // para montar o link do Compras.gov.br quando o PNCP nao traz (participar.mjs)
+    uasg: String(o.unidade_codigo || ''), modId: Number(o.modalidade_licitacao_id) || 0,
     path: `${o.orgao_cnpj}/${o.ano}/${o.numero_sequencial}`, it: keep,
   });
   st.ok++;

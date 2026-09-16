@@ -161,6 +161,7 @@ td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-
 .btn.part:hover{box-shadow:0 6px 16px rgba(23,112,63,.32)}
 .fora{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:4px;padding:10px 12px;border-radius:12px;background:var(--brand-soft);color:var(--ink2);font-size:12.5px}
 .fora span{flex-basis:100%}
+.nota-part{flex-basis:100%;font-size:12px;color:var(--ink3);line-height:1.45}
 .fora input{flex:1 1 220px;min-width:0;font:inherit;padding:7px 10px;border:1.5px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink)}
 /* Se o script da página não rodar (a lista fica em "Carregando…"), a dica de
    recarregar aparece sozinha: só CSS, que funciona mesmo sem o script. */
@@ -311,6 +312,21 @@ function portalCurto(p, link){
   if(/ammlicita/.test(t)) return " no AMM Licita";
   return "";
 }
+// A linha embaixo dos botões quando o Participar não é certeza. Link montado
+// pelo Radar (coluna 21) mostra a UASG e o número, para pesquisar no
+// Compras.gov.br se ele não achar — a reabertura de Caxias do Sul/RS não
+// existia com o número do título. Sem link nenhum, diz onde procurar.
+function notaParticipar(r, fechado){
+  if(fechado) return "";
+  if(r[20] && r[21]){
+    var m = String(r[20]).match(/compra=(\d{6})(\d{2})(\d{5})(\d{4})/);
+    if(!m) return "";
+    return '<div class="nota-part">Link montado pelo Radar, porque o PNCP não informa. Se o Compras.gov.br não encontrar a compra, pesquise pela UASG '
+      + m[1] + ' e o nº ' + Number(m[3]) + '/' + m[4] + '.</div>';
+  }
+  if(!r[20]) return '<div class="nota-part">O PNCP não informa em que plataforma é a disputa deste edital. Ela aparece no edital, logo no início.</div>';
+  return "";
+}
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
 
 function pass(r){
@@ -405,6 +421,7 @@ function render(){
       +'<button type="button" class="btn'+(r[20] && !fechado ? ' alt' : '')+'" data-fora="https://pncp.gov.br/app/editais/'+r[7]+'" title="Abre em uma nova aba">Abrir no PNCP ↗</button>'
       +'<button type="button" class="btn alt" data-fora="https://pncp.gov.br/api/pncp/v1/orgaos/'+pp[0]+"/compras/"+pp[1]+"/"+pp[2]+'/arquivos/'+(r[13]||1)+'" title="Abre em uma nova aba">'+(r[14]?"Baixar edital ("+String(r[14]).toUpperCase()+")":"Baixar edital (arquivo oficial)")+'</button>'
       +'<button class="btn alt" type="button" onclick="resumo(this,'+D.indexOf(r)+')">Baixar resumo + edital</button>'
+      +notaParticipar(r, fechado)
       +'</div></div></div>';
   }).join("");
 }
