@@ -21,7 +21,7 @@ import { linkDoPortal, ehComprasGov, montaLinkComprasGov } from './participar.mj
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const arquivo = path.join(DIR, 'docs', 'dados.json');
 const dados = JSON.parse(fs.readFileSync(arquivo, 'utf8'));
-for (const nome of ['linkPortal', 'linkMontado']) if (!dados.colunas.includes(nome)) dados.colunas.push(nome);
+for (const nome of ['linkPortal', 'linkMontado', 'comoParticipar']) if (!dados.colunas.includes(nome)) dados.colunas.push(nome);
 const C = dados.colunas.reduce((o, n, i) => (o[n] = i, o), {});
 
 const espera = ms => new Promise(x => setTimeout(x, ms));
@@ -64,9 +64,20 @@ async function pelaBusca(e) {
   return null;
 }
 
-let novos = 0, montados = 0, semLink = 0, falhas = 0, seguidas = 0;
+// O que a automacao nao descobre sozinha: edital sem plataforma, em que a
+// disputa e por e-mail ou no balcao (Franca/SP, 16/09/2026). Ver o arquivo.
+let manual = {};
+try { manual = JSON.parse(fs.readFileSync(path.join(DIR, 'participar-manual.json'), 'utf8')); } catch {}
+
+let novos = 0, montados = 0, semLink = 0, falhas = 0, seguidas = 0, manuais = 0;
 for (const e of dados.editais) {
   while (e.length < dados.colunas.length) e.push('');
+  const m = manual[e[C.path]];
+  if (m && /^(https?:|mailto:)/i.test(String(m.link || ''))) {
+    e[C.linkPortal] = m.link; e[C.linkMontado] = ''; e[C.comoParticipar] = String(m.nota || '');
+    manuais++;
+    continue;
+  }
   if (e[C.linkPortal]) continue;
   const j = await consulta(e[C.path]);
   let link = '', montado = false;
@@ -101,4 +112,4 @@ for (const e of dados.editais) {
 
 fs.writeFileSync(arquivo, JSON.stringify(dados), 'utf8');
 const com = dados.editais.filter(e => e[C.linkPortal]).length;
-console.log(`links do portal: ${novos} do PNCP · ${montados} montados · ${semLink} sem link · ${falhas} consulta(s) sem resposta · ${com} de ${dados.editais.length} com botao Participar`);
+console.log(`links do portal: ${novos} do PNCP · ${montados} montados · ${manuais} do participar-manual.json · ${semLink} sem link · ${falhas} consulta(s) sem resposta · ${com} de ${dados.editais.length} com botao Participar`);

@@ -317,7 +317,8 @@ function portalCurto(p, link){
 // Compras.gov.br se ele não achar — a reabertura de Caxias do Sul/RS não
 // existia com o número do título. Sem link nenhum, diz onde procurar.
 function notaParticipar(r, fechado){
-  if(fechado) return "";
+  // coluna 22: a instrução escrita à mão em participar-manual.json
+  if(r[22]) return '<div class="nota-part">'+esc(r[22])+'</div>';
   if(r[20] && r[21]){
     var m = String(r[20]).match(/compra=(\d{6})(\d{2})(\d{5})(\d{4})/);
     if(!m) return "";
@@ -410,15 +411,16 @@ function render(){
       +'<div class="body"><div class="blabel">Itens cotados · '+r[8].length+'</div>'
       +'<div class="scroller"><table><thead><tr><th>Descritivo</th><th class="n">Qtd</th><th class="n">Valor unit. ref.</th></tr></thead><tbody>'+itens+'</tbody></table></div>'
       +'<div class="links">'
-      // Participar leva ao edital dentro do portal da disputa. Edital encerrado
-      // nao tem mais em que entrar, entao o botao some e o PNCP volta a ser o
-      // principal.
+      // Participar leva ao edital dentro do portal da disputa, em TODO edital,
+      // encerrado inclusive: o fim do prazo das propostas e a hora em que a
+      // sessao de lances comeca, e o botao sumia justo ai (16/09/2026).
       //
       // Os tres enderecos de fora sao botoes que abrem aba nova (abreFora), e
       // nao links: no artefato, o link tirava o Radar da aba e, na volta, a
       // pagina voltava so com o topo, sem os editais.
-      +(r[20] && !fechado ? '<button type="button" class="btn part" data-fora="'+esc(r[20])+'" title="Abre em uma nova aba">Participar'+portalCurto(r[18], r[20])+' ↗</button>' : '')
-      +'<button type="button" class="btn'+(r[20] && !fechado ? ' alt' : '')+'" data-fora="https://pncp.gov.br/app/editais/'+r[7]+'" title="Abre em uma nova aba">Abrir no PNCP ↗</button>'
+      +(r[20] ? '<button type="button" class="btn part" data-fora="'+esc(r[20])+'" title="Abre em uma nova aba">'
+        +(/^mailto:/i.test(r[20]) ? 'Participar por e-mail' : 'Participar'+portalCurto(r[18], r[20]))+' ↗</button>' : '')
+      +'<button type="button" class="btn'+(r[20] ? ' alt' : '')+'" data-fora="https://pncp.gov.br/app/editais/'+r[7]+'" title="Abre em uma nova aba">Abrir no PNCP ↗</button>'
       +'<button type="button" class="btn alt" data-fora="https://pncp.gov.br/api/pncp/v1/orgaos/'+pp[0]+"/compras/"+pp[1]+"/"+pp[2]+'/arquivos/'+(r[13]||1)+'" title="Abre em uma nova aba">'+(r[14]?"Baixar edital ("+String(r[14]).toUpperCase()+")":"Baixar edital (arquivo oficial)")+'</button>'
       +'<button class="btn alt" type="button" onclick="resumo(this,'+D.indexOf(r)+')">Baixar resumo + edital</button>'
       +notaParticipar(r, fechado)
