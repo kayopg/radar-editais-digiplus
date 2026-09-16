@@ -93,7 +93,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: steps.guarda.outputs.rodar == 'sim'
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Guardar a versão anterior para comparar
         if: steps.guarda.outputs.rodar == 'sim'
