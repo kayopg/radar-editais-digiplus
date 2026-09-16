@@ -106,7 +106,7 @@ const REPAROS = [
   // "feito em ago inox", "Armario de ago com 4 gavetas", "ago carbono": o "ç" do
   // aço que a extracao do PDF trocou por "g" (anexos da BLL de Serrana/SP e
   // Guia Lopes da Laguna/MS, 16/09/2026). "ago" nao e palavra em portugues.
-  [/(?<!\p{L})(de|em|DE|EM)\s+ago(?!\p{L})/gu, '$1 aço'],
+  [/(?<!\p{L})(de|em|DE|EM)\s+[Aa]go(?!\p{L})/gu, '$1 aço'],
   [/(?<!\p{L})ago(?=\s+(?:inox|INOX|Inox|carbono|CARBONO|galvanizad|escovad|pintad|esmaltad|cromad|\d))/gu, 'aço'],
   [/(?<!\p{L})AGO(?=\s+(?:INOX|CARBONO|GALVANIZAD|ESCOVAD|PINTAD|\d))/gu, 'AÇO'],
   // e o "inox" que o reconhecimento leu como "!fox", "'fox" ou "— fox"

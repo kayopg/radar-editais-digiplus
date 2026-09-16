@@ -2392,6 +2392,19 @@ function descritivosPorItem(secoes, itens) {
     // tinham recorte aprovado, e a tabela saia com lote em uns e numero solto em
     // outros.
     candidatosDeLote.set(i, loteDoItem(rotulo));
+    // O TITULO da celula, quando a marca caiu depois dele. O Termo de Referencia
+    // de Serrana/SP escreve "12 01 Unid. VENTILADOR DE PAREDE 60CM: Ventilador
+    // de Parede, 170W..." e "7 06 Unid. APARELHO DE AR CONDICIONADO: Ar
+    // Condicionado SPLIT 9.000 BTU'S: Aparelho de Ar Condicionado tipo Split...";
+    // o recorte comecava na especificacao, e o usuario viu o item 12 "com
+    // descritivo faltando" (16/09/2026). Entra so o que fica entre a coluna da
+    // unidade e a celula, em ate dois pedacos terminados em dois-pontos.
+    if (vencedor && nota >= 1e6 && kVencedor >= 0) {
+      const antes = secoes.slice(Math.max(0, posicoes[kVencedor] - 170), posicoes[kVencedor]);
+      const tit = /(?:^|\s)(?:Unid\.?|UNID\.?|UN|UND|Unidade|UNIDADE)\s+((?:[A-ZÀ-Ú][^:]{2,90}:\s*){1,2})$/.exec(antes);
+      if (tit && !/\d{1,3}(?:\.\d{3})*,\d{2}/.test(tit[1]) && !vencedor.startsWith(tit[1].trim().slice(0, 20)))
+        vencedor = tit[1].trim() + ' ' + vencedor;
+    }
     if (vencedor && nota >= 1e6) melhor.set(i, { texto: vencedor, confirmado: venceuPeloNumero });
   }
 
@@ -2744,6 +2757,7 @@ for (const e of dados.editais) {
   if (!v || !v.itens) continue;
 
   const secoes = (v.secoes || []).map(s => s.texto).join('  ');
+  let secoesPlano = null;
   if (!secoes) { semTexto++; continue; }
   comTexto++;
 
@@ -2851,6 +2865,17 @@ for (const e of dados.editais) {
   for (const it of v.itens) {
     if (!it[6]) continue;
     it[6] = cortaOrcamento(it[6]);
+    // Frase cortada no meio: "...Os equipamentos instalados atualmente deverão
+    // ser desinstalados pela" (Palmeiras de Goiás/GO), quando o edital segue com
+    // "contratada e devolvidos...". Volta ao ultimo ponto, se ele guarda a
+    // maior parte do texto; o resto e a clausula de instalacao, nao o produto.
+    if (it[6].length > 200 && !/[.;:!?)"”»]$/.test(it[6])) {
+      const plano = secoesPlano || (secoesPlano = secoes.replace(/\s+/g, ' '));
+      const fim = it[6].slice(-40), k = plano.indexOf(fim);
+      const p = it[6].lastIndexOf('. ');
+      if (k >= 0 && /^ [a-zà-ÿ]/.test(plano.slice(k + fim.length, k + fim.length + 2)) && p > it[6].length * 0.6)
+        it[6] = it[6].slice(0, p + 1);
+    }
     if (/SUM[ÁA]RIO/i.test(it[6]) && /\.{20,}\s*\d/.test(it[6])) { it[6] = ''; continue; }
     // justificativa do Termo de Referencia no lugar da especificacao: "VENTILADOR
     // DE PAREDE - 60 CM 06 unidades As quantidades foram definidas..." (Guia
