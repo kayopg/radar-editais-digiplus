@@ -28,7 +28,9 @@ const linhas = editais.map(e => [e.mun, e.uf, e.org, e.ed, e.fecha, e.qtd, e.val
   // 19: vazio = edital lido e sem exigencia impeditiva. Texto = NAO foi
   // possivel avaliar (PDF digitalizado, sem arquivo, erro), e por isso ele
   // continua na lista — cabe conferencia humana.
-  Array.isArray(e.exige) ? '' : (e.exige || '')]);
+  Array.isArray(e.exige) ? '' : (e.exige || ''),
+  // 20: o endereco do edital dentro do portal, para o botao "Participar" (15/09/2026)
+  e.link || '']);
 
 const saida = {
   meta: {
@@ -55,7 +57,7 @@ const saida = {
   colunas: ['municipio', 'uf', 'orgao', 'edital', 'encerramento', 'quantidade',
             'valorEstimado', 'path', 'itens', 'objeto', 'unidade', 'modalidade',
             'publicacao', 'arquivoSeq', 'arquivoExtensao',
-            'aberturaPropostas', 'esfera', 'situacao', 'portal', 'naoAvaliado'],
+            'aberturaPropostas', 'esfera', 'situacao', 'portal', 'naoAvaliado', 'linkPortal'],
   colunasItem: ['categoria', 'quantidade', 'valorUnitario', 'descricao',
                 'unidadeMedida', 'numeroItem', 'beneficio'],
   editais: linhas,

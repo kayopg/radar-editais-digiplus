@@ -144,7 +144,7 @@ const TOPO_DE_CAPA = /EDITAL|PREG[ÃA]O|DISPENSA|AVISO\s+DE|CONCORR[ÊE]NCIA|CON
 // Titulos que nenhuma capa tem, nem com "pregao" do lado: a "RELACAO DE ITENS
 // - PREGAO ELETRONICO" que o Compras.gov gera (Belo Horizonte/MG), o mapa de
 // riscos (Caxias do Sul/RS), o sumario do edital (Chapadao do Sul/MS).
-const TITULO_NUNCA_CAPA = /Modelo\s+de\s+Termo\s+de\s+Refer|RELA[ÇC][ÃA]O\s+DE\s+ITENS|MAPA\s+DE\s+(?:GERENCIAMENTO\s+DE\s+)?RISCOS?|MATRIZ\s+DE\s+RISCOS?|ESTUDO\s+T[ÉE]CNICO\s+PRELIMINAR/i;
+const TITULO_NUNCA_CAPA = /Modelo\s+de\s+Termo\s+de\s+Refer|RELA[ÇC][ÃA]O\s+DE\s+ITENS|MAPA\s+DE\s+(?:GERENCIAMENTO\s+DE\s+)?RISCOS?|MATRIZ\s+DE\s+RISCOS?|ESTUDO\s+T[ÉE]CNICO\s+PRELIMINAR|SUBANEXO|PESQUISA\s+DE\s+PRE[ÇC]OS|MAPA\s+COMPARATIVO|FORMALIZA[ÇC][ÃA]O\s+D[AE]\s+DEMANDA/i;
 function ehAnexo(t) {
   const topo = topoDe(t);
   if (TITULO_NUNCA_CAPA.test(topo.slice(0, 200))) return true;
@@ -177,6 +177,23 @@ function palavrasDoObjeto(e, C) {
     .filter(w => w.length >= 5 && !VAZIAS_OBJ.has(w)))];
 }
 
+// Texto com as letras espacadas: a capa de Cascavel/PR extrai como
+// "P R E GÃO E L E T RÔN I C O Nº 1 2 6 / 2 0 2 6 ... C O N T R A T A N T E",
+// e nenhuma marca casava. Quando mais da metade das palavras tem uma letra so,
+// a pagina e testada tambem sem espaco nenhum, com o espaco das marcas opcional.
+const ehEspacado = t => {
+  const w = String(t || '').split(/\s+/).filter(Boolean);
+  return w.length >= 40 && w.filter(x => x.length === 1).length > w.length / 2;
+};
+const semEspaco = new Map();
+function casa(re, t) {
+  t = String(t || '');
+  if (re.test(t)) return true;
+  if (!ehEspacado(t)) return false;
+  if (!semEspaco.has(re)) semEspaco.set(re, new RegExp(re.source.split('\\s+').join('\\s*').split('\\s*').join('').split('\\b').join(''), re.flags));
+  return semEspaco.get(re).test(t.replace(/\s+/g, ''));
+}
+
 function achaAbertura(paginas, alvo, alvoObjeto) {
   alvo = alvo || [];
   alvoObjeto = alvoObjeto || [];
@@ -203,7 +220,11 @@ function achaAbertura(paginas, alvo, alvoObjeto) {
   for (let i = 0; i < olhadas; i++) if (NAO_E_CAPA.some(re => re.test(paginas[i] || ''))) carimbadas++;
   const carimboEhRodape = olhadas >= 3 && carimbadas >= olhadas - 1;
 
-  const proibida = i => ehAnexo(paginas[i]) || (!carimboEhRodape
+  // A folha que continua um anexo sem titulo proprio tambem e anexo: em
+  // Franca/SP a pagina 3 era o resto do Termo de Referencia da pagina 2.
+  const continuaAnexo = i => i > 0 && (ehAnexo(paginas[i - 1]) || continuaAnexo(i - 1))
+    && !TOPO_DE_CAPA.test(topoDe(paginas[i]).slice(0, 200));
+  const proibida = i => ehAnexo(paginas[i]) || continuaAnexo(i) || (!carimboEhRodape
     && NAO_E_CAPA.some(re => re.test(paginas[i] || '')) && !falaDoObjeto(i));
   // entre duas paginas com a mesma pontuacao, ganha a que fala DESTE edital
   const melhorQue = (n, i, bn, bi) => n > bn || (n === bn && bi >= 0 && relev(i) > relev(bi));
@@ -212,7 +233,7 @@ function achaAbertura(paginas, alvo, alvoObjeto) {
   let melhor = -1, melhorN = 0;
   for (let i = 0; i < Math.min(paginas.length, PRIMEIRAS); i++) {
     if (proibida(i)) continue;
-    const n = CAMPOS.filter(re => re.test(paginas[i] || '')).length;
+    const n = CAMPOS.filter(re => casa(re, paginas[i])).length;
     if (melhorQue(n, i, melhorN, melhor)) { melhorN = n; melhor = i; }
   }
   if (melhorN >= MIN_CAMPOS) return { pagina: melhor, campos: melhorN, via: 'quadro' };
@@ -221,7 +242,7 @@ function achaAbertura(paginas, alvo, alvoObjeto) {
   let capa = -1, capaN = 0;
   for (let i = 0; i < Math.min(paginas.length, PRIMEIRAS_CAPA); i++) {
     if (proibida(i)) continue;
-    const n = MARCAS_CAPA.filter(re => re.test(paginas[i] || '')).length;
+    const n = MARCAS_CAPA.filter(re => casa(re, paginas[i])).length;
     if (melhorQue(n, i, capaN, capa)) { capaN = n; capa = i; }
   }
   // Entre as folhas quase tao marcadas quanto a melhor, fica a PRIMEIRA. As
@@ -231,7 +252,7 @@ function achaAbertura(paginas, alvo, alvoObjeto) {
   if (capaN >= MIN_MARCAS) {
     for (let i = 0; i < capa; i++) {
       if (proibida(i)) continue;
-      const n = MARCAS_CAPA.filter(re => re.test(paginas[i] || '')).length;
+      const n = MARCAS_CAPA.filter(re => casa(re, paginas[i])).length;
       if (n >= MIN_MARCAS && n >= capaN - 2) return { pagina: i, campos: n, via: 'capa' };
     }
     return { pagina: capa, campos: capaN, via: 'capa' };
@@ -245,6 +266,11 @@ function achaAbertura(paginas, alvo, alvoObjeto) {
     if (melhorQue(n, i, soltaN, solta)) { soltaN = n; solta = i; }
   }
   if (soltaN >= MIN_MARCAS) return { pagina: solta, campos: soltaN, via: 'embaralhado' };
+
+  // Daqui para baixo a escolha e fraca. Arquivo que ABRE com anexo, DFD ou
+  // Termo de Referencia nao e edital, e a folha fraca dele seria so mais um
+  // pedaco do TR: em Franca/SP saia o "modelo de gestao do contrato".
+  if (ehAnexo(paginas[0])) return null;
 
   // 4. nenhuma marca: fica a pagina que mais fala deste edital, se falar.
   let rel = -1, relN = 1;

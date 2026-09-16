@@ -2637,6 +2637,17 @@ function juntaPartidas(texto, textoDoEdital) {
   });
 }
 
+// As capacidades em BTU citadas num texto: "9000 BTUs", "12.000 BTU/h",
+// "18 000 btus". Abaixo de 5.000 nao e capacidade de aparelho.
+function btusDe(s) {
+  const out = new Set();
+  for (const m of String(s || '').matchAll(/(\d{1,3}(?:[.\s]\d{3})|\d{4,6})\s*BTU/gi)) {
+    const n = Number(m[1].replace(/[.\s]/g, ''));
+    if (n >= 5000) out.add(n);
+  }
+  return out;
+}
+
 const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v.secoes || []).map(s => s.texto)));
 
 let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0;
@@ -2741,6 +2752,20 @@ for (const e of dados.editais) {
         if (comuns >= ti.size * 0.9 && cr >= cobre(ti) + 2) it[6] = rico[6];
       }
     }
+  }
+
+  // Vetos finais, para qualquer edital (15/09/2026). Nenhum descritivo e melhor
+  // que um errado:
+  // - o sumario do edital ("1. DO OBJETO ........ 3"): Ilicinea/MG recebeu a
+  //   capa e o sumario inteiros como descritivo do gerador;
+  // - BTU diferente do rotulo: em Palmeiras de Goias/GO o item de 12.000 BTUs
+  //   levou o texto do aparelho de 18.000. A capacidade e o que define o preco
+  //   do ar-condicionado, o produto que mais aparece no radar.
+  for (const it of v.itens) {
+    if (!it[6]) continue;
+    if (/SUM[ÁA]RIO/i.test(it[6]) && /\.{20,}\s*\d/.test(it[6])) { it[6] = ''; continue; }
+    const btuRot = btusDe(it[1]), btuDesc = btusDe(it[6]);
+    if (btuRot.size && btuDesc.size && ![...btuRot].some(b => btuDesc.has(b))) it[6] = '';
   }
 
   // Por ultimo, o erro de digitacao e a palavra colada que vieram do proprio

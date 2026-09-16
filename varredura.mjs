@@ -129,6 +129,11 @@ const portalOk = nome => {
 // A API de consulta e outra: tem o portal, mas com cota curta — seis requisicoes
 // em paralelo derrubam tudo por 30 s. Por isso roda serializada, e so sobre a
 // lista final (uns 250), nao sobre os 1500 candidatos.
+const linkDoPortal = u => {
+  const s = String(u || '').trim();
+  return /^https?:\/\/[^\s"'<>]+$/i.test(s) ? s : '';
+};
+
 async function buscaPortal(e) {
   const [c, a, s] = e.path.split('/');
   for (let t = 0; t < 5; t++) {
@@ -137,6 +142,10 @@ async function buscaPortal(e) {
       if (r.status === 429) { await new Promise(x => setTimeout(x, 35000)); continue; }
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const j = await r.json();
+      // O endereco do edital DENTRO do portal, para o botao "Participar" da
+      // pagina: no Compras.gov.br e o acompanhamento da compra, na BLL e na
+      // BNC a pagina do processo, onde o fornecedor entra na disputa.
+      e.link = linkDoPortal(j.linkSistemaOrigem);
       return limpa(j.usuarioNome || '');
     } catch {
       await new Promise(x => setTimeout(x, 3000));

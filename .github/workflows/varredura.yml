@@ -107,6 +107,13 @@ jobs:
         if: steps.guarda.outputs.rodar == 'sim'
         run: node publicar.mjs
 
+      # O link do botao "Participar" vem na consulta do portal, dentro da
+      # varredura. Quem ficou sem (consulta que falhou) e buscado aqui de novo;
+      # quando todos ja tem, o passo nao faz nenhuma requisicao.
+      - name: Completar o link de participacao
+        if: steps.guarda.outputs.rodar == 'sim'
+        run: node links-portal.mjs
+
       # O tee manda o delta para o log ALÉM do Summary. O Summary não tem endpoint
       # na API REST, então sem isso o comparativo do dia só existe no navegador.
       - name: Resumo do que mudou
