@@ -2761,6 +2761,19 @@ function cortaOrcamento(t) {
   return t.replace(/\s+['"•·*«»]+$/, '').replace(/[\s•·,;:\-«»]+$/, '').trim();
 }
 
+function tiraRepeticao(t) {
+  if (t.length < 400) return t;
+  const sem = s => s.replace(/\s+/g, '');
+  for (const m of t.matchAll(/\s/g)) {
+    const p = m.index;
+    if (p < t.length * 0.3 || t.length - p < 150) continue;
+    const resto = t.slice(p + 1), antes = t.slice(0, p);
+    if (!antes.includes(resto.slice(0, 60))) continue;
+    if (sem(antes).includes(sem(resto))) return antes.trim();
+  }
+  return t;
+}
+
 // As capacidades em BTU citadas num texto: "9000 BTUs", "12.000 BTU/h",
 // "18 000 btus". Abaixo de 5.000 nao e capacidade de aparelho.
 function btusDe(s) {
@@ -2894,6 +2907,12 @@ for (const e of dados.editais) {
   for (const it of v.itens) {
     if (!it[6]) continue;
     it[6] = cortaOrcamento(it[6]);
+    // O fim da celula repetido pela virada de folha: o PDF de Pirajuba/MG
+    // redesenha na folha seguinte "(LÍQUIDO) 1/4 POL CÓDIGO EAN ... INSTALADO
+    // POR REDE AUTORIZADA.", e o descritivo saia com a metade final duas vezes.
+    // Sai a repeticao quando TODO o resto ja esta antes, sem contar espaco
+    // ("PROFUNDIDAD E", "CLASSIFICAÇÃ O" da segunda copia).
+    it[6] = tiraRepeticao(it[6]);
     // Frase cortada no meio: "...Os equipamentos instalados atualmente deverão
     // ser desinstalados pela" (Palmeiras de Goiás/GO), quando o edital segue com
     // "contratada e devolvidos...". Volta ao ultimo ponto, se ele guarda a
