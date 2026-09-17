@@ -10,6 +10,7 @@ import { textoDasPaginas, textoUtil } from './paginas-uteis.mjs';
 import { analisaExigencias } from './exigencias.mjs';
 import { devedorDe } from './devedores.mjs';
 import { linkDoPortal, ehComprasGov, montaLinkComprasGov } from './participar.mjs';
+import { portalOk, plataformaDoEdital } from './plataforma.mjs';
 
 // fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
 // entao uma pasta de usuario com acento no nome virava Usu%C3%A1rio e o
@@ -34,7 +35,7 @@ const CAT = [
   ["RF",["refrigerador","geladeira","frigobar","freezer","congelador","conservadora","camara fria","camara frigorifica","expositor refrigerado","balcao refrigerado","cervejeira","resfriador"]],
   ["BB",["bebedouro","purificador de agua","refresqueira","suqueira","refresqueira industrial"]],
   ["CC",["fogao","forno","microondas","micro-ondas","micro ondas","cooktop","fritadeira","salamandra","char broiler","charbroiler","caldeirao","panela eletrica","churrasqueira","balcao termico","buffet termico","banho maria","banho-maria","estufa para salgados","pista termica"]],
-  ["PR",["liquidificador","batedeira","processador de alimentos","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador","masseira","amassadeira"]],
+  ["PR",["liquidificador","batedeira","processador de alimentos","processador alimentos","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador","masseira","amassadeira"]],
   // O aspirador da Digiplus e o de po E AGUA, e o PNCP escreve de varios jeitos:
   // "aspirador de po e agua", "aspirador po/liquido", "aspirador de po/agua".
   // So "aspirador de po" nao pega as duas ultimas, que nao tem o "de".
@@ -114,18 +115,9 @@ function orgaoOk(o) {
 //
 // O nome vem por extenso e varia ("BLL Compras", "Bolsa Nacional De Compras -
 // BNC"), por isso a comparacao e por trecho e nao por igualdade.
-const PORTAIS_OK = [
-  'bll compras', 'bolsa de licitacoes',                       // BLL
-  'bolsa nacional de compras',                                // BNC
-  'compras.gov.br', 'comprasnet',                             // Compras GOV
-  'banrisul',                                                 // Banrisul
-  'portal de compras publicas', 'compras publicas',           // Compras Publicas
-  'licitanet',                                                // Licitanet
-];
-const portalOk = nome => {
-  const t = norm(nome);
-  return !!t && PORTAIS_OK.some(p => t.includes(p));
-};
+// A lista e a comparacao moram em plataforma.mjs, junto com a leitura da
+// plataforma escrita no edital.
+
 
 // A API de consulta e outra: tem o portal, mas com cota curta — seis requisicoes
 // em paralelo derrubam tudo por 30 s. Por isso roda serializada, e so sobre a
@@ -276,6 +268,10 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // com banho-maria e a envasadora com balanca, de mel, da associacao de
 // apicultores de Rosario do Sul/RS.
 "filme de pvc","filme pvc","papel filme","rolo plastico","homogeneizador","envasadora",
+// 17/09/2026: "Suportes para freezer medindo 740x710mm" (Triunfo/RS, movel de
+// cozinha) e "Gas Refrigeracao ... R 22, aplicacao: central ar condicionado"
+// (IF Sul de Minas, cilindro de gas).
+"suporte para freezer","suportes para freezer","gas refrigeracao",
 "protese","jateamento","agitacao de agua","aplicacao: laboratorio","uso laboratorial"];
 
 const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
@@ -515,7 +511,24 @@ errItens = cands.filter(o => !o.__it).length;
 process.stderr.write(`  ${errItens} erros\n`);
 
 // ------------------------------------------------- 4. cinco filtros + dedupe
-const classifica = d => { for (const [c, ts] of CAT) for (const t of ts) if (d.includes(t)) return c; return null; };
+// A categoria e a do termo que aparece PRIMEIRO na descricao, que e o nome do
+// produto: "Coifa para fogao industrial inox" (Triunfo/RS) e coifa, e caia em
+// Coccao so porque a lista de Coccao vem antes na tabela (17/09/2026).
+const posicaoDoTermo = d => {
+  let melhor = null;
+  for (const [c, ts] of CAT) for (const t of ts) {
+    const i = d.indexOf(t);
+    if (i >= 0 && (!melhor || i < melhor.i)) melhor = { c, i };
+  }
+  return melhor;
+};
+const classifica = d => { const m = posicaoDoTermo(d); return m ? m.c : null; };
+// Termo que so aparece depois do caractere 400 de uma descricao longa nao e o
+// produto, e citacao ou peca: "CONJUNTO REFEITORIO COM TAMPO INJETADO ... 10
+// LUGARES" (Morrinhos/GO) entrou como Lavanderia pela palavra "calandra" na
+// posicao 1.121. Nos 214 itens legitimos de 15 a 17/09/2026 o termo nunca
+// passou da posicao 225.
+const TERMO_LONGE = 400;
 
 // Beneficio em uma letra. O PNCP manda a frase por extenso em cada item.
 const beneficio = s => {
@@ -550,7 +563,7 @@ for (const o of cands) {
   for (const it of (o.__it || [])) {
     const d = norm(it.d);
     const cat = classifica(d);
-    if (!cat) continue;
+    if (!cat || posicaoDoTermo(d).i > TERMO_LONGE) continue;
     if (it.m !== 'M' || SERV_ITEM.some(v => d.includes(v))) { servico = true; break; }
     interesse.push([cat, it, d]);
   }
@@ -625,14 +638,30 @@ for (let i = 0; i < fin.length; i++) {
   if ((i + 1) % 50 === 0) process.stderr.write(`  ${i + 1}/${fin.length}\n`);
   await new Promise(x => setTimeout(x, 1200));
 }
-// Portal desconhecido MANTEM o edital: falha de rede nao pode virar exclusao
-// silenciosa. Some so quem respondeu com um portal fora da lista.
+// Quem publicou num portal da casa fica. Os outros — publicados pelo sistema de
+// gestao da prefeitura, ou sem resposta da consulta — valem pela plataforma
+// escrita no edital (ver plataforma.mjs): Vila Flores/RS publica pela Tecnosweb
+// e disputa no Pregao Banrisul, e fica; Pitangueiras/SP disputa no Licitar
+// Digital, e sai, mesmo no dia em que a consulta falha. Ate 17/09/2026 a falha
+// da consulta mantinha o edital e o publicador de fora o tirava, e a lista
+// oscilava conforme a API respondia.
+//
+// Sem resposta E sem plataforma legivel no edital, o edital FICA: falha de rede
+// nao pode virar exclusao silenciosa.
+let vPortalTexto = 0;
+const decide = new Map();
+await pool(fin.filter(e => !(e.portal !== null && portalOk(e.portal))), 4, async (e) => {
+  const linha = []; linha[7] = e.path;
+  decide.set(e, await plataformaDoEdital(linha, e.obj));
+});
 const finP = fin.filter(e => {
-  if (e.portal === null) return true;
-  if (portalOk(e.portal)) return true;
+  if (e.portal !== null && portalOk(e.portal)) return true;
+  const plat = decide.get(e);
+  if (plat && plat.daCasa) { vPortalTexto++; return true; }
+  if (e.portal === null && !plat) return true;
   vPortal++; return false;
 });
-process.stderr.write(`  ${vPortal} fora dos portais da casa, ${errPortal} sem resposta\n`);
+process.stderr.write(`  ${vPortal} fora dos portais da casa, ${vPortalTexto} ficam pela plataforma escrita no edital, ${errPortal} sem resposta\n`);
 fin.length = 0; fin.push(...finP);
 
 
@@ -741,6 +770,7 @@ process.stderr.write(`  ${vExige} com exigencia impeditiva, ${semTexto} sem text
 fin.length = 0; fin.push(...finE);
 
 st.vPortal = vPortal;
+st.vPortalTexto = vPortalTexto;
 st.errPortal = errPortal;
 st.porPortal = porPortal;
 st.vExige = vExige;

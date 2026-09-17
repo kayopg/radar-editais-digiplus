@@ -54,7 +54,22 @@ const VETO = {
 const VETO_ITEM = lista('VETO_ITEM'), VETO_RF_CIENT = lista('VETO_RF_CIENT'), VETO_BL_MEDICA = lista('VETO_BL_MEDICA');
 const RE_VAN = /(^|[^a-z])vans?([^a-z]|$)/;       // o mesmo do varredura.mjs
 const VETO_FORA_DE = { projetor: 'LD' };           // idem
-const vetoDoCatalogo = (d, cat) => VETO_ITEM.find(v => VETO_FORA_DE[v] !== cat && d.includes(v))
+// A tabela de categorias e o limite de posicao do termo, tambem do varredura.mjs:
+// a categoria e a do termo que aparece primeiro, e termo muito para o fim da
+// descricao nao e o produto (ver TERMO_LONGE la).
+const blocoCat = fonte.slice(fonte.indexOf('const CAT = ['), fonte.indexOf('\n];', fonte.indexOf('const CAT = [')) + 3);
+const CAT = eval(blocoCat.replace('const CAT = ', ''));
+const TERMO_LONGE = Number((fonte.match(/const TERMO_LONGE = (\d+)/) || [])[1]) || 400;
+const termoMaisCedo = d => {
+  let melhor = null;
+  for (const [c, ts] of CAT) for (const t of ts) {
+    const i = d.indexOf(t);
+    if (i >= 0 && (!melhor || i < melhor.i)) melhor = { c, i };
+  }
+  return melhor;
+};
+const vetoDoCatalogo = (d, cat) => ((termoMaisCedo(d) || { i: 0 }).i > TERMO_LONGE && 'termo da categoria so no fim da descricao')
+  || VETO_ITEM.find(v => VETO_FORA_DE[v] !== cat && d.includes(v))
   || (RE_VAN.test(d) && 'van')
   || (cat === 'RF' && VETO_RF_CIENT.find(v => d.includes(v)))
   || (cat === 'BL' && VETO_BL_MEDICA.find(v => d.includes(v)));
@@ -68,7 +83,7 @@ const mostra = process.argv.includes('--mostra');
 let fora = {};
 try { fora = JSON.parse(fs.readFileSync(path.join(DIR, 'editais-fora.json'), 'utf8')); } catch { /* sem lista */ }
 
-let tirados = 0, editaisFora = 0;
+let tirados = 0, editaisFora = 0, recategorizados = 0;
 const ficam = [];
 for (const e of dados.editais) {
   const v = desc.editais[e[C.path]] || {};
@@ -77,6 +92,10 @@ for (const e of dados.editais) {
     editaisFora++;
     console.log(`  sai o edital ${nome}: ${fora[e[C.path]].motivo}`);
     continue;
+  }
+  for (const it of e[C.itens]) {
+    const m = termoMaisCedo(norm(it[3]));
+    if (m && m.c !== it[0]) { console.log(`categoria ${it[0]} -> ${m.c} · ${nome} · item ${it[5]}: ${String(it[3]).slice(0, 80)}`); it[0] = m.c; recategorizados++; }
   }
   const itens = e[C.itens].filter(it => {
     const x = (v.itens || []).find(y => y[0] == it[5]);
@@ -100,8 +119,8 @@ for (const e of dados.editais) {
   ficam.push(e);
 }
 
-console.log(`${tirados} item(ns) vetado(s) pelo descritivo, ${editaisFora} edital(is) fora`);
-if (!mostra && (tirados || editaisFora)) {
+console.log(`${tirados} item(ns) vetado(s) pelo descritivo, ${editaisFora} edital(is) fora, ${recategorizados} item(ns) de categoria corrigida`);
+if (!mostra && (tirados || editaisFora || recategorizados)) {
   dados.editais = ficam;
   dados.meta.editais = ficam.length;
   fs.writeFileSync(arqDados, JSON.stringify(dados), 'utf8');

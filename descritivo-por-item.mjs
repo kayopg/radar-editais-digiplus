@@ -2498,7 +2498,10 @@ function descritivosPorItem(secoes, itens) {
   }
   const soTexto = new Map();
   for (const quais of porTexto.values()) {
-    const rotulos = new Set(quais.map(i => normIgual(itens[i][1]).replace(/[^a-z0-9]+/g, ' ').trim()));
+    // O mesmo produto publicado de novo pelo orgao, com a remissao ao item antigo
+    // no fim ("... garantia: 1 Item 1"): a UFPel republicou os itens 1 a 5 como
+    // 6 a 10, e os dez ficavam sem descritivo por "rotulos diferentes" (17/09/2026).
+    const rotulos = new Set(quais.map(i => normIgual(itens[i][1]).replace(/[^a-z0-9]+/g, ' ').replace(/\s+item \d{1,3}\s*$/, '').trim()));
     if (rotulos.size < 2) { for (const i of quais) soTexto.set(i, melhor.get(i)); continue; }
     for (const i of quais) if (melhor.get(i).confirmado) soTexto.set(i, melhor.get(i));
   }
@@ -2729,8 +2732,12 @@ function cortaOrcamento(t) {
   t = t.replace(/(?:\s\d{1,3}(?:\.\d{3})*,\d{2}){0,2}\s*:\s*\(\d{2}\)\s*\d{4,5}-\d{4}(?:\s*\/\s*\d{4,5}-\d{4})*/g, ' ').replace(/\s{2,}/g, ' ').trim();
   // secao seguinte do Termo de Referencia ou do estudo tecnico: "6. DA
   // ESTIMATIVA DO VALOR DA CONTRATAÇÃO", "7. DA JUSTIFICATIVA..." (Alcinópolis/MS)
-  const secao = /\s\d{1,2}(?:\.\d{1,2})?\.?\s+D[AOE]S?\s+(?:ESTIMATIVA|JUSTIFICATIVA|FUNDAMENTA|REQUISITOS|MODELO\s+DE|CRIT[ÉE]RIOS|OBRIGA[ÇC]|PAGAMENTO|VIG[ÊE]NCIA|DEMONSTRATIVO|ADEQUA[ÇC][ÃA]O|LEVANTAMENTO|DESCRI[ÇC][ÃA]O\s+DA\s+SOLU|PRAZO|SAN[ÇC][ÕO]ES)/.exec(t);
-  if (secao && secao.index > 150) t = t.slice(0, secao.index);
+  // (tambem "7- ESTIMATIVA DO PRECO DA CONTRATACAO", sem o "DA", em Alegrete/RS)
+  const secao = /\s\d{1,2}(?:\.\d{1,2})?(?:\.?\s+D[AOE]S?|\s*[-–])\s+(?:ESTIMATIVA|JUSTIFICATIVA|FUNDAMENTA|REQUISITOS|MODELO\s+DE|CRIT[ÉE]RIOS|OBRIGA[ÇC]|PAGAMENTO|VIG[ÊE]NCIA|DEMONSTRATIVO|ADEQUA[ÇC][ÃA]O|LEVANTAMENTO|DESCRI[ÇC][ÃA]O\s+DA\s+SOLU|PRAZO|SAN[ÇC][ÕO]ES)/.exec(t);
+  // A partir de 60 caracteres: a celula curta de Alegrete/RS ("Ventilador de
+  // parede, 8 pas, turbo, 60 cm, na cor preto, 220 volts, 3 velocidades UN 211
+  // 7- ESTIMATIVA DO PRECO...") corria tres mil caracteres de estudo tecnico.
+  if (secao && secao.index > 60) t = t.slice(0, secao.index);
   // clausula do contrato colada no fim da celula: "Imagem apenas ilustrativa*
   // UN 2 2.500,00 5.000,00 O prazo de vigencia da contratacao e de 30 dias..."
   // (Franca/SP) e "O fornecedor devera enviar o produto novo lacrado ...
@@ -2751,6 +2758,23 @@ function cortaOrcamento(t) {
   // Flores/RS), "7HP 1 UN CK" (Vinhedo/SP), "branco 117 SIM (INMETRO + Selo
   // PROCEL)" (Pitangueiras/SP), "3 Velocidades E Oscilante Unidade 100 262 de
   // 420" (UFV, com o numero da folha)
+  // a unidade e o preco partidos no fim ("... 700w UN R$ 283,00 R$ 9.339,00",
+  // "... aço inox UN R$", Alegrete/RS), as colunas numericas soltas depois da
+  // unidade ("... SEM UTILIZAR OLEO UNIDADE 10 2 1 0 13 329506", IF Goiano) e o
+  // numero da folha no meio da lista ("... no Brasil. 46 • Garantia minima",
+  // Pinheiro Machado/RS)
+  // e a fileira de numeros sem letra no fim, colunas de distribuicao por
+  // secretaria e o telefone do rodape: "... 3 velocidades 40 2 5 160 2 2 211 :
+  // 55 3120-1104" (Alegrete/RS)
+  t = t.replace(/(\p{L}[\p{L}.)\]%]*)(?:\s+[\d:()\-/.,]+){4,}$/u, '$1')
+    // e a unidade (com a quantidade) que sobra no fim depois de uma palavra:
+    // "... aco inox UN", "... 3 velocidades UN 211" — "Tampas: 2 UN" fica
+    .replace(/(?<=\p{L}[.,]?)\s+(?:UNIDADE|Unidade|UN|UND|Unid\.?)(?:\s+\d{1,5})?$/u, '');
+  const unPreco = /\s(?:UN|UND|Unid\.?|Unidade)\s+R\$(?:\s|$)/.exec(t);
+  if (unPreco && unPreco.index > 40) t = t.slice(0, unPreco.index);
+  t = t.replace(/\s(?:UNIDADE|Unidade|UN|UND)(?:\s+\d{1,7}){2,}$/, '')
+    .replace(/([.;:])\s+\d{1,3}\s+(?=•)/g, '$1 ')
+    .replace(/\s+Termo\s+de\s+Refer[êe]ncia\s+P[áa]gina\s+\S{1,4}\s+de\s+\S{1,4}(?=\s|$)/g, '');
   t = t.replace(/\s(?:UN|UND|Unid\.?)\s+\d{1,3}\s+(?=[a-zà-ÿ]{3})/g, ' ')
     .replace(/\s\d{1,5}\s+SIM\s+(?=\([^)]*INMETRO)/, ' ')
     .replace(/\s(?:Unidades?|UN|Und|Unid\.?)\s+\d{1,5}\s+\d{1,4}\s+de\s+\d{1,4}$/, '')
@@ -2758,7 +2782,12 @@ function cortaOrcamento(t) {
     // o numero e a letra da cota da linha seguinte: "...porta de aco. 50 E"
     // (Ivaipora/PR), e o "Item 06" da citacao seguinte
     .replace(/([.;])\s+(?:\d{1,3}\s+[A-E]|Item\s+\d{1,3})$/, '$1');
-  const clausula = /\s(?:Image(?:m|ns)\s+(?:apenas|meramente|somente)\s+ilustrativas?|O\s+prazo\s+de\s+vig[êe]ncia\s+d[ao]\s+contrat|O\s+fornecedor\s+dever[áa]\s+enviar\s+o\s+produto)/i.exec(t);
+  // "Imagem Ilustrativa" sozinha tambem, depois de cada item do TR de Pinheiro
+  // Machado/RS; e as colunas de cota da planilha de Sapezal/MT ("... 12 (DOZE)
+  // MESES ITEM PARA AMPLA PARTICIPACAO.", "COTA DO ITEM 04 PARA ME E EPP (Art.
+  // 48, III da LC 147/2014). UN: unidade"); e o que vem depois do item na tabela
+  // de Triunfo/RS, que numera por extenso: "... industrial. Item 2 – 01 Suporte"
+  const clausula = /\s(?:Image(?:m|ns)\s+(?:(?:apenas|meramente|somente)\s+)?ilustrativ[ao]s?|ITEM\s+PARA\s+AMPLA\s+PARTICIPA|COTA\s+DO\s+ITEM\s+\d{1,3}\s+PARA\s+ME\b|UN:\s*unidade|Item\s+\d{1,3}\s+[–-]\s+\d{1,3}\s+[A-ZÀ-Ú]|O\s+prazo\s+de\s+vig[êe]ncia\s+d[ao]\s+contrat|O\s+fornecedor\s+dever[áa]\s+enviar\s+o\s+produto)/i.exec(t);
   if (clausula && clausula.index > 60) t = t.slice(0, clausula.index);
   // o codigo do catalogo da prefeitura fechando a especificacao, com a linha
   // seguinte logo depois: "...pes antiderrapantes. 1004389 6 ME/", "...(1 p/
@@ -2999,6 +3028,21 @@ for (const e of dados.editais) {
   for (const it of v.itens) {
     if (!it[6]) continue;
     it[6] = cortaOrcamento(it[6]);
+    // a quantidade da linha na frente: "60 Bebedouro - purificador de coluna, ..."
+    // (Alegrete/RS, planilha "QTD DESCRICAO UN VALOR")
+    const qtdFrente = String(Math.round(+it[2] || 0));
+    if (+it[2] > 0 && it[6].startsWith(qtdFrente + ' ') && /^[A-ZÀ-Ú]/.test(it[6].slice(qtdFrente.length + 1))) it[6] = it[6].slice(qtdFrente.length + 1);
+    // o cabecalho da folha do orgao no meio da celula: "... funcao freezer,
+    // Municipio de Capanema - PR Secretaria Municipal de Familia e Evolucao Social
+    // dimensoes aprox. ..." (Capanema/PR, 17/09/2026)
+    const munRe = String(e[C.municipio] || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (munRe) it[6] = it[6].replace(new RegExp('\\s*(?:Prefeitura\\s+(?:Municipal\\s+)?(?:de\\s+)?|Munic[íi]pio\\s+de\\s+)' + munRe + '\\s*[-–/]\\s*' + e[C.uf]
+      + '(?:\\s+Secretaria\\s+Municipal\\s+d[eao]s?\\s+(?:\\p{Lu}\\p{L}+|e|de|da|do|das|dos)(?:\\s+(?:\\p{Lu}\\p{L}+|e|de|da|do|das|dos)){0,5})?(?=\\s|$)', 'gu'), ' ')
+      .replace(/\s{2,}/g, ' ').trim();
+    // o que o SIAFISICO poe antes da especificacao: "FORNECIMENTO (SIAFISICO)
+    // QUANTIDADE 01 6502113 - Especificacao Tecnica: Ventilador de Parede; ..."
+    // (Secretaria da Saude de SP, pregao 11)
+    it[6] = it[6].replace(/^FORNECIMENTO\s*\(SIAF[IÍ]SICO\)[^:]{0,60}?Especifica[çc][ãa]o\s+T[ée]cnica:\s*/i, '');
     // O fim da celula repetido pela virada de folha: o PDF de Pirajuba/MG
     // redesenha na folha seguinte "(LÍQUIDO) 1/4 POL CÓDIGO EAN ... INSTALADO
     // POR REDE AUTORIZADA.", e o descritivo saia com a metade final duas vezes.
