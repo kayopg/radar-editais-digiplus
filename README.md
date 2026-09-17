@@ -25,7 +25,7 @@ passo de publicar pula para o `main` atual e refaz o recorte com o código novo 
 
 ```
 varredura.mjs → publicar.mjs → docs/dados.json
-descritivos.mjs → itens-embutidos.mjs → descritivo-por-item.mjs → docs/descritivos.json
+descritivos.mjs → itens-embutidos.mjs → descritivo-por-item.mjs → docs/descritivos.json → veta-pelo-descritivo.mjs
                                                      ↓
                                               docs/index.html
 ```
@@ -34,7 +34,7 @@ descritivos.mjs → itens-embutidos.mjs → descritivo-por-item.mjs → docs/des
 |---|---|
 | `varredura.mjs` | 32 termos × 8 UFs × 2 páginas no PNCP, lê os itens de cada processo e aplica os filtros. ~100 min. |
 | `publicar.mjs` | Converte a saída bruta no `docs/dados.json` que a página consome. |
-| `links-portal.mjs` | Completa o link do edital dentro do portal da disputa (Compras.gov.br, BLL, BNC, Licitanet), usado pelo botão "Participar" de cada card. |
+| `links-portal.mjs` | Completa o link do edital dentro do portal da disputa (Compras.gov.br, BLL, BNC, Licitanet), usado pelo botão "Participar" de cada card. Quando o PNCP não informa, lê a plataforma escrita no começo do edital (Pregão Banrisul, Licitar Digital, portal próprio do órgão) e deixa a nota do que procurar lá. |
 | `participar.mjs` | Monta o link do Compras.gov.br (UASG + modalidade + número + ano) quando o PNCP não informa; a página avisa que o link foi montado. |
 | `participar-manual.json` | Como participar dos editais sem plataforma (disputa por e-mail ou no balcão), escrito à mão; o `links-portal.mjs` aplica todo dia. |
 | `delta.mjs` | Compara duas versões do `dados.json` e imprime o que entrou, o que saiu e o que fecha em 48 h. |
@@ -43,6 +43,8 @@ descritivos.mjs → itens-embutidos.mjs → descritivo-por-item.mjs → docs/des
 | `anexos-plataforma.mjs` | Quando os arquivos do PNCP não descrevem os itens, busca os anexos (Termo de Referência, Anexo I) na página do processo na BLL ou na BNC. |
 | `itens-embutidos.mjs` | Junta a lista de itens do PNCP a cada edital do `docs/descritivos.json`. |
 | `descritivo-por-item.mjs` | Recorta do texto do edital o descritivo de cada item. Na dúvida deixa o item sem descritivo: nenhum é melhor que um errado. |
+| `veta-pelo-descritivo.mjs` | Depois do recorte, tira o item que o Termo de Referência mostra ser de outro mercado (balança antropométrica, refrigerador de termolábeis, banho-maria de laboratório) e aplica as listas de veto da varredura ao dados.json já publicado. Recalcula valor e quantidade e tira o edital que fica sem item ou abaixo do piso. |
+| `editais-fora.json` | Editais conferidos à mão que exigem amostra ou garantia contratual quando a varredura não conseguiu ler o arquivo (zip, docx, odt, html); o `veta-pelo-descritivo.mjs` aplica todo dia. |
 | `ortografia.mjs` | Revisão ortográfica dos descritivos (acentos que o edital não escreveu, letras perdidas na extração do PDF), com os dicionários de `ortografia/` (pt-BR e en-US, LGPL). |
 | `confere-*.mjs`, `audita-descritivos.mjs` | Auditorias do recorte: texto de um item invadindo outro, cortes, numeração, mistura. Contam no Summary do job, não derrubam. |
 | `artefato.mjs` | Monta a página num arquivo só, com dados e PDF embutidos, para publicar como artefato. |
@@ -56,7 +58,7 @@ descritivos.mjs → itens-embutidos.mjs → descritivo-por-item.mjs → docs/des
 Rodar na mão:
 
 ```bash
-node varredura.mjs && node publicar.mjs && node descritivos.mjs && node descritivos.mjs --faltantes && node itens-embutidos.mjs && node descritivo-por-item.mjs
+node varredura.mjs && node publicar.mjs && node descritivos.mjs && node descritivos.mjs --faltantes && node itens-embutidos.mjs && node descritivo-por-item.mjs && node veta-pelo-descritivo.mjs
 ```
 
 Para conferir antes de publicar, sirva a pasta `docs/` (`python -m http.server 8765 --directory docs`)

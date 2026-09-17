@@ -254,6 +254,28 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 "lousa interativa","lousa digital","secadora papeis","secadora de papeis",
 "reservatorio bebedouro","pesagem de animais",
 "equipamento medico","peca / acessorio","peca/acessorio","acessorio para equipamento",
+// Revisao dos 78 editais em 16/09/2026, item a item. Entraram por uma palavra
+// da categoria, mas o produto e outro — e o nome dele abre a descricao:
+//   Itai/SP — "KIT DE ANESTESIA HIPNOS PLUS COM VENTILADOR COMPLETO";
+//   Juiz de Fora/MG — "Haltere ... forma: chaleira", peso de ginastica;
+//   Pinhalao/PR — "Descascador Industrial ... aplicacao: cafe", maquina de
+//     amostra de cafe para sala de prova, nao descascador de legume;
+//   USP e UNIFEI — "Controle Remoto tipo: sem fio, aplicacao: aparelho ar
+//     condicionado" e "Dreno Ar Condicionado" (bomba de dreno): peca, como os
+//     itens de manutencao de Coxim/MS;
+//   Cascavel/PR — "Termostato aplicacao: camara frigorifica", que o edital
+//     descreve como aquecedor submerso de aquario;
+//   Bento Goncalves/RS — "Grelha material: aco inoxidavel ... aplicacao:
+//     churrasqueira", a grelha GN 1/1 de forno: utensilio, nao aparelho;
+//   Lavras/MG — banho-maria de 90 tubos com "controle digital PID Fuzzy", de
+//     laboratorio.
+"anestesia","haltere","aplicacao: cafe","controle remoto tipo:","dreno ar condicionado",
+"bomba dreno","termostato aplicacao","grelha material","pid fuzzy",
+// Varredura de 16/09/2026: "Rolo Plastico Filme De Pvc ... podendo ir em
+// freezers, geladeira e micro-ondas" (Dores de Guanhaes/MG) e o homogeneizador
+// com banho-maria e a envasadora com balanca, de mel, da associacao de
+// apicultores de Rosario do Sul/RS.
+"filme de pvc","filme pvc","papel filme","rolo plastico","homogeneizador","envasadora",
 "protese","jateamento","agitacao de agua","aplicacao: laboratorio","uso laboratorial"];
 
 const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
@@ -292,7 +314,10 @@ const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioim
   // balanca". Os demais sao balanca de pesar gente, que o usuario ja tinha
   // dito ser outro mercado, escritos de um jeito que a lista nao pegava.
   'incubadora','placa sinalizadora','sinalizadora','pesagem de pessoas',
-  'balanca infantil','digital infantil','com regua','coluna articulada'];
+  'balanca infantil','digital infantil','com regua','coluna articulada',
+  // 16/09/2026: a semi-analitica de 0,001 g da UFSM e a rodoviaria de 120
+  // toneladas, instalada e com obra civil, de Alcinopolis/MS
+  'semi-analitica','semi analitica','semianalitica','rodoviaria'];
 
 // ---------------------------------------------------------------- utilidades
 // Cada linha de progresso sai carimbada com o tempo decorrido.

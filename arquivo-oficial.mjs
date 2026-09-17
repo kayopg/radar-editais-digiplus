@@ -125,6 +125,63 @@ export function blocosDoc(bytes) {
   return textoDoc(bytes).split('\n').filter(l => l.trim()).map(txt => ({ t: 'p', txt }));
 }
 
+// ------------------------------------------------------------ ODT e HTML
+// O .odt (LibreOffice) e um ZIP com o texto em content.xml, e o SEI exporta o
+// edital como .html. Caxias do Sul/RS publica edital e termo de referencia so
+// em .odt, dentro do zip, ao lado de tres PDFs de estudo tecnico; Londrina/PR,
+// o edital em .html. Sem ler os dois, Caxias ficava sem descritivo nenhum e
+// nenhum dos dois tinha as exigencias conferidas (16/09/2026). Cada linha da
+// tabela sai numa linha, com as celulas separadas por espaco, como no PDF.
+const NOMEADAS = { nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", ordm: 'º', ordf: 'ª',
+  deg: '°', ndash: '–', mdash: '—', ldquo: '“', rdquo: '”', lsquo: '‘', rsquo: '’', hellip: '…',
+  bull: '•', middot: '·', sup2: '²', sup3: '³', frac12: '½', times: '×', euro: '€' };
+const ACENTOS = { acute: '́', grave: '̀', circ: '̂', tilde: '̃', uml: '̈', cedil: '̧' };
+function entidades(t) {
+  return t
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(+n))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&([A-Za-z])(acute|grave|circ|tilde|uml|cedil);/g, (_, l, a) => (l + ACENTOS[a]).normalize('NFC'))
+    .replace(/&([a-z]+\d?);/gi, (tudo, n) => NOMEADAS[n.toLowerCase()] ?? tudo);
+}
+
+export function textoOdt(bytes) {
+  const alvo = abreZip(bytes).find(e => e.nome === 'content.xml');
+  if (!alvo) throw new Error('nao achei content.xml');
+  return limpa(entidades(Buffer.from(alvo.abre()).toString('utf8')
+    .replace(/<text:tab\/>|<text:s(?:\s[^>]*)?\/>/g, ' ')
+    .replace(/<text:line-break\/>/g, '\n')
+    .replace(/<\/table:table-cell>/g, ' ')
+    .replace(/<\/(?:text:p|text:h|table:table-row)>/g, '\n')
+    .replace(/<[^>]+>/g, '')));
+}
+
+export function textoHtml(bytes) {
+  const b = Buffer.from(bytes);
+  const cs = /charset=["']?([\w-]+)/i.exec(b.slice(0, 4000).toString('latin1'));
+  const utf8 = !cs || /utf-?8/i.test(cs[1]);
+  return limpa(entidades(b.toString(utf8 ? 'utf8' : 'latin1')
+    .replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/t[dh]>/gi, ' ')
+    .replace(/<\/(?:p|div|tr|li|h\d|table|title)>/gi, '\n')
+    .replace(/<[^>]+>/g, '')));
+}
+
+// Os documentos de texto de dentro de um zip, ODT e HTML, para ler ao lado dos
+// PDFs dele. O DOCX tem caminho proprio e continua nele.
+export function textosDoZip(bytes) {
+  const saida = [];
+  for (const e of abreZip(bytes)) {
+    const ext = extDe(e.nome);
+    if (ext !== 'odt' && ext !== 'html' && ext !== 'htm') continue;
+    try {
+      const texto = ext === 'odt' ? textoOdt(e.abre()) : textoHtml(e.abre());
+      if (texto.length > 200) saida.push({ nome: e.nome.split('/').pop(), formato: ext === 'odt' ? 'ODT' : 'HTML', texto });
+    } catch { /* um documento ilegivel nao derruba os outros */ }
+  }
+  return saida;
+}
+
 const RE_ABRE = /<w:tbl>|<w:p[ >]/g;
 
 function blocosDoXml(xml) {

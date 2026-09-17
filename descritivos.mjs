@@ -319,6 +319,7 @@ async function extrai(e) {
   // itens ficavam sem descritivo. O mesmo em Montes Claros/MG e Pouso Alegre/MG.
   const ehTR = a => /termo|referencia|refer[eê]ncia|anexo|especifica|memorial|planilha/i.test(String(a.titulo || ''));
   const ordem = [...cands.filter(ehTR), ...cands.filter(a => !ehTR(a))];
+  const paginasDeTexto = [];
   for (const c of ordem.slice(0, 8)) {
     let f;
     try { f = await fontesDe(c, tropecos); } catch (err) { tropecos.push(err.message); continue; }
@@ -326,6 +327,13 @@ async function extrai(e) {
       try { paginas = paginas.concat(await textoDasPaginas(await LE.abre(p.bytes))); }
       catch (err) { tropecos.push(err.message); }
     }
+    // ODT e HTML (o edital e o termo de referencia de Caxias do Sul/RS, o edital
+    // do SEI de Londrina/PR) entram como paginas de uns 3.500 caracteres, e
+    // passam pela mesma selecao das paginas de PDF. Vao DEPOIS dos PDFs: o
+    // edital em HTML de Londrina vinha no primeiro zip, e o cabecalho dele virou
+    // a celula do item 1, que abre o lote 1 da tabela em PDF.
+    for (const x of f.textos || []) paginasDeTexto.push(...emPaginas(x.texto));
+    if (f.textos && f.textos.length && !f.pdfs.length) continue;
     if (!textoWord && f.texto) {
       try {
         const bytes = await baixaDe(c);
@@ -334,6 +342,7 @@ async function extrai(e) {
       } catch (err) { tropecos.push(err.message); }
     }
   }
+  paginas = paginas.concat(paginasDeTexto);
 
   // O que o PNCP nao tem, a plataforma da disputa pode ter. Em Serrana/SP o
   // PNCP trazia so o corpo do edital, e todos os itens diziam "conforme termo
@@ -397,6 +406,17 @@ async function extrai(e) {
              secoes: limita(secoesDe(textoWord, 'ABERTURA DO EDITAL')) };
   }
   return { fonte: null, secoes: [], motivo: tropecos[0] || 'nao foi possivel ler o arquivo' };
+}
+
+function emPaginas(texto, tamanho = 3500) {
+  const paginas = [];
+  let atual = '';
+  for (const linha of texto.split('\n')) {
+    if (atual.length + linha.length > tamanho && atual) { paginas.push(atual); atual = ''; }
+    atual += (atual ? '\n' : '') + linha;
+  }
+  if (atual) paginas.push(atual);
+  return paginas;
 }
 
 // fontesDe ja baixou os bytes, mas nao os devolve no caminho de texto; para

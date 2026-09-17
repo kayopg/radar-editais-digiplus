@@ -172,6 +172,14 @@ jobs:
         if: steps.guarda.outputs.rodar == 'sim'
         run: node descritivo-por-item.mjs
 
+      # O item que o Termo de Referencia mostra ser de outro mercado (balanca
+      # antropometrica, refrigerador de termolabeis...) so aparece depois do
+      # recorte, e sai aqui; junto, os editais conferidos a mao que exigem o que
+      # a casa nao atende (editais-fora.json). Revisao de 16/09/2026.
+      - name: Vetar pelo descritivo
+        if: steps.guarda.outputs.rodar == 'sim'
+        run: node veta-pelo-descritivo.mjs
+
       # As auditorias nao derrubam o job: elas contam. O numero fica no Summary
       # do dia, e uma queda brusca aparece na comparacao com o dia anterior.
       - name: Auditar os descritivos
@@ -218,10 +226,10 @@ jobs:
             git fetch --depth=1 origin +refs/heads/main:refs/remotes/origin/main
             git reset --hard origin/main
             cp /tmp/gerado/dados.json /tmp/gerado/descritivos.json docs/
-            if ! git diff --quiet "$GITHUB_SHA" origin/main -- '*.mjs' ortografia; then
+            if ! git diff --quiet "$GITHUB_SHA" origin/main -- '*.mjs' ortografia editais-fora.json; then
               echo "O codigo mudou no main durante o job: refazendo o recorte."
               cp /tmp/textos.json docs/descritivos.json
-              if ! { node itens-embutidos.mjs && node descritivo-por-item.mjs; }; then
+              if ! { node itens-embutidos.mjs && node descritivo-por-item.mjs && node veta-pelo-descritivo.mjs; }; then
                 echo "O recorte novo falhou: publicando o do codigo antigo."
                 cp /tmp/gerado/descritivos.json docs/
               fi

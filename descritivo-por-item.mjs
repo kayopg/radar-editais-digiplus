@@ -1345,6 +1345,15 @@ function serve(rotulo, t, confirmado) {
   // limpa do Termo de Referencia e depois era descartada, e o item ficava sem
   // descritivo (16/09/2026).
   if (/Lan[çc]ado\s+por:|Metodologia\s+Menor\s+Valor/i.test(t)) return false;
+  // Nem a justificativa da compra com o nome do produto por titulo: "AR
+  // CONDICIONADO A presente aquisicao tem por finalidade demonstrar a
+  // necessidade ..." venceu a linha "Condicionador de Ar; do Tipo Split; ..."
+  // do mesmo edital (Secretaria da Saude de SP, pregao 28, 16/09/2026).
+  if (/tem\s+por\s+finalidade\s+demonstrar\s+a\s+necessidade|Justifica-se\s+a\s+(?:necessidade|aquisi)/i.test(t)) return false;
+  // Nem a citacao abreviada do item, com "[...]", que vem da resposta a uma
+  // impugnacao: "Item 01: Ventilador de teto, 3 pas em madeira [...], com
+  // controle de velocidade" (Pitangueiras/SP) — a linha inteira esta na tabela.
+  if (/\[\s*(?:\.\.\.|…)\s*\]/.test(t)) return false;
   // nem a pagina de loja virtual copiada na pesquisa: "Ar Condicionado Split
   // Agratto ... Política de Privacidade", "Hisense Eco Plus 12.000 Btus Frio
   // 220v R-32 4.8 (18)" (mesmo edital)
@@ -1544,6 +1553,15 @@ function descritivosPorItem(secoes, itens) {
     const iq = antes.match(/(?:,[0-9]{2}|total)\s+(0*[0-9]{1,3})\s+(0*[0-9]{1,4})\s+$/);
     if (iq && /^[A-ZÀ-Ú]{4,}/.test(secoes.slice(pos, pos + 10))
         && itens.some(it => it[0] === +iq[1] && Number(it[2]) === +iq[2])) return +iq[1];
+    // Item, quantidade inteira e unidade: "01 117 UN Ventilador de teto"
+    // (Pitangueiras/SP). Vale quando a quantidade e a do PNCP para esse item;
+    // sem isso o 117 passava por numero do item, e a linha certa empatava com
+    // cinco mil caracteres do estudo tecnico, que venciam por serem mais longos.
+    // So com "UN"/"UND" sem ponto: com "Unid." (Serrana/SP, "7 06 Unid.
+    // APARELHO DE AR CONDICIONADO: ...") a confirmacao caia no titulo da celula,
+    // que o corpo logo abaixo separa, e o item ficava so com o titulo.
+    const iqu = antes.match(/(?:^|[^0-9.,])(0*[0-9]{1,4})\s+([0-9]{1,5})\s+(?:UN|UND|un|und)\s*$/);
+    if (iqu && itens.some(it => it[0] === +iqu[1] && Number(it[2]) === +iqu[2])) return +iqu[1];
     const q = antes.match(ABERTURA_QTD);
     if (q && +q[1] > 0) return +q[1];
     const c = antes.match(ABERTURA_CAT_QTD);
@@ -2143,6 +2161,14 @@ function descritivosPorItem(secoes, itens) {
     // O cabecalho da AGU sai antes do timbre aprendido: ele vem em duas versoes,
     // o detector aprende as pontas de cada uma e deixaria o miolo para tras.
     const cru = tiraTimbre(secoes.slice(pos, fim).replace(/\s+/g, ' ').replace(CABECALHO_AGU, ' ').replace(CABECALHO_HASH, ' ').trim(), timbres)
+      // A linha que a virada de folha partiu: as colunas de unidade, quantidade
+      // e preco fecham a linha na folha de cima, e a celula continua na de
+      // baixo depois do numero da folha e do cabecalho repetido da tabela.
+      // "...Saude: Remove 99% UND 5 R$ 12.900,00 R$ 64.500,00 25 Ord. Cota
+      // Descricao Und Qtd Valor Unit. Valor Total das bacterias do ar - ..."
+      // (Ivaipora/PR, 16/09/2026). Costura quando o que vem depois do
+      // cabecalho continua a frase, em minuscula.
+      .replace(/\s(?:UND|UN|Und|und|Unid\.?)\s+\d{1,5}\s+R\$\s*[\d.]*,\d{2}\s+R\$\s*[\d.]*,\d{2}\s+\S{1,4}\s+(?:[\p{L}.]+\s+){2,10}?Valor\s+Total\s+(?=[a-zà-ÿ(])/gu, ' ')
       // A folha que vira DEPOIS dos valores da linha, com o fim da celula na
       // folha seguinte: "...Garantia minima de 12 meses 608748 Unidade 05 R$
       // 579,97 R$ 2.899,85 UASG 102315 [cabecalho da AGU] Marca/Modelo de
@@ -2705,6 +2731,46 @@ function cortaOrcamento(t) {
   // ESTIMATIVA DO VALOR DA CONTRATAÇÃO", "7. DA JUSTIFICATIVA..." (Alcinópolis/MS)
   const secao = /\s\d{1,2}(?:\.\d{1,2})?\.?\s+D[AOE]S?\s+(?:ESTIMATIVA|JUSTIFICATIVA|FUNDAMENTA|REQUISITOS|MODELO\s+DE|CRIT[ÉE]RIOS|OBRIGA[ÇC]|PAGAMENTO|VIG[ÊE]NCIA|DEMONSTRATIVO|ADEQUA[ÇC][ÃA]O|LEVANTAMENTO|DESCRI[ÇC][ÃA]O\s+DA\s+SOLU|PRAZO|SAN[ÇC][ÕO]ES)/.exec(t);
   if (secao && secao.index > 150) t = t.slice(0, secao.index);
+  // clausula do contrato colada no fim da celula: "Imagem apenas ilustrativa*
+  // UN 2 2.500,00 5.000,00 O prazo de vigencia da contratacao e de 30 dias..."
+  // (Franca/SP) e "O fornecedor devera enviar o produto novo lacrado ...
+  // procede-se entao o pagamento do empenho" (Montes Claros/MG, 16/09/2026)
+  // e os campos em branco do modelo de proposta: "... energetica A.
+  // MARCA:........ FABRICANTE:........ MODELO:........ un." (Caxias do Sul/RS)
+  const emBranco = /\s(?:MARCA|Marca|FABRICANTE|Fabricante|MODELO|Modelo)\s*:\s*[._…]{5,}/.exec(t);
+  if (emBranco && emBranco.index > 60) t = t.slice(0, emBranco.index);
+  // o rodape do SIPAC na linha: "...MODELO TURBO PREMIUM Quant. Int. 156679 -
+  // UNIVERSIDADE FEDERAL DE CATALAO 41 SIPAC |" (UFCAT) — e o preco seguido do
+  // anexo seguinte: "...QUANTIDADE PAS: 3 UN 368,73 ANEXO II - REGRAS
+  // APLICAVEIS..." (UFV, pregao 218)
+  // e o cabecalho repetido da tabela de Ivaipora/PR, quando nao ha continuacao
+  // para costurar: "... fornos de micro-ondas. 61 Ord. Cota Descricao Und Qtd"
+  const rodapeLinha = /\sQuant\.\s*Int\.\s|\s\d{1,3}(?:\.\d{3})*,\d{2}\s+ANEXO\s+[IVXL]+\b|\s\S{1,4}\s+Ord\.\s+Cota\s+Descri/.exec(t);
+  if (rodapeLinha && rodapeLinha.index > 40) t = t.slice(0, rodapeLinha.index);
+  // colunas soltas no meio e no fim: "controlador de UN 01 temperatura" (Vila
+  // Flores/RS), "7HP 1 UN CK" (Vinhedo/SP), "branco 117 SIM (INMETRO + Selo
+  // PROCEL)" (Pitangueiras/SP), "3 Velocidades E Oscilante Unidade 100 262 de
+  // 420" (UFV, com o numero da folha)
+  t = t.replace(/\s(?:UN|UND|Unid\.?)\s+\d{1,3}\s+(?=[a-zà-ÿ]{3})/g, ' ')
+    .replace(/\s\d{1,5}\s+SIM\s+(?=\([^)]*INMETRO)/, ' ')
+    .replace(/\s(?:Unidades?|UN|Und|Unid\.?)\s+\d{1,5}\s+\d{1,4}\s+de\s+\d{1,4}$/, '')
+    .replace(/(\S)\s\d{1,4}\s+(?:UN|UND|Unid\.?)(?:\s+[A-Z]{1,3})?$/, '$1')
+    // o numero e a letra da cota da linha seguinte: "...porta de aco. 50 E"
+    // (Ivaipora/PR), e o "Item 06" da citacao seguinte
+    .replace(/([.;])\s+(?:\d{1,3}\s+[A-E]|Item\s+\d{1,3})$/, '$1');
+  const clausula = /\s(?:Image(?:m|ns)\s+(?:apenas|meramente|somente)\s+ilustrativas?|O\s+prazo\s+de\s+vig[êe]ncia\s+d[ao]\s+contrat|O\s+fornecedor\s+dever[áa]\s+enviar\s+o\s+produto)/i.exec(t);
+  if (clausula && clausula.index > 60) t = t.slice(0, clausula.index);
+  // o codigo do catalogo da prefeitura fechando a especificacao, com a linha
+  // seguinte logo depois: "...pes antiderrapantes. 1004389 6 ME/", "...(1 p/
+  // limao). 1014691 Batedeira Planetaria com 10 velocidades..." — a metade da
+  // batedeira que ficou antes da virada de folha (Uberlandia/MG)
+  const cod = /([.;)])\s+\d{6,7}(?=\s+(?:\d{1,3}\s+ME\s*\/|Un\b|UN\b|Unid|[A-ZÀ-Ú][a-zà-ÿ]))/.exec(t);
+  if (cod && cod.index > 60) t = t.slice(0, cod.index + 1);
+  // a linha da tabela sem preco: unidade, quantidade e codigo do catalogo, e
+  // dali em diante o rodape da folha ("... com visor em Unidade 01 632257 TERMO
+  // DE REFERENCIA (TR) - BENS", Camara de Belo Horizonte/MG)
+  const linhaSemPreco = /\s(?:Unidades?|Unid\.?|UN|UND)\s+\d{1,4}\s+\d{5,7}(?!\d)/.exec(t);
+  if (linhaSemPreco && linhaSemPreco.index > 40) t = t.slice(0, linhaSemPreco.index);
   for (const m of t.matchAll(PRECOS)) {
     const depois = t.slice(m.index + m[0].length, m.index + m[0].length + 160);
     // e o preco seguido da linha do proximo item: "luz interna. 3.659,93
@@ -2754,8 +2820,19 @@ function cortaOrcamento(t) {
     if (!soNumero) break;
     t = t.slice(0, p + 1);
   }
+  // o preco unitario sozinho no fim, sem R$: "PESA COM INCREMENTOS DE 100G
+  // 511,30" (Casca/RS). So de 100 para cima, e nunca depois de rotulo (":"),
+  // de preposicao ou do "x" das medidas: "Largura: 24,50", "de 150,00" ficam.
+  const precoNoFim = /^([\s\S]{40,}?\S)\s+(\d{1,3}(?:\.\d{3})+,\d{2}|\d{3},\d{2})$/.exec(t);
+  if (precoNoFim && !/(?:[:=xX×]|(?<!\p{L})(?:de|a|até|ate|e|com|mínimo|minimo|máximo|maximo|aprox\.?|aproximadamente|entre|DE|ATÉ|ATE|COM))$/u.test(precoNoFim[1])) t = precoNoFim[1];
+  // a coluna da unidade depois do ponto final: "... selo/homologacao INMETRO. .
+  // Unidade" (Camara de Belo Horizonte/MG)
+  t = t.replace(/([.;])(?:\s*\.)*\s+(?:Unidades?|Unid\.?|UN|UND|un\.?|und\.?)$/, '$1');
   // "Unid BEBEDOURO INDUSTRIAL 50 LITROS: ...": a coluna da unidade na frente
   t = t.replace(/^(?:Unid|UN|UND)\.?\s+(?=[A-ZÀ-Ú]{3})/, '');
+  // e a da cota: "EPP Liquidificador Industrial..." (Uberlandia/MG, onde a
+  // coluna diz "ME/ EPP" e a quebra cai entre as duas siglas)
+  t = t.replace(/^(?:ME\s*\/\s*)?EPP\s+(?=[A-ZÀ-Ú])/, '');
   // pontuacao solta no fim; aspa so quando solta ("... meses. '"), nunca a que
   // fecha 'Letra "A"'
   return t.replace(/\s+['"•·*«»]+$/, '').replace(/[\s•·,;:\-«»]+$/, '').trim();
@@ -2897,6 +2974,21 @@ for (const e of dados.editais) {
     }
   }
 
+  // Edital de um item so, sem linha achada pelo rotulo: o modelo da Secretaria
+  // da Saude de SP escreve "6075800 - Split Hi-wall Inverter 30.000btus
+  // Especificação Técnica: Condicionador de Ar; do Tipo Split; ..." e o rotulo
+  // do PNCP ("Aparelho Ar Condicionado tipo: split hi wall ...") nao ancora
+  // nessa linha — a unica candidata era a justificativa da compra (pregao 28,
+  // 16/09/2026). Com um item so, a unica especificacao tecnica do edital e dele.
+  if (v.itens.length === 1 && !v.itens[0][6]) {
+    // A mesma especificacao aparece de novo em outra copia do anexo, e ali o
+    // fim da secao nao se acha e o trecho corre ate a assinatura: das copias
+    // que abrem igual, vale a mais curta.
+    const specs = [...textoPlano.matchAll(/Especifica[çc][ãa]o\s+T[ée]cnica:\s*(.{60,1500}?)(?=\s\d{1,2}\.\s+D[OAE]S?\s|\s\d{6,7}\s+P[ÇC]\s|$)/g)].map(m => m[1].trim());
+    if (specs.length && new Set(specs.map(s => s.slice(0, 80))).size === 1)
+      v.itens[0][6] = specs.reduce((a, b) => b.length < a.length ? b : a);
+  }
+
   // Vetos finais, para qualquer edital (15/09/2026). Nenhum descritivo e melhor
   // que um errado:
   // - o sumario do edital ("1. DO OBJETO ........ 3"): Ilicinea/MG recebeu a
@@ -2923,6 +3015,17 @@ for (const e of dados.editais) {
       const p = it[6].lastIndexOf('. ');
       if (k >= 0 && /^ [a-zà-ÿ]/.test(plano.slice(k + fim.length, k + fim.length + 2)) && p > it[6].length * 0.6)
         it[6] = it[6].slice(0, p + 1);
+    }
+    // Celula cortada pela virada de folha que termina pendurada numa
+    // preposicao: "...ralagao e processamento de alimentos, com" (Guia Lopes da
+    // Laguna/MS), quando o resto ficou depois do cabecalho da folha seguinte.
+    // Volta a ultima virgula ou ponto; perto do comeco, nao sobra descritivo.
+    // So a minuscula: a maiuscula costuma ser sobra de coluna, como o "EM" de
+    // "COPO COLETOR E PENEIRA EM IC BASE: 253500" (Minacu/GO).
+    if (/(?<!\p{L})(?:com|em|de|da|do|das|dos|para|por|e|ou|no|na|nos|nas|ao|aos|sem|entre)$/u.test(it[6])) {
+      const p = Math.max(it[6].lastIndexOf(', '), it[6].lastIndexOf('. '), it[6].lastIndexOf('; '));
+      it[6] = p > it[6].length * 0.5 ? it[6].slice(0, it[6][p] === ',' ? p : p + 1) : '';
+      if (!it[6]) continue;
     }
     if (/SUM[ÁA]RIO/i.test(it[6]) && /\.{20,}\s*\d/.test(it[6])) { it[6] = ''; continue; }
     // justificativa do Termo de Referencia no lugar da especificacao: "VENTILADOR

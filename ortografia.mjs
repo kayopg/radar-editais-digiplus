@@ -112,6 +112,23 @@ const REPAROS = [
   // e o "inox" que o reconhecimento leu como "!fox", "'fox" ou "— fox"
   [/(?<=(?:[Aa]ço|AÇO)\s)['!]fox(?!\p{L})/gu, 'inox'],
   [/(?<=\s[—–-]\s)fox(?=,)/g, 'inox'],
+  // Cedilha que o reconhecimento trocou por "g" onde a regra geral nao alcanca,
+  // porque o dicionario aceita a forma errada por derivacao ("avangadas",
+  // "fungões"): "possuir fungoes basicas e avangadas de aquecimento ...
+  // garantindo segura nga" (Guia Lopes da Laguna/MS, 16/09/2026)
+  [/(?<!\p{L})([Ff])ungoes(?!\p{L})/gu, '$1unções'], [/(?<!\p{L})FUNGOES(?!\p{L})/gu, 'FUNÇÕES'],
+  [/(?<!\p{L})([Aa])vangad([ao]s?)(?!\p{L})/gu, '$1vançad$2'], [/(?<!\p{L})AVANGAD([AO]S?)(?!\p{L})/gu, 'AVANÇAD$1'],
+  [/(?<!\p{L})([Ss])egura\s+nga(?!\p{L})/gu, '$1egurança'], [/(?<!\p{L})SEGURA\s+NGA(?!\p{L})/gu, 'SEGURANÇA'],
+  // "cozinhas industrials" (mesmo edital)
+  [/(?<!\p{L})industrials(?!\p{L})/gu, 'industriais'],
+  // O ponto no lugar do espaco: "Garantia minima de.12 meses", "controle remoto
+  // sem.fio" (Serrana/SP)
+  [/(?<!\p{L})(de|sem|com|DE|SEM|COM)\.(?=\d|fio\b|FIO\b)/gu, '$1 '],
+  // O espaco depois do separador de milhar ou decimal, no texto do catalogo
+  // copiado para o edital: "POTENCIA 1. 000 W", "18. 000 BTU", "MOTOR 0, 75 CV"
+  // (Monte Belo/MG)
+  [/(?<=\d)\.\s(?=\d{3}(?!\d)\s*(?:W|BTU|kW|KW|V|L|RPM|rpm|mm|MM|kg|KG)(?!\p{L}))/gu, '.'],
+  [/(?<=(?<![\d.,])\d{1,2}),\s(?=\d{1,2}\s*(?:CV|cv|HP|hp|kW|KW|L|kg|KG|mm|MM|cm|CM)(?!\p{L}))/gu, ','],
   // "Acompanha: Motor, Grades, Helice, Frontar, Suporte de Parede" (Salto/SP)
   [/\b([Ff])rontar(?=,)/g, '$1rontal'],
   // "descongelamento de carnes e pratos protos" (Saudade do Iguacu/PR)

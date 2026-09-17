@@ -8,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { textoDasPaginas, escolhePaginas, textoUtil, coberturaItens } from './paginas-uteis.mjs';
-import { abreZip, pdfsDoZip, blocosDocx, blocosDoc, extDe } from './arquivo-oficial.mjs';
+import { abreZip, pdfsDoZip, blocosDocx, blocosDoc, extDe, textoOdt, textoHtml, textosDoZip } from './arquivo-oficial.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const req = createRequire(import.meta.url);
@@ -114,8 +114,12 @@ function farejaTipo(bytes) {
   if (b.startsWith('25504446')) return 'pdf';   // %PDF
   if (b.startsWith('504b0304')) return 'zip';   // PK\3\4 — docx e xlsx tambem
   if (b.startsWith('d0cf11e0')) return 'ole';   // doc/xls do Word 97-2003
+  // pagina do SEI publicada solta: "<!DOCTYPE html" ou "<html", com ou sem BOM
+  if (/^(?:﻿)?\s*<(?:!doctype\s+html|html)/i.test(Buffer.from(bytes.slice(0, 200)).toString('utf8'))) return 'html';
   return 'desconhecido';
 }
+
+const emParagrafos = t => t.split('\n').filter(l => l.trim()).map(txt => ({ t: 'p', txt }));
 
 // PDF primeiro, sempre — pedido do usuario em 04/09/2026. Antes disso, um
 // arquivo INTITULADO "Edital" ganhava do PDF publicado ao lado, e Ribeirao
@@ -257,18 +261,36 @@ export async function fontesDe(c, tropecos, limiteZip = 3) {
     if (dentro.some(e => e.nome === 'word/document.xml')) {
       return { pdfs: [], texto: { blocos: blocosDocx(bytes), formato: 'DOCX', nome: c.titulo } };
     }
+    // O .odt tambem: e zip com content.xml (e o mimetype do OpenDocument)
+    if (dentro.some(e => e.nome === 'content.xml') && dentro.some(e => e.nome === 'mimetype')) {
+      const texto = textoOdt(bytes);
+      return { pdfs: [], texto: { blocos: emParagrafos(texto), formato: 'ODT', nome: c.titulo },
+               textos: [{ nome: c.titulo, formato: 'ODT', texto }] };
+    }
+    // Edital e termo de referencia em ODT ou HTML ao lado dos PDFs do zip
+    // (Caxias do Sul/RS, Londrina/PR): vao em "textos", para o recorte ler.
+    const textos = textosDoZip(bytes);
     const pdfs = pdfsDoZip(bytes).slice(0, limiteZip)
       .map(p => ({ nome: p.nome.split('/').pop(), tipo: p.nome, bytes: p.abre(), zip: true }))
       .sort((a, b) => ORDEM[classe(a.nome, a.tipo)] - ORDEM[classe(b.nome, b.tipo)]);
-    if (pdfs.length) return { pdfs, texto: null };
+    if (pdfs.length) return { pdfs, texto: null, textos };
 
     const dx = dentro.find(e => extDe(e.nome) === 'docx');
-    if (dx) return { pdfs: [], texto: { blocos: blocosDocx(dx.abre()), formato: 'DOCX', nome: dx.nome } };
+    if (dx) return { pdfs: [], texto: { blocos: blocosDocx(dx.abre()), formato: 'DOCX', nome: dx.nome }, textos };
+    if (textos.length) {
+      return { pdfs: [], textos, texto: { blocos: textos.flatMap(x => emParagrafos(x.texto)),
+        formato: [...new Set(textos.map(x => x.formato))].join(' + '), nome: textos.map(x => x.nome).join(' + ') } };
+    }
     tropecos.push('o zip publicado nao trazia PDF nem DOCX');
     return { pdfs: [], texto: null };
   }
 
   if (tipo === 'ole') return { pdfs: [], texto: { blocos: blocosDoc(bytes), formato: 'DOC', nome: c.titulo } };
+  if (tipo === 'html') {
+    const texto = textoHtml(bytes);
+    return { pdfs: [], texto: { blocos: emParagrafos(texto), formato: 'HTML', nome: c.titulo },
+             textos: [{ nome: c.titulo, formato: 'HTML', texto }] };
+  }
   tropecos.push('formato nao reconhecido (' + (c.ext || 'sem extensao') + ')');
   return { pdfs: [], texto: null };
 }

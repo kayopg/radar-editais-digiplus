@@ -335,6 +335,10 @@ await pool(alvos, 2, async (e) => {
       const pdfs = [...f.pdfs].sort((a, b) => prioridadeCapa(b.nome, '') - prioridadeCapa(a.nome, ''));
       for (const p of pdfs) {
         if (f.pdfs.length > 1 && prioridadeCapa(p.nome, '') === 0) continue;
+        // Nem sozinho vira capa o que nunca e edital: o zip de Corrego Danta/MG
+        // no PNCP so traz o "Decreto nº 978-2024 - Decreto de REGIONALIZACAO",
+        // e a primeira folha do decreto saia como capa do resumo (16/09/2026).
+        if (/(?:^|[^a-z])(?:decreto|portaria|mapa de riscos?|matriz de riscos?|parecer)(?:[^a-z]|$)/.test(semAcento(p.nome || '').toLowerCase())) continue;
         if (abertos++ >= 5) break procura;
         const le = await LE.abre(p.bytes);
         const paginas = await textoDasPaginas(le);
