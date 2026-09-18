@@ -74,6 +74,27 @@ const vetoDoCatalogo = (d, cat) => ((termoMaisCedo(d) || { i: 0 }).i > TERMO_LON
   || (cat === 'RF' && VETO_RF_CIENT.find(v => d.includes(v)))
   || (cat === 'BL' && VETO_BL_MEDICA.find(v => d.includes(v)));
 
+// Aparelho que o edital manda entregar instalado sai, menos no RS e em SC, onde a
+// Digiplus instala (decisao do usuario, 17/09/2026; o lado do catalogo esta no
+// 5.1b do varredura.mjs). So frase que OBRIGA: "acessorios necessarios para
+// instalacao", "facil instalacao", "instalacao em parede", "kit de instalacao" e
+// "sem instalacao" descrevem o produto e ficam. Casos de 17/09: Palmeiras de
+// Goias/GO ("deverao ser entregues instalados e em perfeito funcionamento"),
+// Mariopolis/PR ("devidamente instalado, no local de entrega") e Santa Rita do
+// Passa Quatro/SP (BEC: "treinamento, instalacao e assistencia tecnica").
+const UF_INSTALA = new Set(['RS', 'SC']);
+const EXIGE_INSTALACAO = [
+  /entregues? (devidamente )?instalad[oa]s?/,
+  /devidamente instalad[oa]s?/,
+  /instalad[oa]s? e em (perfeito )?funcionamento/,
+  /fornecimento e instalacao/,
+  /instalacao (inclusa|incluida|inclusive)/,
+  /(incluindo|inclusa|incluida|inclusive) (a )?instalacao/,
+  /instalacao e assistencia tecnica/,
+  /instalacao (sera |fica |ficara )?(por conta|a cargo|sob responsabilidade|de responsabilidade) d[ao] (contratad|fornecedor|licitante|empresa)/,
+];
+const exigeInstalacao = d => (EXIGE_INSTALACAO.find(r => r.test(d)) || '') && 'entrega instalada';
+
 const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ');
 const mostra = process.argv.includes('--mostra');
 
@@ -101,7 +122,8 @@ for (const e of dados.editais) {
     const x = (v.itens || []).find(y => y[0] == it[5]);
     const d = norm(x && x[6]);
     const noCatalogo = vetoDoCatalogo(norm(it[3]), it[0]);
-    const termo = noCatalogo || (d && (VETO[it[0]] || []).find(t => d.includes(t)));
+    const termo = noCatalogo || (d && ((VETO[it[0]] || []).find(t => d.includes(t))
+      || (!UF_INSTALA.has(e[C.uf]) && exigeInstalacao(d))));
     if (!termo) return true;
     tirados++;
     console.log(`veta "${termo}" ${noCatalogo ? 'no PNCP' : 'no edital'} · ${it[0]} · ${nome} · item ${it[5]}: ${String(noCatalogo ? it[3] : x[6]).replace(/\s+/g, ' ').slice(0, 140)}`);

@@ -152,6 +152,19 @@ async function buscaPortal(e) {
 const SERV_ITEM = ["instalacao","montagem","manutencao","higienizacao","desinstalacao","recarga de gas","limpeza de ar","mao de obra","servicos de"];
 // 5.1 — serviço no objeto do edital (mais estreito: "manutenção das atividades" é praxe e não é serviço)
 const SERV_OBJ = ["instalacao","montagem","mao de obra"];
+// 5.1b — no RS e em SC a Digiplus instala (decisao do usuario, 17/09/2026): ali
+// instalacao e montagem nao derrubam o edital. O item de servico que so instala
+// (m = 'S', "instalacao de ar-condicionado") sai da lista, mas o edital fica pelos
+// aparelhos. "desinstalacao" continua servico: casa com "instalacao" como texto,
+// por isso o teste e por termo da lista e nao por substring. Fora dessas duas UFs
+// o veto-pelo-descritivo.mjs tira tambem o aparelho que o EDITAL manda entregar
+// instalado — o catalogo do PNCP quase nunca diz isso.
+const UF_INSTALA = new Set(["RS","SC"]);
+const SERV_INSTALA = ["instalacao","montagem"];
+const servicoEm = (lista, d, uf) => lista.some(v => d.includes(v) && !(UF_INSTALA.has(uf) && SERV_INSTALA.includes(v)));
+// "servicos de instalacao" e "mao de obra de instalacao" ainda sao so instalar.
+const NAO_SO_INSTALA = SERV_ITEM.filter(v => !SERV_INSTALA.includes(v) && v !== "servicos de" && v !== "mao de obra");
+const soInstala = (d, uf) => UF_INSTALA.has(uf) && SERV_INSTALA.some(v => d.includes(v)) && !NAO_SO_INSTALA.some(v => d.includes(v));
 
 // 5.2 — veto por objeto
 const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motociclet","automov","trator","maquinas agricolas","brinquedo","material de construcao","processamento de dados","formulas aliment","dieta enteral","generos aliment","material de limpeza","higiene e limpeza","sucata","velorio","tecidos aviamento",
@@ -556,7 +569,7 @@ const st = { objServ: 0, itemServ: 0, semItem: 0, ok: 0 };
 const bruto = [];
 for (const o of cands) {
   const obj = norm((o.description || '') + ' ' + (o.title || ''));
-  if (SERV_OBJ.some(v => obj.includes(v))) { st.objServ++; continue; }
+  if (servicoEm(SERV_OBJ, obj, o.uf)) { st.objServ++; continue; }
 
   const interesse = [];
   let servico = false;
@@ -564,7 +577,8 @@ for (const o of cands) {
     const d = norm(it.d);
     const cat = classifica(d);
     if (!cat || posicaoDoTermo(d).i > TERMO_LONGE) continue;
-    if (it.m !== 'M' || SERV_ITEM.some(v => d.includes(v))) { servico = true; break; }
+    if (it.m !== 'M' && soInstala(d, o.uf)) continue;
+    if (it.m !== 'M' || servicoEm(SERV_ITEM, d, o.uf)) { servico = true; break; }
     interesse.push([cat, it, d]);
   }
   if (servico) { st.itemServ++; continue; }

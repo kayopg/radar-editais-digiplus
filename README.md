@@ -2,7 +2,8 @@
 
 Monitoramento diário de licitações públicas abertas no [PNCP](https://pncp.gov.br) com itens
 de linha branca, climatização, cocção, lavanderia e eletroportáteis — filtradas para
-**fornecimento puro**, sem exigência de instalação, montagem ou manutenção.
+**fornecimento**: fora do RS e de SC, sem exigência de instalação ou montagem; em todo lugar,
+sem manutenção.
 
 **Página:** https://kayopg.github.io/radar-editais-digiplus/
 
@@ -78,7 +79,10 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    Tribunais, agências, saneamento, militares e polícia ficam de fora.
 1. **Só material** — descarta itens de serviço (`materialOuServico !== 'M'`) e descrições com
    instalação, montagem, manutenção, mão de obra. Um edital só entra se **nenhum** item de
-   interesse for serviço.
+   interesse for serviço. No RS e em SC a Digiplus instala: ali instalação e montagem não
+   derrubam o edital, e o item de serviço que só instala sai da lista sem levar o edital junto.
+   Fora dessas duas UFs, o `veta-pelo-descritivo.mjs` tira também o aparelho que o edital
+   manda entregar instalado ("entregues instalados e em perfeito funcionamento").
 2. **Veto por objeto** — derruba o edital inteiro quando o objeto é de veículo, trator,
    alimento, material de limpeza e afins. Veículos casam com a busca porque têm
    ar-condicionado de fábrica.

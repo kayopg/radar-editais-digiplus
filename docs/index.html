@@ -249,7 +249,7 @@ button.btn{font-family:inherit;cursor:pointer}
       <div>
         <div class="eyebrow">PNCP · <span id="listaUf">carregando</span> · varredura de <span id="dataVarredura">—</span></div>
         <h1>Radar de Editais <span class="plus">DigiPlus</span></h1>
-        <p class="sub">Licitações abertas com itens de linha branca, climatização, cocção, lavanderia e eletroportáteis — apenas <strong>fornecimento puro</strong>, sem exigência de instalação, montagem ou manutenção.</p>
+        <p class="sub">Licitações abertas com itens de linha branca, climatização, cocção, lavanderia e eletroportáteis — apenas <strong>fornecimento</strong>: fora do RS e de SC, sem exigência de instalação ou montagem; em todo lugar, sem manutenção.</p>
       </div>
     </div>
     <button class="themebtn" id="theme" type="button" aria-label="Alternar tema"><span id="themeIcon">☾</span> <span id="themeTxt">Modo escuro</span></button>
@@ -283,7 +283,7 @@ button.btn{font-family:inherit;cursor:pointer}
 <div class="method">
   <h2>Como esta lista foi montada</h2>
   <p><strong>Fonte:</strong> API pública do PNCP, onde toda contratação da Lei 14.133/2021 é publicada por obrigação legal. Gratuita, sem login, sem intermediário.</p>
-  <p><strong>Funil:</strong> <span id="nTermos">32</span> termos de busca × <span id="nEstados">8</span> estados → <span id="nCandidatos">—</span> processos candidatos → leitura item a item de cada um → descarte de tudo que exige instalação/montagem/manutenção (usando o campo <code>Material × Serviço</code> do próprio PNCP) → remoção de duplicatas (mesmo edital publicado em portais diferentes) → corte de falsos positivos → a lista acima.</p>
+  <p><strong>Funil:</strong> <span id="nTermos">32</span> termos de busca × <span id="nEstados">8</span> estados → <span id="nCandidatos">—</span> processos candidatos → leitura item a item de cada um → descarte de tudo que exige manutenção ou mão de obra e, fora do RS e de SC, instalação ou montagem (pelo campo <code>Material × Serviço</code> do próprio PNCP e pelo descritivo do edital, quando ele manda entregar o aparelho instalado) → remoção de duplicatas (mesmo edital publicado em portais diferentes) → corte de falsos positivos → a lista acima.</p>
   <p><strong>Falsos positivos cortados:</strong> vans, caminhões e tratores com ar-condicionado de fábrica, leilões de veículo sucateado, diárias de hotel &ldquo;com ar-condicionado e frigobar&rdquo;, ventilador pulmonar, conector &ldquo;split bolt&rdquo;, cooler de PC, torre de micro-ondas em MDF, tubo de cobre para instalação, filtro e placa eletrônica de ar-condicionado, fórmula infantil (casa com &ldquo;liquidificador&rdquo; no descritivo), projeto executivo de climatização, sabão em pó, e itens com preço unitário incompatível com o equipamento real.</p>
   <p><strong>Ressalvas:</strong> os valores são estimativas do órgão, não referência de mercado — vários vêm zerados porque o orçamento é sigiloso. Sobram cerca de 4% de falsos positivos residuais. Confira o edital antes de cotar.</p>
   <p><strong>Filtros:</strong> estado e categoria aceitam várias opções ao mesmo tempo; prazo e preço, uma de cada vez. Nenhuma opção marcada significa "todas". Editais que já encerraram ficam no fim da lista, apagados, e não entram nos números do topo.</p>
