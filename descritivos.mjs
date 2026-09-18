@@ -23,7 +23,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { textoDasPaginas, escolhePaginas, textoUtil, coberturaItens, CABECALHOS } from './paginas-uteis.mjs';
 import { arquivosPublicados, fontesDe, buscaTodosItens } from './resumo-pdf.mjs';
-import { textoDocx, textoDoc } from './arquivo-oficial.mjs';
+import { textoDocx, textoDoc, abreZip } from './arquivo-oficial.mjs';
 import { ehPlataformaComAnexos, anexosDaPlataforma } from './anexos-plataforma.mjs';
 import { createRequire } from 'node:module';
 
@@ -381,7 +381,16 @@ async function extraiSecoes(e, planilhas) {
     if (f.textos && f.textos.length && !f.pdfs.length) continue;
     if (!textoWord && f.texto) {
       try {
-        const bytes = await baixaDe(c);
+        let bytes = await baixaDe(c);
+        // O Word de dentro do zip: o zip inteiro no leitor de DOCX nao dava
+        // texto, e o edital de Nova Prata do Iguacu/PR ("Pregao 040 - ERRATA e
+        // EDITAL.zip") ficava com os 4 mil caracteres da errata em .doc
+        // publicada ao lado (18/09/2026).
+        const zip = Buffer.from(bytes.slice(0, 4)).toString('hex') === '504b0304' ? abreZip(bytes) : null;
+        if (zip && !zip.some(x => x.nome === 'word/document.xml')) {
+          const dentro = zip.find(x => x.nome === f.texto.nome);
+          if (dentro) bytes = dentro.abre();
+        }
         textoWord = f.texto.formato === 'DOC' ? textoDoc(bytes) : textoDocx(bytes);
         formato = f.texto.formato;
       } catch (err) { tropecos.push(err.message); }
