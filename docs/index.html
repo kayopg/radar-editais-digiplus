@@ -1198,9 +1198,18 @@ function usaDados(j){
   D = j.editais || [];
   var m = j.meta || {};
 
+  // O cabecalho mostra as 8 UFs VARRIDAS — e cobertura, e a informacao certa
+  // mesmo quando alguma delas nao trouxe nada hoje.
   var ufs = m.ufs || [];
   document.getElementById("listaUf").textContent = ufs.join(" ");
-  multi("uf", ufs.map(function(u){ return {l:u, v:u}; }), fUF);
+
+  // Ja os CHIPS so listam as UFs que tem edital hoje, pelo mesmo motivo das
+  // categorias logo abaixo: em 17/09/2026 SC ficou sem nenhum, e o chip
+  // continuava na tela abrindo "Nenhum edital com esses filtros".
+  var ufsComEdital = {};
+  D.forEach(function(r){ ufsComEdital[r[1]] = 1; });
+  multi("uf", ufs.filter(function(u){ return ufsComEdital[u]; })
+    .map(function(u){ return {l:u, v:u}; }), fUF);
 
   // So as categorias que existem na varredura de hoje viram filtro, e por isso
   // isto mora aqui: a lista de CAT e fixa e cobre tudo que o radar ja

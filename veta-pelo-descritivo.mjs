@@ -123,6 +123,12 @@ console.log(`${tirados} item(ns) vetado(s) pelo descritivo, ${editaisFora} edita
 if (!mostra && (tirados || editaisFora || recategorizados)) {
   dados.editais = ficam;
   dados.meta.editais = ficam.length;
+  // O porUf vem do publicar.mjs, que rodou ANTES deste veto — sem recalcular
+  // ele fica contando os editais que acabaram de sair. Em 17/09/2026 dizia 76
+  // editais em 8 UFs quando a lista tinha 59 em 7, com SC zerado mas presente.
+  const porUf = {};
+  for (const e of ficam) porUf[e[C.uf]] = (porUf[e[C.uf]] || 0) + 1;
+  dados.meta.porUf = porUf;
   fs.writeFileSync(arqDados, JSON.stringify(dados), 'utf8');
   console.log(`docs/dados.json: ${ficam.length} editais`);
 }
