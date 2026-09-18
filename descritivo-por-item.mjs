@@ -3037,6 +3037,10 @@ function tabelaBate(tabela, itens) {
   return batem >= 2 && batem >= julgaveis.length * 0.7;
 }
 
+// o nome do estado como os timbres de prefeitura escrevem
+const UF_POR_EXTENSO = { RS: 'Rio\\s+Grande\\s+do\\s+Sul', SC: 'Santa\\s+Catarina', PR: 'Paran[áa]', SP: 'S[ãa]o\\s+Paulo',
+  MG: 'Minas\\s+Gerais', GO: 'Goi[áa]s', MT: 'Mato\\s+Grosso', MS: 'Mato\\s+Grosso\\s+do\\s+Sul' };
+
 let manuais = {};
 try { manuais = JSON.parse(fs.readFileSync(path.join(DIR, 'descritivos-manuais.json'), 'utf8')); } catch { /* sem lista */ }
 
@@ -3218,6 +3222,36 @@ for (const e of dados.editais) {
     if (munRe) it[6] = it[6].replace(new RegExp('\\s*(?:Prefeitura\\s+(?:Municipal\\s+)?(?:de\\s+)?|Munic[íi]pio\\s+de\\s+)' + munRe + '\\s*[-–/]\\s*' + e[C.uf]
       + '(?:\\s+Secretaria\\s+Municipal\\s+d[eao]s?\\s+(?:\\p{Lu}\\p{L}+|e|de|da|do|das|dos)(?:\\s+(?:\\p{Lu}\\p{L}+|e|de|da|do|das|dos)){0,5})?(?=\\s|$)', 'gu'), ' ')
       .replace(/\s{2,}/g, ' ').trim();
+    // O mesmo timbre com o ESTADO por extenso, no meio ou no fim da celula, com
+    // as colunas da linha coladas antes e o numero da folha depois (18/09/2026):
+    //   "...ajuste de 5 em R$ 311,60 Estado do Rio Grande do Sul MUNICIPIO DE
+    //   FORQUETINHA 33 5°C; com desligamento automatico." (Forquetinha/RS);
+    //   "...garantia UN 10 55 98415-0409 | 55 98449-1068 @prefeituradesji Estado
+    //   do Rio Grande do Sul MUNICIPIO DE SAO JOSE DO INHACORA minima de 12
+    //   meses." (Sao Jose do Inhacora/RS);
+    //   "...MANUAL DE INSTRUCOES 7,69% 1,0000 Un Municipio de Valparaiso Estado
+    //   de Sao Paulo" (Valparaiso/SP).
+    const est = UF_POR_EXTENSO[e[C.uf]];
+    if (munRe && est) {
+      // numero solto so depois da unidade ("UN 10"): antes dela pode ser dado
+      // do produto ("CONJUNTO ... TAMANHO 6 10,00% 6,0000 Un")
+      const colunas = '(?:\\s+(?:R\\$\\s*[\\d.]+,\\d{2}|\\d{1,3}(?:[.,]\\d+)?%|\\d+,\\d{4}|(?:UN|UND|Un|Und|UNID|Unid|CJT)\\.?(?:\\s+\\d{1,5})?(?=\\s)|P[áa]g(?:ina)?\\.?(?:\\s*\\d{1,3})?))*';
+      const contato = '(?:\\s+(?:\\d{2}\\s+)?\\d{4,5}-\\d{4}(?:\\s*\\|)?)*(?:\\s+@\\S+)?';
+      const munS = munRe.replace(/ +/g, '\\s+');
+      const timbre = '(?:Estado\\s+d[eo]\\s+' + est + '\\s+MUNIC[ÍI]PIO\\s+DE\\s+' + munS + '|Munic[íi]pio\\s+de\\s+' + munS + '\\s+Estado\\s+d[eo]\\s+' + est + ')';
+      it[6] = it[6].replace(new RegExp(colunas + contato + '\\s+' + timbre + '(?:\\s+\\d{1,3}(?=\\s))?(?=\\s|$)', 'giu'), ' ')
+        .replace(/\s{2,}/g, ' ').trim();
+    }
+    // o numero e o codigo BEC do item seguinte colados no fim: "... BALCAO. 110 -
+    // 146244" (Valparaiso/SP, item 109)
+    it[6] = it[6].replace(new RegExp('\\s+' + (+it[0] + 1) + '\\s*-\\s*\\d{5,7}$'), '')
+      // e as colunas da planilha de precos que sobram no fim: "...COR: BRANCO
+      // 91,67% 44,0000 Un" (percentual de desconto, quantidade e unidade)
+      .replace(/(?:\s+(?:\d{1,3}(?:[.,]\d+)?%|\d+,\d{4}|UN|Un|UND|Und|UNID|Unid|Unidade|CJT|\d(?:\.\d{1,2}){3,}))+$/, '')
+      // e a quantidade com a "Ultima Compra" do relatorio de precos: "... 5
+      // Ultima Compra: 7/2021 - 375,0000" (Congonhal/MG), que na linha do item
+      // 47 emendava o item 48 inteiro
+      .replace(/\s+(?:\d[\d.]*\s+)?[ÚU]ltima\s+Compra:.*$/s, '');
     // o que o SIAFISICO poe antes da especificacao: "FORNECIMENTO (SIAFISICO)
     // QUANTIDADE 01 6502113 - Especificacao Tecnica: Ventilador de Parede; ..."
     // (Secretaria da Saude de SP, pregao 11)

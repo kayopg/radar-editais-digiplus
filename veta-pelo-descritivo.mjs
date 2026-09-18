@@ -20,6 +20,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { criaVetoItem, criaPosicaoDoTermo } from './veto-item.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const arqDados = path.join(DIR, 'docs', 'dados.json');
@@ -64,17 +65,13 @@ const VETO_FORA_DE = { projetor: 'LD' };           // idem
 const blocoCat = fonte.slice(fonte.indexOf('const CAT = ['), fonte.indexOf('\n];', fonte.indexOf('const CAT = [')) + 3);
 const CAT = eval(blocoCat.replace('const CAT = ', ''));
 const TERMO_LONGE = Number((fonte.match(/const TERMO_LONGE = (\d+)/) || [])[1]) || 400;
-const termoMaisCedo = d => {
-  let melhor = null;
-  for (const [c, ts] of CAT) for (const t of ts) {
-    const i = d.indexOf(t);
-    if (i >= 0 && (!melhor || i < melhor.i)) melhor = { c, i };
-  }
-  return melhor;
-};
+// o termo citado como uso de outro produto nao conta (ver veto-item.mjs)
+const termoMaisCedo = criaPosicaoDoTermo(CAT);
+// o veto por item com a mesma regra do varredura.mjs: termo de peca so conta
+// quando vem antes do produto (ver veto-item.mjs)
+const vetoItem = criaVetoItem({ VETO_ITEM, VETO_SO_NA_FRENTE: lista('VETO_SO_NA_FRENTE'), VETO_FORA_DE, RE_VAN, posicaoDoTermo: termoMaisCedo });
 const vetoDoCatalogo = (d, cat) => ((termoMaisCedo(d) || { i: 0 }).i > TERMO_LONGE && 'termo da categoria so no fim da descricao')
-  || VETO_ITEM.find(v => VETO_FORA_DE[v] !== cat && d.includes(v))
-  || (RE_VAN.test(d) && 'van')
+  || vetoItem(d, cat)
   || (cat === 'RF' && VETO_RF_CIENT.find(v => d.includes(v)))
   || (cat === 'BL' && VETO_BL_MEDICA.find(v => d.includes(v)));
 

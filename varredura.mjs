@@ -11,6 +11,7 @@ import { analisaExigencias } from './exigencias.mjs';
 import { devedorDe } from './devedores.mjs';
 import { linkDoPortal, ehComprasGov, montaLinkComprasGov } from './participar.mjs';
 import { portalOk, plataformaDoEdital } from './plataforma.mjs';
+import { criaVetoItem, criaPosicaoDoTermo } from './veto-item.mjs';
 
 // fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
 // entao uma pasta de usuario com acento no nome virava Usu%C3%A1rio e o
@@ -28,14 +29,26 @@ const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira",
 "ventilador","purificador de ar","gerador de energia","aquecedor de agua","refresqueira","balcao termico","buffet termico","cafeteira expresso",
 // segunda leva da lista da Digiplus, 01/09/2026. "coifa" e "exaustor" voltam:
 // tinham saido nesta mesma data, antes de a coifa industrial ser confirmada.
-"coifa","exaustor","balanca","lousa digital","geladeira industrial","climatizador industrial"];
+"coifa","exaustor","balanca","lousa digital","geladeira industrial","climatizador industrial",
+// 18/09/2026, da auditoria com todos os itens do dia: edital so de gerador a
+// gasolina (Indaiatuba/SP) ou so de umidificador de ar (Dracena/SP) nao casava
+// com nenhum termo, e extrator de suco nao tinha nem categoria.
+"gerador a gasolina","gerador a diesel","grupo gerador","umidificador","extrator de suco"];
 const UFS = ["PR","RS","SP","MG","GO","MT","MS","SC"];
 
 const CAT = [
-  ["RF",["refrigerador","geladeira","frigobar","freezer","congelador","conservadora","camara fria","camara frigorifica","expositor refrigerado","balcao refrigerado","cervejeira","resfriador"]],
+  ["RF",["refrigerador","geladeira","frigobar","freezer","congelador","conservadora","camara fria","camara frigorifica","expositor refrigerado","balcao refrigerado","cervejeira","resfriador",
+    // "Balcao Conservacao Alimento ... componentes: pasta fria" e o nome do
+    // catalogo do PNCP para o balcao refrigerado (Bento Goncalves/RS, 18/09/2026)
+    "balcao conservacao"]],
   ["BB",["bebedouro","purificador de agua","refresqueira","suqueira","refresqueira industrial"]],
   ["CC",["fogao","forno","microondas","micro-ondas","micro ondas","cooktop","fritadeira","salamandra","char broiler","charbroiler","caldeirao","panela eletrica","churrasqueira","balcao termico","buffet termico","banho maria","banho-maria","estufa para salgados","pista termica"]],
-  ["PR",["liquidificador","batedeira","processador de alimentos","processador alimentos","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador","masseira","amassadeira"]],
+  ["PR",["liquidificador","batedeira","processador de alimentos","processador alimentos","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador","masseira","amassadeira",
+    // 18/09/2026: nomes que o PNCP usa e a tabela nao tinha. Mixer so com
+    // complemento de cozinha: "mixer" solto e tambem a mesa de som.
+    "extrator de suco","centrifuga de fruta","centrifuga de alimento","centrifuga de suco",
+    "mixer de alimento","mixer de mao","mixer 2 em 1","mixer 3 em 1","mixer eletrico","mixer portatil",
+    "mixer vertical","mixer profissional","mixer com lamina","mixer com haste"]],
   // O aspirador da Digiplus e o de po E AGUA, e o PNCP escreve de varios jeitos:
   // "aspirador de po e agua", "aspirador po/liquido", "aspirador de po/agua".
   // So "aspirador de po" nao pega as duas ultimas, que nao tem o "de".
@@ -49,7 +62,10 @@ const CAT = [
   ["LD",["lousa digital","lousa interativa","lousa eletronica","quadro interativo","painel interativo","tela interativa"]],
   // GE entrou em 01/09/2026: gerador nao e climatizacao nem cozinha, e virava
   // "Outros" — categoria que a pagina mostra como se fosse sobra.
-  ["GE",["gerador de energia","gerador a diesel","gerador a gasolina","grupo gerador","motogerador"]],
+  ["GE",["gerador de energia","gerador a diesel","gerador a gasolina","grupo gerador","motogerador",
+    // o catalogo do PNCP escreve "Gerador Energia", sem o "de" (Paranavai/PR,
+    // Uniao da Vitoria/PR, Vicosa/MG, 18/09/2026)
+    "gerador energia","gerador de eletricidade","gerador eletrico","grupo moto gerador","moto gerador"]],
   ["AQ",["aquecedor de agua","aquecedor a gas","aquecedor eletrico","boiler","aquecedor de passagem","aquecedor solar"]],
   ["OT",["enceradeira","aquecedor"]],
 ];
@@ -68,6 +84,13 @@ const PISO_ITEM = 150;
 // panela, nao eletrodomestico. Quem decide se o edital vale a viagem continua
 // sendo o PISO_EDITAL, nao este.
 const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira'];
+
+// 5.4c - volume salva o item de preco quase no piso (decisao do usuario em
+// 18/09/2026): acima de R$ 140 e com mais de 10 unidades, o item fica. A
+// auditoria do dia mostrou o piso derrubando sanduicheira, liquidificador
+// domestico, batedeira e aquecedor de ambiente de R$ 140 a R$ 149.
+const PISO_VOLUME_PRECO = 140, PISO_VOLUME_QTD = 10;
+const salvoPeloVolume = (v, q) => v > PISO_VOLUME_PRECO && q > PISO_VOLUME_QTD;
 
 // 5.6 - piso do edital inteiro. Compra de troco (uma chaleira, um liquidificador)
 // nao vale a viagem. Valor ZERO e orcamento sigiloso e fica: nao se sabe o tamanho,
@@ -165,6 +188,27 @@ const servicoEm = (lista, d, uf) => lista.some(v => d.includes(v) && !(UF_INSTAL
 // "servicos de instalacao" e "mao de obra de instalacao" ainda sao so instalar.
 const NAO_SO_INSTALA = SERV_ITEM.filter(v => !SERV_INSTALA.includes(v) && v !== "servicos de" && v !== "mao de obra");
 const soInstala = (d, uf) => UF_INSTALA.has(uf) && SERV_INSTALA.some(v => d.includes(v)) && !NAO_SO_INSTALA.some(v => d.includes(v));
+// 5.1c — no item de MATERIAL a palavra solta nao e servico (18/09/2026). A
+// auditoria do dia, com todos os itens dos 2.539 candidatos, achou 46 editais
+// derrubados inteiros por "de facil higienizacao" e "removivel para
+// higienizacao", outros por "termostato ... para manutencao da temperatura",
+// "instalacao: piso com pes", "metodos de instalacao: fixacao na parede", "kit
+// completo para instalacao", "facil desmontagem" (que contem "montagem"),
+// "limpeza de areas" (que contem "limpeza de ar") e "servicos de saude" —
+// bebedouro, balanca, fogao, cafeteira, lavadora. No material so conta o que
+// contrata servico junto com o aparelho:
+//   - manutencao contratada, desinstalacao, mao de obra: derruba o edital, como
+//     o item de servico;
+//   - instalacao ou montagem exigida: fora do RS e de SC sai so o ITEM, como no
+//     veta-pelo-descritivo.mjs (decisao do usuario, 17/09/2026 — "aparelhos que
+//     solicitam instalacao pode remover"); no RS e em SC fica.
+// O item de servico (m != 'M') segue como antes.
+const SERVICO_NO_MATERIAL = /servicos? de (?:manutencao|higienizacao|limpeza)|manutencao (?:preventiva|corretiva)|contrato de manutencao|desinstalacao|recarga de gas|limpeza de ar(?:-| )?condicionad|mao de obra(?! de (?:instalacao|montagem))/;
+const INSTALACAO_NO_MATERIAL = /(?:servicos? de|mao de obra de|incluindo (?:a )?|incluir (?:a )?|inclusa (?:a )?|inclusive (?:a )?|fornecimento e |confeccao e )(?:instalacao|montagem)|(?:instalacao|montagem) (?:inclusa|incluida|inclusive|completa|no local|no ato)|com (?:instalacao|montagem)(?! (?:em|na|no|de|tipo|a|sobre|embutid))|entregues? (?:devidamente )?instalad|devidamente instalad|instalad[oa]s? e em (?:perfeito )?funcionamento|(?:instalacao|montagem) (?:sera |fica |ficara )?(?:por conta|a cargo|sob responsabilidade|de responsabilidade) d/;
+const SERVICO_NA_FRENTE = /^(?:re|des)?(?:instalacao|montagem|manutencao|higienizacao|limpeza|recarga|reposicao|substituicao|conserto|reparo|servicos?|mao de obra|calibracao|locacao|troca de|assistencia tecnica)(?![a-z])/;
+// "kit de instalacao" no OBJETO e acessorio, nao servico: "ar condicionado tipo
+// split Hi Wall Inverter e kits de instalacao" (Jaguariuna/SP) caia inteiro.
+const objetoSemKit = obj => obj.replace(/(?:kits?|materia(?:l|is)|acessorios?) (?:de|para) (?:instalacao|montagem)/g, ' ');
 
 // 5.2 — veto por objeto
 const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motociclet","automov","trator","maquinas agricolas","brinquedo","material de construcao","processamento de dados","formulas aliment","dieta enteral","generos aliment","material de limpeza","higiene e limpeza","sucata","velorio","tecidos aviamento",
@@ -173,7 +217,28 @@ const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motocicle
 // R$ 3,1 milhoes de varricao urbana que entrou como eletroportatil; Coxim/MS e
 // "materiais de refrigeracao e rede de gases para MANUTENCAO de aparelhos de
 // ar condicionado", cujos itens sao pecas de reposicao.
-"coletor de residuos","residuos organicos","rede de gases","manutencao de aparelhos"];
+"coletor de residuos","residuos organicos","rede de gases","manutencao de aparelhos",
+// 18/09/2026: gerador ALUGADO para evento (Barao de Cocais/MG, "ADESAO:
+// ESTRUTURAS E SERVICOS PARA EVENTOS"), que veio com o termo de busca "gerador"
+"servicos para eventos","estruturas para eventos"];
+// 5.2c — o objeto que TAMBEM compra eletrodomestico nao cai inteiro por uma
+// palavra (18/09/2026). "Aquisicao de Moveis, Eletrodomesticos, Eletronicos e
+// brinquedos", "motocicleta, bicicleta eletrica e refrigerador frost free" e
+// "material de Copa, Cozinha, Higiene e Limpeza" saiam antes de ler os itens.
+// Com eletrodomestico no objeto, quem decide e o item: o veiculo, o brinquedo e
+// o genero alimenticio caem pelo VETO_ITEM, a geladeira fica. Os termos que
+// dizem que o edital inteiro e outra coisa (sucata, velorio, varricao urbana,
+// pecas de manutencao) seguem derrubando sempre. "trator" como comeco de
+// palavra, pelo mesmo motivo do veto-item.mjs ("extrator").
+const VETO_OBJ_SEMPRE = new Set(["sucata","velorio","coletor de residuos","residuos organicos","rede de gases","manutencao de aparelhos"]);
+const OBJ_ELETRO = /eletrodomestic|eletroportat|linha branca/;
+const vetoDoObjeto = txt => {
+  const v = VETO_OBJ.find(t => t === 'trator' ? /(?:^|[^a-z])trator/.test(txt) : txt.includes(t));
+  if (!v) return RE_VAN.test(txt) ? 'van' : null;
+  if (VETO_OBJ_SEMPRE.has(v)) return v;
+  const compraEletro = OBJ_ELETRO.test(txt) || CAT.some(([, ts]) => ts.some(t => txt.includes(t)));
+  return compraEletro ? null : v;
+};
 
 // 5.3 — veto por item (lista viva, construída de falsos positivos reais)
 const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
@@ -285,7 +350,54 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // cozinha) e "Gas Refrigeracao ... R 22, aplicacao: central ar condicionado"
 // (IF Sul de Minas, cilindro de gas).
 "suporte para freezer","suportes para freezer","gas refrigeracao",
-"protese","jateamento","agitacao de agua","aplicacao: laboratorio","uso laboratorial"];
+"protese","jateamento","agitacao de agua","aplicacao: laboratorio","uso laboratorial",
+// 18/09/2026: com "umidificador" na busca vem o umidificador de OXIGENIO, de
+// hospital ("Umidificador para O2", "Material Gasoterapia modelo: umidificador",
+// "Umidificador de ar comprimido"), que nao e o umidificador de ambiente da casa.
+// "oxigenio" solto nao: o aquecedor de ambiente anuncia que "NAO QUEIMA OXIGENIO".
+"p/ oxigenio","para oxigenio","umidificador de oxigenio","umidificador oxigenio","cilindro de oxigenio",
+"oxigenio medicinal","fluxometro","gasoterapia","ar comprimido","para o2",
+// A lousa interativa ja estava vetada por decisao do usuario (10/09/2026, "a
+// tela, de 52 a 86 polegadas"), mas so pelos nomes "lousa interativa" e "lousa
+// digital": "TELA INTERATIVA 86 COM CAMERA" (Xangri-la/RS, R$ 2,1 milhoes),
+// "Tela Interativa LED 75 polegadas" (Alegrete/RS) e "painel interativo" passavam.
+"tela interativa","painel interativo","quadro interativo","lousa eletronica",
+// 18/09/2026, da simulacao das regras novas sobre todos os itens do dia: com o
+// edital nao caindo mais inteiro por uma palavra, apareceram itens que a regra
+// antiga so escondia. Lavadora/secadora de PISO (Paranavai/PR, Nazareno/MG),
+// conector "split-bolt" com hifen (Amparo/SP), manta termica de paciente
+// (Governador Valadares/MG), circuito respiratorio de ventilador pulmonar
+// (Flores de Goias/GO, Santana de Parnaiba/SP), termostato de aquario
+// (Cascavel/PR), air bike e simuladores de academia (Santa Vitoria/MG,
+// Saudade do Iguacu/PR), balde espremedor de mop, secadora de instrumental
+// cirurgico e o kit de iluminacao para foto.
+"secadora de piso","lavadora de piso","secadora automatica de piso","split-bolt","parafuso fendido",
+"manta termica","p/ paciente","para paciente","circuito paciente","circuito respiratorio",
+"aquario","air bike","eliptico","simulador de esqui","mop","instrumentais","produtos para saude",
+"fotografia","caixa de desumidificacao","notebook","computador portatil",
+// e os de peca/utensilio, que so vetam na frente do produto (VETO_SO_NA_FRENTE)
+"balde","filtro","suporte","rack","ferramenta","gaiola","jarra plastica","jarra graduada","jarra - do tipo","jarra do tipo","disco","kit manual","utensilio"];
+
+// 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
+// categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
+// termos da VETO_ITEM vetam em qualquer ponto da descricao.
+const VETO_SO_NA_FRENTE = ["suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
+"embalagem","embalag","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po",
+"refil","filtro refil","unidade filtrante","elemento filtrante","filtro purificacao","disco abrasivo","manta abrasiva",
+"cooler","gabinete","nobreak","no-break","conector","gas refrigerante","gas refrigeracao","pecas e acessorios","pecas /","pecas/",
+"peca / acessorio","peca/acessorio","acessorio para equipamento","placa eletronica","compressor","separador de oleo",
+"resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico",
+"suporte dispenser","dispenser","escova","carrinho","carro material","carro balde","panela","frigideira","copos","jogo 12",
+"niple","kit registro","kit de limpeza","conjunto para limpeza","coletor lixo","martelo","coador de pano","coador pano",
+"filtro ar condicionado","filtro de ar","controle de ventilador","controle universal","controle remoto universal",
+"controle remoto tipo:","chave controle","botijao de gas","pano multiuso","cabine","torneira de parede","torneira para pia",
+"tubo de ferro","tubo de cobre","tubo cobre","suporte para televis","suporte de televis","suporte de videocassete",
+"tampao","resistencia aquecedor","luva termica","prato fundo","alicate","removedor de","ralador/fatiador","liner",
+"placa aquecedora","boia para","porca flange","valvula de servico","valvula de servicos","kit placa","bolsa coletora",
+"fita de pvc","micro motor","ima de geladeira","ima geladeira","reservatorio bebedouro","dreno ar condicionado",
+"bomba dreno","termostato aplicacao","grelha material","filme de pvc","filme pvc","papel filme","rolo plastico",
+"suporte para freezer","suportes para freezer","agricol",
+"balde","filtro","suporte","rack","ferramenta","gaiola","jarra plastica","jarra graduada","jarra - do tipo","jarra do tipo","disco","kit manual","utensilio"];
 
 const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 
@@ -460,7 +572,7 @@ for (const o of res.values()) {
   const dt = f ? new Date(f) : null;
   if (!dt || isNaN(dt) || dt < hoje || dt.getFullYear() > 2030) { vData++; continue; }
   const txt = norm((o.description || '') + ' ' + (o.title || ''));
-  if (VETO_OBJ.some(v => txt.includes(v)) || RE_VAN.test(txt)) { vObj++; continue; }
+  if (vetoDoObjeto(txt)) { vObj++; continue; }
   cands.push(o);
 }
 console.error("Candidatos: " + cands.length + " (modalidade " + vMod + ", orgao " + vOrgao + ", objeto " + vObj + ", data " + vData + ")");
@@ -527,14 +639,9 @@ process.stderr.write(`  ${errItens} erros\n`);
 // A categoria e a do termo que aparece PRIMEIRO na descricao, que e o nome do
 // produto: "Coifa para fogao industrial inox" (Triunfo/RS) e coifa, e caia em
 // Coccao so porque a lista de Coccao vem antes na tabela (17/09/2026).
-const posicaoDoTermo = d => {
-  let melhor = null;
-  for (const [c, ts] of CAT) for (const t of ts) {
-    const i = d.indexOf(t);
-    if (i >= 0 && (!melhor || i < melhor.i)) melhor = { c, i };
-  }
-  return melhor;
-};
+// O termo que aparece como USO de outro produto ("apto para micro-ondas",
+// "aplicacao: refrigerador") nao conta: ver criaPosicaoDoTermo no veto-item.mjs.
+const posicaoDoTermo = criaPosicaoDoTermo(CAT);
 const classifica = d => { const m = posicaoDoTermo(d); return m ? m.c : null; };
 // Termo que so aparece depois do caractere 400 de uma descricao longa nao e o
 // produto, e citacao ou peca: "CONJUNTO REFEITORIO COM TAMPO INJETADO ... 10
@@ -561,15 +668,15 @@ const itemVivo = s => !norm(s).includes('anulado');
 // derrubada junto. Escopar o veto para fora da categoria LD resolve sem ter de
 // adivinhar o contexto pelo texto — mesmo recurso do VETO_RF_CIENT.
 const VETO_FORA_DE = { projetor: 'LD' };
-const temVeto = (d, cat) => VETO_ITEM.some(v =>
-  (VETO_FORA_DE[v] !== cat) && d.includes(v)) || RE_VAN.test(d);
+const vetoDoItem = criaVetoItem({ VETO_ITEM, VETO_SO_NA_FRENTE, VETO_FORA_DE, RE_VAN, posicaoDoTermo });
+const temVeto = (d, cat) => !!vetoDoItem(d, cat);
 
 let vPiso = 0, vCient = 0, vBalanca = 0, vCancel = 0;
-const st = { objServ: 0, itemServ: 0, semItem: 0, ok: 0 };
+const st = { objServ: 0, itemServ: 0, itemInstala: 0, semItem: 0, ok: 0 };
 const bruto = [];
 for (const o of cands) {
   const obj = norm((o.description || '') + ' ' + (o.title || ''));
-  if (servicoEm(SERV_OBJ, obj, o.uf)) { st.objServ++; continue; }
+  if (servicoEm(SERV_OBJ, objetoSemKit(obj), o.uf)) { st.objServ++; continue; }
 
   const interesse = [];
   let servico = false;
@@ -577,8 +684,20 @@ for (const o of cands) {
     const d = norm(it.d);
     const cat = classifica(d);
     if (!cat || posicaoDoTermo(d).i > TERMO_LONGE) continue;
-    if (it.m !== 'M' && soInstala(d, o.uf)) continue;
-    if (it.m !== 'M' || servicoEm(SERV_ITEM, d, o.uf)) { servico = true; break; }
+    if (it.m !== 'M') { if (soInstala(d, o.uf)) continue; servico = true; break; }
+    // o servico cadastrado como material abre a descricao: "Instalacao Split
+    // 9.000 12.000 BTUs", "Reposicao de gas para Split", "Higienizacao Split"
+    // (Cachoeira do Sul/RS), "SERVICO MANUTENCAO: calibracao das balancas"
+    // (Osorio/RS). A mesma palavra DEPOIS do aparelho e descricao dele.
+    // Tem de ABRIR a descricao: "Esponja de limpeza (lava loucas)" e esponja,
+    // e derrubava o edital de limpeza de Herculandia/SP com o aspirador junto.
+    const serv = SERVICO_NA_FRENTE.exec(d.replace(/^[^a-z]*(?:\d+\s*-\s*)?/, ''));
+    if (serv && serv.index === 0) {
+      if (UF_INSTALA.has(o.uf) && /instalacao|montagem/.test(serv[0]) && !/desinstalacao/.test(serv[0])) continue;
+      servico = true; break;
+    }
+    if (SERVICO_NO_MATERIAL.test(d)) { servico = true; break; }
+    if (!UF_INSTALA.has(o.uf) && INSTALACAO_NO_MATERIAL.test(d)) { st.itemInstala++; continue; }
     interesse.push([cat, it, d]);
   }
   if (servico) { st.itemServ++; continue; }
@@ -590,7 +709,7 @@ for (const o of cands) {
     if (cat === 'BL' && VETO_BL_MEDICA.some(v => d.includes(v))) { vBalanca++; continue; }
     if (!itemVivo(it.sit)) { vCancel++; continue; }
     const v = +it.v || 0;
-    if (v > 0 && v < PISO_ITEM && !SEM_PISO.some(p => d.includes(p))) continue;
+    if (v > 0 && v < PISO_ITEM && !SEM_PISO.some(p => d.includes(p)) && !salvoPeloVolume(v, +it.q || 0)) continue;
     // Posicoes 0-3 sao as antigas; 4 e 5 vieram com o resumo mais completo
     // (01/09/2026) e 6 logo depois. Acrescente sempre no fim: a pagina le por indice.
     //

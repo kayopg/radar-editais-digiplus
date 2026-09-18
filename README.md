@@ -34,6 +34,7 @@ descritivos.mjs → itens-embutidos.mjs → descritivo-por-item.mjs → docs/des
 | Arquivo | O que faz |
 |---|---|
 | `varredura.mjs` | 32 termos × 8 UFs × 2 páginas no PNCP, lê os itens de cada processo e aplica os filtros. ~100 min. |
+| `veto-item.mjs` | A regra comum do veto por item e da categoria, usada pela varredura e pelo `veta-pelo-descritivo.mjs`: termo de peça só veta antes do aparelho, e aparelho citado como uso ("apto para micro-ondas") não dá categoria. |
 | `publicar.mjs` | Converte a saída bruta no `docs/dados.json` que a página consome. |
 | `plataforma.mjs` | Em que plataforma é a disputa: o publicador aceito no PNCP (BLL, BNC, Compras.gov.br, Banrisul, Portal de Compras Públicas, Licitanet) ou, quando a prefeitura publica pelo sistema de gestão dela, a plataforma escrita no começo do edital. A varredura usa para aplicar a regra dos seis portais; o `links-portal.mjs`, para o botão Participar. |
 | `links-portal.mjs` | Completa o link do edital dentro do portal da disputa (Compras.gov.br, BLL, BNC, Licitanet), usado pelo botão "Participar" de cada card. Quando o PNCP não informa, lê a plataforma escrita no começo do edital (Pregão Banrisul, Licitar Digital, portal próprio do órgão) e deixa a nota do que procurar lá. |
@@ -78,22 +79,32 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
 0b. **Tipo de órgão** — só município (prefeitura, câmara, fundo, autarquia — via o campo
    `esfera_nome` do PNCP), mais instituições de ensino e de saúde de qualquer esfera.
    Tribunais, agências, saneamento, militares e polícia ficam de fora.
-1. **Só material** — descarta itens de serviço (`materialOuServico !== 'M'`) e descrições com
-   instalação, montagem, manutenção, mão de obra. Um edital só entra se **nenhum** item de
-   interesse for serviço. No RS e em SC a Digiplus instala: ali instalação e montagem não
+1. **Só material** — descarta itens de serviço (`materialOuServico !== 'M'`) e o material que é
+   serviço: descrição que **abre** com instalação, higienização, reposição, substituição,
+   serviço, calibração ("Instalação Split", "Reposição de gás para Split"), ou que contrata
+   manutenção preventiva/corretiva, desinstalação ou mão de obra. A mesma palavra depois do
+   aparelho é descrição dele ("de fácil higienização", "termostato para manutenção da
+   temperatura") e não derruba nada. Um edital só entra se **nenhum** item de interesse for
+   serviço. No RS e em SC a Digiplus instala: ali instalação e montagem não
    derrubam o edital, e o item de serviço que só instala sai da lista sem levar o edital junto.
    Fora dessas duas UFs, o `veta-pelo-descritivo.mjs` tira também o aparelho que o edital
    manda entregar instalado ("entregues instalados e em perfeito funcionamento").
 2. **Veto por objeto** — derruba o edital inteiro quando o objeto é de veículo, trator,
    alimento, material de limpeza e afins. Veículos casam com a busca porque têm
-   ar-condicionado de fábrica.
+   ar-condicionado de fábrica. Se o objeto também compra eletrodoméstico ("Móveis,
+   Eletrodomésticos, Eletrônicos e brinquedos"), quem decide é o item.
 3b. **Refrigeração científica** — itens de refrigeração para vacina, imunobiológico,
    hemocomponente ou laboratório saem: é outro mercado, com registro na Anvisa. O teste vale
    só para a categoria Refrigeração, senão derrubaria aspirador de pó "aplicação: laboratório".
 3. **Veto por item** — lista de falsos positivos reais, ampliada conforme aparecem novos:
    ventilador pulmonar, conector "split bolt", cooler de PC, diária de hotel "com
-   ar-condicionado e frigobar", tubo de cobre, fórmula infantil.
-4. **Piso de preço unitário** por categoria — equipamento de verdade custa. Itens com valor
+   ar-condicionado e frigobar", tubo de cobre, fórmula infantil. O termo de peça ou
+   acessório (prateleira, refil, compressor, filtro, gabinete, embalagem) só veta quando vem
+   **antes** do aparelho — "Prateleira para geladeira" sai, "Geladeira ... prateleiras de
+   vidro" fica (`veto-item.mjs`). E o aparelho citado como uso de outra coisa ("apto para
+   micro-ondas", "aplicação: refrigerador") não dá categoria ao item.
+4. **Piso de preço unitário** de R$ 150 — equipamento de verdade custa. Chaleira elétrica e
+   cafeteira não têm piso, e acima de R$ 140 com mais de 10 unidades o item fica. Itens com valor
    **zero** são mantidos: é orçamento sigiloso, e a página mostra "sigiloso", nunca "R$ 0".
 5. **Duplicatas** — o mesmo edital sai duas vezes (publicação direta e via portal
    intermediário). Agrupa por município + UF + dia de encerramento + quantidade + valor.
