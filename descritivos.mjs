@@ -298,7 +298,51 @@ function limita(secoes) {
   return saida;
 }
 
+// Numero do item -> descricao, das planilhas publicadas (ver linhasXlsx no
+// arquivo-oficial.mjs). O cabecalho e a linha que tem uma coluna "ITEM" e uma
+// de descricao; havendo duas ("DESCCRICAO SIMPLIFICADA" e "DESCRICAO
+// DETALHADA", IF Sudeste MG), vale a detalhada. Quem decide se a numeracao da
+// planilha bate com a do PNCP e o descritivo-por-item.mjs, item a item.
+function descricoesDaPlanilha(folhas) {
+  const porItem = {};
+  const curta = /simplif|resum|sucint|abrevia/;
+  for (const linhas of folhas) {
+    let colItem = null, colDesc = [];
+    for (const l of linhas) {
+      if (!colItem) {
+        const cab = Object.entries(l).map(([k, t]) => [k, norm(t).trim()]);
+        const it = cab.find(([, t]) => /^(?:n[º°o.]?\s*(?:do\s+)?)?item$|^item\s*n/.test(t));
+        const ds = cab.filter(([, t]) => /desc+ri|especifica/.test(t));
+        if (it && ds.length) {
+          colItem = it[0];
+          // a detalhada primeiro; a simplificada so quando a detalhada da linha
+          // esta vazia (o item 30 de Juiz de Fora so tem a simplificada)
+          const peso = t => (/detalhad|complet|especifica|tecnic/.test(t) ? 0 : 1) + (curta.test(t) ? 2 : 0);
+          colDesc = ds.sort((a, b) => peso(a[1]) - peso(b[1])).map(([k]) => k);
+        }
+        continue;
+      }
+      const n = String(l[colItem] || '').trim();
+      let d = colDesc.map(k => l[k]).find(t => t && t.length >= 30);
+      // A detalhada que continua a simplificada: no item 30 de Juiz de Fora a
+      // simplificada e "Fogao a Gas Material: Aco Inoxidavel ... Forno
+      // ergonomico" e a detalhada comeca em "com Mesa de Inox, Acendimento...".
+      const antes = d && /^[a-zà-ÿ]/.test(d) && colDesc.map(k => l[k]).find(t => t && t !== d);
+      if (antes) d = antes + ' ' + d;
+      if (/^\d{1,4}$/.test(n) && d && !porItem[+n]) porItem[+n] = d;
+    }
+  }
+  return Object.keys(porItem).length ? porItem : undefined;
+}
+
 async function extrai(e) {
+  const planilhas = [];
+  const r = await extraiSecoes(e, planilhas);
+  const planilha = descricoesDaPlanilha(planilhas);
+  return planilha ? { ...r, planilha } : r;
+}
+
+async function extraiSecoes(e, planilhas) {
   const tropecos = [];
   const cands = await arquivosPublicados(e);
   const itens = await buscaTodosItens(e) || [];
@@ -323,6 +367,7 @@ async function extrai(e) {
   for (const c of ordem.slice(0, 8)) {
     let f;
     try { f = await fontesDe(c, tropecos); } catch (err) { tropecos.push(err.message); continue; }
+    planilhas.push(...(f.planilhas || []));
     for (const p of f.pdfs) {
       try { paginas = paginas.concat(await textoDasPaginas(await LE.abre(p.bytes))); }
       catch (err) { tropecos.push(err.message); }

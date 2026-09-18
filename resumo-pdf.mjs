@@ -8,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { textoDasPaginas, escolhePaginas, textoUtil, coberturaItens } from './paginas-uteis.mjs';
-import { abreZip, pdfsDoZip, blocosDocx, blocosDoc, extDe, textoOdt, textoHtml, textosDoZip } from './arquivo-oficial.mjs';
+import { abreZip, pdfsDoZip, pdfsDasEntradas, abreRar, linhasXlsx, planilhasDoZip, blocosDocx, blocosDoc, extDe, textoOdt, textoHtml, textosDoZip } from './arquivo-oficial.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const req = createRequire(import.meta.url);
@@ -114,6 +114,7 @@ function farejaTipo(bytes) {
   if (b.startsWith('25504446')) return 'pdf';   // %PDF
   if (b.startsWith('504b0304')) return 'zip';   // PK\3\4 — docx e xlsx tambem
   if (b.startsWith('d0cf11e0')) return 'ole';   // doc/xls do Word 97-2003
+  if (b.startsWith('52617221')) return 'rar';   // Rar!
   // pagina do SEI publicada solta: "<!DOCTYPE html" ou "<html", com ou sem BOM
   if (/^(?:﻿)?\s*<(?:!doctype\s+html|html)/i.test(Buffer.from(bytes.slice(0, 200)).toString('utf8'))) return 'html';
   return 'desconhecido';
@@ -238,7 +239,7 @@ export async function anexaOficial(doc, r, opts = {}) {
 function classe(nome, tipo) {
   const s = normSimples(nome) + ' ' + normSimples(tipo);
   if (/edital|aviso de contratacao/.test(s)) return 'edital';
-  if (/termo de referencia|(^|[^a-z])tr[\s_.-]|especifica|descritiv|memorial/.test(s)) return 'tr';
+  if (/termo de referencia|(^|[^a-z])tr[\s_.-]|especifica|descritiv|memorial|descricao (?:detalhada|dos itens)|relacao d[eo]s? itens/.test(s)) return 'tr';
   return 'outro';
 }
 const ORDEM = { edital: 0, tr: 1, outro: 2 };
@@ -254,8 +255,26 @@ export async function fontesDe(c, tropecos, limiteZip = 3) {
 
   if (tipo === 'pdf') return { pdfs: [{ nome: c.titulo || null, tipo: c.tipo, bytes, zip: false }], texto: null };
 
+  // RAR (UFSM, Santa Maria/RS): so os PDFs de dentro, com o mesmo peso de nome
+  // do zip. Sem 7z nem bsdtar na maquina, abreRar devolve null e o arquivo fica
+  // nao lido, como era antes.
+  if (tipo === 'rar') {
+    const dentro = abreRar(bytes);
+    if (!dentro) { tropecos.push('rar publicado, e nao ha 7z nem bsdtar para abrir'); return { pdfs: [], texto: null }; }
+    const pdfs = pdfsDasEntradas(dentro).slice(0, limiteZip)
+      .map(p => ({ nome: p.nome.split('/').pop(), tipo: p.nome, bytes: p.abre(), zip: true }))
+      .sort((a, b) => ORDEM[classe(a.nome, a.tipo)] - ORDEM[classe(b.nome, b.tipo)]);
+    if (pdfs.length) return { pdfs, texto: null, planilhas: planilhasDoZip(dentro) };
+    tropecos.push('o rar publicado nao trazia PDF');
+    return { pdfs: [], texto: null, planilhas: planilhasDoZip(dentro) };
+  }
+
   if (tipo === 'zip') {
     const dentro = abreZip(bytes);
+    // A planilha solta (.xlsx tambem e zip): so as linhas, para o descritivo.
+    if (dentro.some(e => e.nome === 'xl/workbook.xml')) return { pdfs: [], texto: null, planilhas: linhasXlsx(bytes) };
+    // As planilhas de dentro do zip vao junto com o resto (Juiz de Fora/MG).
+    const planilhas = planilhasDoZip(dentro);
     // Um .docx tambem comeca com PK: a assinatura nao separa os dois, o
     // conteudo separa.
     if (dentro.some(e => e.nome === 'word/document.xml')) {
@@ -273,16 +292,16 @@ export async function fontesDe(c, tropecos, limiteZip = 3) {
     const pdfs = pdfsDoZip(bytes).slice(0, limiteZip)
       .map(p => ({ nome: p.nome.split('/').pop(), tipo: p.nome, bytes: p.abre(), zip: true }))
       .sort((a, b) => ORDEM[classe(a.nome, a.tipo)] - ORDEM[classe(b.nome, b.tipo)]);
-    if (pdfs.length) return { pdfs, texto: null, textos };
+    if (pdfs.length) return { pdfs, texto: null, textos, planilhas };
 
     const dx = dentro.find(e => extDe(e.nome) === 'docx');
-    if (dx) return { pdfs: [], texto: { blocos: blocosDocx(dx.abre()), formato: 'DOCX', nome: dx.nome }, textos };
+    if (dx) return { pdfs: [], texto: { blocos: blocosDocx(dx.abre()), formato: 'DOCX', nome: dx.nome }, textos, planilhas };
     if (textos.length) {
-      return { pdfs: [], textos, texto: { blocos: textos.flatMap(x => emParagrafos(x.texto)),
+      return { pdfs: [], textos, planilhas, texto: { blocos: textos.flatMap(x => emParagrafos(x.texto)),
         formato: [...new Set(textos.map(x => x.formato))].join(' + '), nome: textos.map(x => x.nome).join(' + ') } };
     }
     tropecos.push('o zip publicado nao trazia PDF nem DOCX');
-    return { pdfs: [], texto: null };
+    return { pdfs: [], texto: null, planilhas };
   }
 
   if (tipo === 'ole') return { pdfs: [], texto: { blocos: blocosDoc(bytes), formato: 'DOC', nome: c.titulo } };

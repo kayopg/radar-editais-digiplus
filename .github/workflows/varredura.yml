@@ -145,6 +145,13 @@ jobs:
       # Cada etapa baixa do PNCP, entao a rede pode falhar em uma sem que as
       # outras percam o trabalho: por isso cada uma e um passo, e o dados.json
       # so e commitado no fim.
+      # O bsdtar abre o edital publicado em .rar (UFSM, 18/09/2026); sem ele o
+      # arquivo fica nao lido, como antes. Falhar aqui nao derruba o job.
+      - name: Ferramenta para abrir RAR
+        if: steps.guarda.outputs.rodar == 'sim'
+        continue-on-error: true
+        run: sudo apt-get install -y -qq libarchive-tools || (sudo apt-get update -qq && sudo apt-get install -y -qq libarchive-tools)
+
       - name: Extrair o texto dos editais
         if: steps.guarda.outputs.rodar == 'sim'
         run: node descritivos.mjs

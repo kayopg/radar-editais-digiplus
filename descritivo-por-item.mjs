@@ -2896,6 +2896,68 @@ function btusDe(s) {
   return out;
 }
 
+// O anexo "Descricao detalhada dos itens" da EBSERH (Santa Maria/RS, pregao
+// 40/2026), em texto corrido: "1 444993 155125 <descritivo simples>;
+// <descritivo completo> unidade 5 0 0 0 0 0 0,5 2 450917 ...". Numero do item,
+// CATMAT de seis digitos e um ou dois codigos internos abrem a linha; a unidade
+// e as colunas de quantidade fecham. O completo repete o simples no comeco, e e
+// o completo que fica. O cabecalho da tabela, repetido a cada folha, sai.
+//
+// A linha vai do comeco dela ao comeco da seguinte, e a seguinte tem de ser a
+// do proximo numero: nem toda linha fecha com a unidade (a 11 termina em
+// "...garantia minima de 12 meses. 2" e ja abre a 12). A sequencia recomeca a
+// cada "1": o termo de referencia pode ter a sua propria tabela antes do anexo,
+// e de cada item fica o texto mais comprido.
+const COLUNAS_DO_FIM = /\s+(?:unidade|und|un|conjunto|kit|par|pe[çc]a|caixa|pacote|jogo|metro|rolo)\s+\d+(?:,\d+)?(?:\s+\d+(?:,\d+)?){2,}[\s\S]*$/i;
+//
+// So no modelo da EBSERH, reconhecido pelo cabecalho "Descritivo simples
+// Descritivo completo": aberta a qualquer tabela com CATMAT, a segmentacao
+// pegava as de Ponta Grossa/PR, Vicosa/MG e Bento Goncalves/RS e trocava a
+// celula boa do termo pela linha com o cabecalho da folha dentro.
+function tabelaEbserh(plano) {
+  if (!/Descritivo\s+simples\s+Descritivo\s+completo/i.test(plano)) return {};
+  const RE = /(?:^|\s)(\d{1,3})\s+\d{6}(?:\s+\d{5,7}){0,2}\s+(?=\S)/g;
+  const tabelas = [];
+  let atual = null;
+  for (const m of plano.matchAll(RE)) {
+    const n = +m[1];
+    if (n === 1) { atual = []; tabelas.push(atual); }
+    else if (!atual || n !== atual[atual.length - 1].n + 1) continue;
+    atual.push({ n, ini: m.index, de: m.index + m[0].length });
+  }
+  const saida = {};
+  for (const linhas of tabelas) {
+    if (linhas.length < 2) continue;
+    linhas.forEach((l, i) => {
+      const prox = linhas[i + 1];
+      let t = plano.slice(l.de, prox ? prox.ini : l.de + 6000);
+      const fim = t.search(COLUNAS_DO_FIM);
+      if (fim >= 0) t = t.slice(0, fim);
+      else if (prox) t = t.replace(/(?:\s+(?:unidade|und|un|conjunto|kit|par|pe[çc]a|caixa|pacote|jogo|metro|rolo))?(?:\s+\d+(?:,\d+)?)*\s*$/i, '');
+      else return;             // a ultima linha sem fecho nao se sabe onde acaba
+      t = t.replace(/\s*Escopo:\s*Objeto:.{0,600}?Intervalo\s+M[íi]nimo\s+entre\s+Lances\s*/gi, ' ').trim();
+      // O simples na frente do completo, que abre igual: "Geladeira portatil
+      // Geladeira portatil com capacidade...", "Aquecedor ... 50 litros;
+      // Aquecedor ... 50 litros; estrutura...".
+      for (let k = 13; k <= Math.min(400, t.length / 2); k++) {
+        if (!/[\s;]/.test(t[k - 1])) continue;
+        const cab = t.slice(0, Math.min(k - 1, 25)).replace(/[\s;,.]+$/, '');
+        if (cab.length >= 12 && t.startsWith(cab, k)) { t = t.slice(k); break; }
+      }
+      if (t.length >= 30 && (!saida[l.n] || t.length > saida[l.n].length)) saida[l.n] = t;
+    });
+  }
+  return saida;
+}
+
+// A numeracao da tabela e a do PNCP quando a maioria das linhas fala do produto
+// do rotulo com o mesmo numero — as que tem rotulo para julgar.
+function tabelaBate(tabela, itens) {
+  const julgaveis = itens.filter(it => tabela[it[0]] && palavrasDoItem(it[1]).length >= 2);
+  const batem = julgaveis.filter(it => falaDoMesmoProduto(it[1], tabela[it[0]])).length;
+  return batem >= 2 && batem >= julgaveis.length * 0.7;
+}
+
 const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v.secoes || []).map(s => s.texto)));
 
 let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0;
@@ -2951,6 +3013,25 @@ for (const e of dados.editais) {
     const L = lotes.get(i);
     if (L) { it[7] = L.lote; it[8] = L.noLote || null; }
   });
+
+  // A tabela estruturada, quando o edital tem uma: a planilha de itens (.xlsx,
+  // Juiz de Fora/MG) ou o anexo "Descricao detalhada dos itens" da EBSERH
+  // (Santa Maria/RS). As duas trazem o numero do item na propria linha, e quem
+  // prova que essa numeracao e a do PNCP e a tabela inteira: a maioria das
+  // linhas tem de falar do produto do rotulo. Provada, a linha dela vence o
+  // recorte do texto corrido — na EBSERH o recorte pegava o codigo interno na
+  // frente ("155125 Batedeira...") e o rodape da folha no fim — e vale mesmo
+  // quando o rotulo do catalogo engana: o "Exaustor ... diametro: 25" de Juiz de
+  // Fora e um sistema de exaustao com coifa e dutos, fornecido e instalado, e o
+  // "Ventilador tipo: parede" 16 da EBSERH e uma longarina de espera.
+  {
+    const tabela = { ...tabelaEbserh(textoPlano), ...(v.planilha || {}) };
+    if (tabelaBate(tabela, v.itens)) for (const it of v.itens) {
+      if (!tabela[it[0]] || !serve(it[1], tabela[it[0]], true)) continue;
+      if (!it[6]) itensRicos++;
+      it[6] = tabela[it[0]];
+    }
+  }
 
   // A cota reservada que remete a cota principal: "...COTA RESERVADA DE ATE 25%
   // PARA ME/EPP, CONFORME ART. 48, III, DA LC No 123/2006 - DO ITEM: 4 DESCRICAO

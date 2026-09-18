@@ -41,10 +41,10 @@ descritivos.mjs → itens-embutidos.mjs → descritivo-por-item.mjs → docs/des
 | `participar-manual.json` | Como participar dos editais sem plataforma (disputa por e-mail ou no balcão), escrito à mão; o `links-portal.mjs` aplica todo dia. |
 | `delta.mjs` | Compara duas versões do `dados.json` e imprime o que entrou, o que saiu e o que fecha em 48 h. |
 | `conferir.mjs` | Trava de sanidade: derruba o job antes do commit se o resultado do dia parecer degradado. |
-| `descritivos.mjs` | Baixa o edital de cada processo e extrai o texto das seções que descrevem os produtos. `--faltantes` refaz só quem ficou sem texto. ~50 min. |
+| `descritivos.mjs` | Baixa o edital de cada processo e extrai o texto das seções que descrevem os produtos. Lê PDF, DOC/DOCX, ODT, HTML, ZIP e RAR (RAR só com 7z ou bsdtar na máquina), e guarda a planilha de itens `.xlsx` quando o órgão publica uma. `--faltantes` refaz só quem ficou sem texto. ~50 min. |
 | `anexos-plataforma.mjs` | Quando os arquivos do PNCP não descrevem os itens, busca os anexos (Termo de Referência, Anexo I) na página do processo na BLL ou na BNC. |
 | `itens-embutidos.mjs` | Junta a lista de itens do PNCP a cada edital do `docs/descritivos.json`. |
-| `descritivo-por-item.mjs` | Recorta do texto do edital o descritivo de cada item. Na dúvida deixa o item sem descritivo: nenhum é melhor que um errado. |
+| `descritivo-por-item.mjs` | Recorta do texto do edital o descritivo de cada item. Quando o edital traz tabela estruturada (planilha `.xlsx` de itens, anexo "Descrição detalhada dos itens" da EBSERH) e a numeração dela bate com a do PNCP, vale a linha da tabela. Na dúvida deixa o item sem descritivo: nenhum é melhor que um errado. |
 | `veta-pelo-descritivo.mjs` | Depois do recorte, tira o item que o Termo de Referência mostra ser de outro mercado (balança antropométrica, refrigerador de termolábeis, banho-maria de laboratório) e aplica as listas de veto da varredura ao dados.json já publicado. Recalcula valor e quantidade e tira o edital que fica sem item ou abaixo do piso. |
 | `editais-fora.json` | Editais conferidos à mão que exigem amostra ou garantia contratual quando a varredura não conseguiu ler o arquivo (zip, docx, odt, html); o `veta-pelo-descritivo.mjs` aplica todo dia. |
 | `ortografia.mjs` | Revisão ortográfica dos descritivos (acentos que o edital não escreveu, letras perdidas na extração do PDF), com os dicionários de `ortografia/` (pt-BR e en-US, LGPL). |

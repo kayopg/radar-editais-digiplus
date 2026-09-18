@@ -46,6 +46,10 @@ const VETO = {
   CC: ['banho maria de laboratorio', 'banho-maria de laboratorio', 'aplicacoes laboratoriais', 'uso laboratorial', 'pid fuzzy'],
   BB: ['laboratorial'],
   CX: ['soldagem', 'fumaca de bancada'],
+  // Em qualquer categoria: o item 16 da EBSERH Santa Maria/RS e "Ventilador
+  // tipo: parede, potencia motor: 500" no catalogo e "Longarina de espera com
+  // 03 (tres) lugares de assento" no anexo de descricao detalhada (18/09/2026).
+  TODAS: ['longarina de espera'],
 };
 
 // E as listas do catalogo, sobre a descricao do PNCP, do mesmo jeito que o
@@ -117,12 +121,26 @@ for (const e of dados.editais) {
   for (const it of e[C.itens]) {
     const m = termoMaisCedo(norm(it[3]));
     if (m && m.c !== it[0]) { console.log(`categoria ${it[0]} -> ${m.c} · ${nome} · item ${it[5]}: ${String(it[3]).slice(0, 80)}`); it[0] = m.c; recategorizados++; }
+    // O descritivo que ABRE com o produto de outra categoria e nao cita a do
+    // rotulo: o item 10 da EBSERH Santa Maria/RS e "Exaustor material: plastico,
+    // aplicacao: banheiro" no catalogo e "Fogao industrial a gas de baixa
+    // pressao; 4 queimadores" no anexo de descricao detalhada (18/09/2026).
+    const x = (v.itens || []).find(y => y[0] == it[5]);
+    const dd = norm(x && x[6]);
+    const abre = dd && termoMaisCedo(dd.slice(0, 60));
+    const cita = dd && CAT.some(([c, ts]) => c === it[0] && ts.some(t => dd.includes(t)));
+    // Para "Outros" nao: la mora o "aquecedor" solto, que e so o comeco de
+    // "Aquecedor termico de agua" (EBSERH, item 1), da categoria AQ.
+    if (abre && abre.i <= 5 && abre.c !== it[0] && abre.c !== 'OT' && !cita) {
+      console.log(`categoria ${it[0]} -> ${abre.c} pelo descritivo · ${nome} · item ${it[5]}: ${x[6].slice(0, 80)}`);
+      it[0] = abre.c; recategorizados++;
+    }
   }
   const itens = e[C.itens].filter(it => {
     const x = (v.itens || []).find(y => y[0] == it[5]);
     const d = norm(x && x[6]);
     const noCatalogo = vetoDoCatalogo(norm(it[3]), it[0]);
-    const termo = noCatalogo || (d && ((VETO[it[0]] || []).find(t => d.includes(t))
+    const termo = noCatalogo || (d && ((VETO[it[0]] || []).find(t => d.includes(t)) || VETO.TODAS.find(t => d.includes(t))
       || (!UF_INSTALA.has(e[C.uf]) && exigeInstalacao(d))));
     if (!termo) return true;
     tirados++;

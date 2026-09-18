@@ -9,6 +9,10 @@
 // intitulado "Edital": era exatamente o caso de Ribeirao Preto/SP, onde o
 // Termo de Referencia estava em PDF no arquivo seguinte.
 import zlib from 'node:zlib';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
@@ -70,7 +74,9 @@ export function abreZip(bytes) {
 // Interessa o que for PDF; entre eles, o que tiver cara de edital ou termo de
 // referencia vem primeiro, e o tamanho desempata (o edital e o arquivo gordo).
 const PESO_NOME = [[/edital/, 100], [/termo\s*de\s*referencia|^tr[\s_.-]|anexo\s*i\b/, 80],
-  [/especifica|descritiv|memorial/, 60], [/aviso|errata|retifica/, -40],
+  // "ANEXO V- Descricao detalhada dos itens" (EBSERH Santa Maria/RS, 18/09/2026)
+  // pesava zero e perdia a vaga para os Requisitos de Saude e Seguranca, 5 MB.
+  [/especifica|descritiv|memorial|descricao\s*(?:detalhada|dos\s*itens)|relacao\s*d[eo]s?\s*itens/, 60], [/aviso|errata|retifica/, -40],
   [/minuta|contrato|^arp|ata\s*de\s*registro/, -60], [/decreto|portaria|^lei\b/, -80]];
 
 // So o nome do arquivo entra na conta, nunca o caminho: o zip de Pouso
@@ -78,7 +84,12 @@ const PESO_NOME = [[/edital/, 100], [/termo\s*de\s*referencia|^tr[\s_.-]|anexo\s
 // com o caminho inteiro os quatro PDFs empatavam em 100 — inclusive a ata de
 // registro de precos, que nao tem descritivo nenhum.
 export function pdfsDoZip(bytes) {
-  return abreZip(bytes)
+  return pdfsDasEntradas(abreZip(bytes));
+}
+
+// O mesmo peso para qualquer pacote ja aberto (zip ou rar).
+export function pdfsDasEntradas(entradas) {
+  return entradas
     .filter(e => extDe(e.nome) === 'pdf')
     .map(e => {
       const base = norm(e.nome.split('/').pop());
@@ -165,6 +176,83 @@ export function textoHtml(bytes) {
     .replace(/<\/t[dh]>/gi, ' ')
     .replace(/<\/(?:p|div|tr|li|h\d|table|title)>/gi, '\n')
     .replace(/<[^>]+>/g, '')));
+}
+
+// ------------------------------------------------------------------- RAR
+// Nao ha leitor de RAR em JS puro que valha a pena: quem abre e o 7-Zip ou o
+// bsdtar, e no Windows 10+ o tar.exe do sistema (que e bsdtar). A UFSM (Santa
+// Maria/RS, pregao 43/2026) publica o edital so dentro de um .rar, e sem abrir
+// o edital ficava sem capa. Sem nenhum dos tres, devolve null e o edital segue
+// como antes: nao lido.
+export function abreRar(bytes) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rar-'));
+  const arq = path.join(dir, 'pacote.rar'), sai = path.join(dir, 'x');
+  fs.mkdirSync(sai);
+  fs.writeFileSync(arq, Buffer.from(bytes));
+  const tentativas = [['7z', ['x', '-y', '-o' + sai, arq]], ['bsdtar', ['-xf', arq, '-C', sai]]];
+  if (process.platform === 'win32')
+    tentativas.push([path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'tar.exe'), ['-xf', arq, '-C', sai]]);
+  try {
+    for (const [cmd, args] of tentativas) {
+      const r = spawnSync(cmd, args, { stdio: 'ignore', timeout: 60000 });
+      if (r.status !== 0) continue;
+      const lista = [];
+      const anda = d => {
+        for (const f of fs.readdirSync(d, { withFileTypes: true })) {
+          const p = path.join(d, f.name);
+          if (f.isDirectory()) { anda(p); continue; }
+          const b = fs.readFileSync(p);
+          lista.push({ nome: path.relative(sai, p).split(path.sep).join('/'), tamanho: b.length, abre: () => b });
+        }
+      };
+      anda(sai);
+      if (lista.length) return lista;
+    }
+    return null;
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+}
+
+// ------------------------------------------------------------------ XLSX
+// A planilha de itens que o orgao publica ao lado do edital. O IF Sudeste MG
+// (Juiz de Fora, pregao 90.603/2026) poe a "DESCRICAO DETALHADA" dos 261 itens
+// so no Anexo I em .xlsx; o edital e o termo em PDF trazem apenas o nome do
+// catalogo, e ali o "Exaustor ... diametro: 25" do PNCP e na verdade um sistema
+// de exaustao com coifa e dutos, fornecido e instalado. Sai cada folha como
+// lista de linhas, e cada linha como mapa coluna -> texto ({ A: '1', D: '...' }).
+export function linhasXlsx(bytes) {
+  const z = abreZip(bytes);
+  const le = e => Buffer.from(e.abre()).toString('utf8');
+  const textoDe = x => entidades([...x.matchAll(/<t(?:\s[^>]*)?>([\s\S]*?)<\/t>/g)].map(m => m[1]).join(''));
+  const ss = z.find(e => e.nome === 'xl/sharedStrings.xml');
+  const comum = ss ? [...le(ss).matchAll(/<si>([\s\S]*?)<\/si>/g)].map(m => textoDe(m[1])) : [];
+  const folhas = [];
+  for (const e of z.filter(x => /^xl\/worksheets\/sheet\d+\.xml$/.test(x.nome))) {
+    const linhas = [];
+    for (const r of le(e).matchAll(/<row\b[^>]*?(?:\/>|>([\s\S]*?)<\/row>)/g)) {
+      const linha = {};
+      for (const c of (r[1] || '').matchAll(/<c\b([^>]*?)(?:\/>|>([\s\S]*?)<\/c>)/g)) {
+        const col = (c[1].match(/\br="([A-Z]+)\d+"/) || [])[1];
+        const v = (c[2] || '').match(/<v>([\s\S]*?)<\/v>/);
+        const t = /\bt="s"/.test(c[1]) ? (v ? comum[+v[1]] : '')
+          : /\bt="inlineStr"/.test(c[1]) ? textoDe(c[2] || '') : (v ? entidades(v[1]) : '');
+        const limpo = String(t ?? '').replace(/\s+/g, ' ').trim();
+        if (col && limpo) linha[col] = limpo;
+      }
+      linhas.push(linha);
+    }
+    folhas.push(linhas);
+  }
+  return folhas;
+}
+
+// As planilhas de dentro de um zip, cada uma como as folhas de linhasXlsx().
+export function planilhasDoZip(entradas) {
+  const saida = [];
+  for (const e of entradas) {
+    if (extDe(e.nome) !== 'xlsx') continue;
+    try { saida.push(...linhasXlsx(e.abre())); } catch { /* planilha ilegivel nao derruba o resto */ }
+  }
+  return saida;
 }
 
 // Os documentos de texto de dentro de um zip, ODT e HTML, para ler ao lado dos
