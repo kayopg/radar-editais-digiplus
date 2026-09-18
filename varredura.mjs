@@ -208,7 +208,22 @@ const INSTALACAO_NO_MATERIAL = /(?:servicos? de|mao de obra de|incluindo (?:a )?
 const SERVICO_NA_FRENTE = /^(?:re|des)?(?:instalacao|montagem|manutencao|higienizacao|limpeza|recarga|reposicao|substituicao|conserto|reparo|servicos?|mao de obra|calibracao|locacao|troca de|assistencia tecnica)(?![a-z])/;
 // "kit de instalacao" no OBJETO e acessorio, nao servico: "ar condicionado tipo
 // split Hi Wall Inverter e kits de instalacao" (Jaguariuna/SP) caia inteiro.
-const objetoSemKit = obj => obj.replace(/(?:kits?|materia(?:l|is)|acessorios?) (?:de|para) (?:instalacao|montagem)/g, ' ');
+const objetoSemKit = obj => obj.replace(/(?:kits?|materia(?:l|is)|acessorios?) (?:de|para) (?:instalacao|montagem)/g, ' ')
+  // "incluindo entrega, montagem dos moveis correspondentes aos itens 15, 16 e
+  // 17" (Camara de Cuiaba/MT) e montagem de movel, nao do ar-condicionado
+  .replace(/montagem d[oe]s? (?:moveis|mobiliarios?)/g, ' ');
+// 5.1e — objeto MISTO (moveis e eletrodomesticos) ou com instalacao
+// CONDICIONAL ("caso seja aplicavel aos itens") nao cai inteiro pela instalacao
+// (18/09/2026): "mobiliario, eletrodomesticos e equipamentos eletroeletronicos
+// (com montagem e instalacao dos bens moveis)" (Lucelia/SP), "(climatizacao,
+// hospitalares, eletronicos, eletrodomesticos) e mobiliario, com montagem,
+// instalacao e testes" (Boa Esperanca/PR) levavam fogao, geladeira e lavadora
+// junto. Fora do RS e de SC saem so os itens que se instalam — ar-condicionado,
+// cortina de ar, coifa e exaustor, aquecedor de agua —; o resto fica.
+const OBJ_CONDICIONAL = /caso seja aplicavel|quando aplicavel|se aplicavel|quando couber/;
+const objetoMisto = obj => /mobiliario|moveis/.test(obj) && /eletrodomestic|eletroportat/.test(obj);
+const instalavel = (d, cat) => cat === 'CX' || cat === 'AQ'
+  || (cat === 'CL' && /split|ar[- ]?condicionad|arcondicionad|condicionador|cortina de ar/.test(d));
 
 // 5.2 — veto por objeto
 const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motociclet","automov","trator","maquinas agricolas","brinquedo","material de construcao","processamento de dados","formulas aliment","dieta enteral","generos aliment","material de limpeza","higiene e limpeza","sucata","velorio","tecidos aviamento",
@@ -375,6 +390,11 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 "manta termica","p/ paciente","para paciente","circuito paciente","circuito respiratorio",
 "aquario","air bike","eliptico","simulador de esqui","mop","instrumentais","produtos para saude",
 "fotografia","caixa de desumidificacao","notebook","computador portatil",
+// maquina de gelo nao e da casa (usuario, 18/09/2026)
+"maquina de gelo","producao de gelo","fabricador de gelo","gerador de gelo",
+// equipamento de laboratorio do IFNMG (Montes Claros/MG) e de Ponta Grossa/PR:
+// chapa aquecedora de bancada e misturador de argamassa
+"chapa aquecedora","misturador / amassadeira","misturador/amassadeira",
 // e os de peca/utensilio, que so vetam na frente do produto (VETO_SO_NA_FRENTE)
 "balde","filtro","suporte","rack","ferramenta","gaiola","jarra plastica","jarra graduada","jarra - do tipo","jarra do tipo","disco","kit manual","utensilio"];
 
@@ -676,7 +696,13 @@ const st = { objServ: 0, itemServ: 0, itemInstala: 0, semItem: 0, ok: 0 };
 const bruto = [];
 for (const o of cands) {
   const obj = norm((o.description || '') + ' ' + (o.title || ''));
-  if (servicoEm(SERV_OBJ, objetoSemKit(obj), o.uf)) { st.objServ++; continue; }
+  const objLimpo = objetoSemKit(obj);
+  let instalaNoObjeto = false;
+  if (servicoEm(SERV_OBJ, objLimpo, o.uf)) {
+    const soInstalacao = !objLimpo.includes('mao de obra');
+    if (soInstalacao && (objetoMisto(objLimpo) || OBJ_CONDICIONAL.test(objLimpo))) instalaNoObjeto = true;
+    else { st.objServ++; continue; }
+  }
 
   const interesse = [];
   let servico = false;
@@ -697,7 +723,7 @@ for (const o of cands) {
       servico = true; break;
     }
     if (SERVICO_NO_MATERIAL.test(d)) { servico = true; break; }
-    if (!UF_INSTALA.has(o.uf) && INSTALACAO_NO_MATERIAL.test(d)) { st.itemInstala++; continue; }
+    if (!UF_INSTALA.has(o.uf) && (INSTALACAO_NO_MATERIAL.test(d) || (instalaNoObjeto && instalavel(d, cat)))) { st.itemInstala++; continue; }
     interesse.push([cat, it, d]);
   }
   if (servico) { st.itemServ++; continue; }
