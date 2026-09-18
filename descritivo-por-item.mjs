@@ -2950,6 +2950,85 @@ function tabelaEbserh(plano) {
   return saida;
 }
 
+// A linha da tabela achada pelo fim dela, e nao pelo nome do produto.
+//
+// O recorte ancora o item pelas palavras do rotulo do PNCP, e quando o orgao
+// cadastra um codigo de catalogo que chama o produto de outro nome a linha nunca
+// e achada: o item 120 de Goiania/GO e "Processador Alimentos" no PNCP e
+// "LIQUIDIFICADOR INDUSTRIAL CAPACIDADE MINIMA 25 LITROS" no edital, o 1 de
+// Cubatao/SP e "Refrigerador Domestico" e "Geladeira 3 portas Inox" (18/09/2026).
+// Mas a linha fecha com as colunas do proprio item — unidade, quantidade e preco
+// unitario: "UNIDADE 8 R$ 2.018,27", "UN 01 R$ 6.090,69", "UN 1/10 R$ 2.499,00".
+// A quantidade tem de ser a do PNCP, e alem dela o preco unitario ou o nome do
+// produto (a pesquisa do termo nem sempre e a do PNCP: 309,41 contra 307,66 no
+// ventilador de Guia Lopes da Laguna/MS). A linha comeca onde terminam as colunas
+// da anterior, e tem de abrir com o numero do item — ou traze-lo no meio seguido
+// da coluna de beneficio, quando a celula do numero ficou centrada e a virada de
+// folha a partiu (item 7 de Uberlandia/MG: "Batedeira Planetaria ... potencia
+// [timbre] 7 ME/ EPP minima 800 W ..."). So entra onde o item ficou sem nada.
+const CAUDA = /\s(?:(?:UNIDADES?|UNID\.?|UND|UN|PC|P[ÇC]|PCT)\s+((?:\d+\/)?\d{1,6})|((?:\d+\/)?\d{1,6})\s+(?:UNIDADES?|UNID\.?|UND|UN|PC|P[ÇC]|PCT))\s+(?:R\s?\$\s*)?(\d{1,3}(?:\.?\d{3})*\s?,\s?\d{2})(?!\d)/gi;
+const PRECOS_DEPOIS = /^(?:\s+(?:R\s?\$\s*)?\d{1,3}(?:\.?\d{3})*\s?,\s?\d{2}(?!\d))*/;
+const ANTES_DO_NUMERO = /^(?:(?:\d{5,7}|LOTE\s+\d{1,3}|ME\s?\/\s?EPP|EXCLUSIVO|COTA\s+(?:PRINCIPAL|RESERVADA)|AMPLA(?:\s+CONCORR[ÊE]NCIA)?|\*?AC)\s+)*/i;
+const CABECALHO_ANTES = /(?:ITEM|VALOR\s+TOTAL|VALOR\s+UNIT[ÁA]RIO|\(R\$\)|REFER[ÊE]NCIA\)|QUANT\S*|QTDE?\.?|UNID\.?|MEDIDA|M[ÁA]X\.?)\s*$/i;
+const LIXO_DE_LINHA = /As\s+quantidades\s+foram\s+definidas|JUSTIFICATIVA\s+D[AO]\s|FUNDAMENTA[ÇC][ÃA]O\s+E\s+DESCRI|Lan[çc]ado\s+por:|Metodologia\s+Menor\s+Valor|Menor\s+Valor\s+Valor\s+Estimado/i;
+function linhaPelaCauda(plano, caudas, it, timbres) {
+  const n = +it[0], q = Math.round(+it[2] || 0);
+  if (!n || !q) return null;
+  const numeroNaFrente = new RegExp('^0*' + n + '\\s+');
+  const numeroNoMeio = new RegExp('\\s0*' + n + '\\s+(?:ME\\s?\\/\\s?EPP|EXCLUSIVO|COTA\\s+\\S+|AMPLA\\S*)\\s');
+  let melhor = null;
+  caudas.forEach((c, j) => {
+    if (+String(c[1] || c[2]).split('/').pop() !== q) return;
+    const precoBate = Math.abs(+c[3].replace(/[\s.]/g, '').replace(',', '.') - (+it[4] || 0)) < 0.011;
+    const ant = caudas[j - 1];
+    let ini, depoisDaAnterior = false;
+    if (ant && c.index - (ant.index + ant[0].length) < 4000) {
+      ini = ant.index + ant[0].length;
+      ini += plano.slice(ini).match(PRECOS_DEPOIS)[0].length;
+      depoisDaAnterior = true;
+    } else {
+      // primeira linha da tabela: o numero do item logo depois do cabecalho
+      // dela ("VALOR TOTAL 1 Geladeira", "(REFERENCIA) 01 Ar-condicionado"). O
+      // numero mais perto sozinho nao serve: no televisor de Uberlandia/MG era o
+      // "01 RF" de dentro da especificacao.
+      const antes = plano.slice(Math.max(0, c.index - 1500), c.index);
+      const k = [...antes.matchAll(new RegExp('(?:^|\\s)0*' + n + '\\s', 'g'))]
+        .filter(x => CABECALHO_ANTES.test(antes.slice(Math.max(0, x.index - 40), x.index))).pop();
+      if (!k) return;
+      ini = c.index - antes.length + k.index;
+    }
+    let linha = tiraTimbre(plano.slice(ini, c.index), timbres).trim().replace(ANTES_DO_NUMERO, '');
+    if (numeroNaFrente.test(linha)) linha = linha.replace(numeroNaFrente, '');
+    else if (depoisDaAnterior && /^\p{Lu}/u.test(linha) && numeroNoMeio.test(linha)) {
+      // Entre as duas metades fica o timbre da folha, que o tiraTimbre nem
+      // sempre conhece: e o fim da primeira metade que se repete no edital.
+      const m = numeroNoMeio.exec(linha);
+      const metade = linha.slice(0, m.index);
+      let corte = -1;
+      for (let i = 0; i < metade.length - 30; i++) {
+        if (metade[i] !== ' ') continue;
+        const timbre = metade.slice(i + 1);
+        if (plano.indexOf(timbre) !== plano.lastIndexOf(timbre)) { corte = i; break; }
+      }
+      if (corte < 0) {
+        // sem timbre no meio, as metades se emendam direto
+        if (metade.length > 400) return;
+        corte = metade.length;
+      }
+      linha = metade.slice(0, corte) + ' ' + linha.slice(m.index + m[0].length);
+    }
+    else return;
+    linha = linha.replace(ANTES_DO_NUMERO, '').replace(/\s+\d{5,7}$/, '').replace(/\s{2,}/g, ' ').trim();
+    if (linha.length < 30 || comecaNoMeio(linha) || AINDA_SUJO.test(linha) || LIXO_DE_LINHA.test(linha)) return;
+    if (/(?<!\p{L})(?:com|em|de|da|do|das|dos|para|por|e|ou|no|na|nos|nas|ao|a|o)$/iu.test(linha)) return;
+    // o titulo que so repete o rotulo nao acrescenta nada (Birigui/SP, item 12)
+    if (normIgual(it[1]).replace(/[^a-z0-9]+/g, ' ').includes(normIgual(linha).replace(/[^a-z0-9]+/g, ' ').trim())) return;
+    if (!precoBate && !falaDoMesmoProduto(it[1], linha)) return;
+    if (!melhor || (precoBate && !melhor.precoBate)) melhor = { linha, precoBate };
+  });
+  return melhor && melhor.linha;
+}
+
 // A numeracao da tabela e a do PNCP quando a maioria das linhas fala do produto
 // do rotulo com o mesmo numero — as que tem rotulo para julgar.
 function tabelaBate(tabela, itens) {
@@ -2957,6 +3036,9 @@ function tabelaBate(tabela, itens) {
   const batem = julgaveis.filter(it => falaDoMesmoProduto(it[1], tabela[it[0]])).length;
   return batem >= 2 && batem >= julgaveis.length * 0.7;
 }
+
+let manuais = {};
+try { manuais = JSON.parse(fs.readFileSync(path.join(DIR, 'descritivos-manuais.json'), 'utf8')); } catch { /* sem lista */ }
 
 const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v.secoes || []).map(s => s.texto)));
 
@@ -3030,6 +3112,22 @@ for (const e of dados.editais) {
       if (!tabela[it[0]] || !serve(it[1], tabela[it[0]], true)) continue;
       if (!it[6]) itensRicos++;
       it[6] = tabela[it[0]];
+    }
+  }
+
+  // O que continua sem descritivo (ou com a justificativa da compra no lugar,
+  // que o veto final apagaria): a linha pelas colunas do fim. Ver linhaPelaCauda.
+  {
+    const faltam = v.itens.filter(it => !it[6] || LIXO_DE_LINHA.test(it[6]));
+    if (faltam.length) {
+      const caudas = [...textoPlano.matchAll(CAUDA)];
+      const timbres = timbresDoEdital(secoes);
+      for (const it of faltam) {
+        const t = linhaPelaCauda(textoPlano, caudas, it, timbres);
+        if (!t) continue;
+        if (!it[6]) itensRicos++;
+        it[6] = t;
+      }
     }
   }
 
@@ -3168,6 +3266,18 @@ for (const e of dados.editais) {
   // Por ultimo, o erro de digitacao e a palavra colada que vieram do proprio
   // edital: "na cor brnca", "Atraves Dechave Seletora". Ver ortografia.mjs.
   for (const it of v.itens) if (it[6]) it[6] = revisaOrtografia(it[6]);
+
+  // E o transcrito a mao, onde nenhuma regra le a tabela (descritivos-manuais.json).
+  // So vale enquanto o item do PNCP tem a quantidade e o preco conferidos.
+  for (const [n, m] of Object.entries((manuais[e[C.path]] || {}).itens || {})) {
+    const it = v.itens.find(x => x[0] == n);
+    if (!it || +it[2] !== m.qtd || Math.abs(+it[4] - m.valor) > 0.005) {
+      console.log(`  descritivo manual ignorado: ${e[C.path]} item ${n} nao confere com o PNCP`);
+      continue;
+    }
+    if (!it[6]) itensRicos++;
+    it[6] = m.texto;
+  }
 }
 
 fs.writeFileSync(arquivo, JSON.stringify(base), 'utf8');

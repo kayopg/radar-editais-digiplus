@@ -137,6 +137,13 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           exit $st
 
+      # O bsdtar abre o edital publicado em .rar (UFSM, 18/09/2026); sem ele o
+      # arquivo fica nao lido, como antes. Falhar aqui nao derruba o job.
+      - name: Ferramenta para abrir RAR
+        if: steps.guarda.outputs.rodar == 'sim'
+        continue-on-error: true
+        run: sudo apt-get install -y -qq libarchive-tools || (sudo apt-get update -qq && sudo apt-get install -y -qq libarchive-tools)
+
       # O que faltava para a automacao servir sozinha. Ate 10/09/2026 o job
       # publicava so a LISTA de editais: quem entrasse no dia aparecia no site
       # sem uma linha de especificacao, porque o texto do edital era extraido a
@@ -145,13 +152,6 @@ jobs:
       # Cada etapa baixa do PNCP, entao a rede pode falhar em uma sem que as
       # outras percam o trabalho: por isso cada uma e um passo, e o dados.json
       # so e commitado no fim.
-      # O bsdtar abre o edital publicado em .rar (UFSM, 18/09/2026); sem ele o
-      # arquivo fica nao lido, como antes. Falhar aqui nao derruba o job.
-      - name: Ferramenta para abrir RAR
-        if: steps.guarda.outputs.rodar == 'sim'
-        continue-on-error: true
-        run: sudo apt-get install -y -qq libarchive-tools || (sudo apt-get update -qq && sudo apt-get install -y -qq libarchive-tools)
-
       - name: Extrair o texto dos editais
         if: steps.guarda.outputs.rodar == 'sim'
         run: node descritivos.mjs
@@ -233,7 +233,7 @@ jobs:
             git fetch --depth=1 origin +refs/heads/main:refs/remotes/origin/main
             git reset --hard origin/main
             cp /tmp/gerado/dados.json /tmp/gerado/descritivos.json docs/
-            if ! git diff --quiet "$GITHUB_SHA" origin/main -- '*.mjs' ortografia editais-fora.json; then
+            if ! git diff --quiet "$GITHUB_SHA" origin/main -- '*.mjs' ortografia editais-fora.json descritivos-manuais.json; then
               echo "O codigo mudou no main durante o job: refazendo o recorte."
               cp /tmp/textos.json docs/descritivos.json
               if ! { node itens-embutidos.mjs && node descritivo-por-item.mjs && node veta-pelo-descritivo.mjs; }; then

@@ -1,0 +1,21 @@
+{
+  "_leia": "Descritivos transcritos a mao do edital, para itens cuja tabela nenhuma regra do descritivo-por-item.mjs le com seguranca (texto de OCR com as colunas de preco no meio da celula, descricao antes do numero). Cada entrada guarda a quantidade e o preco unitario do PNCP conferidos na transcricao: se o orgao mudar o item, a entrada deixa de valer sozinha. Erros de OCR corrigidos na transcricao ('lli' -> 'III', 'INMÊTRO' -> 'INMETRO', 'MiNIMO' -> 'MÍNIMO'); o resto e o texto do edital. Sai quando o edital sai do radar.",
+  "76208867000107/2026/485": {
+    "edital": "Cascavel/PR, Pregao Eletronico 69/2026 (EDITAL COMPLETO GOV.pdf)",
+    "conferido": "2026-09-18",
+    "itens": {
+      "7": {
+        "qtd": 1, "valor": 1960.12, "fonte": "pagina 52",
+        "texto": "BALANÇA DIGITAL DE BANCADA 50 KG COM DIVISÃO DE 5G. Descrição: • Classe de exatidão III • Aprovado pelo INMETRO conforme portaria 236 • Display com 26 mm de altura (com 5 ou 6 dígitos) • Gabinete em aço inoxidável polido • Alimentação de 85 a 250 Vca (fonte automática) • Capacidade programável • Velocidade de leitura/tempo de estabilização configurável • Filtro digital contra vibrações, configurável em até 8 níveis • Indicadores luminosos de zero, peso líquido e peso estável • Detector de pico máximo • Contagem de peças • Pés niveladores • Dimensões A: 165 mm, L: 240 mm, P: 70 mm • Grau de proteção IP65 (módulo de pesagem). Especificação: alimentação elétrica 110/220 V, fonte externa automática; capacidade - divisão: 50 kg - 5 g; coluna: 450 mm; dimensões (A x L x C): 165 x 240 x 70 mm; INMETRO: conforme portaria 235; interface de comunicação: opcionais; saídas: RS 232, RS 485, ethernet; plataforma: 400 x 400; garantia: 1 ano; despacho: em até 15 dias úteis."
+      },
+      "8": {
+        "qtd": 2, "valor": 182, "fonte": "pagina 52",
+        "texto": "BALANÇA DIGITAL DE COZINHA. Descrição: balança digital de cozinha para alimentos; pesagem em gramas - peso digital; material: aço inoxidável; capacidade: até 5 kg. Especificações: cor: prata; tamanho aproximado: 22 cm x 18 cm x 4,5 cm."
+      },
+      "113": {
+        "qtd": 2, "valor": 238.31, "fonte": "pagina 65",
+        "texto": "LIQUIDIFICADOR. CAPACIDADE DO COPO MÍNIMO 4,0 LITROS, LÂMINAS EM AÇO INOX. POTÊNCIA MÍNIMA 500W, FUNÇÃO PULSAR. MÍNIMO 3 VELOCIDADES. VOLTAGEM 110/220V (A DEFINIR)."
+      }
+    }
+  }
+}
