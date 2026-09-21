@@ -137,7 +137,7 @@ export async function arquivosPublicados(r) {
   let lista = null, ultimo;
   for (let t = 0; t < 3; t++) {
     try {
-      const resp = await fetch(base);
+      const resp = await fetch(base, { signal: AbortSignal.timeout(30000) });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       lista = await resp.json();
       break;
@@ -168,7 +168,8 @@ async function baixa(url) {
   let ultimo;
   for (let t = 0; t < 3; t++) {
     try {
-      const resp = await fetch(url);
+      // com prazo: o download que trava esperava os 5 min do Node por tentativa
+      const resp = await fetch(url, { signal: AbortSignal.timeout(120000) });
       if (!resp.ok) throw new Error('HTTP ' + resp.status);
       return new Uint8Array(await resp.arrayBuffer());
     } catch (e) {

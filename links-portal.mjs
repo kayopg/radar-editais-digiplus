@@ -33,7 +33,7 @@ async function consulta(p) {
   const [c, a, s] = p.split('/');
   for (let t = 0; t < 4; t++) {
     try {
-      const r = await fetch(`https://pncp.gov.br/api/consulta/v1/orgaos/${c}/compras/${a}/${s}`);
+      const r = await fetch(`https://pncp.gov.br/api/consulta/v1/orgaos/${c}/compras/${a}/${s}`, { signal: AbortSignal.timeout(20000) });
       if (r.status === 429) { await espera(35000); continue; }
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return await r.json();

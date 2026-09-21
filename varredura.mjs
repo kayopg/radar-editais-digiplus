@@ -145,11 +145,16 @@ function orgaoOk(o) {
 // A API de consulta e outra: tem o portal, mas com cota curta — seis requisicoes
 // em paralelo derrubam tudo por 30 s. Por isso roda serializada, e so sobre a
 // lista final (uns 250), nao sobre os 1500 candidatos.
+// Toda chamada tem prazo. Sem ele, a consulta que trava espera os 5 min do
+// Node a cada tentativa: em 21/09/2026 a API de consulta ficou fora do ar, a
+// etapa dos portais levou 4h45 na maquina local e o job do GitHub (teto de
+// 300 min) morreu nela sem publicar.
+const PRAZO_CONSULTA = 20000, PRAZO_ARQUIVO = 120000;
 async function buscaPortal(e) {
   const [c, a, s] = e.path.split('/');
   for (let t = 0; t < 5; t++) {
     try {
-      const r = await fetch(`https://pncp.gov.br/api/consulta/v1/orgaos/${c}/compras/${a}/${s}`);
+      const r = await fetch(`https://pncp.gov.br/api/consulta/v1/orgaos/${c}/compras/${a}/${s}`, { signal: AbortSignal.timeout(PRAZO_CONSULTA) });
       if (r.status === 429) { await new Promise(x => setTimeout(x, 35000)); continue; }
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const j = await r.json();
@@ -500,7 +505,7 @@ const limpa = s => String(s ?? '').replace(/\s+/g, ' ').trim();
 async function getJson(url, tent = 7) {
   for (let i = 0; i < tent; i++) {
     try {
-      const r = await fetch(url, { headers: { accept: 'application/json' } });
+      const r = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(60000) });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       return await r.json();
     } catch (e) {
@@ -805,11 +810,16 @@ st.dup = bruto.length - fin.length;
 process.stderr.write('Portais: ' + fin.length + ' consultas (serializadas)\n');
 let vPortal = 0, errPortal = 0;
 const porPortal = {};
+// API fora do ar: depois de 6 sem resposta seguidos para de insistir edital
+// por edital e so testa de novo a cada 20. Os que ficam sem consulta seguem a
+// regra do "sem resposta" logo abaixo (valem pela plataforma escrita no edital).
+let seguidas = 0, pulados = 0;
 for (let i = 0; i < fin.length; i++) {
   const e = fin[i];
+  if (seguidas >= 6 && i % 20) { e.portal = null; errPortal++; pulados++; continue; }
   e.portal = await buscaPortal(e);
-  if (e.portal === null) errPortal++;
-  else porPortal[e.portal] = (porPortal[e.portal] || 0) + 1;
+  if (e.portal === null) { errPortal++; if (++seguidas === 6) process.stderr.write('  a API de consulta nao responde; testando so a cada 20\n'); }
+  else { seguidas = 0; porPortal[e.portal] = (porPortal[e.portal] || 0) + 1; }
   if ((i + 1) % 50 === 0) process.stderr.write(`  ${i + 1}/${fin.length}\n`);
   await new Promise(x => setTimeout(x, 1200));
 }
@@ -825,10 +835,17 @@ for (let i = 0; i < fin.length; i++) {
 // nao pode virar exclusao silenciosa.
 let vPortalTexto = 0;
 const decide = new Map();
+// Com teto de 60 min: com a consulta fora do ar sao uns 240 editais a ler, e em
+// 21/09/2026 esta leitura levou quase 3 h. Passado o teto, o que falta fica
+// sem plataforma lida — o sem resposta fica, o publicador de fora sai.
+const tetoPlataforma = Date.now() + 60 * 60 * 1000;
+let semTempo = 0;
 await pool(fin.filter(e => !(e.portal !== null && portalOk(e.portal))), 4, async (e) => {
+  if (Date.now() > tetoPlataforma) { semTempo++; return; }
   const linha = []; linha[7] = e.path;
   decide.set(e, await plataformaDoEdital(linha, e.obj));
 });
+if (semTempo) process.stderr.write(`  ${semTempo} sem plataforma lida: passou o teto de 60 min\n`);
 const finP = fin.filter(e => {
   if (e.portal !== null && portalOk(e.portal)) return true;
   const plat = decide.get(e);
@@ -836,7 +853,7 @@ const finP = fin.filter(e => {
   if (e.portal === null && !plat) return true;
   vPortal++; return false;
 });
-process.stderr.write(`  ${vPortal} fora dos portais da casa, ${vPortalTexto} ficam pela plataforma escrita no edital, ${errPortal} sem resposta\n`);
+process.stderr.write(`  ${vPortal} fora dos portais da casa, ${vPortalTexto} ficam pela plataforma escrita no edital, ${errPortal} sem resposta${pulados ? ` (${pulados} nem consultados: API fora do ar)` : ''}\n`);
 fin.length = 0; fin.push(...finP);
 
 
@@ -890,7 +907,7 @@ await pool(fin, 6, async (e) => {
     e.arq = a.sequencialDocumento;
     e.arqExt = extDe(a.titulo);
     try {
-      const h = await fetch(`${base}/${a.sequencialDocumento}`, { method: 'HEAD' });
+      const h = await fetch(`${base}/${a.sequencialDocumento}`, { method: 'HEAD', signal: AbortSignal.timeout(PRAZO_CONSULTA) });
       if (h.ok) {
         const real = extDe(nomeDoCd(h.headers.get('content-disposition')));
         if (real) e.arqExt = real;
@@ -922,7 +939,7 @@ await pool(fin, 4, async (e) => {
   if (String(e.arqExt).toLowerCase() !== 'pdf' || !e.arq) { e.exige = 'sem-arquivo'; return; }
   try {
     const [c, a, s] = e.path.split('/');
-    const r = await fetch(`https://pncp.gov.br/api/pncp/v1/orgaos/${c}/compras/${a}/${s}/arquivos/${e.arq}`);
+    const r = await fetch(`https://pncp.gov.br/api/pncp/v1/orgaos/${c}/compras/${a}/${s}/arquivos/${e.arq}`, { signal: AbortSignal.timeout(PRAZO_ARQUIVO) });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const le = await LE.abre(new Uint8Array(await r.arrayBuffer()));
     const pgs = await textoDasPaginas(le);
