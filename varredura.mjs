@@ -408,6 +408,9 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // alvenaria (UFPel)
 "secrecoes","secrecao","neonatal","berco aquecido","recem-nascido","recem nascido","peca / acessorio",
 "microventilador","eletrodeionizacao","destilacao","revitalizacao",
+// lavadora extratora hospitalar de 50 kg com barreira sanitaria (Sonora/MS,
+// decisao do usuario em 21/09/2026)
+"lavadora de roupas hospitalar","lavadora hospitalar","barreira sanitaria",
 // e os de peca/utensilio, que so vetam na frente do produto (VETO_SO_NA_FRENTE)
 "balde","filtro","suporte","rack","ferramenta","gaiola","jarra plastica","jarra graduada","jarra - do tipo","jarra do tipo","disco","kit manual","utensilio","tampo","granito","mesa de apoio"];
 
@@ -479,7 +482,10 @@ const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioim
   // 21/09/2026: balanca de banheiro e de bebe em compra de saude (Pato Branco/PR,
   // Rio Pardo de Minas/MG, Flores de Goias/GO). 180 kg e a capacidade da
   // balanca de pesar gente; a de plataforma comercial e 150, 200 ou 300 kg.
-  '180 kg','180kg','de banheiro','plataforma em vidro','em vidro temperado','para bebe','recem-nascido','recem nascido','neonat'];
+  '180 kg','180kg','de banheiro','plataforma em vidro','em vidro temperado','para bebe','recem-nascido','recem nascido','neonat',
+  // e a portatil de 200 kg com tapete antiderrapante, de pesar paciente na UBS
+  // (Uruguaiana/RS, decisao do usuario em 21/09/2026)
+  'tapete anti-derrapante','tapete antiderrapante','tapete anti derrapante'];
 
 // ---------------------------------------------------------------- utilidades
 // Cada linha de progresso sai carimbada com o tempo decorrido.

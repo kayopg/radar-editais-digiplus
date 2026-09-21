@@ -47,6 +47,8 @@ const VETO = {
   CC: ['banho maria de laboratorio', 'banho-maria de laboratorio', 'aplicacoes laboratoriais', 'uso laboratorial', 'pid fuzzy'],
   BB: ['laboratorial'],
   CX: ['soldagem', 'fumaca de bancada'],
+  // lavanderia hospitalar (Sonora/MS, 21/09/2026)
+  LV: ['hospitalar', 'barreira sanitaria'],
   // Em qualquer categoria: o item 16 da EBSERH Santa Maria/RS e "Ventilador
   // tipo: parede, potencia motor: 500" no catalogo e "Longarina de espera com
   // 03 (tres) lugares de assento" no anexo de descricao detalhada (18/09/2026).
