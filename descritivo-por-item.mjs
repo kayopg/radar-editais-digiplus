@@ -2732,8 +2732,11 @@ function cortaOrcamento(t) {
   t = t.replace(/(?:\s\d{1,3}(?:\.\d{3})*,\d{2}){0,2}\s*:\s*\(\d{2}\)\s*\d{4,5}-\d{4}(?:\s*\/\s*\d{4,5}-\d{4})*/g, ' ').replace(/\s{2,}/g, ' ').trim();
   // secao seguinte do Termo de Referencia ou do estudo tecnico: "6. DA
   // ESTIMATIVA DO VALOR DA CONTRATAÇÃO", "7. DA JUSTIFICATIVA..." (Alcinópolis/MS)
-  // (tambem "7- ESTIMATIVA DO PRECO DA CONTRATACAO", sem o "DA", em Alegrete/RS)
-  const secao = /\s\d{1,2}(?:\.\d{1,2})?(?:\.?\s+D[AOE]S?|\s*[-–])\s+(?:ESTIMATIVA|JUSTIFICATIVA|FUNDAMENTA|REQUISITOS|MODELO\s+DE|CRIT[ÉE]RIOS|OBRIGA[ÇC]|PAGAMENTO|VIG[ÊE]NCIA|DEMONSTRATIVO|ADEQUA[ÇC][ÃA]O|LEVANTAMENTO|DESCRI[ÇC][ÃA]O\s+DA\s+SOLU|PRAZO|SAN[ÇC][ÕO]ES)/.exec(t);
+  // (tambem "7- ESTIMATIVA DO PRECO DA CONTRATACAO", sem o "DA", em Alegrete/RS,
+  // e "10. ADEQUAÇÃO ORÇAMENTÁRIA Tratando-se...", so com o ponto, em
+  // Arvorezinha/RS — ai com o titulo inteiro em maiusculas, que "2. Prazo de
+  // garantia" dentro da especificacao nao e secao)
+  const secao = /\s\d{1,2}(?:\.\d{1,2})?(?:\.?\s+D[AOE]S?\s+|\s*[-–]\s+|\.\s+(?=[A-ZÀ-Ý]{4,}\s+[A-ZÀ-Ý]{3,}))(?:ESTIMATIVA|JUSTIFICATIVA|FUNDAMENTA|REQUISITOS|MODELO\s+DE|CRIT[ÉE]RIOS|OBRIGA[ÇC]|PAGAMENTO|VIG[ÊE]NCIA|DEMONSTRATIVO|ADEQUA[ÇC][ÃA]O|LEVANTAMENTO|DESCRI[ÇC][ÃA]O\s+DA\s+SOLU|PRAZO|SAN[ÇC][ÕO]ES|DOTA[ÇC][ÃA]O)/.exec(t);
   // A partir de 60 caracteres: a celula curta de Alegrete/RS ("Ventilador de
   // parede, 8 pas, turbo, 60 cm, na cor preto, 220 volts, 3 velocidades UN 211
   // 7- ESTIMATIVA DO PRECO...") corria tres mil caracteres de estudo tecnico.
@@ -3252,6 +3255,66 @@ for (const e of dados.editais) {
       // Ultima Compra: 7/2021 - 375,0000" (Congonhal/MG), que na linha do item
       // 47 emendava o item 48 inteiro
       .replace(/\s+(?:\d[\d.]*\s+)?[ÚU]ltima\s+Compra:.*$/s, '');
+    // O preco unitario e o total da linha no meio da celula, com o numero da
+    // folha depois: "...drenagem por sistema manual ou 484,84 R$ 2.424,20 44
+    // automatico" (Arvorezinha/RS, item 55). So quando o primeiro valor e o
+    // preco do item no PNCP: dois valores seguidos nao sao especificacao.
+    if (+it[4] > 0) {
+      const brl = (+it[4]).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+,)/g, '.');
+      const par = '\\s(?:R\\$\\s*)?' + brl.replace(/\./g, '\\.') + '\\s+R\\$\\s*\\d{1,3}(?:\\.\\d{3})*,\\d{2}';
+      // no fim, leva junto o numero do item seguinte ou da folha ("... classe
+      // A. 2.112,17 R$ 6.336,51 9. 2", Vista Alegre/RS)
+      it[6] = it[6].replace(new RegExp(par + '[\\s\\d.]*$', 'u'), '')
+        .replace(new RegExp(par + '(?:\\s+\\d{1,3}(?=\\s+\\p{Ll}))?(?=\\s)', 'u'), '');
+    }
+    // O rodape do sistema de processo e os relatorios anexos colados depois da
+    // especificacao (Campo Grande/MS, 21/09/2026): "... sem lustre. 120 Total:
+    // 120 Item 22 1 Un.", "... baixa. Total: 00009636 - Forno ... HASH: ebe0...
+    // Juntado em 06/08/2026 por ... Relatorio de Quantitativo de Orgaos",
+    // "... inox. 1 Un. 5212 - Aparelhos e Utensilios Domesticos Sim -- Item".
+    // Corta no primeiro deles. "Total:" so depois de numero ou ponto:
+    // "Capacidade Total: 400 litros" e do produto.
+    const rodape = /(?:\s+\d+|\.)\s+Total:\s+\d|\s+HASH:\s*[0-9a-f]{16}|\s+Juntado\s+em\s+\d{2}\/\d{2}\/\d{4}|\s+C[óo]digo\s+do\s+documento:|\s+Relat[óo]rio\s+de\s+(?:Quantitativo|Itens\s+com\s+Aplica)|\s+Valor\s+Total\s+(?:Global|R\$)|\s+VALOR\s+TOTAL\s+(?:GLOBAL|R\$)|\s\d{1,2}(?:\.\d{1,2})?\.?\s+(?:Valor\s+(?:total\s+)?estimado|Metodologia\s+aplicada|Estimativa\s+d[oa]\s+(?:valor|pre[çc]o))|\s+\d+\s*-?\s*Un\.?\s+\d{4}\s+-\s+\p{Lu}/u.exec(it[6]);
+    if (rodape) it[6] = it[6].slice(0, rodape.index + (rodape[0][0] === '.' ? 1 : 0)).trim();
+    // E o texto de OUTRO item do mesmo edital emendado: a tabela de quantidades
+    // por orgao repete as descricoes em sequencia, e o "Freezer - Tipo:
+    // horizontal" levava junto "Freezer - Tipo: vertical ... Lavadora ...
+    // Televisor" (Campo Grande/MS, 21/09/2026). Corta onde comeca a descricao do
+    // PNCP de outro item (as seis primeiras palavras, de ao menos 30 letras),
+    // salvo quando ela abre igual a deste (o mesmo produto em cota reservada).
+    const junta = t => normIgual(t).replace(/s+/g, ' ').trim();
+    const proprio = junta(it[1]), plano = normIgual(it[6]);
+    let corte = -1;
+    for (const x of v.itens) {
+      if (x[0] == it[0]) continue;
+      const pal = junta(x[1]).split(' ').slice(0, 6);
+      const pre = pal.join(' ');
+      if (pal.length < 6 || pre.length < 30 || proprio.startsWith(pre)) continue;
+      const m = new RegExp(pal.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s*')).exec(plano);
+      if (m && m.index >= 20 && (corte < 0 || m.index < corte)) corte = m.index;
+    }
+    if (corte > 0) it[6] = it[6].slice(0, corte).replace(/[\s,;:–-]+$/, '').trim();
+    if (it[6].length < 30) { it[6] = ''; continue; }
+    // so o cabecalho da tabela: "AR CONDICIONADO PORTA TIL 3 Unidade B)
+    // ESPECIFICAÇÕES MÍNIMAS Descrição" (Braganca Paulista/SP)
+    // (em maiusculas: "...as especificações mínimas estabelecidas." fecha o
+    // descritivo do cutter de Juiz de Fora/MG)
+    if (/ESPECIFICA[ÇC][ÕO]ES\s+M[ÍI]NIMAS(?:\s+Descri[çc][ãa]o)?\s*$/.test(it[6])) { it[6] = ''; continue; }
+    // O descritivo que ABRE com a descricao de outro item, bem mais parecido com
+    // ela do que com a deste: o item 5 de Campo Grande/MS e "Bebedouro - Tipo:
+    // industrial; Material: aco inox; Sistema de filtragem: com carvao" e
+    // recebia "Bebedouro - Tipo: industrial; Material: aco inox 430; Acompanha:
+    // 4 torneiras", que e o item 8 (21/09/2026). Nenhum e melhor que o errado.
+    // So letras e numeros: "18.000 BTU/H.:" e "18.000 BTU/H." sao o mesmo (Quarai/RS).
+    const comum = (a, b) => { let i = 0; while (i < a.length && a[i] === b[i]) i++; return i; };
+    const letras = t => normIgual(t).replace(/[^a-z0-9]/g, '');
+    const abre = letras(it[6]).slice(0, 250), meu = comum(abre, letras(it[1]));
+    if (v.itens.some(x => x[0] != it[0] && comum(abre, letras(x[1])) >= Math.max(35, meu + 12))) { it[6] = ''; continue; }
+    // as colunas da tabela de quantidades por orgao no meio da especificacao:
+    // "Material: tem 20 1 Un metal; ... 3 pas; 0 0 0 0 140. Velocidade: 3"
+    if (/(?:^|\s)(?:0\s+){3,}\d/.test(it[6])) { it[6] = ''; continue; }
+    // e a unidade com as quantidades no fim: "... 127/220 V. 1-Un. 1.949 489"
+    it[6] = it[6].replace(/\s+\d+\s*-\s*Un\.?(?:\s+[\d.,]+)*$/, '');
     // o que o SIAFISICO poe antes da especificacao: "FORNECIMENTO (SIAFISICO)
     // QUANTIDADE 01 6502113 - Especificacao Tecnica: Ventilador de Parede; ..."
     // (Secretaria da Saude de SP, pregao 11)

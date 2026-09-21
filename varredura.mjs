@@ -65,7 +65,7 @@ const CAT = [
   ["GE",["gerador de energia","gerador a diesel","gerador a gasolina","grupo gerador","motogerador",
     // o catalogo do PNCP escreve "Gerador Energia", sem o "de" (Paranavai/PR,
     // Uniao da Vitoria/PR, Vicosa/MG, 18/09/2026)
-    "gerador energia","gerador de eletricidade","gerador eletrico","grupo moto gerador","moto gerador"]],
+    "gerador energia","gerador de eletricidade","gerador eletrico","grupo moto gerador","moto gerador","gerador - potencia"]],
   ["AQ",["aquecedor de agua","aquecedor a gas","aquecedor eletrico","boiler","aquecedor de passagem","aquecedor solar"]],
   ["OT",["enceradeira","aquecedor"]],
 ];
@@ -204,7 +204,7 @@ const soInstala = (d, uf) => UF_INSTALA.has(uf) && SERV_INSTALA.some(v => d.incl
 //     solicitam instalacao pode remover"); no RS e em SC fica.
 // O item de servico (m != 'M') segue como antes.
 const SERVICO_NO_MATERIAL = /servicos? de (?:manutencao|higienizacao|limpeza)|manutencao (?:preventiva|corretiva)|contrato de manutencao|desinstalacao|recarga de gas|limpeza de ar(?:-| )?condicionad|mao de obra(?! de (?:instalacao|montagem))/;
-const INSTALACAO_NO_MATERIAL = /(?:servicos? de|mao de obra de|incluindo (?:a )?|incluir (?:a )?|inclusa (?:a )?|inclusive (?:a )?|fornecimento e |confeccao e )(?:instalacao|montagem)|(?:instalacao|montagem) (?:inclusa|incluida|inclusive|completa|no local|no ato)|com (?:instalacao|montagem)(?! (?:em|na|no|de|tipo|a|sobre|embutid))|entregues? (?:devidamente )?instalad|devidamente instalad|instalad[oa]s? e em (?:perfeito )?funcionamento|(?:instalacao|montagem) (?:sera |fica |ficara )?(?:por conta|a cargo|sob responsabilidade|de responsabilidade) d/;
+const INSTALACAO_NO_MATERIAL = /(?:servicos? de |mao de obra de |incluindo (?:a )?|incluir (?:a )?|inclusa (?:a )?|inclusive (?:a )?|fornecimento e |confeccao e )(?:instalacao|montagem)|(?:instalacao|montagem) (?:inclusa|incluida|inclusive|completa|no local|no ato)|com (?:instalacao|montagem)(?! (?:em|na|no|de|tipo|a|sobre|embutid))|entregues? (?:devidamente )?instalad|devidamente instalad|instalad[oa]s? e em (?:perfeito )?funcionamento|(?:instalacao|montagem) (?:sera |fica |ficara )?(?:por conta|a cargo|sob responsabilidade|de responsabilidade) d/;
 const SERVICO_NA_FRENTE = /^(?:re|des)?(?:instalacao|montagem|manutencao|higienizacao|limpeza|recarga|reposicao|substituicao|conserto|reparo|servicos?|mao de obra|calibracao|locacao|troca de|assistencia tecnica)(?![a-z])/;
 // "kit de instalacao" no OBJETO e acessorio, nao servico: "ar condicionado tipo
 // split Hi Wall Inverter e kits de instalacao" (Jaguariuna/SP) caia inteiro.
@@ -395,8 +395,16 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // equipamento de laboratorio do IFNMG (Montes Claros/MG) e de Ponta Grossa/PR:
 // chapa aquecedora de bancada e misturador de argamassa
 "chapa aquecedora","misturador / amassadeira","misturador/amassadeira",
+// 21/09/2026, editais novos da varredura: aspirador cirurgico de secrecao
+// (Consorcio de Saude de Pato Branco/PR), berco aquecido neonatal
+// (Bituruna/PR), peca de CATMAT "Ventilador / Exaustor Axial - Peca /
+// Acessorio" (SAAE Lambari/MG), purificador de laboratorio por
+// eletrodeionizacao ou destilacao (UFMT), revitalizacao de camara fria em
+// alvenaria (UFPel)
+"secrecoes","secrecao","neonatal","berco aquecido","recem-nascido","recem nascido","peca / acessorio",
+"microventilador","eletrodeionizacao","destilacao","revitalizacao",
 // e os de peca/utensilio, que so vetam na frente do produto (VETO_SO_NA_FRENTE)
-"balde","filtro","suporte","rack","ferramenta","gaiola","jarra plastica","jarra graduada","jarra - do tipo","jarra do tipo","disco","kit manual","utensilio"];
+"balde","filtro","suporte","rack","ferramenta","gaiola","jarra plastica","jarra graduada","jarra - do tipo","jarra do tipo","disco","kit manual","utensilio","tampo","granito","mesa de apoio"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
@@ -417,7 +425,11 @@ const VETO_SO_NA_FRENTE = ["suporte para tv","suporte de tv","pedestal para","su
 "fita de pvc","micro motor","ima de geladeira","ima geladeira","reservatorio bebedouro","dreno ar condicionado",
 "bomba dreno","termostato aplicacao","grelha material","filme de pvc","filme pvc","papel filme","rolo plastico",
 "suporte para freezer","suportes para freezer","agricol",
-"balde","filtro","suporte","rack","ferramenta","gaiola","jarra plastica","jarra graduada","jarra - do tipo","jarra do tipo","disco","kit manual","utensilio"];
+"balde","filtro","suporte","rack","ferramenta","gaiola","jarra plastica","jarra graduada","jarra - do tipo","jarra do tipo","disco","kit manual","utensilio",
+// 21/09/2026: "Tampo e rodatampo em granito para balcao de cozinha ... recorte
+// para cuba, fogao cooktop" (Ipora do Oeste/SC) e "Mesa de apoio para forno"
+// (Arvorezinha/RS). "Fogao ... com tampo de vidro" fica.
+"tampo","granito","mesa de apoio"];
 
 const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 
@@ -458,7 +470,11 @@ const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioim
   'balanca infantil','digital infantil','com regua','coluna articulada',
   // 16/09/2026: a semi-analitica de 0,001 g da UFSM e a rodoviaria de 120
   // toneladas, instalada e com obra civil, de Alcinopolis/MS
-  'semi-analitica','semi analitica','semianalitica','rodoviaria'];
+  'semi-analitica','semi analitica','semianalitica','rodoviaria',
+  // 21/09/2026: balanca de banheiro e de bebe em compra de saude (Pato Branco/PR,
+  // Rio Pardo de Minas/MG, Flores de Goias/GO). 180 kg e a capacidade da
+  // balanca de pesar gente; a de plataforma comercial e 150, 200 ou 300 kg.
+  '180 kg','180kg','de banheiro','plataforma em vidro','em vidro temperado','para bebe','recem-nascido','recem nascido','neonat'];
 
 // ---------------------------------------------------------------- utilidades
 // Cada linha de progresso sai carimbada com o tempo decorrido.

@@ -92,6 +92,8 @@ const EXIGE_INSTALACAO = [
   /instalacao (inclusa|incluida|inclusive)/,
   /(incluindo|inclusa|incluida|inclusive) (a )?instalacao/,
   /instalacao e assistencia tecnica/,
+  // "com mao de obra de instalacao e drenos" (Sertanopolis/PR, 21/09/2026)
+  /(mao de obra|servicos?) de (instalacao|montagem)/,
   /instalacao (sera |fica |ficara )?(por conta|a cargo|sob responsabilidade|de responsabilidade) d[ao] (contratad|fornecedor|licitante|empresa)/,
 ];
 const exigeInstalacao = d => (EXIGE_INSTALACAO.find(r => r.test(d)) || '') && 'entrega instalada';
@@ -136,7 +138,9 @@ for (const e of dados.editais) {
   const itens = e[C.itens].filter(it => {
     const x = (v.itens || []).find(y => y[0] == it[5]);
     const d = norm(x && x[6]);
-    const noCatalogo = vetoDoCatalogo(norm(it[3]), it[0]);
+    // a instalacao vale tambem no texto do PNCP, que muitas vezes traz a
+    // informacao complementar do item colada na descricao
+    const noCatalogo = vetoDoCatalogo(norm(it[3]), it[0]) || (!UF_INSTALA.has(e[C.uf]) && exigeInstalacao(norm(it[3])));
     const termo = noCatalogo || (d && ((VETO[it[0]] || []).find(t => d.includes(t)) || VETO.TODAS.find(t => d.includes(t))
       || (!UF_INSTALA.has(e[C.uf]) && exigeInstalacao(d))));
     if (!termo) return true;
