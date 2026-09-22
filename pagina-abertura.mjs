@@ -362,6 +362,23 @@ async function pool(itens, n, fn) {
   }));
 }
 
+// A tabela de categorias do varredura.mjs, lida do arquivo como no
+// veta-pelo-descritivo.mjs: o arquivo cita o produto se trouxer um termo da
+// categoria do item ou duas das tres primeiras palavras da descricao do PNCP.
+const fonteVarredura = fs.readFileSync(path.join(DIR, 'varredura.mjs'), 'utf8');
+const inicioCat = fonteVarredura.indexOf('const CAT = [');
+const CAT = eval(fonteVarredura.slice(inicioCat, fonteVarredura.indexOf('\n];', inicioCat) + 3).replace('const CAT = ', ''));
+const normTxt = s => semAcento(String(s || '')).toLowerCase().replace(/\s+/g, ' ');
+function citaProdutoDoRadar(texto, e) {
+  const t = normTxt(texto);
+  return e[C.itens].some(it => {
+    const termos = (CAT.find(c => c[0] === it[0]) || [, []])[1];
+    if (termos.some(x => t.includes(x))) return true;
+    const pal = normTxt(it[3]).split(/[^a-z0-9]+/).filter(w => w.length >= 5).slice(0, 3);
+    return pal.filter(w => t.includes(w)).length >= 2;
+  });
+}
+
 const saida = { ...jaTem };
 let com = 0, sem = 0, erros = 0, bytesTotal = 0;
 
@@ -391,6 +408,14 @@ await pool(alvos, 2, async (e) => {
         if (abertos++ >= 5) break procura;
         const le = await LE.abre(p.bytes);
         const paginas = await textoDasPaginas(le);
+        // O arquivo que nao cita nenhum produto do radar e de OUTRA licitacao: a
+        // prefeitura de Marcelandia/MT publicou no pregao 31/2026 (eletrodomesticos)
+        // o edital do 029/2026 (materiais pedagogicos), e a capa saia dele
+        // (22/09/2026). Sem capa e melhor que com a do edital errado.
+        if (paginas.join(' ').length > 8000 && !citaProdutoDoRadar(paginas.join(' '), e)) {
+          console.log(`    ${nome} · ${p.nome || c.titulo}: nenhum produto do radar no arquivo, e de outra licitacao`);
+          continue;
+        }
         const achado = achaAbertura(paginas, palavrasDoEdital(e, C), palavrasDoObjeto(e, C));
         if (process.env.DEPURA) console.log(`    ${nome} · ${p.nome || c.titulo} · ${paginas.length} p · ${achado ? 'p' + (achado.pagina + 1) + ' ' + achado.via : 'nada'}`
           + paginas.slice(0, 3).map((t, i) => `\n      p${i + 1}${ehAnexo(t) ? ' [anexo]' : ''}: ${topoDe(t).slice(0, 200)}`).join(''));
@@ -401,8 +426,9 @@ await pool(alvos, 2, async (e) => {
         if (nota >= FORCA.imagem) break procura;
       }
     }
-    if (!abertos) { sem++; console.log(`  ${nome} · sem PDF legivel`); return; }
-    if (!melhor) { sem++; console.log(`  ${nome} · sem folha de abertura`); return; }
+    // (e com --so, a capa antiga sai: refazer e para corrigir, nao para manter)
+    if (!abertos) { sem++; delete saida[e[C.path]]; console.log(`  ${nome} · sem PDF legivel`); return; }
+    if (!melhor) { sem++; delete saida[e[C.path]]; console.log(`  ${nome} · sem folha de abertura`); return; }
     const { achado, le } = melhor;
 
     // PDF de carona: a pagina original na frente, a branca do novo() atras.
