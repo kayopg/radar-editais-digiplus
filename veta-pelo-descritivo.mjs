@@ -171,6 +171,23 @@ for (const e of dados.editais) {
   ficam.push(e);
 }
 
+// O mesmo orgao com o mesmo numero de edital no mesmo dia e o mesmo edital
+// publicado por dois sistemas (ver 5.5 no varredura.mjs): fica o que tem mais
+// itens; empatado, o mais novo.
+const numEd = e => { const m = String(e[C.edital]).match(/(\d+)\s*\/\s*(\d{4})/); return m ? (+m[1]) + '/' + m[2] : null; };
+const porNumero = new Map();
+for (const e of ficam) {
+  const n = numEd(e);
+  const k = n ? `${e[C.path].split('/')[0]}|${e[C.modalidade]}|${String(e[C.encerramento]).slice(0, 10)}|${n}` : e[C.path];
+  const a = porNumero.get(k);
+  if (!a) { porNumero.set(k, e); continue; }
+  const fica = e[C.itens].length > a[C.itens].length || (e[C.itens].length === a[C.itens].length && +e[C.path].split('/')[2] > +a[C.path].split('/')[2]) ? e : a;
+  const sai = fica === e ? a : e;
+  console.log(`  sai o edital ${sai[C.municipio]}/${sai[C.uf]} ${sai[C.edital]} (${sai[C.path]}): e o mesmo que ${fica[C.edital]} (${fica[C.path]})`);
+  porNumero.set(k, fica); editaisFora++;
+}
+ficam.length = 0; ficam.push(...porNumero.values());
+
 console.log(`${tirados} item(ns) vetado(s) pelo descritivo, ${editaisFora} edital(is) fora, ${recategorizados} item(ns) de categoria corrigida`);
 if (!mostra && (tirados || editaisFora || recategorizados)) {
   dados.editais = ficam;
