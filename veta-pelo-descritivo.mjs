@@ -58,6 +58,7 @@ const VETO = {
 // E as listas do catalogo, sobre a descricao do PNCP, do mesmo jeito que o
 // varredura.mjs as aplica: termo novo entra no dados.json ja publicado sem
 // esperar a proxima varredura.
+const VETO_OBJ_SEMPRE = JSON.parse((fonte.match(/const VETO_OBJ_SEMPRE = new Set\((\[[^\]]*\])\)/) || [, '[]'])[1]);
 const VETO_ITEM = lista('VETO_ITEM'), VETO_RF_CIENT = lista('VETO_RF_CIENT'), VETO_BL_MEDICA = lista('VETO_BL_MEDICA');
 const RE_VAN = /(^|[^a-z])vans?([^a-z]|$)/;       // o mesmo do varredura.mjs
 const VETO_FORA_DE = { projetor: 'LD' };           // idem
@@ -117,6 +118,14 @@ for (const e of dados.editais) {
   if (fora[e[C.path]] && e[C.path] !== '_leia') {
     editaisFora++;
     console.log(`  sai o edital ${nome}: ${fora[e[C.path]].motivo}`);
+    continue;
+  }
+  // O objeto que diz que o edital inteiro e outra coisa (VETO_OBJ_SEMPRE do
+  // varredura.mjs): termo novo vale para o dados.json ja publicado.
+  const vetoObj = VETO_OBJ_SEMPRE.find(t => norm(e[C.objeto]).includes(t));
+  if (vetoObj) {
+    editaisFora++;
+    console.log(`  sai o edital ${nome}: objeto "${vetoObj}"`);
     continue;
   }
   for (const it of e[C.itens]) {

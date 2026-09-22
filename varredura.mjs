@@ -241,7 +241,10 @@ const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motocicle
 "coletor de residuos","residuos organicos","rede de gases","manutencao de aparelhos",
 // 18/09/2026: gerador ALUGADO para evento (Barao de Cocais/MG, "ADESAO:
 // ESTRUTURAS E SERVICOS PARA EVENTOS"), que veio com o termo de busca "gerador"
-"servicos para eventos","estruturas para eventos"];
+"servicos para eventos","estruturas para eventos",
+// 22/09/2026: ventiladores de reposicao para inversor de frequencia WEG
+// (COMUSA, Novo Hamburgo/RS)
+"inversores de frequencia","inversor de frequencia"];
 // 5.2c — o objeto que TAMBEM compra eletrodomestico nao cai inteiro por uma
 // palavra (18/09/2026). "Aquisicao de Moveis, Eletrodomesticos, Eletronicos e
 // brinquedos", "motocicleta, bicicleta eletrica e refrigerador frost free" e
@@ -251,7 +254,7 @@ const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motocicle
 // dizem que o edital inteiro e outra coisa (sucata, velorio, varricao urbana,
 // pecas de manutencao) seguem derrubando sempre. "trator" como comeco de
 // palavra, pelo mesmo motivo do veto-item.mjs ("extrator").
-const VETO_OBJ_SEMPRE = new Set(["sucata","velorio","coletor de residuos","residuos organicos","rede de gases","manutencao de aparelhos"]);
+const VETO_OBJ_SEMPRE = new Set(["sucata","velorio","coletor de residuos","residuos organicos","rede de gases","manutencao de aparelhos","inversores de frequencia","inversor de frequencia"]);
 const OBJ_ELETRO = /eletrodomestic|eletroportat|linha branca/;
 const vetoDoObjeto = txt => {
   const v = VETO_OBJ.find(t => t === 'trator' ? /(?:^|[^a-z])trator/.test(txt) : txt.includes(t));
@@ -415,8 +418,12 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // suqueira de vidro com torneira plastica e utensilio, nao refresqueira
 // eletrica (Porto Vitoria/PR, 22/09/2026)
 "suqueira de vidro",
+// 22/09/2026, na revisao edital por edital: peca de bote e de motor de
+// embarcacao num pregao de ar-condicionado (EBSERH Santa Maria/RS), bandeja
+// termica de uso medico (UFSM), ventilador de 24/48 V de inversor WEG
+"embarcacao","peca/componente","uso medico","vcc c/ cabo","cfw50","cfw11",
 // e os de peca/utensilio, que so vetam na frente do produto (VETO_SO_NA_FRENTE)
-"balde","filtro","suporte","rack","ferramenta","gaiola","jarra plastica","jarra graduada","jarra - do tipo","jarra do tipo","disco","kit manual","utensilio","tampo","granito","mesa de apoio"];
+"balde","filtro","suporte","rack","ferramenta","gaiola","jarra plastica","jarra graduada","jarra - do tipo","jarra do tipo","disco","kit manual","utensilio","tampo","granito","mesa de apoio","borracha vedacao","borracha de vedacao"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
@@ -441,7 +448,7 @@ const VETO_SO_NA_FRENTE = ["suporte para tv","suporte de tv","pedestal para","su
 // 21/09/2026: "Tampo e rodatampo em granito para balcao de cozinha ... recorte
 // para cuba, fogao cooktop" (Ipora do Oeste/SC) e "Mesa de apoio para forno"
 // (Arvorezinha/RS). "Fogao ... com tampo de vidro" fica.
-"tampo","granito","mesa de apoio"];
+"tampo","granito","mesa de apoio","borracha vedacao","borracha de vedacao"];
 
 const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 
@@ -491,7 +498,10 @@ const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioim
   // (Uruguaiana/RS, decisao do usuario em 21/09/2026)
   'tapete anti-derrapante','tapete antiderrapante','tapete anti derrapante',
   // "Balanca de laboratorio, tipo analitica, 0,0001 g" (Januaria/MG, 22/09/2026)
-  'tipo analitica','balanca de laboratorio'];
+  'tipo analitica','balanca de laboratorio',
+  // "BALANCA DIGITAL ATROPOMETRICA" (sic, Sao Gabriel/RS) e "BALANCA DIGITAL DE
+  // VIDRO TEMPERADO" para a UBS (Timburi/SP)
+  'atropometr','de vidro temperado'];
 
 // ---------------------------------------------------------------- utilidades
 // Cada linha de progresso sai carimbada com o tempo decorrido.
