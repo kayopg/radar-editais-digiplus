@@ -432,7 +432,19 @@ async function extraiSecoes(e, planilhas) {
       // Mesma regra do anexo: selecao que nao cobre os itens nao serve, e ai
       // vale mais mandar o documento inteiro do que perder descritivo.
       const base = (cobre >= 0.6 && (sel.tabela.length || (sel.tr && sel.tr.length)))
-        ? sel.escolhidas : paginas.map((_, i) => i);
+        ? [...sel.escolhidas] : paginas.map((_, i) => i);
+      // O item do radar que nenhuma pagina escolhida cita traz as paginas que
+      // citam o nome dele (a primeira palavra do rotulo do PNCP), ate tres. O
+      // bebedouro de Renascenca/PR esta na pagina 31 de 82, na tabela do lote 2,
+      // e a selecao de 19 paginas nao a pegava: o catalogo chama o item de
+      // "Bebedouro Agua tipo: pressao conjugado" e o edital de "BEBEDOURO EM ACO
+      // INOX. AGUA FILTRADA E GELADA" (22/09/2026).
+      const normPag = paginas.map(p => norm(p));
+      for (const it of e[C.itens] || []) {
+        const w = norm(it[3]).split(/[^a-z0-9]+/).find(x => x.length >= 5);
+        if (!w || base.some(i => normPag[i].includes(w))) continue;
+        for (const i of normPag.map((p, i) => p.includes(w) ? i : -1).filter(i => i >= 0).slice(0, 3)) base.push(i);
+      }
 
       // A pagina SEGUINTE de cada escolhida entra junto.
       //

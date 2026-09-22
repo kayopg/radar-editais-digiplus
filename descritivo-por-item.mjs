@@ -630,6 +630,8 @@ const CABECALHO_AGU = /\s*(?:UASG\s+\d{5,6}\s+)?C[\u00e2a]mara Nacional de Model
 // 14.133, de 2021". Sai antes do timbre, que levava so as pontas.
 // A unidade da coluna da linha da tabela, e a medida que um numero escrito
 // na especificacao leva depois dele (para nao confundir com o numero da folha).
+// DEPURA_ITEM="trecho do rotulo" mostra as candidatas e a decisao desse item
+const DEPURA_ITEM = process.env.DEPURA_ITEM || '';
 const UNID_LINHA = '(?:UN|UND|Und|und|Un|Unid\\.?|UNID\\.?|Unidade|UNIDADE|Unidades|UNIDADES|PC|PÇ|PCT|CX|KIT|Kit|CJ|CJT|CONJ|JG|PAR)';
 const MEDIDA = '(?:kg|g|mg|l|lt|litros?|ml|cm|mm|m|m2|m²|m3|w|watts?|v|volts?|kw|kwh|hz|btus?|rpm|bar|pol|polegadas?|pés|pas|p[áa]s|velocidades?|bocas?|portas?|queimadores?|x|a|e|ou)(?![a-zà-ÿ])';
 // A celula que atravessa a virada de folha (ou que tem as colunas no meio da
@@ -2416,6 +2418,7 @@ function descritivosPorItem(secoes, itens) {
       const semSolto = x => x.replace(/(?<![\w.,\/])\d{1,4}(?![\w.,\/])/g, '').replace(/\s+/g, '');
       const mesmoTexto = vencedor && semSolto(t) === semSolto(vencedor);
       avaliados.push({ k, t, n, confirmado, idx });
+      if (DEPURA_ITEM && rotulo.includes(DEPURA_ITEM)) console.log('  DEPURA candidato', JSON.stringify({ n, confirmado, deOutro, serve: serve(rotulo, t, confirmado), doVizinho, capDeOutro, temMeu, alguemTemMeu, len: t.length, t: t.slice(0, 90) + ' ... ' + t.slice(-50) }));
       if (n > nota || (n === nota && (mesmoTexto ? t.length < vencedor.length : t.length > vencedor.length))) {
         nota = n; vencedor = t; venceuPeloNumero = confirmado;
         numeroVencedor = numLinha[idx]; kVencedor = k;
@@ -2517,6 +2520,7 @@ function descritivosPorItem(secoes, itens) {
       if (tit && !/\d{1,3}(?:\.\d{3})*,\d{2}/.test(tit[1]) && !vencedor.startsWith(tit[1].trim().slice(0, 20)))
         vencedor = tit[1].trim() + ' ' + vencedor;
     }
+    if (DEPURA_ITEM && rotulo.includes(DEPURA_ITEM)) console.log('  DEPURA escolha', JSON.stringify({ candidatos: quais.length, cabecas: cabecas.length, nota, vencedor: String(vencedor).slice(0, 120) }));
     if (vencedor && nota >= 1e6) melhor.set(i, { texto: vencedor, confirmado: venceuPeloNumero });
   }
 
@@ -2574,6 +2578,7 @@ function descritivosPorItem(secoes, itens) {
     const rotulos = new Set(quais.map(i => normIgual(itens[i][1]).replace(/[^a-z0-9]+/g, ' ').replace(/\s+item \d{1,3}\s*$/, '').trim()));
     if (rotulos.size < 2) { for (const i of quais) soTexto.set(i, melhor.get(i)); continue; }
     for (const i of quais) if (melhor.get(i).confirmado) soTexto.set(i, melhor.get(i));
+    if (DEPURA_ITEM) for (const i of quais) if (itens[i][1].includes(DEPURA_ITEM) && !melhor.get(i).confirmado) console.log('  DEPURA conflito: mesmo texto de rotulos diferentes', quais.map(j => itens[j][0]));
   }
   return { textos: soTexto, lotes: lotes };
 }
@@ -2806,7 +2811,7 @@ function cortaOrcamento(t) {
   // e "10. ADEQUAÇÃO ORÇAMENTÁRIA Tratando-se...", so com o ponto, em
   // Arvorezinha/RS — ai com o titulo inteiro em maiusculas, que "2. Prazo de
   // garantia" dentro da especificacao nao e secao)
-  const secao = /\s\d{1,2}(?:\.\d{1,2})?(?:\.?\s+D[AOE]S?\s+|\s*[-–]\s+|\.\s+(?=[A-ZÀ-Ý]{4,}\s+[A-ZÀ-Ý]{3,}))(?:ESTIMATIVA|JUSTIFICATIVA|FUNDAMENTA|REQUISITOS|MODELO\s+DE|CRIT[ÉE]RIOS|OBRIGA[ÇC]|PAGAMENTO|VIG[ÊE]NCIA|DEMONSTRATIVO|ADEQUA[ÇC][ÃA]O|LEVANTAMENTO|DESCRI[ÇC][ÃA]O\s+DA\s+SOLU|PRAZO|SAN[ÇC][ÕO]ES|DOTA[ÇC][ÃA]O)/.exec(t);
+  const secao = /\s\d{1,2}(?:\.\d{1,2})?(?:\.?\s+D[AOE]S?\s+|\s*[-–]\s+|\.\s+(?=[A-ZÀ-Ý]{4,}\s+[A-ZÀ-Ý]))(?:ESTIMATIVA|JUSTIFICATIVA|FUNDAMENTA|REQUISITOS|MODELO\s+DE|CRIT[ÉE]RIOS|OBRIGA[ÇC]|PAGAMENTO|VIG[ÊE]NCIA|DEMONSTRATIVO|ADEQUA[ÇC][ÃA]O|LEVANTAMENTO|DESCRI[ÇC][ÃA]O\s+DA\s+SOLU|PRAZO|SAN[ÇC][ÕO]ES|DOTA[ÇC][ÃA]O)/.exec(t);
   // A partir de 60 caracteres: a celula curta de Alegrete/RS ("Ventilador de
   // parede, 8 pas, turbo, 60 cm, na cor preto, 220 volts, 3 velocidades UN 211
   // 7- ESTIMATIVA DO PRECO...") corria tres mil caracteres de estudo tecnico.
@@ -2960,6 +2965,14 @@ function btusDe(s) {
   for (const m of String(s || '').matchAll(/(\d{1,3}(?:[.\s]\d{3})|\d{4,6})\s*BTU/gi)) {
     const n = Number(m[1].replace(/[.\s]/g, ''));
     if (n >= 5000) out.add(n);
+  }
+  // A faixa vale pelas duas pontas e pelo que ha entre elas: "capacidade de
+  // 9.000 a 12.000 BTUs" serve ao item de 9.000 (Sao Gabriel do Oeste/MS,
+  // 22/09/2026), que saia sem descritivo porque so o 12.000 era lido.
+  for (const m of String(s || '').matchAll(/(\d{1,3}(?:[.\s]\d{3})|\d{4,6})\s*(?:a|até|ate|-|–)\s*(\d{1,3}(?:[.\s]\d{3})|\d{4,6})\s*BTU/gi)) {
+    const a = Number(m[1].replace(/[.\s]/g, '')), b = Number(m[2].replace(/[.\s]/g, ''));
+    if (a >= 5000 && b > a) for (const p of [7000, 9000, 10000, 12000, 18000, 22000, 24000, 30000, 36000, 48000, 57000, 60000]) if (p >= a && p <= b) out.add(p);
+    if (a >= 5000) out.add(a);
   }
   // A capacidade do CATALOGO do PNCP ("capacidade refrigeração: 16.000", sem
   // "BTU") fica de fora de proposito: o catalogo so tem capacidades padrao e o
@@ -3313,6 +3326,9 @@ for (const e of dados.editais) {
       const munS = munRe.replace(/ +/g, '\\s+');
       const timbre = '(?:Estado\\s+d[eo]\\s+' + est + '\\s+MUNIC[ÍI]PIO\\s+DE\\s+' + munS + '|Munic[íi]pio\\s+de\\s+' + munS + '\\s+Estado\\s+d[eo]\\s+' + est + ')';
       it[6] = it[6].replace(new RegExp(colunas + contato + '\\s+' + timbre + '(?:\\s+\\d{1,3}(?=\\s))?(?=\\s|$)', 'giu'), ' ')
+        // e o rodape "Sao Jose do Inhacora/RS | prefeito@...", com a unidade e a
+        // quantidade da linha na frente, no meio da celula (22/09/2026)
+        .replace(new RegExp('(?:\\s(?:UN|UND|Unid\\.?|Unidade)\\s+\\d{1,5})?\\s+' + munS + '\\s*/\\s*' + e[C.uf] + '\\s*\\|\\s*\\S+@\\S+', 'giu'), ' ')
         .replace(/\s{2,}/g, ' ').trim();
     }
     // o numero e o codigo BEC do item seguinte colados no fim: "... BALCAO. 110 -
@@ -3325,6 +3341,15 @@ for (const e of dados.editais) {
       // Ultima Compra: 7/2021 - 375,0000" (Congonhal/MG), que na linha do item
       // 47 emendava o item 48 inteiro
       .replace(/\s+(?:\d[\d.]*\s+)?[ÚU]ltima\s+Compra:.*$/s, '')
+      // A tabela "MATERIAL CODIGO DESCRICAO UN QTD N+1." de Congonhal/MG: o
+      // codigo na frente, o "UN" da coluna no meio da celula ("TANQUE EM ACO UN
+      // INOX") e a unidade, a quantidade e o numero do item seguinte no fim
+      // ("... 1.400 W. UN 5 4."), quando nao o item seguinte inteiro ("UN 15 39.
+      // FOGAO GAS, MAT...") ou o corpo do edital ("UN 50 A quantidade de cada
+      // item foi estabelecida...") (22/09/2026).
+      // So com o numero seguinte e ponto: "UN 02 Equipamento com funcionamento
+      // eletrico..." (Cacapava do Sul/RS) e a continuacao da celula.
+      .replace(/\s(?:UN|UND|Unid\.?|Unidade)\s+\d{1,5}\s+\d{1,3}\.(?=\s|$).*$/su, '')
       // e a letra que abre a frase seguinte, colada no ponto: "...ficha tecnica
       // oficial do fabricante.O" (Januaria/MG, "O licitante vencedor devera...")
       .replace(/([.;])\s?[A-ZÀ-Ú]$/, '$1');
@@ -3347,7 +3372,7 @@ for (const e of dados.editais) {
     // "... inox. 1 Un. 5212 - Aparelhos e Utensilios Domesticos Sim -- Item".
     // Corta no primeiro deles. "Total:" so depois de numero ou ponto:
     // "Capacidade Total: 400 litros" e do produto.
-    const rodape = /(?:\s+\d+|\.)\s+Total:\s+\d|\s+HASH:\s*[0-9a-f]{16}|\s+Juntado\s+em\s+\d{2}\/\d{2}\/\d{4}|\s+C[óo]digo\s+do\s+documento:|\s+Relat[óo]rio\s+de\s+(?:Quantitativo|Itens\s+com\s+Aplica)|\s+Valor\s+Total\s+(?:Global|R\$)|\s+VALOR\s+TOTAL\s+(?:GLOBAL|R\$)|\s\d{1,2}(?:\.\d{1,2})?\.?\s+(?:Valor\s+(?:total\s+)?estimado|Metodologia\s+aplicada|Estimativa\s+d[oa]\s+(?:valor|pre[çc]o))|\s+\d+\s*-?\s*Un\.?\s+\d{4}\s+-\s+\p{Lu}/u.exec(it[6]);
+    const rodape = /(?:\s+\d+|\.)\s+Total:\s+\d|\s+HASH:\s*[0-9a-f]{16}|\s+Juntado\s+em\s+\d{2}\/\d{2}\/\d{4}|\s+C[óo]digo\s+do\s+documento:|\s+Relat[óo]rio\s+de\s+(?:Quantitativo|Itens\s+com\s+Aplica)|\s+(?:UN\s+\d{1,5}\s+)?A\s+quantidade\s+de\s+cada\s+item\s+foi\s+estabelecida|\s+Valor\s+Total\s+(?:Global|R\$)|\s+VALOR\s+TOTAL\s+(?:GLOBAL|R\$)|\s\d{1,2}(?:\.\d{1,2})?\.?\s+(?:Valor\s+(?:total\s+)?estimado|Metodologia\s+aplicada|Estimativa\s+d[oa]\s+(?:valor|pre[çc]o))|\s+\d+\s*-?\s*Un\.?\s+\d{4}\s+-\s+\p{Lu}/u.exec(it[6]);
     if (rodape) it[6] = it[6].slice(0, rodape.index + (rodape[0][0] === '.' ? 1 : 0)).trim();
     // E o texto de OUTRO item do mesmo edital emendado: a tabela de quantidades
     // por orgao repete as descricoes em sequencia, e o "Freezer - Tipo:
@@ -3388,6 +3413,9 @@ for (const e of dados.editais) {
     if (/(?:^|\s)(?:0\s+){3,}\d/.test(it[6])) { it[6] = ''; continue; }
     // e a unidade com as quantidades no fim: "... 127/220 V. 1-Un. 1.949 489"
     it[6] = it[6].replace(/\s+\d+\s*-\s*Un\.?(?:\s+[\d.,]+)*$/, '');
+    // (e o codigo do material na frente, com o "UN" que a coluna enfia no meio)
+    // (aqui ainda sem o espaco que a revisao ortografica poe: "MATERIAL27740")
+    if (/^MATERIAL\s*\d{4,6}\s+\p{Lu}/u.test(it[6])) it[6] = it[6].replace(/^MATERIAL\s*\d{4,6}\s+/, '').replace(/(?<=[\p{L}\d.,])\s+UN\s+(?=\p{Lu})/u, ' ');
     // o que o SIAFISICO poe antes da especificacao: "FORNECIMENTO (SIAFISICO)
     // QUANTIDADE 01 6502113 - Especificacao Tecnica: Ventilador de Parede; ..."
     // (Secretaria da Saude de SP, pregao 11)

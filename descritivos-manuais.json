@@ -5,16 +5,406 @@
     "conferido": "2026-09-18",
     "itens": {
       "7": {
-        "qtd": 1, "valor": 1960.12, "fonte": "pagina 52",
+        "qtd": 1,
+        "valor": 1960.12,
+        "fonte": "pagina 52",
         "texto": "BALANÇA DIGITAL DE BANCADA 50 KG COM DIVISÃO DE 5G. Descrição: • Classe de exatidão III • Aprovado pelo INMETRO conforme portaria 236 • Display com 26 mm de altura (com 5 ou 6 dígitos) • Gabinete em aço inoxidável polido • Alimentação de 85 a 250 Vca (fonte automática) • Capacidade programável • Velocidade de leitura/tempo de estabilização configurável • Filtro digital contra vibrações, configurável em até 8 níveis • Indicadores luminosos de zero, peso líquido e peso estável • Detector de pico máximo • Contagem de peças • Pés niveladores • Dimensões A: 165 mm, L: 240 mm, P: 70 mm • Grau de proteção IP65 (módulo de pesagem). Especificação: alimentação elétrica 110/220 V, fonte externa automática; capacidade - divisão: 50 kg - 5 g; coluna: 450 mm; dimensões (A x L x C): 165 x 240 x 70 mm; INMETRO: conforme portaria 235; interface de comunicação: opcionais; saídas: RS 232, RS 485, ethernet; plataforma: 400 x 400; garantia: 1 ano; despacho: em até 15 dias úteis."
       },
       "8": {
-        "qtd": 2, "valor": 182, "fonte": "pagina 52",
+        "qtd": 2,
+        "valor": 182,
+        "fonte": "pagina 52",
         "texto": "BALANÇA DIGITAL DE COZINHA. Descrição: balança digital de cozinha para alimentos; pesagem em gramas - peso digital; material: aço inoxidável; capacidade: até 5 kg. Especificações: cor: prata; tamanho aproximado: 22 cm x 18 cm x 4,5 cm."
       },
+      "48": {
+        "qtd": 30,
+        "valor": 340.38,
+        "fonte": "relacao de itens, item 48",
+        "texto": "Desumidificador pequeno recarregável, absorvedor de umidade para espaços fechados. Com desumidificação de alta eficiência, gel de silica cristalizado dentro do mínidesumidificador para remover a umidade em qualquer espaço fechado. Adequado para áreas de até 32m^, remove até 170 ml de água por carga. Com janela indicadora, mostrando a coloração da silica, que fica rosa quando a unidade precisar de regeneração, que deverá ocorrer a cada 10 a 20 dias (dependendo da umidade ambiente). (Referência de marca howay)"
+      },
+      "76": {
+        "qtd": 8,
+        "valor": 612,
+        "fonte": "relacao de itens, item 76",
+        "texto": "MINI DESUMIDIFICADOR RECICLAVEL CAIXA DE DESUMIDIFICAÇÃO - SACO DE ABSORÇÃO DE UMIDADE S Descrição; Área aplicável: menos de 10 metros quadrados (nf). Capacidade do tanque de água: menos de 1 litro. Capacidade de desumidificação: Menos de 1 litro/hora. Tensão nominal classificada: 5V (V). Frequência nominal: 501 Hz (Hz). Potência nominal: 10 (W). Especificações; retangular, quadrado, mini. Quantidade do pacote: 1 peça"
+      },
       "113": {
-        "qtd": 2, "valor": 238.31, "fonte": "pagina 65",
+        "qtd": 2,
+        "valor": 238.31,
+        "fonte": "pagina 65",
         "texto": "LIQUIDIFICADOR. CAPACIDADE DO COPO MÍNIMO 4,0 LITROS, LÂMINAS EM AÇO INOX. POTÊNCIA MÍNIMA 500W, FUNÇÃO PULSAR. MÍNIMO 3 VELOCIDADES. VOLTAGEM 110/220V (A DEFINIR)."
+      }
+    }
+  },
+  "88768080000170/2026/486": {
+    "edital": "São Gabriel/RS, Pregao 53/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "1": {
+        "qtd": 6,
+        "valor": 2946,
+        "fonte": "termo de referencia, item 4",
+        "texto": "APARELHO DE AR-CONDICIONADO NOVO, TIPO SPLIT PARA PAREDE, INVERTER, COM CAPACIDADE DE REFRIGERAÇÃO/AQUECIMENTO DE 18.000 BTUS, COM CONTROLE REMOTO, VOLTAGEM 220 V, GÁS REFRIGERANTE R410-A OU R-32, SERPENTINA EM COBRE, EFICIÊNCIA ENERGÉTICA CLASSE \"A\" INMETRO, GARANTIA DE NO MÍNIMO 12 MESES DO EQUIPAMENTO."
+      },
+      "2": {
+        "qtd": 1,
+        "valor": 2436.07,
+        "fonte": "termo de referencia, item 4",
+        "texto": "APARELHO DE AR-CONDICIONADO NOVO, TIPO SPLIT PARA PAREDE, INVERTER COM CAPACIDADE DE REFRIGERAÇÃO/AQUECIMENTO DE 12.000 BTUS, COM CONTROLE REMOTO, VOLTAGEM 220 V, GÁS REFRIGERANTE R410-A OU R-32, SERPENTINA EM COBRE, EFICIÊNCIA ENERGÉTICA CLASSE \"A\" INMETRO, GARANTIA DE NO MÍNIMO 12 MESES DO EQUIPAMENTO."
+      }
+    }
+  },
+  "15389588000194/2026/72": {
+    "edital": "São Gabriel do Oeste/MS, Pregao 55/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "43": {
+        "qtd": 1,
+        "valor": 784,
+        "fonte": "termo de referencia, linha DE",
+        "texto": "Forno micro-ondas com capacidade de 26 a 30 litros, destinado ao aquecimento, descongelamento e preparo de alimentos, com painel de controle e funcionamento por energia elétrica."
+      }
+    }
+  },
+  "76235746000146/2026/41": {
+    "edital": "Santa Amélia/PR, Pregao 12/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "51": {
+        "qtd": 7,
+        "valor": 593.05,
+        "fonte": "planilha do edital, lote 051",
+        "texto": "PURIFICADOR DE ÁGUA. purificador de água refrigerado, possui 2 torneiras para uso, com a possibilidade de tratamento para água gelada ou natural. Regulagem de temperatura em até 7 níveis, sendo ajustado de acordo com a necessidade. Reservatório de Água:2,3 litros de água gelada. Sistema de Filtragem: Cartucho de polipropileno. Sistema de compressão: conjunto integrado entre motor, serpentina e condensador, proporcionando uma melhor eficiência do produto. Vazão nominal: 48l/h. Vazão mínima: 30l/h. De qualidade igual ou superior a colomarq. Conforme imagem de referência. 110v.As imagens são apenas ilustrativas, possíveis informações de marcas nas mesmas devem ser desconsideradas. Garantia 12 meses"
+      }
+    }
+  },
+  "16829640000149/2026/107": {
+    "edital": "Araguari/MG, Pregao 030/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "18": {
+        "qtd": 3,
+        "valor": 1037.05,
+        "fonte": "termo de referencia, item 1 da tabela",
+        "texto": "Fogão de piso a gás; Quantidade de queimadores: 04 (quatro) bocas; Acabamento externo: Inox ou material equivalente de alta resistência; Mesa de cocção em aço inoxidável; Acendimento automático (elétrico) para queimadores da mesa; Funcionamento compatível com gás GLP e possibilidade de conversão para GN; Alimentação elétrica bivolt (127V/220V); Classificação de eficiência energética: Classe A ou superior; Produto novo, sem uso anterior, em embalagem original do fabricante. Mesa e Queimadores: Mesa em inox resistente à corrosão e de fácil limpeza; Queimadores com diferentes potências para melhor desempenho no preparo dos alimentos; Grades/trempes resistentes, com estabilidade para panelas; Manípulos removíveis para facilitar a higienização. Forno: Capacidade mínima do forno: 58 litros; Acendimento automático; Iluminação interna; Porta com visor de vidro; Revestimento interno esmaltado de fácil limpeza; Prateleira interna regulável/deslizante; Sistema que facilite a limpeza e reduza acúmulo de gordura. Dimensões aproximadas: Altura: aproximadamente 96 cm; Largura: aproximadamente 51,5 cm; Profundidade: aproximadamente 60 cm; Peso aproximado: 23,5 kg. Segurança e Garantia: Atender às normas técnicas e de segurança aplicáveis para equipamentos a gás; Possuir manual de instruções em português; Garantia mínima do fabricante: 12 (doze) meses. Referência de qualidade: Equipamento equivalente ou superior ao modelo Fogão Consul 4 Bocas Inox com Acendimento Automático – CFO4NAR."
+      },
+      "19": {
+        "qtd": 3,
+        "valor": 766.47,
+        "fonte": "termo de referencia, item 2 da tabela",
+        "texto": "Micro-ondas com capacidade mínima de 31 litros, na cor inox espelhado, com painel de controle integrado, display digital e funções eletrônicas para aquecimento, descongelamento e preparo de alimentos. Características mínimas exigidas: Capacidade interna: 31 litros; Tipo: micro-ondas de bancada; Cor/acabamento: inox espelhado ou equivalente; Painel de controle: integrado, com design moderno e teclas de fácil operação; Porta com acabamento espelhado; Display digital com função econômica/desligamento do display; Prato giratório em vidro; Frequência: 60 Hz; Alimentação elétrica: 127V ou 220V, conforme solicitação da Administração; Potência compatível com equipamentos de capacidade mínima de 31 litros; Classificação energética mínima: A; Função de descongelamento automático; Função de manter aquecido; Função para redução de odores internos (tira odor ou tecnologia equivalente); Função silenciosa/mudo para desativação dos sinais sonoros; Trava de segurança; Menu de receitas/programações automáticas; Luz interna; Controle eletrônico de tempo e potência. Dimensões aproximadas: Altura: aproximadamente 32,5 cm; Largura: aproximadamente 52 cm; Profundidade: aproximadamente 42,2 cm; Peso aproximado: 15 kg. Acessórios inclusos: Prato giratório; Manual de instruções em português; Cabo de alimentação; Demais acessórios necessários ao funcionamento completo do equipamento. Garantia: Garantia mínima de 12 meses contra defeitos de fabricação, contados a partir da entrega definitiva do produto. Modelo de referência: Micro-ondas Electrolux 31L Inox Espelhado com Painel Integrado e Função Tira Odor – MI41S, ou equipamento equivalente ou superior."
+      },
+      "20": {
+        "qtd": 4,
+        "valor": 3301.92,
+        "fonte": "termo de referencia, item 3 da tabela",
+        "texto": "Refrigerador tipo duplex, com capacidade total mínima de 385 litros, acabamento externo na cor inox, duas portas independentes, sendo freezer na parte superior e refrigerador na parte inferior, com sistema de degelo automático Frost Free, tecnologia de refrigeração eficiente e baixo consumo de energia. Características mínimas exigidas: Capacidade total: mínima de 385 litros; Tipo: Duplex (freezer superior); Quantidade de portas: 02 portas; Sistema de degelo: Frost Free; Cor/acabamento: inox ou equivalente; Compressor com tecnologia Inverter ou tecnologia equivalente de eficiência energética; Classificação energética mínima: A; Tensão elétrica: 127V ou 220V, conforme solicitação da Administração; Frequência: 60 Hz; Controle eletrônico de temperatura; Iluminação interna em LED; Prateleiras internas em vidro temperado ou material de resistência equivalente; Gaveta para frutas e verduras; Compartimento para alimentos resfriados; Freezer com controle de temperatura; Função turbo/resfriamento rápido ou equivalente; Sistema de proteção contra variações de energia; Funcionamento silencioso; Pés niveladores e/ou rodízios para movimentação. Capacidade interna aproximada: Capacidade total: 385 litros; Compartimento refrigerador e freezer conforme projeto do fabricante. Dimensões aproximadas: Altura: 176 cm; Largura: 62 cm; Profundidade: 72 cm; Peso aproximado: 55 kg. Acessórios inclusos: Manual de instruções em português; Cabo de alimentação; Prateleiras e gavetas internas originais; Demais acessórios necessários ao pleno funcionamento do equipamento. Garantia: Garantia mínima de 12 (doze) meses contra defeitos de fabricação, contados a partir da entrega definitiva do produto. Modelo de referência: Geladeira/Refrigerador Brastemp Frost Free Duplex 385 Litros Inox – Modelo BRM46MK, ou equipamento equivalente ou superior em características técnicas e desempenho."
+      }
+    }
+  },
+  "87612867000186/2026/79": {
+    "edital": "Boa Vista do Buricá/RS, Pregao 031/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "24": {
+        "qtd": 8,
+        "valor": 318.58,
+        "fonte": "termo de referencia, item 24",
+        "texto": "MULTIPROCESSADOR DE ALIMENTOS. 1. CARACTERÍSTICAS TÉCNICAS 1.1. TIPO DE PRODUTO: MULTIPROCESSADOR DE ALIMENTOS. 1.2. POTÊNCIA: DE NO MÍNIMO 800W. 1.3. CAPACIDADE DO COPO DO PROCESSADOR: DE NO MÍNIMO 1,2L. 1.4. CAPACIDADE DO COPO DO LIQUIDIFICADOR: DE NO MÍNIMO 1,5L. 1.5. FUNÇÕES MÍNIMAS: PROCESSAR, CORTAR, MISTURAR, FATIAR, PICAR E LIQUIDIFICAR OS ALIMENTOS. 1.6. QUANTIDADE DE VELOCIDADES: 02 FUNÇÃO PULSAR. 1.7. ALIMENTAÇÃO: 220V OU BIVOLT. 1.8. ACOMPANHA MANUAL DE INSTRUÇÕES. 1.9. GARANTIA DE NO MINIMO 1 ANO."
+      }
+    }
+  },
+  "72836588000129/2026/63": {
+    "edital": "Valparaíso/SP, Pregao 16/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "60": {
+        "qtd": 2,
+        "valor": 0,
+        "fonte": "relacao de itens, item 60",
+        "texto": "LIQUIDIFICADOR INDUSTRIAL 8 LITROS. UTILIDADE TRITURAR PRODUTOS DIVERSOS COM ADICAO DE LIQUIDO CAPACIDADE 8 LITROS COPO EM ACO INOX GABINETE EXTERNO EM ACO INOX COMPONENTES DO GABINETE INTERNO EM ALUMINIO FUNDIDO BAIXA ROTACAO ALTURA MM 760 FRENTE MM 250 FUNDO MM 220 PESO KG 10 MOTOR CV 3 4 CAPACIDADE L 8 VOLTAGEM V 110 220 CONSUMO KW H 0 91"
+      },
+      "85": {
+        "qtd": 3,
+        "valor": 0,
+        "fonte": "relacao de itens, item 85",
+        "texto": "Liquidificador industrial 4 litros. Cor: Inox/Preto Voltagem: 127V/220V Potência: 1000 W Quantidade de velocidades: 1"
+      },
+      "105": {
+        "qtd": 1,
+        "valor": 0,
+        "fonte": "relacao de itens, item 105",
+        "texto": "Liquidificador comercial com capacidade de 8 litros, dotado de sistema de monitoramento de abertura da tampa, fabricado em conformidade à Norma Regulamentadora do Ministério do Trabalho NR12 - Segurança no Trabalho em Máquinas e Equipamentos. O aparelho deve possuir Certificação INMETRO, conforme estabelecido nas portarias INMETRO nº 371, de 29 de dezembro de 2009 e nº 328, de 8 de agosto de 2011. Copo removível em aço inox AISI 304, espessura mínima de 0,8 mm, com capacidade de 8 litros. Encaixe para o copo (parte superior do gabinete do motor) e base (parte inferior do gabinete do motor) em nylon com fibra ou plástico de engenharia, em cor clara. Alças constituídas em chapa dobrada ou perfil tubular de aço inox AISI 304, com espessura de chapa de mínima de 1,20mm, isentas de bordas vivas ou partes cortantes. Tampa do copo em aço inox AISI 304, espessura mínima de 0,6mm, com dobras estruturais que permitam a limpeza interna, monitorada por sensor indutivo que desligue o motor mediante sua abertura. O Visor da tampa, removível, em plástico injetado atóxico, transparente. Gabinete do motor em aço inox AISI 304, espessura de 0,6mm. Dreno posicionado na parte superior do gabinete do motor de modo a não haver entrada de líquidos no motor. Sapatas antivibratórias de material aderente. Facas triplas (três lâminas duplas) em aço inox AISI 304. Eixo, mancal do eixo, e porca fixadora das facas em aço inox AISI 304. Bucha do eixo em bronze sinterizado. O Arruelas em celeron. Anel de vedação do eixo em borracha atóxica. Interruptor liga/ desliga com proteção impermeável. Tecla para pulsar. Potência mínima de1/2 CV. Tensão de alimentação: 127V, 220V (fornecimento conforme pedido) ou bivolt comutável. Dimensionamento e robustez da fiação, plugue e conectores elétricos compatíveis com a corrente de operação. O Cordão de alimentação (rabicho) com 1200 mm de comprimento, certificado pelo INMETRO conforme Portaria nº 640 e em conformidade com a norma NBR NM 287-4. O Plugue certificado pelo INMETRO conforme Portaria nº 136 e em conformidade com a norma NBR 14136. Selo INMETRO no equipamento."
+      }
+    }
+  },
+  "87849923000109/2026/630": {
+    "edital": "Bento Gonçalves/RS, Pregao 0138/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "27": {
+        "qtd": 100,
+        "valor": 796.78,
+        "fonte": "termo de referencia, item 27",
+        "texto": "FORNO MICRO-ONDAS CAPACIDADE MÍNIMA 30 LITROS. CERTIFICADO DO INMETRO, GABINETE MONOBLOCO EM AÇO GALVANIZADO, REVESTIDO INTERNA E EXTERNAMENTE COM PINTURA ELETROSTÁTICA EM PÓ NA COR BRANCA. ILUMINAÇÃO INTERNA; PAINEL DE CONTROLE DIGITAL COM FUNÇÕES PRÉ PROGRAMADAS; TIMER; RELÓGIO; PORTA COM VISOR CENTRAL DOTADA DE PUXADOR E/OU TECLA DE ABERTURA, COM DISPOSITIVOS E TRAVAS DE SEGURANÇA. POTÊNCIA MÍNIMA DE 800 WATS E TENSÃO 220V, DEVE ACOMPANHAR PRATO PARA AQUECER ALIMENTOS. COM GARANTIA DE NO MÍNIMO 12 MESES."
+      },
+      "30": {
+        "qtd": 10,
+        "valor": 1500.92,
+        "fonte": "termo de referencia, item 30",
+        "texto": "REFRIGERADOR TIPO FRIGOBAR. EQUIPAMENTO COM CERTIFICAÇÃO DO INMETRO, DEVENDO PORTAR OBRIGATORIAMENTE A ETIQUETA NACIONAL DE CONSERVAÇÃO DE ENERGIA (ENCE) COM CLASSIFICAÇÃO DE EFICIÊNCIA ENERGÉTICA \"A\" FIXADA NO PRODUTO. CAPACIDADE LÍQUIDA INTERNA DE, NO MÍNIMO, 100 LITROS. GABINETE EXTERNO ESTRUTURADO EM MATERIAL RESISTENTE COM ACABAMENTO NA COR BRANCA OU PRETA. CONFIGURAÇÃO INTERNA CONTENDO COMPARTIMENTO INTERNO DE CONGELADOR/EVAPORADOR PARA RESFRIAMENTO RÁPIDO, PRATELEIRAS REMOVÍVEIS E COMPARTIMENTOS OTIMIZADOS NA CONTRAPORTA (PARA LATAS E GARRAFAS). SISTEMA DE CONTROLE DE TEMPERATURA POR MEIO DE TERMOSTATO REGULÁVEL ACESSÍVEL. DOTADO DE PÉS NIVELADORES PARA PERFEITO ALINHAMENTO AO PISO, ISOLAMENTO TÉRMICO E FLUIDO REFRIGERANTE TOTALMENTE ECOLÓGICOS E LIVRES DE CFC (CLOROFLUOROCARBONETO). TENSÃO DE ALIMENTAÇÃO ELÉTRICA EM 220V / 60HZ. O EQUIPAMENTO DEVE SER FORNECIDO ACOMPANHADO DE MANUAL DE INSTRUÇÕES EM PORTUGUÊS. GARANTIA TOTAL CONTRA DEFEITOS DE FABRICAÇÃO DE, NO MÍNIMO, 12 MESES (01 ANO)."
+      }
+    }
+  },
+  "10637926000146/2026/232": {
+    "edital": "Bento Gonçalves/RS (IFRS), Pregao 307/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "57": {
+        "qtd": 33,
+        "valor": 1013.3,
+        "fonte": "termo de referencia, item 57",
+        "texto": "Frigobar – Capacidade Mínima de 76 Litros: Frigobar destinado ao armazenamento e conservação de alimentos, bebidas e medicamentos (quando aplicável), adequado para uso em ambientes administrativos, laboratórios, copas e áreas de apoio. Especificações mínimas: ● Capacidade total líquida mínima de 76 litros; ● Alimentação elétrica em 110 V ou 220 V, conforme definido no instrumento convocatório; ● Sistema de refrigeração por compressor hermético de alto desempenho; ● Controle interno de temperatura com ajuste manual ou eletrônico; ● Compartimento interno para congelados (freezer ou congelador), integrado ao gabinete; ● Mínimo de 02 (duas) prateleiras internas, sendo ao menos uma removível ou regulável; ● Compartimentos na porta para acondicionamento de garrafas, latas e outros recipientes; ● Porta reversível ou possibilidade de inversão do sentido de abertura; ● Pés niveladores ajustáveis; Iluminação interna; ● Gabinete externo confeccionado em aço com pintura eletrostática ou material de resistência equivalente, na cor branca, prata, inox ou outra cor neutra; ● Gabinete interno em material resistente, atóxico e de fácil higienização; ● Gás refrigerante ambientalmente adequado, conforme regulamentação vigente; ● Eficiência energética compatível com a classificação vigente do Programa Brasileiro de Etiquetagem (PBE/INMETRO); ● Cabo de alimentação com plugue em conformidade com a ABNT NBR 14136; ● Produto certificado pelo INMETRO ou por organismo de certificação por ele acreditado, quando aplicável; ● Manual de instruções em língua portuguesa; ● Produto novo, sem uso anterior, acondicionado de forma a preservar sua integridade durante o transporte e armazenamento; ● Garantia mínima de 12 (doze) meses contra defeitos de fabricação."
+      }
+    }
+  },
+  "76977768000181/2026/178": {
+    "edital": "Paranavaí/PR, Pregao 16/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "2": {
+        "qtd": 25,
+        "valor": 7523.95,
+        "fonte": "relacao de itens, item 2",
+        "texto": "Geladeira Industrial 700L. Em Inox, com 4 portas, capacidade de no mínimo 700 litros. Bivolt. Produto deverá possuir Selo de Identificação de Conformidade do INMETRO."
+      },
+      "23": {
+        "qtd": 14,
+        "valor": 9862.35,
+        "fonte": "relacao de itens, item 23",
+        "texto": "Geladeira Industrial em Inox 1.000L. Com 6 portas. Capacidade: mínimo 1.000 litros. Bivolt. Produto deverá possuir Selo de Identificação de Conformidade do INMETRO."
+      },
+      "24": {
+        "qtd": 21,
+        "valor": 5358.97,
+        "fonte": "relacao de itens, item 24",
+        "texto": "Freezer Vertical. Capacidade entre 560 a 570 L. Voltagem: Bivolt V. Temperatura Operação: -50 a -86 °C. Quantidade de portas: 1 porta. Produto deverá possuir Selo de Identificação de Conformidade do INMETRO."
+      },
+      "47": {
+        "qtd": 8,
+        "valor": 7523.95,
+        "fonte": "relacao de itens, item 47 (cota do item 2)",
+        "texto": "Geladeira Industrial 700L. Em Inox, com 4 portas, capacidade de no mínimo 700 litros. Bivolt. Produto deverá possuir Selo de Identificação de Conformidade do INMETRO."
+      },
+      "48": {
+        "qtd": 4,
+        "valor": 9862.35,
+        "fonte": "relacao de itens, item 48 (cota do item 23)",
+        "texto": "Geladeira Industrial em Inox 1.000L. Com 6 portas. Capacidade: mínimo 1.000 litros. Bivolt. Produto deverá possuir Selo de Identificação de Conformidade do INMETRO."
+      }
+    }
+  },
+  "05649898000147/2026/44": {
+    "edital": "São Paulo/SP (Subprefeitura Pinheiros), Dispensa 47/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "1": {
+        "qtd": 2,
+        "valor": 1399.18,
+        "fonte": "termo de referencia, item 01",
+        "texto": "Frigobar compacto, novo, de primeiro uso, destinado à conservação e refrigeração de alimentos, bebidas e demais produtos de uso administrativo, com capacidade líquida total mínima de 120 litros, com as seguintes características e requisitos mínimos: • Capacidade líquida total mínima de 120 litros; • Sistema de refrigeração por compressor, adequado ao uso contínuo; • Controle de temperatura manual/analógico, permitindo regulagem da temperatura interna de acordo com a necessidade de utilização; • Faixa de temperatura ajustável de aproximadamente -2 °C a 10 °C, ou que ofereça desempenho equivalente; • Compartimento de resfriamento rápido/extra frio, destinado à conservação de alimentos e bebidas em temperaturas mais baixas; • Sistema de degelo Cycle Defrost ou equivalente; • Iluminação interna em LED, proporcionando adequada visualização do conteúdo armazenado; • Porta única, com possibilidade de reversão do sentido de abertura, permitindo adequação ao espaço disponível para instalação; • Prateleiras internas removíveis, preferencialmente confeccionadas em vidro temperado ou material de resistência e qualidade equivalente, permitindo melhor organização e higienização do equipamento; • Compartimentos internos na porta para armazenamento de garrafas, latas e outros recipientes de diferentes dimensões; • Gaveta ou compartimento específico para frutas, legumes e alimentos, destinado à melhor organização e conservação dos produtos; • Pés niveladores ou sistema equivalente para garantir estabilidade e adequado nivelamento do equipamento; • Gabinete externo confeccionado em material resistente, de fácil limpeza e adequado ao uso em ambiente administrativo; • Capacidade de acomodação de recipientes de diferentes dimensões, inclusive garrafas e bebidas; • Tensão de alimentação elétrica de 127 V, frequência de 60 Hz, compatível com a instalação elétrica da unidade requisitante; • Classificação de eficiência energética A ou superior, conforme classificação vigente do Programa Brasileiro de Etiquetagem/INMETRO; • Consumo de energia compatível com equipamento de sua categoria, priorizando modelos de maior eficiência energética; • Gás refrigerante de baixo impacto ambiental, em conformidade com a legislação e normas técnicas aplicáveis; • Produto acompanhado de manual de instruções em língua portuguesa e demais acessórios necessários ao seu pleno funcionamento; • Atendimento às normas técnicas, de segurança e de eficiência energética aplicáveis ao produto, incluindo certificação/registro junto ao INMETRO, quando exigível; • Garantia mínima de 12 (doze) meses, contados a partir do recebimento definitivo do equipamento."
+      }
+    }
+  },
+  "18338178000102/2026/273": {
+    "edital": "Juiz de Fora/MG, Pregao 093/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "1": {
+        "qtd": 1,
+        "valor": 2643.87,
+        "fonte": "especificacao detalhada, item 1",
+        "texto": "Geladeira/Refrigerador de uso doméstico, 300 Litros, Voltagem 127V, cor branca, sistema de degelo semi-automático, linha branca com 01 porta; classificação energética: A."
+      }
+    }
+  },
+  "87612750000100/2026/133": {
+    "edital": "Arvorezinha/RS, Pregao 33/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "12": {
+        "qtd": 15,
+        "valor": 1397.46,
+        "fonte": "termo de referencia, item 12",
+        "texto": "Bebedouro Industrial 25 Litros: Bebedouro elétrico industrial com duas torneiras com capacidade de refrigeração de no mínimo 25l/h, para instalação no piso, Altura máxima: 1300 mm; • Largura máxima: 550mm; • Profundidade máxima: 500 mm; • Fornecimento mínimo de água gelada: 25 l/h; Termostato com regulagem de temperatura; • Sistema de filtragem que inclua retenção de partículas (PIII) e Redução de cloro (CI). • Corpo em aço inox polido, • Duas torneiras em metal cromado para copo tipo lavatório (ou similar), reguláveis e de fácil acionamento pelos usuários previstos: crianças em escolas e creches. • Reservatório de água em material resistente, atóxico e de fácil limpeza (polipropileno ou aço inox). • Serpentina interna em aço inox. • Isolamento em EPS. • Gás refrigerante R600a ou R134a. • Previsões para limpeza, higienização e dreno. • Mangueiras atóxicas e adaptador para conexão com a rede hidráulica. • Baixo consumo de energia, com termostato para controle automático da temperatura da água. • Dreno para limpeza da cuba. • Sapatas niveladoras em borracha ou nylon. • Não possuir cantos vivos, arestas ou quaisquer outras saliências cortantes ou perfurantes de modo a não causar acidentes. A cuba, as torneiras e o(s) filtro(s) devem fazer parte integral do equipamento, não podendo considerá-las como itens adicionais. • Dimensionamento e robustez da fiação, plugue e conectores elétricos compatíveis com a corrente de operação. Voltagem: 220V (ou 110V/127V, conforme demanda da Ordem de Fornecimento). Cordão de alimentação (rabicho) certificado pelo INMETRO, com indicação de voltagem."
+      },
+      "41": {
+        "qtd": 6,
+        "valor": 430.73,
+        "fonte": "termo de referencia, item 41",
+        "texto": "liquidificador semi-industrial: modelo padrão fnde - Liquidificador com 2 Velocidades com Função Pulsar • Capacidade para Triturar Gelo Capacidade: • Copo com capacidade útil de 2 litros. Características construtivas: • Copo removível, confeccionado em chapa de aço inox, em peça única, sem soldas, com espessura de 1 mm. • Flange do copo em material plástico injetado, em cor clara. • Alças em aço inox, espessura de chapa de 1,25mm, com bordas rebatidas para o lado interno e soldadas em toda extensão de modo a não haver retenção de resíduos. Fixação das alças ao copo com soldas lisas, uniformes e sem frestas de modo a evitar o acúmulo de resíduos. • Tampa do copo em aço inox, espessura mínima de chapa de 0,6mm, com dobras estruturais que permitam a limpeza interna. • Gabinete do motor em aço inox, espessura mínima de chapa de 0,6mm, flange superior e ao da base em material plástico injetado, em cor clara. Dreno da flange posicionado de modo a não haver entrada de líquidos no gabinete do motor. • Sapatas antivibratórias em material aderente. • Facas, eixo, buchas, porca fixadora do eixo da faca e pino elástico de tração da faca em aço inox. • O conjunto formado pelas facas, eixo e elementos de fixação deve ser removível para limpeza, sem a necessidade de utilização de ferramentas. • Flange de acoplamento do motor, pinos de tração e elementos de fixação em aço inox. • Interruptor liga/desliga. • Interruptor para pulsar. • Motor monofásico de ½ HP. • Dimensionamento e robustez da fiação, plugue e conectores elétricos compatíveis com a corrente de operação. • Voltagem do aparelho: 220V ou comutável (110V/220V por chave seletora/bivolt). • Indicação da voltagem na chave comutadora. • Cordão de alimentação (rabicho) com 1200 mm de comprimento. Matérias-primas, tratamentos e acabamentos: • As matérias primas utilizadas na fabricação do equipamento devem atender às normas técnicas específicas para cada material. • Copo, tampa, alças e gabinete em aço inox AISI 304, com acabamento BB N.7 do lado externo e 2B do lado interno, conforme padrões ASTM. • Flange do copo, base e flange do gabinete em polipropileno injetado virgem, em cor clara. • Facas em aço inox AISI 420 temperado. • Eixo, buchas e porca fixadora do eixo da faca em aço inox AISI 304. • Pino elástico de tração da faca em aço inox AISI 304. • Flange de acoplamento, pinos de tração e elementos de fixação em aço inox AISI 304. • O equipamento e seus componentes devem ser isentos de rebarbas, arestas cortantes ou elementos perfurantes."
+      }
+    }
+  },
+  "25107897000188/2026/63": {
+    "edital": "Palmeiras de Goiás/GO (Câmara), Pregao 6/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "1": {
+        "qtd": 14,
+        "valor": 3000,
+        "fonte": "termo de referencia, item 1",
+        "texto": "Aparelhos de ar condicionador de 12000BTUs, modelo split, piso teto tecnologia inverter, 220V."
+      },
+      "3": {
+        "qtd": 1,
+        "valor": 5000,
+        "fonte": "termo de referencia, item 3",
+        "texto": "Aparelho de ar condicionado de 24.000BTUs, modelo split, piso teto tecnologia inverter, 220V."
+      },
+      "5": {
+        "qtd": 1,
+        "valor": 13000,
+        "fonte": "termo de referencia, item 5",
+        "texto": "Aparelho de ar condicionado de 48.000BTUs, modelo split, piso teto tecnologia inverter, 220V."
+      }
+    }
+  },
+  "88659313000105/2026/159": {
+    "edital": "Caxias do Sul/RS (SAMAE), Pregao 41/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "14": {
+        "qtd": 1,
+        "valor": 2916.33,
+        "fonte": "termo de referencia, item 14 e 1.1.1.3",
+        "texto": "Refrigerador Frost Free duplex, cor branca, com prateleiras removíveis de vidro temperado, de 380 a 390 L de capacidade total, tensão 220 V e frequência 60 HZ. Tipo: Vertical. Tecnologia de Degelo: Frost Free (degelo automático); Posição vertical. Capacidade Total Líquida: Mínima de 380 litros e máxima de 390 litros. Configuração: Duplex (duas portas verticais, com freezer na parte superior e refrigerador na parte inferior). Cor/Acabamento Externo: Branca. Prateleiras Internas: Removíveis e reguláveis, fabricadas em vidro temperado de alta resistência. Tensão Elétrica: 220 V. Frequência: 60 Hz. Eficiência Energética: Classificação Procel “A” ou superior (padrão Inmetro vigente); Marcas/modelos de referência: Brastemp BRM46MB, Electrolux TF41, Midea MD-RT533 e Panasonic NR-BT41PD1W."
+      }
+    }
+  },
+  "87297982000103/2026/294": {
+    "edital": "Lajeado/RS, Pregao 0055/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "1": {
+        "qtd": 19,
+        "valor": 4637.84,
+        "fonte": "termo de referencia, linha 1",
+        "texto": "Amassadeira lenta/semirrápida, com capacidade de massa pronta de 15 kg para uso industrial/profissional. Capacidade de farinha de até 10 kg + ingredientes, sistema basculante com pás fixas. Indicada para a preparação de massas pesadas como pães, pizzas e similares. Cuba em aço inoxidável e estrutura em aço carbono com acabamento em pintura epóxi resistente. Com potência mínima de ½ cv, tipo de tensão bivolt ou 220 v e motor monofásico. Deve atender as normas se segurança conforme a NR 12 - SEGURANÇA NO TRABALHO EM MÁQUINAS E EQUIPAMENTOS."
+      },
+      "2": {
+        "qtd": 6,
+        "valor": 4637.84,
+        "fonte": "termo de referencia, linha 1",
+        "texto": "Amassadeira lenta/semirrápida, com capacidade de massa pronta de 15 kg para uso industrial/profissional. Capacidade de farinha de até 10 kg + ingredientes, sistema basculante com pás fixas. Indicada para a preparação de massas pesadas como pães, pizzas e similares. Cuba em aço inoxidável e estrutura em aço carbono com acabamento em pintura epóxi resistente. Com potência mínima de ½ cv, tipo de tensão bivolt ou 220 v e motor monofásico. Deve atender as normas se segurança conforme a NR 12 - SEGURANÇA NO TRABALHO EM MÁQUINAS E EQUIPAMENTOS."
+      },
+      "3": {
+        "qtd": 30,
+        "valor": 793.33,
+        "fonte": "termo de referencia, linha 2",
+        "texto": "Balança digital eletrônica de mesa, comercial, com capacidade mínima de pesagem de 30 kg, com divisões a cada 5 g, prato superior em aço inoxidável, mostrador junto a base ou em coluna. Display em cristal líquido (LCD), com no mínimo 5 dígitos para o peso. Deve possuir teclas de zero e tara. Selo e lacre de calibração do INMETRO. Deve possuir bateria interna recarregável, com autonomia para operação independente de rede elétrica, e sistema de carregamento via cabo de alimentação bivolt ou 220v, com indicação da voltagem no cabo de alimentação."
+      },
+      "4": {
+        "qtd": 20,
+        "valor": 2009.83,
+        "fonte": "termo de referencia, linha 3",
+        "texto": "Batedeira Planetária industrial de bancada com capacidade de 5 litros, destinada a misturar e bater massas leves. Cuba fabricada em aço inoxidável com sistema de fixação por manipulo. Corpo em aço carbono com acabamento em pintura epóxi eletrostática. Potência mínima de 800 watts, com sistema de proteção térmica. Sistema eletrônico com no mínimo três níveis de velocidade progressiva sem interrupção do funcionamento. Acessórios mínimos: três batedores (globo, raquete e gancho). Equipamento dotado de grade de proteção móvel intervalada (interrompe o funcionamento ao abrir), botão de emergência e proteção contra religamento automático em caso de queda de energia. Tipo de tensão bivolt ou 220 v, com indicação da voltagem no cabo de alimentação. Deve atender as normas se segurança conforme a NR 12 - SEGURANÇA NO TRABALHO EM MÁQUINAS E EQUIPAMENTOS."
+      },
+      "5": {
+        "qtd": 10,
+        "valor": 679.33,
+        "fonte": "termo de referencia, linha 4",
+        "texto": "Bebedouro de água refrigerado, modelo de coluna (instalação direta sobre o piso, dispensando bancadas de apoio) projetado para suporte e operação com garrafão/galão de 20 litros. Gabinete externo fabricado em aço inox sem emendas. Bandeja coletora de gotas removível para facilitar o escoamento, limpeza e higienização, torneiras de acionamento manual (tipo alavanca, tecla ou botão), fabricadas em material atóxico e de fácil substituição Capacidade mínima de resfriamento de 2,8 litros de água por hora (abaixo de 10°C). Sistema de refrigeração por compressor hermético com gás refrigerante ecológico (r134a). Fornecimento de água em duas opções com torneiras independentes: natural e gelada. Termostato regulável na lateral ou traseira do equipamento para ajuste fino da temperatura da água gelada. Tensão de funcionamento de 220v."
+      },
+      "6": {
+        "qtd": 20,
+        "valor": 2300.57,
+        "fonte": "termo de referencia, linha 5",
+        "texto": "Bebedouro de água em inox, mínimo 100 litros e 3 torneiras, tecnologia de isolamento em poliuretano, expandido, recipiente para o depósito de água em polietileno roto-moldado atóxico, corpo inox, pia de escoamento em vacuum-forming, água resfriada para a faixa de 2ºC a 7ºC em tempo mínimo, por se tratar de um recipiente refrigerado de acumilação e passagem. Motor: ⅙ c dimensões aproximadas: altura: 1520 mm, largura: 505 mm, profundidade: 560 mm. Equipamento de acordo com INMETRO, com selo de conformidade expedido pelo mesmo."
+      },
+      "7": {
+        "qtd": 20,
+        "valor": 2461.67,
+        "fonte": "termo de referencia, linha 6",
+        "texto": "Buffet térmico quente, com capacidade para 8 cubas, fabricado em aço inox, aquecimento em banho-maria. Com protetor salivar superior em vidro curvo temperado de 4 mm, sustentado por colunas em aço inoxidável, apoios de pratos instalados nas laterais (sistema de platibanda), projetados para o deslize e suporte seguro de pratos. Equipamento com rodízios com trava para facilitar o transporte, temperatura de aquecimento controlada por termostato de 10º à 70 ºC, cubas de acordo com o padrão mundial gastronorm de ½ e 1/1, corpo e banho-maria em aço inox AISI 430, tampas das cubas com pegador estampado em aço inox, cubas deve conter alças. Medidas aproximadas: altura: 135 cm (com o protetor salivar), largura: 68 cm, profundidade: 106 cm (com apoios de pratos ativados). Potência da resistência: 2000 W, tensão de funcionamento 220v. Deverá vir incluso 8 cubas gastronômicas padrão GN 1/2, com 10 cm de altura (profundidade), 8 tampas em aço inox com pegador estampado, alças integradas nas cubas para transporte seguro de alimentos quentes."
+      },
+      "8": {
+        "qtd": 27,
+        "valor": 1798,
+        "fonte": "termo de referencia, linha 7",
+        "texto": "Buffet térmico quente infantil, com capacidade para 8 cubas, fabricado em aço inox, aquecimento em banho-maria. Com protetor salivar superior em vidro curvo temperado de 4mm, sustentado por colunas em aço inoxidável, apoios de pratos instalados nas laterais (sistema de platibanda), projetados para o deslize e suporte seguro de pratos. Equipamento com rodízios com trava para facilitar o transporte, temperatura de aquecimento controlada por termostato de 10º à 70 ºC, cubas de acordo com o padrão mundial gastronorm de ½ e 1/1, corpo e banho-maria em aço inox AISI 430, tampas das cubas com pegador estampado em aço inox, cubas deve conter alças. Medidas aproximadas: altura do chão até as cubas: 65 cm, altura total (chão até o topo do protetor salivar): 114 cm a 115 cm, largura: 60 cm, profundidade aproximada: 98 cm (com apoios de pratos ativados). Potência da resistência: 2000 W, tensão de funcionamento 220v. Deverá vir incluso 8 cubas gastronômicas padrão GN 1/2, com 10 cm de altura (profundidade), 8 tampas em aço inox com pegador estampado, alças integradas nas cubas para transporte seguro de alimentos quentes."
+      },
+      "10": {
+        "qtd": 20,
+        "valor": 1674.67,
+        "fonte": "termo de referencia, linha 9",
+        "texto": "Fogão industrial a gás com 6 queimadores, sendo 3 deles duplos. Queimadores e grelhas em ferro fundido, corpo em aço carbono com pintura eletrostática, grelha de 30 x 30 mesa com perfil de 5 cm com espera para forno. Dimensões aproximadas: altura: 80 cm, largura: 108 cm, profundidade: 82 cm"
+      },
+      "11": {
+        "qtd": 15,
+        "valor": 2693.33,
+        "fonte": "termo de referencia, linha 10",
+        "texto": "Fogão industrial a gás com 6 queimadores, sendo 3 deles duplos, queimadores e grelhas em ferro fundido, corpo em aço carbono com pintura eletrostática, grelha de 40 x 40 mesa com perfil de 10 cm com espera para forno. Dimensões aproximadas: altura: 82 cm, largura: 153 cm, profundidade: 106 cm."
+      },
+      "12": {
+        "qtd": 20,
+        "valor": 3429.74,
+        "fonte": "termo de referencia, linha 11",
+        "texto": "Forno elétrico industrial em inox, 220v, com laterais, frente e teto externas em aço inox, com duas resistências por câmara, sendo uma superior e uma inferior, com controle individual de temperatura, painel composto por dois termostatos de 50 ºC a 300 ºC, para regulagem de temperatura, sendo um para a resistência superior e outro para a resistência inferior. Cavalete reforçado em aço carbono com acabamento em pintura eletrostática com base fosfatizada.Sistema para abertura do vidro tipo guilhotina com acabamento em pintura a pó eletrostática com base fosfatizada. Revestimento interno em aço galvanizado. Isolamento em lã de rocha. Medidas externas do forno de aproximadamente: largura: 121 cm, altura: 139 cm, profundidade: 97,5 cm. Medidas internas de aproximadamente: largura: 95 cm, altura: 29 cm, profundidade 95 cm."
+      },
+      "13": {
+        "qtd": 30,
+        "valor": 676.3,
+        "fonte": "termo de referencia, linha 12",
+        "texto": "Forno elétrico doméstico de bancada, com capacidade mínima de 44 L, controle automático de temperatura com termostato compreendido entre 50ºC a 320°C. Com função grill/dourador. Com potência mínima de 1750 W. Com lâmpada interna, gabinete interno autolimpante, grade removível e cromada. Vidro duplo serigrafado, cor branca, 220v."
+      },
+      "14": {
+        "qtd": 20,
+        "valor": 3198.11,
+        "fonte": "termo de referencia, linha 13",
+        "texto": "Freezer doméstico vertical, sistema de refrigeração \"frost free\" (degelo automático), com uma porta, equipado com cestos removíveis, compartimento com tampa basculante, sistema de congelamento rápido e fluxo de ar dinâmico para distribuição uniforme do frio. Sistema de refrigeração operado por gás ecológico R600a (isobutano). Classificação de consumo energético com Selo Procel \"A\" ou superior. Capacidade de armazenamento mínimo de 228 litros, cor branca. Voltagem: 220V."
+      },
+      "15": {
+        "qtd": 20,
+        "valor": 2804.91,
+        "fonte": "termo de referencia, linha 14",
+        "texto": "Freezer doméstico horizontal, tipo uma tampa, cor branca, com capacidade mínima de 309 litros. Sistema de refrigeração operado por gás ecológico R600a (isobutano). Classificação de consumo energético com Selo Procel “A” (ou superior), voltagem de 220 V."
+      },
+      "16": {
+        "qtd": 40,
+        "valor": 641.69,
+        "fonte": "termo de referencia, linha 15",
+        "texto": "Forno Micro-ondas, com capacidade mínima de 35 L, cor branca, voltagem 220 v, potência mínima de 1450w, com prato giratório, descongelamento, eficiência energética A"
+      },
+      "17": {
+        "qtd": 30,
+        "valor": 534.5,
+        "fonte": "termo de referencia, linha 16",
+        "texto": "Liquidificador industrial, capacidade de 4 litros. Com gabinete em aço inox, copo em aço inox, monobloco, com capacidade para 4 litros, com base antiderrapante, motor de baixa rotação, com conjunto hélice/mancal produzido em aço inox, com chave liga/desliga. Potência mínima de ½ cv e aproximadamente 3500 RPM. Tensão de funcionamento 220 volts."
+      },
+      "18": {
+        "qtd": 15,
+        "valor": 2309.3,
+        "fonte": "termo de referencia, linha 17",
+        "texto": "Máquina de lavar roupa automática de uso doméstico. Dimensões aproximada (sem embalagem): Altura: 106 cm, Largura: 66 cm, profundidade: 72,4 cm - capacidade mínima: 15 kg. Características: gabinete externo do tipo monobloco revestido em chapa de aço galvanizado ou fosfatizado com acabamento em pintura eletrostática a pó (epóxi/poliéster) na cor branca. Painel de controle externo contendo botões seletores e/ou teclas para programas de lavagem e/ou funções pré- programadas, níveis de consumo de água, enxágues e centrifugação. Todas as funções devem ser identificadas. Tecla ou botão de acionamento liga/desliga. Programação para diferentes tipos de lavagem. Mangueiras para entrada de água com filtro e de saída para drenagem. Mínimo três níveis de água, centrifugação, filtro para retenção de fiapos, dispenser para sabão, amaciante e alvejante. Compartimento interno (cesto) em aço inox. Acesso ao cesto pela parte superior da máquina. Sapatas niveladoras, dispositivo de segurança da tampa (desligamento ou travamento). Dimensionamento da fiação, plugue e conectores elétricos compatíveis com a corrente de operação. Voltagem 220v. Cordão de alimentação (rabicho) certificado pelo INMETRO, com indicação de voltagem."
+      },
+      "21": {
+        "qtd": 13,
+        "valor": 6370.55,
+        "fonte": "termo de referencia, linha 20",
+        "texto": "Refrigerador comercial/industrial 4 portas, com gabinete externo em aço inox; capacidade mínima: 744 litros; sistema de refrigeração por ar forçado; temperatura mínima 0 a +7 °C; voltagem 220 V monofásico; material do gabinete interno em aço galvanizado; controlador eletrônico digital com indicador de temperatura; prateleiras internas em grades aramadas com regulagem de altura; pés termoplásticos com regulagem de altura. Sistema de refrigeração operado por gás refrigerante ecológico (R290 ou R600a), alta eficiência energética. Dimensões aproximadas: largura: 108 cm, profundidade: 59,5 cm, altura: 200 cm."
+      },
+      "22": {
+        "qtd": 2,
+        "valor": 6370.55,
+        "fonte": "termo de referencia, linha 20",
+        "texto": "Refrigerador comercial/industrial 4 portas, com gabinete externo em aço inox; capacidade mínima: 744 litros; sistema de refrigeração por ar forçado; temperatura mínima 0 a +7 °C; voltagem 220 V monofásico; material do gabinete interno em aço galvanizado; controlador eletrônico digital com indicador de temperatura; prateleiras internas em grades aramadas com regulagem de altura; pés termoplásticos com regulagem de altura. Sistema de refrigeração operado por gás refrigerante ecológico (R290 ou R600a), alta eficiência energética. Dimensões aproximadas: largura: 108 cm, profundidade: 59,5 cm, altura: 200 cm."
+      },
+      "23": {
+        "qtd": 20,
+        "valor": 3056.6,
+        "fonte": "termo de referencia, linha 21",
+        "texto": "Refrigerador vertical combinado, linha branca, sistema de refrigeração “frost free” (degelo automático) com capacidade mínima de 410 litros. Largura máxima: 750 mm. Gabinete tipo “duplex” com duas portas (freezer e refrigerador). gabinete externo do tipo monobloco e portas revestidas em chapa de aço com acabamento em pintura eletrostática em pó, na cor branca. Partes internas revestidas com painéis plásticos moldados com relevos para suporte das prateleiras internas deslizantes. Conjunto de prateleiras removíveis e reguláveis de material resistente. Prateleiras da porta e cestos em material resistente, removíveis e reguláveis. Gaveta em material resistente para acondicionamento de frutas, verduras ou legumes. Sistema de fechamento hermético. Dobradiças metálicas. Sapatas niveladoras. Sistema de controle de temperatura ajustável. Sistema de refrigeração operado por gás ecológico R600a e alta eficiência energética, com classificação de consumo energético Procel A (ou superior) Dimensionamento da fiação, plugue e conectores elétricos compatíveis com a corrente de operação. Voltagem 220v. Cordão de alimentação certificado pelo INMETRO, com indicação da voltagem."
       }
     }
   }

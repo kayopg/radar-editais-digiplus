@@ -43,7 +43,9 @@ const PISO_EDITAL = Number((fonte.match(/const PISO_EDITAL = (\d+)/) || [])[1]) 
 // "compressor" e "condensador" sao parte da geladeira e do ar-condicionado.
 const VETO = {
   BL: lista('VETO_BL_MEDICA'),
-  RF: ['imunobiolog', 'termolab', 'hemocompon', 'vacina'],
+  // e o freezer de ultrabaixa temperatura, "-50 a -86 °C" (Paranavai/PR,
+  // item 24, que o catalogo chama de "Refrigerador Alimentos", 22/09/2026)
+  RF: ['imunobiolog', 'termolab', 'hemocompon', 'vacina', '-86', '-80 °c', 'ultrabaix', 'ultra baix'],
   CC: ['banho maria de laboratorio', 'banho-maria de laboratorio', 'aplicacoes laboratoriais', 'uso laboratorial', 'pid fuzzy'],
   BB: ['laboratorial'],
   CX: ['soldagem', 'fumaca de bancada'],
@@ -52,7 +54,10 @@ const VETO = {
   // Em qualquer categoria: o item 16 da EBSERH Santa Maria/RS e "Ventilador
   // tipo: parede, potencia motor: 500" no catalogo e "Longarina de espera com
   // 03 (tres) lugares de assento" no anexo de descricao detalhada (18/09/2026).
-  TODAS: ['longarina de espera'],
+  // E o absorvedor de umidade de silica ou de saco, que o catalogo chama de
+  // "Desumidificador ... ambiente com 300 m²" (Cascavel/PR, itens 48 e 76,
+  // 22/09/2026).
+  TODAS: ['longarina de espera', 'absorvedor de umidade', 'gel de silica', 'saco de absorcao', 'caixa de desumidificacao'],
 };
 
 // E as listas do catalogo, sobre a descricao do PNCP, do mesmo jeito que o
