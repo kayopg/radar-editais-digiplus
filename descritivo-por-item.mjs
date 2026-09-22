@@ -3508,6 +3508,25 @@ for (const e of dados.editais) {
   // edital: "na cor brnca", "Atraves Dechave Seletora". Ver ortografia.mjs.
   for (const it of v.itens) if (it[6]) it[6] = revisaOrtografia(it[6]);
 
+  // O LOTE pelo titulo da secao da tabela, quando nenhuma outra via o leu: o
+  // edital de Renascenca/PR separa os itens em "LOTE 1 - ELETROELETRONICOS",
+  // "LOTE 2 - ELETRODOMESTICOS"... e numera corrido ("03 483886 2 UN BEBEDOURO"
+  // e o item 3, do lote 2), 22/09/2026. Cada item fica com o ultimo titulo de
+  // lote antes do seu descritivo no texto. So com dois lotes ou mais, e so
+  // quando nenhum item ja tem lote.
+  if (!v.itens.some(it => it[7])) {
+    const titulos = [...secoes.matchAll(/\bLOTE\s*0*(\d{1,3})\s*[-–:]\s*\p{Lu}/gu)].map(m => ({ i: m.index, n: +m[1] }));
+    if (new Set(titulos.map(x => x.n)).size >= 2) {
+      const radar = new Set((e[C.itens] || []).map(r => r[5]));
+      for (const it of v.itens) {
+        if (!it[6] || !radar.has(it[0])) continue;
+        const k = secoes.indexOf(String(it[6]).slice(0, 40));
+        if (k < 0) continue;
+        const antes = titulos.filter(x => x.i < k).pop();
+        if (antes) { it[7] = antes.n; it[8] = null; }
+      }
+    }
+  }
   // E o transcrito a mao, onde nenhuma regra le a tabela (descritivos-manuais.json).
   // So vale enquanto o item do PNCP tem a quantidade e o preco conferidos.
   for (const [n, m] of Object.entries((manuais[e[C.path]] || {}).itens || {})) {
