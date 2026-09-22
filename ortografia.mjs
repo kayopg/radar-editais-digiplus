@@ -371,6 +371,28 @@ export function criaRevisor(textos) {
     if (cands.length > 1 && cands[0].prova < 3 * cands[1].prova) return null;
     return caixa(w, cands[0].forma);
   }
+  // A LIGADURA que a extracao perde: o PDF desenha "ti", "fi", "fl" como um
+  // glifo so, e o texto sai sem ele — "Serpenna de cobre", "garana do
+  // compressor", "ancorrosao" (EBSERH Santa Maria/RS), "Garana 12 meses",
+  // "anbacteriano" (Anapolis/GO), 22/09/2026. Devolve as duas letras quando a
+  // palavra nao existe e uma unica forma com elas existe.
+  function ligadura(w) {
+    if (w.length < 5 || conhecida(w)) return null;
+    const s = w.toLowerCase();
+    const achadas = new Set();
+    // A forma com a ligadura tem de ser COMUM nos editais, nao so existir no
+    // dicionario: "corino" (o couro sintetico) nao vira "corintio", nem
+    // "INMETRO/DIMEL" vira "DIMETIL".
+    for (const par of ['ti', 'fi', 'fl', 'ff', 'ft']) {
+      for (let i = 1; i < s.length; i++) {
+        const c = s.slice(0, i) + par + s.slice(i);
+        const k = porChave.get(tiraAcento(c));
+        if (f(c) >= 3 && pt(c)) achadas.add(c);
+        else if (k && forca(tiraAcento(c)) >= 3) achadas.add(k.forma);
+      }
+    }
+    return achadas.size === 1 ? caixa(w, [...achadas][0]) : null;
+  }
   const FUNCIONAIS = ['de', 'do', 'da', 'dos', 'das', 'ou', 'o', 'a', 'e', 'em', 'com', 'para', 'no', 'na', 'sem'];
   // Palavra curta colada na seguinte: "Dechave" -> "De chave", "OUMECANICO" ->
   // "OU MECANICO". Uma separacao so, e a segunda parte comum nos editais.
@@ -457,7 +479,7 @@ export function criaRevisor(textos) {
     t = t.replace(/(?<![\p{L}])(\p{L}{4,})p\/(?=\p{L})/gu, (tudo, l) => pt(l) && !pt(l + 'p') ? l + ' p/' : tudo);
     // Palavra curta colada e erro de digitacao.
     t = t.replace(/(?<![\p{L}\p{N}])\p{L}{4,}(?![\p{L}\p{N}])/gu, (w, pos) => {
-      const c = cedilha(w) || acentua(w) || acentuaNoTexto(w, t, pos) || corrige(w, t, pos, pos + w.length);
+      const c = cedilha(w) || acentua(w) || acentuaNoTexto(w, t, pos) || ligadura(w) || corrige(w, t, pos, pos + w.length);
       if (c) return c;
       const sep = separa(w);
       if (!sep) return w;

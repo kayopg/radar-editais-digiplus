@@ -14,6 +14,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { limpaTextoPncp } from './texto-pncp.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const arquivo = path.join(DIR, 'docs', 'descritivos.json');
@@ -21,7 +22,8 @@ const base = JSON.parse(fs.readFileSync(arquivo, 'utf8'));
 const dados = JSON.parse(fs.readFileSync(path.join(DIR, 'docs', 'dados.json'), 'utf8'));
 const C = dados.colunas.reduce((o, n, i) => (o[n] = i, o), {});
 
-const limpa = s => String(s ?? '').replace(/\s+/g, ' ').trim();
+// o HTML e a acentuacao quebrada que o PNCP devolve saem aqui (ver texto-pncp.mjs)
+const limpa = s => limpaTextoPncp(s);
 const beneficio = s => {
   const t = limpa(s).toLowerCase();
   if (t.includes('exclusiva')) return 'E';

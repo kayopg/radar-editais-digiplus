@@ -632,7 +632,7 @@ const CABECALHO_AGU = /\s*(?:UASG\s+\d{5,6}\s+)?C[\u00e2a]mara Nacional de Model
 // na especificacao leva depois dele (para nao confundir com o numero da folha).
 // DEPURA_ITEM="trecho do rotulo" mostra as candidatas e a decisao desse item
 const DEPURA_ITEM = process.env.DEPURA_ITEM || '';
-const UNID_LINHA = '(?:UN|UND|Und|und|Un|Unid\\.?|UNID\\.?|Unidade|UNIDADE|Unidades|UNIDADES|PC|PÇ|PCT|CX|KIT|Kit|CJ|CJT|CONJ|JG|PAR)';
+const UNID_LINHA = '(?:UN|UND|Und|und|Un|Unid\\.?|UNID\\.?|Unidade|UNIDADE|Unidades|UNIDADES|PC|PÇ|PCT|CX|KIT|Kit|CJ|CJT|CONJ|JG|PAR|APARELHOS?)';
 const MEDIDA = '(?:kg|g|mg|l|lt|litros?|ml|cm|mm|m|m2|m²|m3|w|watts?|v|volts?|kw|kwh|hz|btus?|rpm|bar|pol|polegadas?|pés|pas|p[áa]s|velocidades?|bocas?|portas?|queimadores?|x|a|e|ou)(?![a-zà-ÿ])';
 // A celula que atravessa a virada de folha (ou que tem as colunas no meio da
 // altura da linha): quantidade, unidade e precos da linha, o que sobra do
@@ -653,6 +653,13 @@ const COSTURA_ABERTA = new RegExp('(?<=[:,]|\\s(?:de|da|do|das|dos|e|ou|com|sem|
 // Unidade - Descricao Quantid ade - Licitada Cotacao Maxima - Unitaria Cotacao
 // Maxima - Total" (Pirajuba/MG).
 const COSTURA_CABECALHO = new RegExp(COLUNAS_DA_LINHA + SOBRA_DA_FOLHA + '(?:\\s+“[^”]{1,40}”)?\\s+Item\\s+(?:(?:\\p{Lu}[\\p{L}.]*|[-–.]|\\(\\p{L}+\\)|\\p{Ll}{1,4})\\s+){2,25}?(?:Total|total|TOTAL)\\s+(?=\\p{L})', 'gu');
+// E com o cabecalho da folha seguinte INTEIRO no meio, palavras e tudo, quando
+// ele fecha na marca de pagina: "...split high wall, capacidade UNID. 10 R$
+// 2.290,00 R$ 22.900,00 223560-9 ESTADO DE MATO GROSSO CAMARA MUNICIPAL DE
+// CUIABA PREGAO ELETRONICO N.º 004/2026 Pagina 30 | 74 nominal de 12.000
+// BTU/h..." (Cuiaba/MT, 22/09/2026). A marca explicita de pagina e o que
+// garante que o miolo e cabecalho, e nao o item seguinte.
+const COSTURA_PAGINA = new RegExp(COLUNAS_DA_LINHA + '(?:\\s+[\\d-]{4,14})?\\s[^]{0,260}?P[áa]gina\\s+\\d{1,3}\\s*(?:\\||de|/)\\s*\\d{1,3}\\s+(?=[a-zà-ÿ])', 'gu');
 const CABECALHO_HASH = /\s*Documento assinado digitalmente\s*-\s*Por favor, verifique o HASH de autenticidade na p[áa]gina \d+ deste documento\.(?:\s*‖‖)?\s*(?:EDITAL\s*[-–]\s*)?PREG[ÃA]O ELETR[ÔO]NICO[\s\S]{0,400}?Lei n[ºo°] 14\.133, de 2021/g;
 
 // O QUE NAO E ESPECIFICACAO DENTRO DA CELULA, depois do corte.
@@ -2226,7 +2233,8 @@ function descritivosPorItem(secoes, itens) {
       // congelador separados). UN 3 R$ 6.377,33 R$ 19.131,99 “Deus Seja
       // Louvado” Item Descricao Unid. Quant . Media Total (unitaria) Media total
       // Classificacao de eficiencia..." (Pariquera-Acu/SP, item 3).
-      .replace(COSTURA_CABECALHO, ' ');
+      .replace(COSTURA_CABECALHO, ' ')
+      .replace(COSTURA_PAGINA, ' ');
     // cortaOrcamento aqui tambem, e nao so no fim: a celula e julgada pelo
     // tamanho e pelo fecho, e o preco e a dotacao grudados atrapalhavam o
     // julgamento (o ventilador de Serrana/SP terminava em "Atencao Basica 13")
@@ -3350,6 +3358,22 @@ for (const e of dados.editais) {
       // So com o numero seguinte e ponto: "UN 02 Equipamento com funcionamento
       // eletrico..." (Cacapava do Sul/RS) e a continuacao da celula.
       .replace(/\s(?:UN|UND|Unid\.?|Unidade)\s+\d{1,5}\s+\d{1,3}\.(?=\s|$).*$/su, '')
+      // as colunas soltas no fim: "... aplicaveis. UN 10 U de OS" (Senador
+      // Firmino/MG), "... cor branca 2 5 un" (Inhumas/GO), "... 12 meses un"
+      // (Brasilandia/MS)
+      .replace(/\s+UN\s+\d{1,5}\s+\p{L}\s+de\s+OS$/u, '').replace(/(?:\s+\d{1,5}){0,3}\s+un$/i, '')
+      // e as da EBSERH: "... Sem instalação. unidade 20 0 0 îì 0 0 0,5"
+      .replace(/\s+unidade(?:\s+(?:[\d,.]+|[^\sA-Za-z0-9]{1,6}))+$/i, '').replace(/(?<=instala[çc][ãa]o\.?)\s+unidade$/i, '')
+      // ... e no meio, quando a linha seguinte veio junto: "... Sem instalacao
+      // Unidade 5 0 0 ñ 0 0 0,5 7 480929 155125 Ar-Condicionado, Split cassete
+      // 4 vias, 60000 BTU/h..." (EBSERH Santa Maria/RS, item 6)
+      .replace(/\s+unidade\s+\d{1,5}\s+\d+\s+\d+\s+\S{1,4}\s+\d+\s+\d+\s+[\d,]+\s.*$/is, '')
+      // e o "Soma" da coluna de total (Pirajuba/MG)
+      .replace(/\s+Soma$/, '')
+      // O cabecalho da tabela repetido no meio da celula, quando a folha vira:
+      // "... divisoria fixa, 2 Ordem Descricao Unid. Quant. Valor Max. Unit.
+      // Valor Max. Total porta, com dreno..." (Florestopolis/PR)
+      .replace(/\s(?:Item|Ordem)\s+(?:Produto\s+-\s+)?Descri[çc][ãa]o\s+(?:[\p{L}.\-–]+\s+){1,16}?(?:Total|m[áa]xima)(?=\s|$)/u, ' ')
       // e a letra que abre a frase seguinte, colada no ponto: "...ficha tecnica
       // oficial do fabricante.O" (Januaria/MG, "O licitante vencedor devera...")
       .replace(/([.;])\s?[A-ZÀ-Ú]$/, '$1');
@@ -3372,7 +3396,7 @@ for (const e of dados.editais) {
     // "... inox. 1 Un. 5212 - Aparelhos e Utensilios Domesticos Sim -- Item".
     // Corta no primeiro deles. "Total:" so depois de numero ou ponto:
     // "Capacidade Total: 400 litros" e do produto.
-    const rodape = /(?:\s+\d+|\.)\s+Total:\s+\d|\s+HASH:\s*[0-9a-f]{16}|\s+Juntado\s+em\s+\d{2}\/\d{2}\/\d{4}|\s+C[óo]digo\s+do\s+documento:|\s+Relat[óo]rio\s+de\s+(?:Quantitativo|Itens\s+com\s+Aplica)|\s+(?:UN\s+\d{1,5}\s+)?A\s+quantidade\s+de\s+cada\s+item\s+foi\s+estabelecida|\s+Valor\s+Total\s+(?:Global|R\$)|\s+VALOR\s+TOTAL\s+(?:GLOBAL|R\$)|\s\d{1,2}(?:\.\d{1,2})?\.?\s+(?:Valor\s+(?:total\s+)?estimado|Metodologia\s+aplicada|Estimativa\s+d[oa]\s+(?:valor|pre[çc]o))|\s+\d+\s*-?\s*Un\.?\s+\d{4}\s+-\s+\p{Lu}/u.exec(it[6]);
+    const rodape = /(?:\s+\d+|\.)\s+Total:\s+\d|\s+HASH:\s*[0-9a-f]{16}|\s+Juntado\s+em\s+\d{2}\/\d{2}\/\d{4}|\s+C[óo]digo\s+do\s+documento:|\s+Relat[óo]rio\s+de\s+(?:Quantitativo|Itens\s+com\s+Aplica)|\s+(?:UN\s+\d{1,5}\s+)?A\s+quantidade\s+de\s+cada\s+item\s+foi\s+estabelecida|\s+Valor\s+Total\s+(?:Global|R\$)|\s+VALOR\s+TOTAL\s+ESTIMADO|\s+Valor\s+total\s+estimado|\s+TOTAL\s+LOTE\s+\d|\s+(?:UNID\.?\s+\d+\s+)?TOTAL\s+DO\s+LOTE|\s+(?:UNI?D?\.?\s+[\d.]+\s+)?\(COTA\s+RESERVADA|\s+Total\s+R\$\s*[\d.]+,\d{2}|\s+(?:Valor\s+)?[Ee]stimado\s+da\s+contrata[çc][ãa]o:|\s+VALOR\s+ESTIMADO\s+DA\s+CONTRATA|\s+(?:Und\s+\d+\s+)?JUSTIFICATIVA\s+(?:A|O|DA|DO|E)\s|\s\d{1,2}\.\s+N[úu]mero\s+da\s+Unidade\s+Or[çc]ament|\s+VALOR\s+TOTAL\s+(?:GLOBAL|R\$)|\s\d{1,2}(?:\.\d{1,2})?\.?\s+(?:Valor\s+(?:total\s+)?estimado|Metodologia\s+aplicada|Estimativa\s+d[oa]\s+(?:valor|pre[çc]o))|\s+\d+\s*-?\s*Un\.?\s+\d{4}\s+-\s+\p{Lu}/u.exec(it[6]);
     if (rodape) it[6] = it[6].slice(0, rodape.index + (rodape[0][0] === '.' ? 1 : 0)).trim();
     // E o texto de OUTRO item do mesmo edital emendado: a tabela de quantidades
     // por orgao repete as descricoes em sequencia, e o "Freezer - Tipo:
@@ -3464,6 +3488,17 @@ for (const e of dados.editais) {
     if (btuRot.size && btuDesc.size && ![...btuRot].some(b => btuDesc.has(b))) it[6] = '';
   }
 
+  // O arquivo que nao cita nenhum produto do radar e de OUTRA licitacao: a
+  // prefeitura de Marcelandia/MT publicou no pregao 31/2026 (eletrodomesticos)
+  // o edital do 029/2026 (materiais pedagogicos), e o item 3 saia com uma linha
+  // dele (22/09/2026). Nenhum descritivo sai de um edital assim.
+  {
+    const plano = normIgual(secoes);
+    const radar = e[C.itens] || [];
+    const cita = radar.some(r => { const w = normIgual(r[3]).split(/[^a-z0-9]+/).find(x => x.length >= 5); return w && plano.includes(w); });
+    // (so sem planilha de itens: em Juiz de Fora/MG os descritivos vem do .xlsx)
+    if (!v.planilha && radar.length && plano.length > 8000 && !cita) for (const it of v.itens) it[6] = '';
+  }
   // Por ultimo, o erro de digitacao e a palavra colada que vieram do proprio
   // edital: "na cor brnca", "Atraves Dechave Seletora". Ver ortografia.mjs.
   for (const it of v.itens) if (it[6]) it[6] = revisaOrtografia(it[6]);

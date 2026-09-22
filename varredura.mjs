@@ -12,6 +12,7 @@ import { devedorDe } from './devedores.mjs';
 import { linkDoPortal, ehComprasGov, montaLinkComprasGov } from './participar.mjs';
 import { portalOk, plataformaDoEdital } from './plataforma.mjs';
 import { criaVetoItem, criaPosicaoDoTermo } from './veto-item.mjs';
+import { limpaTextoPncp } from './texto-pncp.mjs';
 
 // fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
 // entao uma pasta de usuario com acento no nome virava Usu%C3%A1rio e o
@@ -786,7 +787,7 @@ for (const o of cands) {
     // no JSON: E = exclusiva ME/EPP, C = cota reservada, S = sem beneficio.
     // Nao e detalhe: 41% dos itens da varredura de 01/09 sao exclusivos de
     // ME/EPP, e quem nao e ME/EPP nem pode disputar.
-    keep.push([cat, Math.round(+it.q || 0), Math.round(v * 100) / 100, limpa(it.d),
+    keep.push([cat, Math.round(+it.q || 0), Math.round(v * 100) / 100, limpaTextoPncp(it.d),
                limpa(it.u), +it.n || 0, beneficio(it.b)]);
   }
   if (!keep.length) { st.semItem++; continue; }
@@ -797,7 +798,7 @@ for (const o of cands) {
   bruto.push({
     mun: limpa(o.municipio_nome), uf: o.uf, org: limpa(o.orgao_nome), ed: limpa(o.title),
     // cabecalho padrao do edital: objeto e o que faltava, e e o campo mais importante
-    obj: limpa(o.description), uni: limpa(o.unidade_nome),
+    obj: limpaTextoPncp(o.description), uni: limpa(o.unidade_nome),
     mod: limpa(o.modalidade_licitacao_nome), pub: o.data_publicacao_pncp || null,
     fecha: o.data_fim_vigencia, qtd, val,
     // acrescentados em 01/09/2026: abertura das propostas, esfera do orgao e

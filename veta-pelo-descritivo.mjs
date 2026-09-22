@@ -21,6 +21,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { criaVetoItem, criaPosicaoDoTermo } from './veto-item.mjs';
+import { limpaTextoPncp } from './texto-pncp.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const arqDados = path.join(DIR, 'docs', 'dados.json');
@@ -46,7 +47,9 @@ const VETO = {
   // e o freezer de ultrabaixa temperatura, "-50 a -86 °C" (Paranavai/PR,
   // item 24, que o catalogo chama de "Refrigerador Alimentos", 22/09/2026)
   RF: ['imunobiolog', 'termolab', 'hemocompon', 'vacina', '-86', '-80 °c', 'ultrabaix', 'ultra baix'],
-  CC: ['banho maria de laboratorio', 'banho-maria de laboratorio', 'aplicacoes laboratoriais', 'uso laboratorial', 'pid fuzzy'],
+  // e o banho-maria de controle digital com precisao de decimo de grau, que e de
+  // laboratorio (IF Sudeste MG, Juiz de Fora, item 57, 22/09/2026)
+  CC: ['banho maria de laboratorio', 'banho-maria de laboratorio', 'aplicacoes laboratoriais', 'uso laboratorial', 'pid fuzzy', 'precisao de controle'],
   BB: ['laboratorial'],
   CX: ['soldagem', 'fumaca de bancada'],
   // lavanderia hospitalar (Sonora/MS, 21/09/2026)
@@ -115,9 +118,13 @@ const mostra = process.argv.includes('--mostra');
 let fora = {};
 try { fora = JSON.parse(fs.readFileSync(path.join(DIR, 'editais-fora.json'), 'utf8')); } catch { /* sem lista */ }
 
-let tirados = 0, editaisFora = 0, recategorizados = 0;
+let tirados = 0, editaisFora = 0, recategorizados = 0, limpos = 0;
 const ficam = [];
 for (const e of dados.editais) {
+  // O HTML e a acentuacao quebrada do PNCP (ver texto-pncp.mjs), tambem no
+  // dados.json ja publicado.
+  for (const it of e[C.itens]) { const l = limpaTextoPncp(it[3]); if (l !== it[3]) { it[3] = l; limpos++; } }
+  { const l = limpaTextoPncp(e[C.objeto]); if (l !== e[C.objeto]) { e[C.objeto] = l; limpos++; } }
   const v = desc.editais[e[C.path]] || {};
   const nome = e[C.municipio] + '/' + e[C.uf] + ' ' + e[C.edital];
   if (fora[e[C.path]] && e[C.path] !== '_leia') {
@@ -194,7 +201,8 @@ for (const e of ficam) {
 ficam.length = 0; ficam.push(...porNumero.values());
 
 console.log(`${tirados} item(ns) vetado(s) pelo descritivo, ${editaisFora} edital(is) fora, ${recategorizados} item(ns) de categoria corrigida`);
-if (!mostra && (tirados || editaisFora || recategorizados)) {
+if (limpos) console.log(`${limpos} texto(s) do PNCP limpos de HTML e acentuacao quebrada`);
+if (!mostra && (tirados || editaisFora || recategorizados || limpos)) {
   dados.editais = ficam;
   dados.meta.editais = ficam.length;
   // O porUf vem do publicar.mjs, que rodou ANTES deste veto — sem recalcular
