@@ -74,7 +74,19 @@ async function pelaBusca(e) {
 let manual = {};
 try { manual = JSON.parse(fs.readFileSync(path.join(DIR, 'participar-manual.json'), 'utf8')); } catch {}
 
-let novos = 0, montados = 0, semLink = 0, falhas = 0, seguidas = 0, manuais = 0, doEdital = 0;
+let novos = 0, montados = 0, semLink = 0, falhas = 0, seguidas = 0, manuais = 0, doEdital = 0, reusados = 0, apiFora = false;
+// A versao anterior do dados.json: a que o workflow guarda em /tmp/anterior.json
+// antes da varredura, ou a indicada em DADOS_ANTERIOR.
+const anterior = new Map();
+for (const arq of [process.env.DADOS_ANTERIOR, '/tmp/anterior.json'].filter(Boolean)) {
+  try {
+    const a = JSON.parse(fs.readFileSync(arq, 'utf8'));
+    const A = (a.colunas || []).reduce((o, n, i) => (o[n] = i, o), {});
+    if (A.linkPortal === undefined) continue;
+    for (const x of a.editais || []) if (x[A.linkPortal]) anterior.set(x[A.path], { link: x[A.linkPortal], montado: x[A.linkMontado] || '', nota: x[A.comoParticipar] || '' });
+    break;
+  } catch { /* sem versao anterior */ }
+}
 for (const e of dados.editais) {
   while (e.length < dados.colunas.length) e.push('');
   const m = manual[e[C.path]];
@@ -84,7 +96,19 @@ for (const e of dados.editais) {
     continue;
   }
   if (e[C.linkPortal]) continue;
-  const j = await consulta(e[C.path]);
+  // O link do dia anterior: o endereco do edital no portal nao muda, e com a
+  // consulta fora do ar a varredura de 22/09/2026 saiu com 151 de 154 cards sem
+  // o botao Participar, quando na vespera 91 o tinham.
+  const ant = anterior.get(e[C.path]);
+  if (ant && ant.link) {
+    e[C.linkPortal] = ant.link; e[C.linkMontado] = ant.montado; e[C.comoParticipar] = ant.nota;
+    reusados++;
+    continue;
+  }
+  // API fora do ar: nao adianta insistir edital por edital, mas a plataforma
+  // escrita no edital ainda vale (antes o laco parava e os demais ficavam sem
+  // nada).
+  const j = apiFora ? null : await consulta(e[C.path]);
   let link = '', montado = false;
   if (j) {
     seguidas = 0;
@@ -104,8 +128,7 @@ for (const e of dados.editais) {
     }
   } else {
     falhas++;
-    // API fora do ar: nao adianta insistir edital por edital
-    if (++seguidas >= 5) { console.log('a API de consulta nao responde; parando'); break; }
+    if (!apiFora && ++seguidas >= 5) { apiFora = true; console.log('a API de consulta nao responde; os demais so pela plataforma escrita no edital'); }
   }
   if (!link) {
     const p = await plataformaDoEdital(e, e[C.objeto]);
@@ -125,4 +148,4 @@ for (const e of dados.editais) {
 
 fs.writeFileSync(arquivo, JSON.stringify(dados), 'utf8');
 const com = dados.editais.filter(e => e[C.linkPortal]).length;
-console.log(`links do portal: ${novos} do PNCP · ${montados} montados · ${doEdital} pela plataforma escrita no edital · ${manuais} do participar-manual.json · ${semLink} sem link · ${falhas} consulta(s) sem resposta · ${com} de ${dados.editais.length} com botao Participar`);
+console.log(`links do portal: ${novos} do PNCP · ${montados} montados · ${doEdital} pela plataforma escrita no edital · ${reusados} do dia anterior · ${manuais} do participar-manual.json · ${semLink} sem link · ${falhas} consulta(s) sem resposta · ${com} de ${dados.editais.length} com botao Participar`);

@@ -228,11 +228,12 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           mkdir -p /tmp/gerado
-          cp docs/dados.json docs/descritivos.json /tmp/gerado/
+          cp docs/dados.json docs/descritivos.json publicadores.json /tmp/gerado/
           for tentativa in 1 2 3; do
             git fetch --depth=1 origin +refs/heads/main:refs/remotes/origin/main
             git reset --hard origin/main
             cp /tmp/gerado/dados.json /tmp/gerado/descritivos.json docs/
+            cp /tmp/gerado/publicadores.json .
             if ! git diff --quiet "$GITHUB_SHA" origin/main -- '*.mjs' ortografia editais-fora.json descritivos-manuais.json; then
               echo "O codigo mudou no main durante o job: refazendo o recorte."
               cp /tmp/textos.json docs/descritivos.json
@@ -241,11 +242,11 @@ jobs:
                 cp /tmp/gerado/descritivos.json docs/
               fi
             fi
-            if git diff --quiet -- docs/dados.json docs/descritivos.json; then
+            if git diff --quiet -- docs/dados.json docs/descritivos.json publicadores.json; then
               echo "Nada mudou hoje — nenhum commit."
               exit 0
             fi
-            git add docs/dados.json docs/descritivos.json
+            git add docs/dados.json docs/descritivos.json publicadores.json
             git commit -m "Varredura de $(TZ=America/Sao_Paulo date +%d/%m/%Y)"
             if git push origin HEAD:main; then exit 0; fi
             echo "O push foi recusado (tentativa $tentativa); tentando de novo."

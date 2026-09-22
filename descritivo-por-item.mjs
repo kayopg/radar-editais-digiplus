@@ -3398,11 +3398,18 @@ for (const e of dados.editais) {
     // especificacao (Campo Grande/MS, 21/09/2026): "... sem lustre. 120 Total:
     // 120 Item 22 1 Un.", "... baixa. Total: 00009636 - Forno ... HASH: ebe0...
     // Juntado em 06/08/2026 por ... Relatorio de Quantitativo de Orgaos",
-    // "... inox. 1 Un. 5212 - Aparelhos e Utensilios Domesticos Sim -- Item".
+    // "... inox. 1 Un. 5212 - Aparelhos e Utensilios Domesticos Sim -- Item",
+    // "... FECHO REFORÇADO. Observação: Valor unitário, inclusos Frete CIF"
+    // (Sao Gabriel/RS, 22/09/2026).
     // Corta no primeiro deles. "Total:" so depois de numero ou ponto:
     // "Capacidade Total: 400 litros" e do produto.
-    const rodape = /(?:\s+\d+|\.)\s+Total:\s+\d|\s+HASH:\s*[0-9a-f]{16}|\s+Juntado\s+em\s+\d{2}\/\d{2}\/\d{4}|\s+C[óo]digo\s+do\s+documento:|\s+Relat[óo]rio\s+de\s+(?:Quantitativo|Itens\s+com\s+Aplica)|\s+(?:UN\s+\d{1,5}\s+)?A\s+quantidade\s+de\s+cada\s+item\s+foi\s+estabelecida|\s+Valor\s+Total\s+(?:Global|R\$)|\s+VALOR\s+TOTAL\s+ESTIMADO|\s+Valor\s+total\s+estimado|\s+TOTAL\s+LOTE\s+\d|\s+(?:UNID\.?\s+\d+\s+)?TOTAL\s+DO\s+LOTE|\s+(?:UNI?D?\.?\s+[\d.]+\s+)?\(COTA\s+RESERVADA|\s+Total\s+R\$\s*[\d.]+,\d{2}|\s+(?:Valor\s+)?[Ee]stimado\s+da\s+contrata[çc][ãa]o:|\s+VALOR\s+ESTIMADO\s+DA\s+CONTRATA|\s+(?:Und\s+\d+\s+)?JUSTIFICATIVA\s+(?:A|O|DA|DO|E)\s|\s\d{1,2}\.\s+N[úu]mero\s+da\s+Unidade\s+Or[çc]ament|\s+VALOR\s+TOTAL\s+(?:GLOBAL|R\$)|\s\d{1,2}(?:\.\d{1,2})?\.?\s+(?:Valor\s+(?:total\s+)?estimado|Metodologia\s+aplicada|Estimativa\s+d[oa]\s+(?:valor|pre[çc]o))|\s+\d+\s*-?\s*Un\.?\s+\d{4}\s+-\s+\p{Lu}/u.exec(it[6]);
+    const rodape = /(?:\s+\d+|\.)\s+Total:\s+\d|\s+HASH:\s*[0-9a-f]{16}|\s+Juntado\s+em\s+\d{2}\/\d{2}\/\d{4}|\s+C[óo]digo\s+do\s+documento:|\s+Relat[óo]rio\s+de\s+(?:Quantitativo|Itens\s+com\s+Aplica)|\s+(?:UN\s+\d{1,5}\s+)?A\s+quantidade\s+de\s+cada\s+item\s+foi\s+estabelecida|\s+Valor\s+Total\s+(?:Global|R\$)|\s+VALOR\s+TOTAL\s+ESTIMADO|\s+Valor\s+[Tt]otal\s+[Ee]stimado|\s+TOTAL\s+LOTE\s+\d|\s+(?:UNID\.?\s+\d+\s+)?TOTAL\s+DO\s+LOTE|\s+(?:UNI?D?\.?\s+[\d.]+\s+)?\(COTA\s+RESERVADA|\s+Total\s+R\$\s*[\d.]+,\d{2}|\s+(?:Valor\s+)?[Ee]stimado\s+da\s+contrata[çc][ãa]o:|\s+VALOR\s+ESTIMADO\s+DA\s+CONTRATA|\s+(?:Und\s+\d+\s+)?JUSTIFICATIVA\s+(?:A|O|DA|DO|E)\s|\s\d{1,2}\.\s+N[úu]mero\s+da\s+Unidade\s+Or[çc]ament|\s+VALOR\s+TOTAL\s+(?:GLOBAL|R\$)|\s\d{1,2}(?:\.\d{1,2})?\.?\s+(?:Valor\s+(?:total\s+)?estimado|Metodologia\s+aplicada|Estimativa\s+d[oa]\s+(?:valor|pre[çc]o))|\s+\d+\s*-?\s*Un\.?\s+\d{4}\s+-\s+\p{Lu}|\s+Observa[çc][ãa]o:\s+Valor\s+unit[áa]rio/u.exec(it[6]);
     if (rodape) it[6] = it[6].slice(0, rodape.index + (rodape[0][0] === '.' ? 1 : 0)).trim();
+    // A clausula da minuta do contrato depois da tabela dela: "... NA COR
+    // BRANCA. 1 EM II – DO PRAZO DE VIGÊNCIA DO CONTRATO 2. Este instrumento
+    // ..." (Barueri/SP, 22/09/2026). Titulo em romano com travessao e "DO/DA".
+    const clausula = /(?<=\.)(?:\s+\d{1,4}(?:\s+\p{Lu}{1,3})?)?\s+[IVX]{1,5}\s*[–-]\s*D[OA]S?\s+\p{Lu}{3,}/u.exec(it[6]);
+    if (clausula && clausula.index > 30) it[6] = it[6].slice(0, clausula.index).trim();
     // E o texto de OUTRO item do mesmo edital emendado: a tabela de quantidades
     // por orgao repete as descricoes em sequencia, e o "Freezer - Tipo:
     // horizontal" levava junto "Freezer - Tipo: vertical ... Lavadora ...
@@ -3442,6 +3449,13 @@ for (const e of dados.editais) {
     if (/(?:^|\s)(?:0\s+){3,}\d/.test(it[6])) { it[6] = ''; continue; }
     // e a unidade com as quantidades no fim: "... 127/220 V. 1-Un. 1.949 489"
     it[6] = it[6].replace(/\s+\d+\s*-\s*Un\.?(?:\s+[\d.,]+)*$/, '');
+    // a coluna da unidade depois de dois-pontos, com o que a folha trouxe
+    // junto: "ALTURA MÍNIMA 1,20 : unidade 4 ISTÊNCIA SOCIAL assistencia...",
+    // "PROFUNDIDADE 39,80CM:" (Jaíba/MG); e unidade, quantidade, lote e o
+    // rotulo da coluna do item: "(EM INOX) Unidade 2 LOTE 011 Item" (Três
+    // Lagoas/MS), 22/09/2026
+    it[6] = it[6].replace(/\s*:\s*unidade\s+\d+\b[\s\S]*$/i, '').replace(/\s*:$/, '')
+      .replace(/\s+Unidade\s+[\d.,]+\s+LOTE(?:\s+\d{1,4})?\s+Item\b[\s\S]*$/i, '');
     // (e o codigo do material na frente, com o "UN" que a coluna enfia no meio)
     // (aqui ainda sem o espaco que a revisao ortografica poe: "MATERIAL27740")
     if (/^MATERIAL\s*\d{4,6}\s+\p{Lu}/u.test(it[6])) it[6] = it[6].replace(/^MATERIAL\s*\d{4,6}\s+/, '').replace(/(?<=[\p{L}\d.,])\s+UN\s+(?=\p{Lu})/u, ' ');
@@ -3503,6 +3517,44 @@ for (const e of dados.editais) {
     const cita = radar.some(r => { const w = normIgual(r[3]).split(/[^a-z0-9]+/).find(x => x.length >= 5); return w && plano.includes(w); });
     // (so sem planilha de itens: em Juiz de Fora/MG os descritivos vem do .xlsx)
     if (!v.planilha && radar.length && plano.length > 8000 && !cita) for (const it of v.itens) it[6] = '';
+  }
+  // O item que ficou sem nada e que o edital descreve com o MESMO texto do
+  // PNCP, seguido do preco dele: "61 910.001.078 FOGAO A GÁS, 4 BOCAS, 127V,
+  // FORNO AUTOLIMPANTE, IGNIÇÃO AUTOMÁTICO, COM PÉS. UN 3, 680,25" (Pongaí/SP),
+  // "06 37.1407 Bebedouro/ Purificador Refrigerado ... 3 R$1.375,7033"
+  // (Parapuã/SP). A escolha la em cima recusa a celula que so repete o rotulo —
+  // em Guia Lopes da Laguna/MS ela tomava o lugar da especificacao inteira —,
+  // mas quando nada mais sobrou, o descritivo do edital e esse mesmo. Entre o
+  // texto e o preco so pode haver unidade, quantidade e codigo: se o edital
+  // continua a descricao, a celula e maior que o rotulo e nao e este caso
+  // (22/09/2026).
+  {
+    const radar = new Set((e[C.itens] || []).map(r => r[5]));
+    const plano = normIgual(secoes);
+    const SO_COLUNAS = /^(?:[\s\d.,;:()\/$|-]|r\$|\b(?:un|und|unid|unidade|unidades|pc|pca|peca|cx|kit|jg|par|pct)\b)*$/;
+    for (const it of plano.length === secoes.length ? v.itens : []) {
+      if (it[6] || !radar.has(it[0]) || String(it[1]).length < 25) continue;
+      const toks = normIgual(it[1]).split(/[^a-z0-9]+/).filter(Boolean);
+      if (toks.length < 4) continue;
+      // (o preco com quatro casas tambem: "R$3.082,6697" para os 3.082,67 do
+      // PNCP, Parapuã/SP — confere ate a primeira casa)
+      const [int, dec] = (+it[4]).toFixed(2).split('.');
+      const precos = [int.replace(/\B(?=(\d{3})+(?!\d))/g, '.'), int].map(p => p.replace(/\./g, '\\.') + ',' + dec[0] + '\\d');
+      const re = new RegExp('(?<![a-z0-9])' + toks.join('[^a-z0-9]{1,6}') + '(?![a-z0-9])', 'g');
+      for (const m of plano.matchAll(re)) {
+        let fim = m.index + m[0].length;
+        // o parentese e o ponto que fecham o rotulo: "CAFETEIRA ELÉTRICA -
+        // GRANDE (127V)" (Três Lagoas/MS)
+        const abertos = (m[0].match(/\(/g) || []).length - (m[0].match(/\)/g) || []).length;
+        if (abertos > 0 && secoes[fim] === ')') fim++;
+        if (/\.\s*$/.test(it[1]) && secoes[fim] === '.') fim++;
+        const depois = plano.slice(fim, fim + 70);
+        const k = Math.min(...precos.map(p => { const x = depois.search(new RegExp('(?<![\\d.,])' + p)); return x < 0 ? 1e9 : x; }));
+        if (k === 1e9 || !SO_COLUNAS.test(depois.slice(0, k))) continue;
+        it[6] = secoes.slice(m.index, fim).trim();
+        break;
+      }
+    }
   }
   // Por ultimo, o erro de digitacao e a palavra colada que vieram do proprio
   // edital: "na cor brnca", "Atraves Dechave Seletora". Ver ortografia.mjs.

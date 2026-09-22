@@ -413,6 +413,9 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // alvenaria (UFPel)
 "secrecoes","secrecao","neonatal","berco aquecido","recem-nascido","recem nascido","peca / acessorio",
 "microventilador","eletrodeionizacao","destilacao","revitalizacao",
+// e o purificador de laboratorio por resina de troca ionica (deionizador de
+// 1.800 L/h, Sao Gabriel/RS, pregao 68/2026, 22/09/2026)
+"deionizador","deionizacao",
 // lavadora extratora hospitalar de 50 kg com barreira sanitaria (Sonora/MS,
 // decisao do usuario em 21/09/2026)
 "lavadora de roupas hospitalar","lavadora hospitalar","barreira sanitaria",
@@ -423,8 +426,15 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // embarcacao num pregao de ar-condicionado (EBSERH Santa Maria/RS), bandeja
 // termica de uso medico (UFSM), ventilador de 24/48 V de inversor WEG
 "embarcacao","peca/componente","uso medico","vcc c/ cabo","cfw50","cfw11",
+// 22/09/2026, editais novos da varredura: palito de churrasco "seco em estufa"
+// (Conceicao da Barra de Minas/MG, Alfredo Vasconcelos/MG), estante de tubo de
+// ensaio "para geladeiras/freezers" (consorcio de saude, Uberlandia/MG),
+// suqueira de plastico (Pecanha/MG, Divinolandia/SP), ultrafreezer de
+// laboratorio (UDESC) e marmore de bancada de churrasqueira (Crissiumal/RS)
+"palitos de churrasco","palito de churrasco","tubo de ensaio","suqueira cristal","suqueira dispenser",
+"suqueira acrilic","suqueira plastic","suqueira de plastico","ultrafreezer","ultra freezer","ultracongelador",
 // e os de peca/utensilio, que so vetam na frente do produto (VETO_SO_NA_FRENTE)
-"balde","filtro","suporte","rack","ferramenta","gaiola","jarra plastica","jarra graduada","jarra - do tipo","jarra do tipo","disco","kit manual","utensilio","tampo","granito","mesa de apoio","borracha vedacao","borracha de vedacao"];
+"balde","filtro","suporte","rack","ferramenta","gaiola","jarra plastica","jarra graduada","jarra - do tipo","jarra do tipo","disco","kit manual","utensilio","tampo","granito","mesa de apoio","borracha vedacao","borracha de vedacao","marmore"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
@@ -449,7 +459,7 @@ const VETO_SO_NA_FRENTE = ["suporte para tv","suporte de tv","pedestal para","su
 // 21/09/2026: "Tampo e rodatampo em granito para balcao de cozinha ... recorte
 // para cuba, fogao cooktop" (Ipora do Oeste/SC) e "Mesa de apoio para forno"
 // (Arvorezinha/RS). "Fogao ... com tampo de vidro" fica.
-"tampo","granito","mesa de apoio","borracha vedacao","borracha de vedacao"];
+"tampo","granito","mesa de apoio","borracha vedacao","borracha de vedacao","marmore"];
 
 const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 
@@ -502,7 +512,9 @@ const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioim
   'tipo analitica','balanca de laboratorio',
   // "BALANCA DIGITAL ATROPOMETRICA" (sic, Sao Gabriel/RS) e "BALANCA DIGITAL DE
   // VIDRO TEMPERADO" para a UBS (Timburi/SP)
-  'atropometr','de vidro temperado'];
+  'atropometr','de vidro temperado',
+  // "BALANCA ADULTO DIGITAL 150KG" (Rio Paranaiba/MG, 22/09/2026)
+  'balanca adulto','adulto'];
 
 // ---------------------------------------------------------------- utilidades
 // Cada linha de progresso sai carimbada com o tempo decorrido.
@@ -852,14 +864,45 @@ const porPortal = {};
 // por edital e so testa de novo a cada 20. Os que ficam sem consulta seguem a
 // regra do "sem resposta" logo abaixo (valem pela plataforma escrita no edital).
 let seguidas = 0, pulados = 0;
+// Quem publicou cada edital ja consultado, com o link do portal
+// (publicadores.json). O publicador nao muda, e com a consulta fora do ar a
+// varredura de 22/09/2026 trouxe de volta uns trinta editais do IPM, da
+// Fiorilli, da AZ Informatica, do Licitar Digital: sem resposta e sem
+// plataforma legivel, o edital fica. Com o publicador guardado de um dia em
+// que a consulta respondeu, a regra de baixo decide igual nos dois dias.
+const ARQ_PUBLICADORES = path.join(DIR, 'publicadores.json');
+let publicadores = {};
+try { publicadores = JSON.parse(fs.readFileSync(ARQ_PUBLICADORES, 'utf8')); } catch { /* primeiro dia */ }
+const hojeIso = new Date().toISOString().slice(0, 10);
+let doCache = 0;
+const doPublicador = e => {
+  const x = publicadores[e.path];
+  if (!x || !x.nome) return null;
+  if (!e.link && x.link) e.link = x.link;
+  doCache++;
+  return x.nome;
+};
 for (let i = 0; i < fin.length; i++) {
   const e = fin[i];
-  if (seguidas >= 6 && i % 20) { e.portal = null; errPortal++; pulados++; continue; }
+  if (seguidas >= 6 && i % 20) { e.portal = doPublicador(e); errPortal++; pulados++; continue; }
   e.portal = await buscaPortal(e);
-  if (e.portal === null) { errPortal++; if (++seguidas === 6) process.stderr.write('  a API de consulta nao responde; testando so a cada 20\n'); }
-  else { seguidas = 0; porPortal[e.portal] = (porPortal[e.portal] || 0) + 1; }
+  if (e.portal === null) {
+    errPortal++;
+    if (++seguidas === 6) process.stderr.write('  a API de consulta nao responde; testando so a cada 20\n');
+    e.portal = doPublicador(e);
+  } else {
+    seguidas = 0; porPortal[e.portal] = (porPortal[e.portal] || 0) + 1;
+    if (e.portal) publicadores[e.path] = { nome: e.portal, link: e.link || '', visto: hojeIso };
+  }
   if ((i + 1) % 50 === 0) process.stderr.write(`  ${i + 1}/${fin.length}\n`);
   await new Promise(x => setTimeout(x, 1200));
+}
+if (doCache) process.stderr.write(`  ${doCache} sem resposta decididos pelo publicador ja conhecido (publicadores.json)\n`);
+// Guarda o que a consulta respondeu; o que nao aparece ha 90 dias sai.
+{
+  const limite = new Date(Date.now() - 90 * 864e5).toISOString().slice(0, 10);
+  for (const [p, x] of Object.entries(publicadores)) if (!x.visto || x.visto < limite) delete publicadores[p];
+  fs.writeFileSync(ARQ_PUBLICADORES, JSON.stringify(publicadores, null, 0) + '\n', 'utf8');
 }
 // Quem publicou num portal da casa fica. Os outros — publicados pelo sistema de
 // gestao da prefeitura, ou sem resposta da consulta — valem pela plataforma

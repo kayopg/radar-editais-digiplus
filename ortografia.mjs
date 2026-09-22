@@ -98,6 +98,14 @@ function carregaDicionario(nome) {
 const tiraAcento = s => s.normalize('NFD').replace(/\p{M}/gu, '').normalize('NFC');
 const LETRAS = 'abcdefghijklmnopqrstuvwxyz';
 const COM_ACENTO = { a: ['á', 'à', 'â', 'ã'], e: ['é', 'ê'], i: ['í'], o: ['ó', 'ô', 'õ'], u: ['ú', 'ü'], c: ['ç'] };
+// Sem acento sao verbos que descricao de produto nao usa: "domestico" e
+// "domesticar", "maquina" e "maquinar". Valem a forma acentuada sempre que ela
+// aparece nos editais, sem a conta das cinco vezes: com o catalogo da
+// Prefeitura de Sao Paulo, que grava tudo sem acento, "Forno Doméstico" voltou
+// a "Forno Domestico" na lista de 22/09/2026.
+const SO_SUBSTANTIVO = new Set(['domestico', 'domestica', 'domesticos', 'domesticas', 'maquina', 'maquinas',
+  'numero', 'numeros', 'modulo', 'modulos', 'liquido', 'liquida', 'liquidos', 'liquidas', 'deposito', 'depositos',
+  'rotulo', 'rotulos', 'titulo', 'circulo', 'pratico', 'pratica', 'praticos', 'praticas', 'potencia', 'potencias']);
 const PALAVRA = /[\p{L}\p{N}]+/gu;
 
 // Erro que o dicionario nao pega (a forma errada tambem e palavra, ou aparece
@@ -286,7 +294,7 @@ export function criaRevisor(textos) {
     if (!achadas.size) return null;
     const ordem = [...achadas].sort((a, b) => f(b) - f(a));
     if (ordem.length > 1 && f(ordem[0]) < 5 * f(ordem[1])) return null;
-    if (valida && f(ordem[0]) < 5 * Math.max(1, f(s))) return null;
+    if (valida && !SO_SUBSTANTIVO.has(s) && f(ordem[0]) < 5 * Math.max(1, f(s))) return null;
     // "complementa" nao e "complementá", que so existe antes do pronome
     // ("complementá-lo"): palavra valida nao ganha acento na ultima letra.
     if (valida && /[À-ÿ]$/.test(ordem[0]) && (f(ordem[0]) < 50 || f(ordem[0]) < 20 * Math.max(1, f(s)))) return null;

@@ -155,6 +155,74 @@ function entidades(t) {
     .replace(/&([a-z]+\d?);/gi, (tudo, n) => NOMEADAS[n.toLowerCase()] ?? tudo);
 }
 
+// RTF: Sapezal/MT publica o edital e o termo de referencia so em .rtf, e o
+// edital ficava sem texto nenhum ("formato nao reconhecido", 22/09/2026).
+// Le o texto corrido e pula os grupos que nao sao texto do documento: fontes,
+// cores, estilos, imagens (o \pict em hexadecimal e quase todo o arquivo),
+// cabecalho e rodape (o timbre repetido) e os destinos marcados com \*.
+const RTF_PULA = new Set(['fonttbl', 'colortbl', 'stylesheet', 'info', 'pict', 'object', 'themedata',
+  'colorschememapping', 'datastore', 'latentstyles', 'listtable', 'listoverridetable', 'rsidtbl',
+  'xmlnstbl', 'generator', 'filetbl', 'revtbl', 'header', 'headerl', 'headerr', 'headerf', 'footer',
+  'footerl', 'footerr', 'footerf', 'fldinst', 'shppict', 'nonshppict', 'sp', 'pgdsctbl', 'userprops']);
+const RTF_TROCA = { par: '\n', line: '\n', row: '\n', sect: '\n', page: '\n', cell: ' ', tab: ' ',
+  emdash: '—', endash: '–', bullet: '•', lquote: '‘', rquote: '’', ldblquote: '“', rdblquote: '”',
+  emspace: ' ', enspace: ' ', qmspace: ' ' };
+export function textoRtf(bytes) {
+  const s = Buffer.from(bytes).toString('latin1');
+  let dec;
+  try { const d = new TextDecoder('windows-1252'); dec = b => d.decode(Uint8Array.from(b)); }
+  catch { dec = b => Buffer.from(b).toString('latin1'); }
+  const saida = [];
+  let bytesPend = [];
+  const poe = t => { if (bytesPend.length) { saida.push(dec(bytesPend)); bytesPend = []; } if (t) saida.push(t); };
+  const pilha = [];
+  let pula = false, uc = 1, abriu = false, engole = 0;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === '{') { pilha.push({ pula, uc }); abriu = true; continue; }
+    if (ch === '}') { const x = pilha.pop(); if (x) ({ pula, uc } = x); abriu = false; engole = 0; continue; }
+    if (ch === '\\') {
+      const nx = s[i + 1];
+      if (nx === "'") {
+        const b = parseInt(s.substr(i + 2, 2), 16);
+        i += 3;
+        if (engole > 0) { engole--; continue; }
+        if (!pula && !Number.isNaN(b)) bytesPend.push(b);
+        abriu = false;
+        continue;
+      }
+      if (nx === '*') { if (abriu) pula = true; i++; continue; }
+      if (!/[A-Za-z]/.test(nx || '')) {
+        i++;
+        abriu = false;
+        if (pula) continue;
+        if (nx === '\\' || nx === '{' || nx === '}') poe(nx);
+        else if (nx === '~') poe(' ');
+        else if (nx === '_') poe('-');
+        else if (nx === '\n' || nx === '\r') poe('\n');
+        continue;
+      }
+      const m = /^([A-Za-z]+)(-?\d+)? ?/.exec(s.slice(i + 1, i + 40));
+      i += m[0].length;
+      const pal = m[1], num = m[2] === undefined ? null : +m[2];
+      if (abriu && RTF_PULA.has(pal)) pula = true;
+      abriu = false;
+      if (pal === 'bin' && num > 0) { i += num; continue; }
+      if (pal === 'uc' && num !== null) { uc = num; continue; }
+      if (pula) continue;
+      if (pal === 'u' && num !== null) { poe(String.fromCharCode(num < 0 ? num + 65536 : num)); engole = uc; continue; }
+      if (RTF_TROCA[pal]) poe(RTF_TROCA[pal]);
+      continue;
+    }
+    if (ch === '\r' || ch === '\n') continue;
+    abriu = false;
+    if (engole > 0) { engole--; continue; }
+    if (!pula) poe(ch);
+  }
+  poe('');
+  return limpa(saida.join(''));
+}
+
 export function textoOdt(bytes) {
   const alvo = abreZip(bytes).find(e => e.nome === 'content.xml');
   if (!alvo) throw new Error('nao achei content.xml');

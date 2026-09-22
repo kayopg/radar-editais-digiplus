@@ -8,7 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { textoDasPaginas, escolhePaginas, textoUtil, coberturaItens } from './paginas-uteis.mjs';
-import { abreZip, pdfsDoZip, pdfsDasEntradas, abreRar, linhasXlsx, planilhasDoZip, blocosDocx, blocosDoc, extDe, textoOdt, textoHtml, textosDoZip } from './arquivo-oficial.mjs';
+import { abreZip, pdfsDoZip, pdfsDasEntradas, abreRar, linhasXlsx, planilhasDoZip, blocosDocx, blocosDoc, extDe, textoOdt, textoHtml, textoRtf, textosDoZip } from './arquivo-oficial.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const req = createRequire(import.meta.url);
@@ -117,6 +117,8 @@ function farejaTipo(bytes) {
   if (b.startsWith('52617221')) return 'rar';   // Rar!
   // pagina do SEI publicada solta: "<!DOCTYPE html" ou "<html", com ou sem BOM
   if (/^(?:﻿)?\s*<(?:!doctype\s+html|html)/i.test(Buffer.from(bytes.slice(0, 200)).toString('utf8'))) return 'html';
+  // RTF solto: o edital e o termo de referencia de Sapezal/MT (22/09/2026)
+  if (Buffer.from(bytes.slice(0, 5)).toString('latin1') === '{\\rtf') return 'rtf';
   return 'desconhecido';
 }
 
@@ -310,6 +312,11 @@ export async function fontesDe(c, tropecos, limiteZip = 3) {
     const texto = textoHtml(bytes);
     return { pdfs: [], texto: { blocos: emParagrafos(texto), formato: 'HTML', nome: c.titulo },
              textos: [{ nome: c.titulo, formato: 'HTML', texto }] };
+  }
+  if (tipo === 'rtf') {
+    const texto = textoRtf(bytes);
+    return { pdfs: [], texto: { blocos: emParagrafos(texto), formato: 'RTF', nome: c.titulo },
+             textos: [{ nome: c.titulo, formato: 'RTF', texto }] };
   }
   tropecos.push('formato nao reconhecido (' + (c.ext || 'sem extensao') + ')');
   return { pdfs: [], texto: null };

@@ -439,10 +439,15 @@ async function extraiSecoes(e, planilhas) {
       // e a selecao de 19 paginas nao a pegava: o catalogo chama o item de
       // "Bebedouro Agua tipo: pressao conjugado" e o edital de "BEBEDOURO EM ACO
       // INOX. AGUA FILTRADA E GELADA" (22/09/2026).
+      // Conta como citado tambem o que esta na pagina vizinha de uma escolhida,
+      // que entra logo abaixo. Sem isso Bento Goncalves/RS (IFRS, 307) ganhava a
+      // tabela-resumo do edital, e a linha curta dela ("AR CONDICIONADO 9.000
+      // BTU/h UNIDADE ...") tomava o lugar da descricao do termo de referencia.
       const normPag = paginas.map(p => norm(p));
+      const perto = i => base.some(j => Math.abs(i - j) <= 1);
       for (const it of e[C.itens] || []) {
         const w = norm(it[3]).split(/[^a-z0-9]+/).find(x => x.length >= 5);
-        if (!w || base.some(i => normPag[i].includes(w))) continue;
+        if (!w || normPag.some((p, i) => perto(i) && p.includes(w))) continue;
         for (const i of normPag.map((p, i) => p.includes(w) ? i : -1).filter(i => i >= 0).slice(0, 3)) base.push(i);
       }
 
