@@ -3368,12 +3368,17 @@ for (const e of dados.editais) {
       // Unidade 5 0 0 ñ 0 0 0,5 7 480929 155125 Ar-Condicionado, Split cassete
       // 4 vias, 60000 BTU/h..." (EBSERH Santa Maria/RS, item 6)
       .replace(/\s+unidade\s+\d{1,5}\s+\d+\s+\d+\s+\S{1,4}\s+\d+\s+\d+\s+[\d,]+\s.*$/is, '')
-      // e o "Soma" da coluna de total (Pirajuba/MG)
-      .replace(/\s+Soma$/, '')
+      // e o "Soma" da coluna de total (Pirajuba/MG), e "UNIDADE 1 a" (Viamao/RS)
+      .replace(/\s+Soma$/, '').replace(/\s+UNIDADE\s+\d{1,5}\s+\p{L}$/u, '')
+      // o cabecalho da tabela da folha seguinte fechando a celula: "... cor
+      // 431265 29464 | 38 Item Descricao Catmat Codigo IPM Un" (Mercedes/PR)
+      .replace(/(?:\s+[\d|]+)*\s(?:Item|Ordem)\s+Descri[çc][ãa]o(?:\s+[\p{L}.\-–]+){0,8}\s*$/u, '')
       // O cabecalho da tabela repetido no meio da celula, quando a folha vira:
       // "... divisoria fixa, 2 Ordem Descricao Unid. Quant. Valor Max. Unit.
       // Valor Max. Total porta, com dreno..." (Florestopolis/PR)
-      .replace(/\s(?:Item|Ordem)\s+(?:Produto\s+-\s+)?Descri[çc][ãa]o\s+(?:[\p{L}.\-–]+\s+){1,16}?(?:Total|m[áa]xima)(?=\s|$)/u, ' ')
+      // (com os codigos e a folha antes, "431265 29464 | 38 Item Descricao
+      // Catmat Codigo IPM Und Qtd R$ Unit R$ Total", Mercedes/PR)
+      .replace(/(?:(?:\s+\d{4,})*\s+\|\s+\d{1,3})?\s(?:Item|Ordem)\s+(?:Produto\s+-\s+)?Descri[çc][ãa]o[\s\p{L}.\-–$]{5,160}?(?:Total|m[áa]xima)(?=\s|$)/u, ' ')
       // e a letra que abre a frase seguinte, colada no ponto: "...ficha tecnica
       // oficial do fabricante.O" (Januaria/MG, "O licitante vencedor devera...")
       .replace(/([.;])\s?[A-ZÀ-Ú]$/, '$1');

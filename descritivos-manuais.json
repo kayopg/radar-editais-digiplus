@@ -58,6 +58,12 @@
     "edital": "São Gabriel do Oeste/MS, Pregao 55/2026",
     "conferido": "2026-09-22",
     "itens": {
+      "42": {
+        "qtd": 1,
+        "valor": 2048,
+        "fonte": "termo de referencia, linha DD",
+        "texto": "Fogão a gás, automático, com 6 bocas, equipado com forno e acendimento automático."
+      },
       "43": {
         "qtd": 1,
         "valor": 784,
@@ -106,11 +112,23 @@
     "edital": "Boa Vista do Buricá/RS, Pregao 031/2026",
     "conferido": "2026-09-22",
     "itens": {
+      "3": {
+        "qtd": 7,
+        "valor": 2494.41,
+        "fonte": "termo de referencia, item 03",
+        "texto": "BEBEDOURO DE ÁGUA 100LT TIPO INDUSTRIAL/HOSPITALAR, COM NO MÍNIMO DUASTORNEIRAS, SISTEMA DE REFRIGERAÇÃO POR COMPRESSOR, ALIMENTAÇÃO ELÉTRICA EM 220V, DESTINADO AO FORNECIMENTO CONTÍNUO DE ÁGUA GELADA. O EQUIPAMENTO DEVERÁ POSSUIR ESTRUTURA EXTERNA EM AÇO INOXIDÁVEL, RESERVATÓRIO INTERNO EM MATERIAL ATÓXICO E RESISTENTE, SERPENTINA INTERNA EM AÇO INOX, ISOLAMENTO TÉRMICO EFICIENTE, TERMOSTATO REGULÁVEL PARA CONTROLE DE TEMPERATURA E SISTEMA DE REFRIGERAÇÃO DE ALTO DESEMPENHO, COMPATÍVEL COM USO CONTÍNUO EM AMBIENTES DE MÉDIO A ALTO FLUXO. DEVERÁ DISPOR DE TORNEIRAS DE ALTA RESISTÊNCIA, COM VAZÃO ADEQUADA, PINGADEIRA REMOVÍVEL, PÉS REGULÁVEIS E SISTEMA QUE PERMITA FÁCIL HIGIENIZAÇÃO E MANUTENÇÃO O FORNECIMENTO DEVERÁ CONTEMPLAR A ENTREGA E INSTALAÇÃO COMPLETA NAS ESCOLAS, INCLUINDO TODOS OS MATERIAIS, CONEXÕES HIDRÁULICAS, FIXAÇÕES E AJUSTES NECESSÁRIOS PARA O PLENO FUNCIONAMENTO. DEVERÁ SER ENTREGUE EM PERFEITO ESTADO DE FUNCIONAMENTO, ACOMPANHADO DE MANUAL EM LÍNGUA PORTUGUESA E GARANTIA MÍNIMA DE 12 MESES."
+      },
       "24": {
         "qtd": 8,
         "valor": 318.58,
         "fonte": "termo de referencia, item 24",
         "texto": "MULTIPROCESSADOR DE ALIMENTOS. 1. CARACTERÍSTICAS TÉCNICAS 1.1. TIPO DE PRODUTO: MULTIPROCESSADOR DE ALIMENTOS. 1.2. POTÊNCIA: DE NO MÍNIMO 800W. 1.3. CAPACIDADE DO COPO DO PROCESSADOR: DE NO MÍNIMO 1,2L. 1.4. CAPACIDADE DO COPO DO LIQUIDIFICADOR: DE NO MÍNIMO 1,5L. 1.5. FUNÇÕES MÍNIMAS: PROCESSAR, CORTAR, MISTURAR, FATIAR, PICAR E LIQUIDIFICAR OS ALIMENTOS. 1.6. QUANTIDADE DE VELOCIDADES: 02 FUNÇÃO PULSAR. 1.7. ALIMENTAÇÃO: 220V OU BIVOLT. 1.8. ACOMPANHA MANUAL DE INSTRUÇÕES. 1.9. GARANTIA DE NO MINIMO 1 ANO."
+      },
+      "51": {
+        "qtd": 16,
+        "valor": 3158.33,
+        "fonte": "termo de referencia, item 51",
+        "texto": "Ar Condicionado Split Quente/frio inverter – 18.000 Btus, novo, com no mínimo as seguintes características técnicas: Ar Condicionado Split Quente e frio – 18.000 Btus, na cor branca. Equipamento com inteligência artificial. Ciclo: quente e frio inverter. Função autolimpeza. Classe de eficiência energética: A. Silencioso. Modos de operação: aquece, resfria, desumidifica e ventila. Velocidade regulável. Compressor rotativo. Controle remoto com display digital, funções: turbo, swing, dormir bem. Filtro: tripla filtragem contra alérgenos, bactérias e fungos (HEPA), lavável, removível. Timer: digital. Tensão: 220 v ou bivolt (127/220 V). Modelo em linha de fabricação. Frequência de 60 Hz. Fabricação nacional e manual de instrução em português. Equipamento com selo do Inmetro. Garantia mínima de 1 ano."
       }
     }
   },
@@ -495,6 +513,30 @@
         "valor": 0,
         "fonte": "termo de referencia, linha 14",
         "texto": "Renovador de ar, Capacidade de renovação nominal de 150 m³/h com tolerância de +/- 10%, Sem instalação"
+      }
+    }
+  },
+  "75193516000107/2026/58": {
+    "edital": "São João do Triunfo/PR, Pregao 33/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "62": {
+        "qtd": 6,
+        "valor": 1816.24,
+        "fonte": "termo de referencia, item 62",
+        "texto": "Forno Industrial Gás Refratário 80x60 Capa Inox' de excelente resistência e alta qualidade, Corpo: Aço Carbono, medidas mínimas interior (LxAxP): 79 x 22,5 x 61 Tamanho externo (LxAxP): 92 x 45 x 79,5"
+      }
+    }
+  },
+  "46137410000180/2026/672": {
+    "edital": "Bauru/SP, Pregao 423/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "1": {
+        "qtd": 60,
+        "valor": 605,
+        "fonte": "anexo I, lote 01",
+        "texto": "BALANÇA DIGITAL: BALANÇA ELETRÔNICA DIGITAL DE BANCADA, COM CAPACIDADE MÍNIMA DE 30 KG, PRECISÃO DE NO MÁXIMO 10 GRAMAS. ACABAMENTO DE PLÁSTICO ABS INJETADO, COM PRATO DE AÇO INOXIDAVEL, BIVOLT, ACOMPANHADA DE FONTE DE ENERGIA COMPATIVEL COM O EQUIPAMENTO."
       }
     }
   }

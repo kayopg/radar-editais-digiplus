@@ -25,7 +25,10 @@ const FECHADA = /[.;:)\]]\s*$/;
 // Comeca em minuscula, em "e"/"ou"/"com", ou emenda direto a palavra cortada.
 // Linha nova de tabela sempre abre com numero, unidade ou nome em caixa alta,
 // entao nada disso e confundido com o item seguinte.
-const CONTINUA = /^[a-zà-ÿ(]/;
+// A coluna da linha que vem depois nao e continuacao, mesmo em minuscula:
+// "unidade 20 0 0 ... 0,5" (EBSERH), "un 200,00" (Sao Valerio do Sul/RS),
+// "(1209004934124 - 2) UN 6" (Sao Joao do Triunfo/PR), 22/09/2026.
+const CONTINUA = /^(?!(?:un|und|unid|unidade|unidades)\b)(?!\(\s*\d)[a-zà-ÿ(]/;
 
 // Ou a celula acaba num artigo ou numa preposicao, e ai nao importa como o
 // texto segue: "...PERMITE ADICIONAR INGREDIENTES A | TIGELA DURANTE O
