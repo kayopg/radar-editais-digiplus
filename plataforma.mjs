@@ -62,15 +62,20 @@ export const PLATAFORMAS = [
 // https://scpiiacanga.dcfiorilli.com.br:879/comprasedital/" (Iacanga/SP), portal
 // proprio da prefeitura que nenhuma lista conhece.
 const ENDERECO_DA_SESSAO = /(?:sess[ãa]o[^.]{0,90}?realizada\s+no\s+(?:seguinte\s+)?endere[çc]o(?:\s+eletr[ôo]nico)?|ENDERE[ÇC]O\s+ELETR[ÔO]NICO|Link)\s*:?\s*((?:https?:\/\/|www\.)[^\s,;"')]+)/i;
-const naoEPlataforma = u => /1doc\.com\.br|pncp\.gov|\.(?:sp|mg|pr|rs|sc|go|mt|ms)\.gov\.br|planalto|in\.gov/i.test(u);
+// Pagina do governo federal que nao e o Compras.gov.br tambem nao e plataforma:
+// "Consultar o Guia Nacional de Contratacoes Sustentaveis, atraves do link:
+// https://www.gov.br/agu/..." virava "portal proprio do orgao" e tirava do
+// radar o pregao da UFPel no Compras.gov.br (Pelotas/RS, 21/09/2026).
+const naoEPlataforma = u => /1doc\.com\.br|pncp\.gov|\.(?:sp|mg|pr|rs|sc|go|mt|ms)\.gov\.br|planalto|in\.gov|(?:\/\/|^)(?:www\.)?gov\.br\/(?!compras)|\bcgu\.gov\.br/i.test(u);
 
 // { url, nome, daCasa } ou null. O compras.gov.br so conta pelo endereco da
 // sessao: "SICAF" e "Compras.gov.br" aparecem em todo edital de prefeitura como
 // cadastro, nao como lugar da disputa.
 export function plataformaDoTexto(texto) {
   const t = String(texto || '').replace(/\s+/g, ' ');
-  const s = t.match(ENDERECO_DA_SESSAO);
-  if (s && !naoEPlataforma(s[1])) {
+  // o primeiro endereco que e plataforma, e nao so o primeiro escrito
+  const s = [...t.matchAll(new RegExp(ENDERECO_DA_SESSAO.source, 'gi'))].find(m => !naoEPlataforma(m[1]));
+  if (s) {
     const conhecida = PLATAFORMAS.find(([re]) => re.test(s[1]));
     if (conhecida) return { url: conhecida[1], nome: conhecida[2], daCasa: conhecida[3] };
     const url = (/^www\./i.test(s[1]) ? 'https://' + s[1] : s[1]).replace(/[.:]+$/, '');

@@ -24,7 +24,7 @@ const DIR = path.dirname(fileURLToPath(import.meta.url));
 // — ventilador, aquecedor de agua e purificador de ar — ja tinham categoria mas
 // nao eram BUSCADOS: so apareciam de carona quando o edital tambem citava um
 // termo antigo, entao edital so de ventilador nunca era encontrado.
-const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira","freezer","frigobar","fogao industrial","fogao","forno industrial","forno eletrico","microondas","cooktop","liquidificador industrial","liquidificador","batedeira planetaria","cafeteira","chaleira eletrica","fritadeira","lavadora de roupas","maquina de lavar roupas","secadora de roupas","bebedouro","purificador de agua","camara fria","expositor refrigerado","ar condicionado","climatizador","cortina de ar","equipamentos de cozinha","aspirador de po",
+const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira","freezer","frigobar","fogao industrial","fogao","forno industrial","forno eletrico","microondas","cooktop","liquidificador industrial","liquidificador","batedeira planetaria","cafeteira","chaleira eletrica","sanduicheira","grill eletrico","fritadeira","lavadora de roupas","maquina de lavar roupas","secadora de roupas","bebedouro","purificador de agua","camara fria","expositor refrigerado","ar condicionado","climatizador","cortina de ar","equipamentos de cozinha","aspirador de po",
 // acrescentados em 01/09/2026
 "ventilador","purificador de ar","gerador de energia","aquecedor de agua","refresqueira","balcao termico","buffet termico","cafeteira expresso",
 // segunda leva da lista da Digiplus, 01/09/2026. "coifa" e "exaustor" voltam:
@@ -52,7 +52,7 @@ const CAT = [
   // O aspirador da Digiplus e o de po E AGUA, e o PNCP escreve de varios jeitos:
   // "aspirador de po e agua", "aspirador po/liquido", "aspirador de po/agua".
   // So "aspirador de po" nao pega as duas ultimas, que nao tem o "de".
-  ["EP",["cafeteira","chaleira","sanduicheira","torradeira","air fryer","airfryer","aspirador de po","aspirador po","aspirador de agua","aspirador agua","grill eletrico"]],
+  ["EP",["cafeteira","chaleira","sanduicheira","torradeira","air fryer","airfryer","aspirador de po","aspirador po","aspirador de agua","aspirador agua","grill eletrico","grill"]],
   ["LV",["lavadora de roupa","maquina de lavar","secadora","centrifuga de roupa","calandra","tanquinho","lava-loucas","lava loucas","lavadora extratora"]],
   ["CL",["ar-condicionado","ar condicionado","arcondicionado","condicionador de ar","split","climatizador","cortina de ar","ventilador","desumidificador","umidificador","purificador de ar"]],
   // CX voltou em 01/09/2026: saiu de manha, quando "coifas" entrou na lista de
@@ -83,7 +83,8 @@ const PISO_ITEM = 150;
 // fogao continua fora, porque nao casa com "eletrica" nem "industrial" — e
 // panela, nao eletrodomestico. Quem decide se o edital vale a viagem continua
 // sendo o PISO_EDITAL, nao este.
-const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira'];
+// Sanduicheira e grill tambem (decisao do usuario em 22/09/2026).
+const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira','sanduicheira','grill'];
 
 // 5.4c - volume salva o item de preco quase no piso (decisao do usuario em
 // 18/09/2026): acima de R$ 140 e com mais de 10 unidades, o item fica. A

@@ -103,8 +103,8 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    **antes** do aparelho — "Prateleira para geladeira" sai, "Geladeira ... prateleiras de
    vidro" fica (`veto-item.mjs`). E o aparelho citado como uso de outra coisa ("apto para
    micro-ondas", "aplicação: refrigerador") não dá categoria ao item.
-4. **Piso de preço unitário** de R$ 150 — equipamento de verdade custa. Chaleira elétrica e
-   cafeteira não têm piso, e acima de R$ 140 com mais de 10 unidades o item fica. Itens com valor
+4. **Piso de preço unitário** de R$ 150 — equipamento de verdade custa. Chaleira elétrica,
+   cafeteira, sanduicheira e grill não têm piso, e acima de R$ 140 com mais de 10 unidades o item fica. Itens com valor
    **zero** são mantidos: é orçamento sigiloso, e a página mostra "sigiloso", nunca "R$ 0".
 5. **Duplicatas** — o mesmo edital sai duas vezes (publicação direta e via portal
    intermediário). Agrupa por município + UF + dia de encerramento + quantidade + valor.

@@ -281,7 +281,11 @@ const FIM_DE_LINHA = [
   // Depois da tabela costuma vir a minuta do contrato, e o ultimo item entrava
   // nela: a mesa de futmesa de Rio Bom/PR seguia por "de um lado, a PREFEITURA
   // DO MUNICIPIO DE RIO BOM - PR, pessoa juridica de direito publico...".
-  /\s(?:pessoa jur[íi]dica de direito|de um lado,?\s+[ao]\s+PREFEITURA|CL[ÁA]USULA\s+(?:PRIMEIRA|SEGUNDA|[IVX]+)|CONTRATANTE\b|(?<!-\s*A\s)CONTRATADA\b|doravante denominad)/i
+  // A parte do contrato citada como quem decide a especificacao nao fecha a
+  // celula: "(conforme necessidade da contratante)" cortava o ar-condicionado
+  // de Caxambu/MG no meio (22/09/2026). "A contratada devera..." continua
+  // fechando.
+  /\s(?:pessoa jur[íi]dica de direito|de um lado,?\s+[ao]\s+PREFEITURA|CL[ÁA]USULA\s+(?:PRIMEIRA|SEGUNDA|[IVX]+)|(?<!(?:necessidade|crit[ée]rio|interesse|escolha|solicita[çc][ãa]o|demanda)\s+d[ao]\s)CONTRATANTE\b|(?<!-\s*A\s)CONTRATADA\b|doravante denominad)/i
   ,
   // A CLAUSULA que abre o contrato, com o ordinal por extenso. O padrao antigo
   // so listava PRIMEIRA e SEGUNDA, e os itens 7 e 14 de Descalvado/SP — as
@@ -624,7 +628,30 @@ const CABECALHO_AGU = /\s*(?:UASG\s+\d{5,6}\s+)?C[\u00e2a]mara Nacional de Model
 // 96 deste documento. PREGAO ELETRONICO No 102150-369/2026 - HU/USP ... Pagina 24
 // | 95 Aprovado pelo Parecer ... Edital de Pregao - Bens e Servicos - Lei no
 // 14.133, de 2021". Sai antes do timbre, que levava so as pontas.
-const CABECALHO_HASH = /\s*Documento assinado digitalmente\s*-\s*Por favor, verifique o HASH de autenticidade na p[áa]gina \d+ deste documento\.(?:\s*‖‖)?\s*PREG[ÃA]O ELETR[ÔO]NICO[\s\S]{0,400}?Lei n[ºo°] 14\.133, de 2021/g;
+// A unidade da coluna da linha da tabela, e a medida que um numero escrito
+// na especificacao leva depois dele (para nao confundir com o numero da folha).
+const UNID_LINHA = '(?:UN|UND|Und|und|Un|Unid\\.?|UNID\\.?|Unidade|UNIDADE|Unidades|UNIDADES|PC|PÇ|PCT|CX|KIT|Kit|CJ|CJT|CONJ|JG|PAR)';
+const MEDIDA = '(?:kg|g|mg|l|lt|litros?|ml|cm|mm|m|m2|m²|m3|w|watts?|v|volts?|kw|kwh|hz|btus?|rpm|bar|pol|polegadas?|pés|pas|p[áa]s|velocidades?|bocas?|portas?|queimadores?|x|a|e|ou)(?![a-zà-ÿ])';
+// A celula que atravessa a virada de folha (ou que tem as colunas no meio da
+// altura da linha): quantidade, unidade e precos da linha, o que sobra do
+// rodape e do cabecalho da folha — so numero, sinal e telefone, nenhuma
+// palavra — e a continuacao. Ver o uso no recorte por posicao.
+// (com o codigo do catalogo antes, quando a tabela o traz: "ventilacao, 625431
+// 34570 UN 1 R$ ...", Mercedes/PR)
+// (e a quantidade com casas decimais: "UNIDADE 20,0000 3.115,0000 62.300,00",
+// Pirajuba/MG)
+const COLUNAS_DA_LINHA = '(?:\\s+\\d{5,7}){0,3}\\s(?:\\d{1,5}(?:,\\d{1,4})?\\s+' + UNID_LINHA + '|' + UNID_LINHA + '\\s+\\d{1,5}(?:,\\d{1,4})?)\\s+(?:R\\$\\s*)?[\\d.]*\\d,\\d{2,4}\\s+(?:R\\$\\s*)?[\\d.]*\\d,\\d{2,4}';
+const SOBRA_DA_FOLHA = '(?:\\s+(?:[°ºª.,;:|–-]\\S{0,3}|\\d+\\/\\d+|\\(?\\d{2}\\)?[\\s-]?\\d{4,5}-\\d{4}|\\d{1,3}(?=\\s+(?:[°ºª.,;:|–(-]|\\d|(?!' + MEDIDA + ')[a-zà-ÿ]))))*';
+const COSTURA_MINUSCULA = new RegExp(COLUNAS_DA_LINHA + SOBRA_DA_FOLHA + '\\s+(?=[a-zà-ÿ]|\\d+(?:[.,]\\d+)?\\s*[a-zà-ÿ])', 'gu');
+const COSTURA_ABERTA = new RegExp('(?<=[:,]|\\s(?:de|da|do|das|dos|e|ou|com|sem|em|para|por|a|o|as|os|ao))' + COLUNAS_DA_LINHA + SOBRA_DA_FOLHA + '\\s+(?=\\p{Lu}\\p{Ll})', 'gu');
+// O cabecalho repetido: "Item", depois so palavra de titulo (maiuscula, traco,
+// ponto, parenteses, pedaco curto de palavra partida como o "ade" de "Quantid
+// ade") e fecha em "Total": "Item Descricao Unid. Quant . Media Total
+// (unitaria) Media total" (Pariquera-Acu/SP), "Item Produto - Descricao
+// Unidade - Descricao Quantid ade - Licitada Cotacao Maxima - Unitaria Cotacao
+// Maxima - Total" (Pirajuba/MG).
+const COSTURA_CABECALHO = new RegExp(COLUNAS_DA_LINHA + SOBRA_DA_FOLHA + '(?:\\s+“[^”]{1,40}”)?\\s+Item\\s+(?:(?:\\p{Lu}[\\p{L}.]*|[-–.]|\\(\\p{L}+\\)|\\p{Ll}{1,4})\\s+){2,25}?(?:Total|total|TOTAL)\\s+(?=\\p{L})', 'gu');
+const CABECALHO_HASH = /\s*Documento assinado digitalmente\s*-\s*Por favor, verifique o HASH de autenticidade na p[áa]gina \d+ deste documento\.(?:\s*‖‖)?\s*(?:EDITAL\s*[-–]\s*)?PREG[ÃA]O ELETR[ÔO]NICO[\s\S]{0,400}?Lei n[ºo°] 14\.133, de 2021/g;
 
 // O QUE NAO E ESPECIFICACAO DENTRO DA CELULA, depois do corte.
 //
@@ -2177,7 +2204,27 @@ function descritivosPorItem(secoes, itens) {
       // ficava de fora; ela toma o lugar deles, sem o numero do item seguinte
       // que fecha o trecho. So no FIM do trecho e curta: numa copia sem a marca
       // do item 3 o "fim" seria a linha inteira do mixer.
-      .replace(/\s\d{5,6}\s+Unidade\s+\d{1,5}\s+R\$\s*[\d.]*,\d{2}\s+R\$\s*[\d.]*,\d{2}\s+(?:UASG\s+\d{4,6}\s+)?(?:\d{1,3}\s+)?(Marca\/Modelo\s+de\s+refer[êe]ncia\b[^]{0,200}?)(?:\s+\d{1,3})?$/i, ' $1');
+      .replace(/\s\d{5,6}\s+Unidade\s+\d{1,5}\s+R\$\s*[\d.]*,\d{2}\s+R\$\s*[\d.]*,\d{2}\s+(?:UASG\s+\d{4,6}\s+)?(?:\d{1,3}\s+)?(Marca\/Modelo\s+de\s+refer[êe]ncia\b[^]{0,200}?)(?:\s+\d{1,3})?$/i, ' $1')
+      // O mesmo com as colunas na ordem quantidade, unidade e precos, e o que
+      // sobra do rodape e do cabecalho da folha — so numero e sinal, nenhuma
+      // palavra — antes da continuacao em minuscula: "...com sistema de
+      // turbilhonamento, estrutura 8 UN R$ 554,74 R$ 4.437,92 25 ° 221/26
+      // resistente e painel de facil operacao..." (Avare/SP, item 26, 22/09/2026).
+      // Com palavra no meio nao costura: pode ser o numero e o nome do item
+      // seguinte ("27 FOGAO: fogao de piso"). O numero da folha so sai quando
+      // nao e medida: "...minima de 40 UN R$ ... 42 1,7 litros" perde o 42 e
+      // guarda o 1,7; "... 10 kg" guarda o 10 (Sao Joao do Triunfo/PR).
+      .replace(COSTURA_MINUSCULA, ' ')
+      // A frase aberta antes das colunas (dois-pontos, virgula, preposicao)
+      // continua mesmo em maiuscula: onde as colunas ficam no meio da altura da
+      // linha, o texto sai "...57,96 cm; Funcionamento: Unid. 5 R$ 1.936,25 R$
+      // 9.681,25 Gas; Capacidade do Forno..." (Borrazopolis/PR, item 73).
+      .replace(COSTURA_ABERTA, ' ')
+      // E o cabecalho da tabela repetido no alto da folha seguinte: "...
+      // congelador separados). UN 3 R$ 6.377,33 R$ 19.131,99 “Deus Seja
+      // Louvado” Item Descricao Unid. Quant . Media Total (unitaria) Media total
+      // Classificacao de eficiencia..." (Pariquera-Acu/SP, item 3).
+      .replace(COSTURA_CABECALHO, ' ');
     // cortaOrcamento aqui tambem, e nao so no fim: a celula e julgada pelo
     // tamanho e pelo fecho, e o preco e a dotacao grudados atrapalhavam o
     // julgamento (o ventilador de Serrana/SP terminava em "Atencao Basica 13")
@@ -2404,6 +2451,29 @@ function descritivosPorItem(secoes, itens) {
       if (troca) {
         vencedor = troca.t; nota = troca.n; venceuPeloNumero = troca.confirmado;
         numeroVencedor = numLinha[troca.idx]; kVencedor = troca.k;
+      }
+      // A copia que o PROPRIO PNCP confirma mais longe. Quando a vencedora para
+      // num ponto em que o texto do item no PNCP continua, e outra candidata
+      // segue exatamente como o PNCP, a vencedora e a copia cortada: em
+      // Caxambu/MG a tabela do edital traz so "...24.000 BTUs/h, ciclo quente e
+      // frio" e o termo de referencia a especificacao inteira; em Pirajuba/MG a
+      // copia da virada de folha parava em "(TUBULACAO DE" (22/09/2026).
+      const letras = x => normIgual(x).replace(/[^a-z0-9]/g, '');
+      const pn = letras(rotulo), lv = letras(vencedor), rabo = lv.slice(-30);
+      const kp = rabo.length >= 20 ? pn.lastIndexOf(rabo) : -1;
+      if (kp >= 0 && pn.length - (kp + rabo.length) >= 25) {
+        const segue = pn.slice(kp, kp + rabo.length + 25);
+        let longe = null;
+        for (const a of avaliados) {
+          if (a.t === vencedor || a.n < 1e6 || (venceuPeloNumero && !a.confirmado)) continue;
+          const la = letras(a.t);
+          if (!la.includes(segue) || la.length <= lv.length) continue;
+          if (!longe || la.length < letras(longe.t).length) longe = a;
+        }
+        if (longe) {
+          vencedor = longe.t; nota = longe.n; venceuPeloNumero = longe.confirmado;
+          numeroVencedor = numLinha[longe.idx]; kVencedor = longe.k;
+        }
       }
     }
     // O numero que ABRE a linha seguinte fica antes da marca dela, e portanto no
@@ -3254,7 +3324,10 @@ for (const e of dados.editais) {
       // e a quantidade com a "Ultima Compra" do relatorio de precos: "... 5
       // Ultima Compra: 7/2021 - 375,0000" (Congonhal/MG), que na linha do item
       // 47 emendava o item 48 inteiro
-      .replace(/\s+(?:\d[\d.]*\s+)?[ÚU]ltima\s+Compra:.*$/s, '');
+      .replace(/\s+(?:\d[\d.]*\s+)?[ÚU]ltima\s+Compra:.*$/s, '')
+      // e a letra que abre a frase seguinte, colada no ponto: "...ficha tecnica
+      // oficial do fabricante.O" (Januaria/MG, "O licitante vencedor devera...")
+      .replace(/([.;])\s?[A-ZÀ-Ú]$/, '$1');
     // O preco unitario e o total da linha no meio da celula, com o numero da
     // folha depois: "...drenagem por sistema manual ou 484,84 R$ 2.424,20 44
     // automatico" (Arvorezinha/RS, item 55). So quando o primeiro valor e o
@@ -3333,7 +3406,10 @@ for (const e of dados.editais) {
       const plano = secoesPlano || (secoesPlano = secoes.replace(/\s+/g, ' '));
       const fim = it[6].slice(-40), k = plano.indexOf(fim);
       const p = it[6].lastIndexOf('. ');
-      if (k >= 0 && /^ [a-zà-ÿ]/.test(plano.slice(k + fim.length, k + fim.length + 2)) && p > it[6].length * 0.6)
+      // (a unidade minuscula da coluna seguinte nao e continuacao: "...Ideal
+      // para uso domestico e escritorio un 200,00", Sao Valerio do Sul/RS)
+      const depois = plano.slice(k + fim.length, k + fim.length + 24);
+      if (k >= 0 && /^ [a-zà-ÿ]/.test(depois) && !/^ (?:un|und|unid|pc|p[çc]|cx|kit|cj|cjt|par|jg|pct)\.?\s+[\d.,]/.test(depois) && p > it[6].length * 0.6)
         it[6] = it[6].slice(0, p + 1);
     }
     // Celula cortada pela virada de folha que termina pendurada numa
