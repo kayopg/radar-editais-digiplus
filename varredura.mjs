@@ -412,6 +412,9 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // lavadora extratora hospitalar de 50 kg com barreira sanitaria (Sonora/MS,
 // decisao do usuario em 21/09/2026)
 "lavadora de roupas hospitalar","lavadora hospitalar","barreira sanitaria",
+// suqueira de vidro com torneira plastica e utensilio, nao refresqueira
+// eletrica (Porto Vitoria/PR, 22/09/2026)
+"suqueira de vidro",
 // e os de peca/utensilio, que so vetam na frente do produto (VETO_SO_NA_FRENTE)
 "balde","filtro","suporte","rack","ferramenta","gaiola","jarra plastica","jarra graduada","jarra - do tipo","jarra do tipo","disco","kit manual","utensilio","tampo","granito","mesa de apoio"];
 
@@ -486,7 +489,9 @@ const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioim
   '180 kg','180kg','de banheiro','plataforma em vidro','em vidro temperado','para bebe','recem-nascido','recem nascido','neonat',
   // e a portatil de 200 kg com tapete antiderrapante, de pesar paciente na UBS
   // (Uruguaiana/RS, decisao do usuario em 21/09/2026)
-  'tapete anti-derrapante','tapete antiderrapante','tapete anti derrapante'];
+  'tapete anti-derrapante','tapete antiderrapante','tapete anti derrapante',
+  // "Balanca de laboratorio, tipo analitica, 0,0001 g" (Januaria/MG, 22/09/2026)
+  'tipo analitica','balanca de laboratorio'];
 
 // ---------------------------------------------------------------- utilidades
 // Cada linha de progresso sai carimbada com o tempo decorrido.
