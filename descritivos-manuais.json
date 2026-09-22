@@ -129,6 +129,12 @@
         "valor": 3158.33,
         "fonte": "termo de referencia, item 51",
         "texto": "Ar Condicionado Split Quente/frio inverter – 18.000 Btus, novo, com no mínimo as seguintes características técnicas: Ar Condicionado Split Quente e frio – 18.000 Btus, na cor branca. Equipamento com inteligência artificial. Ciclo: quente e frio inverter. Função autolimpeza. Classe de eficiência energética: A. Silencioso. Modos de operação: aquece, resfria, desumidifica e ventila. Velocidade regulável. Compressor rotativo. Controle remoto com display digital, funções: turbo, swing, dormir bem. Filtro: tripla filtragem contra alérgenos, bactérias e fungos (HEPA), lavável, removível. Timer: digital. Tensão: 220 v ou bivolt (127/220 V). Modelo em linha de fabricação. Frequência de 60 Hz. Fabricação nacional e manual de instrução em português. Equipamento com selo do Inmetro. Garantia mínima de 1 ano."
+      },
+      "53": {
+        "qtd": 1,
+        "valor": 1648,
+        "fonte": "termo de referencia, item 53",
+        "texto": "FOGÃO 05 BOCAS. Fogão 5 bocas de piso, com forno, a gás GLP, bivolt."
       }
     }
   },
@@ -141,6 +147,12 @@
         "valor": 0,
         "fonte": "relacao de itens, item 60",
         "texto": "LIQUIDIFICADOR INDUSTRIAL 8 LITROS. UTILIDADE TRITURAR PRODUTOS DIVERSOS COM ADICAO DE LIQUIDO CAPACIDADE 8 LITROS COPO EM ACO INOX GABINETE EXTERNO EM ACO INOX COMPONENTES DO GABINETE INTERNO EM ALUMINIO FUNDIDO BAIXA ROTACAO ALTURA MM 760 FRENTE MM 250 FUNDO MM 220 PESO KG 10 MOTOR CV 3 4 CAPACIDADE L 8 VOLTAGEM V 110 220 CONSUMO KW H 0 91"
+      },
+      "64": {
+        "qtd": 4,
+        "valor": 0,
+        "fonte": "anexo I, item 64",
+        "texto": "AR CONDICIONADO 12.000 BTUS SPLIT QUENTE E FRIO. Características: ar condicionado 12.000 BTUs split quente e frio."
       },
       "85": {
         "qtd": 3,
@@ -537,6 +549,162 @@
         "valor": 605,
         "fonte": "anexo I, lote 01",
         "texto": "BALANÇA DIGITAL: BALANÇA ELETRÔNICA DIGITAL DE BANCADA, COM CAPACIDADE MÍNIMA DE 30 KG, PRECISÃO DE NO MÁXIMO 10 GRAMAS. ACABAMENTO DE PLÁSTICO ABS INJETADO, COM PRATO DE AÇO INOXIDAVEL, BIVOLT, ACOMPANHADA DE FONTE DE ENERGIA COMPATIVEL COM O EQUIPAMENTO."
+      }
+    }
+  },
+  "10784782000150/2026/384": {
+    "edital": "Cáceres/MT, Contratacao Direta 53/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "6": {
+        "qtd": 1,
+        "valor": 2459.47,
+        "fonte": "termo de referencia, item 6",
+        "texto": "Refrigerador Doméstico - Geladeira: Refrigerador Doméstico, Capacidade: 550 a 590 Litros, Voltagem: Bivolt, Cor: Branca, Tipo: Vertical."
+      }
+    }
+  },
+  "76208867000107/2026/495": {
+    "edital": "Cascavel/PR, PCE 126/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "7": {
+        "qtd": 1,
+        "valor": 1960.12,
+        "fonte": "termo de referencia, item 7",
+        "texto": "BALANÇA DIGITAL DE BANCADA 50 KG COM DIVISÃO DE 5G. Descrição: • Classe de exatidão III • Aprovado pelo INMETRO conforme portaria 236 • Display com 26 mm de altura (com 5 ou 6 dígitos) • Gabinete em Aço Inoxidável Polido • Alimentação de 85 a 250 Vca (Fonte Automática) • Capacidade Programável • Velocidade de leitura/tempo de estabilização configurável • Filtro digital, contra vibrações, configurável em até 8 níveis • Indicadores luminosos de zero, peso líquido e peso estável • Detector de pico máximo • Contagem de peças • Pés Niveladores • Dimensões A: 165mm, L: 240mm, P: 70mm • Grau de Proteção IP65 (Módulo de Pesagem). Especificação: Alimentação Elétrica: 110/220 Fonte Externa Automática; Capacidade - Divisão: 50kg - 5g; Coluna: 450mm; Dimensões (A x L x C) (mm): 165 x 240 x 70; INMETRO: conforme portaria 235; Interface de Comunicação: Opcionais; Saídas: RS 232, RS 485, ethernet; Plataforma: 400 x 400; Garantia: 1 ano."
+      },
+      "8": {
+        "qtd": 2,
+        "valor": 182,
+        "fonte": "termo de referencia, item 8",
+        "texto": "BALANÇA DIGITAL DE COZINHA. Descrição: • Balança digital de cozinha para alimentos • Pesagem em gramas - peso digital • Material: aço inoxidável • Capacidade: até 5Kg. Especificações: • Cor: prata • Tamanho aproximado: 22 cm x 18 cm x 4,5 cm."
+      }
+    }
+  },
+  "88768080000170/2026/509": {
+    "edital": "São Gabriel/RS, Pregao 51/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "1": {
+        "qtd": 2,
+        "valor": 1933.33,
+        "fonte": "termo de referencia, item 1",
+        "texto": "AR CONDICIONADO SPLIT 9.000 BTUS QUENTE/FRIO 220 V."
+      }
+    }
+  },
+  "18128207000101/2026/270": {
+    "edital": "Ubá/MG, Pregao 52/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "25": {
+        "qtd": 1,
+        "valor": 764.01,
+        "fonte": "termo de referencia com precos, item 25",
+        "texto": "Liquidificador industrial de baixa rotação, com capacidade mínima de 8 litros, destinado ao preparo e processamento de alimentos em cozinhas industriais, refeitórios e unidades de alimentação coletiva, fabricado em conformidade com as normas de segurança aplicáveis, incluindo NR-12. O equipamento deverá possuir copo removível em aço inoxidável, preferencialmente em peça única e de fácil higienização, tampa resistente e removível, gabinete confeccionado em aço inoxidável ou material de alta resistência, conjunto de facas em aço inox com sistema removível para limpeza sem necessidade de ferramentas e estrutura adequada para uso contínuo. Deverá possuir motor monofásico com potência compatível para processamento de alimentos leves com adição de líquidos, alimentação elétrica bivolt ou compatível com a rede local, sistema de acionamento seguro, sapatas antiderrapantes, componentes elétricos em conformidade com normas técnicas aplicáveis e cordão de alimentação certificado pelo INMETRO. O equipamento deverá possuir garantia mínima de 12 meses contra defeitos de fabricação e assistência técnica autorizada durante o período de garantia."
+      },
+      "46": {
+        "qtd": 10,
+        "valor": 1535.89,
+        "fonte": "termo de referencia com precos, item 46",
+        "texto": "Forno a gás de baixa pressão, no padrão Glp,contendo porta do forno (com visor) confeccionado em aço inox escovado externo e interno com vidro temperado de 6 mm,equipada com mola para facilitar a vedação da porta em borracha de silicone para reter o calor.Possui Sistema de Segurança, isolamento térmico em lã de rocha; acabamento interno esmaltado a fogo; acompanhando duas grelhas com limitador; no modelo de mesa. Medidas aproximadas: altura: 545mm (externa) / 300mm (interna) / 1195mm (com pé), largura: 640mm (externa) / 510mm (interna), profundidade: 720mm (externa) / 700mm (interna) Consumo: 0,380kg/h.• Recobrimento especial das paredes internas que evite acumulo de gorduras e facilite a limpeza (sistema “autolimpante” ou similar).• Porta com visor em vidro, com eixo de abertura horizontal, dobradiças reforçadas com mola e puxador metálico de modo que a porta possa permanecer aberta sem a aplicação de força e fechar com facilidade. • Piso em aço carbono esmaltado com orifício(s) de visualização das chamas. GARANTIA: • Mínima de um ano a partir da data da entrega, de cobertura integral do equipamento. O fabricante/contratado é obrigado a dar assistência técnica gratuita na sua rede credenciada de assistência, durante o período da garantia, substituindo as peças com defeito."
+      },
+      "48": {
+        "qtd": 12,
+        "valor": 623.23,
+        "fonte": "termo de referencia com precos, item 48",
+        "texto": "Cortina de Ar 120 cm com Controle Remoto 110VA/220VA Cortina de Ar com função de separar a temperatura ambiente exterior da temperatura interior. Desenvolvido especialmente para áreas que são climatizadas, mas precisam manter as portas abertas, fornecendo uma maior economia de energia ao mesmo tempo em que mantém o conforto térmico do local. A Cortina de Ar precisa ser instalada sobre a porta, criando assim uma barreira de vento que garante uma isolação térmica, impedindo que o ar refrigerado escape. Além disso, a Cortina de Ar evita a entrada de poeira, fumaça, insetos e outras partículas. Possuir controle remoto que facilita a programação e alteração de velocidade e ligar e desligar o produto se ele for instalado em grandes alturas ou em locais inacessíveis. Principais Características: Isola a Entrada: Isola a entrada do ar arrefecido ou aquecido, devido a abertura de portas; Proteção: Protege o ambiente contra insetos, poeiras, poluição e odores; Maior Vida Útil: Aumenta a vida útil dos quipamentos de refrigeração; Controle Remoto: Acompanha controle remoto; Com certificação Inmetro."
+      },
+      "73": {
+        "qtd": 4,
+        "valor": 449.36,
+        "fonte": "termo de referencia, item 73 (BATEIRA e Bow corrigidos)",
+        "texto": "BATEDEIRA PLANETÁRIA POTÊNCIA PROFISSIONAL: Motor de no mínimo de 850W de potência. CONTROLE TOTAL: Com no mínimo 12 velocidades e partida suave com precisão e mistura homogênea sem respingos. Deve possuir ventosas de alta sucção na base que proporcionam firmeza mesmo em receitas mais pesadas como pães. Bowl em acabamento em inox, com capacidade mínima de 4 litros."
+      }
+    }
+  },
+  "88379763000136/2026/135": {
+    "edital": "Igrejinha/RS, Pregao 023/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "1": {
+        "qtd": 1,
+        "valor": 117821.19,
+        "fonte": "edital, item 1",
+        "texto": "Aquisição de UM GRUPO GERADOR, desenvolvendo a potência nominal de 92KW (115 KVA) em regime “Standby” ou 83 KW (104 KVA) em regime “Prime Power”, conectado na tensão 380/220V composto de: - MOTOR DIESEL refrigerado por radiador, turbo-alimentado, seis cilindros em linha, desenvolvendo 179 CV de potência bruta a 1800 RPM, construção específica para acionamento de alternadores elétricos, sistema de injeção do combustível com gerenciador mecânico de rotação do motor, com baixos índices de emissões e máximo de aproveitamento do combustível. - ALTERNADOR com construção horizontal “single bearing”, isolação classe H conforme NEMA MG1-1.65, trifásico 380 Volts, fator de potência 0,8 fechamento em estrela com neutro acessível, 4 pólos, 60 Hz 1800 RPM, elevação de temperatura até 105/125ºC, arrefecimento por ventilador montado no próprio eixo, sistema de excitação brushless, com regulador de tensão controlado por microprocessador, que assegura máxima precisão e velocidade de correção quando das variações de carga. O sistema de excitação deve oferecer proteção contra sobrecargas, com capacidade de anular a alimentação do campo em casos de sobre-corrente nas bobinas do estator. Acoplamento monobloco por meio de disco de aço flexível. Características elétricas principais: Regulação de tensão entre vazio e plena carga: + 0,5% Regulação de frequência: Isócrono Variação randômica de frequência: + 0,25% Fator de influência telefônica (TIF): < 50 (NEMA MG1-22.43) Fator telefônico harmônico (THF): < 3 - REGULADOR ELETRÔNICO DE VELOCIDADE – VER: Sistema de injeção de combustível com Regulador Eletrônico de Velocidade, que mantém o controle preciso da rotação do motor e, consequentemente, da frequência, tornando mais rápida a recuperação da tensão após uma entrada de carga transiente (bloco de carga), torna o consumo de combustível mais eficiente e reduz o índice de emissões de gases poluentes. - PAINEL DE CONTROLE DO GRUPO MOTOR-GERADOR: Controlador microprocessado para grupos geradores que incorpora as funções de medição digital, monitoração e sistema de controle, que está instalado individualmente no motor-gerador, com interface simples, regulação digital de tensão, controle de partida/parada proteções do motor e gerador e controle integrado de ATS. Medições do motor: Temperatura, pressão do óleo, tensão de bateria e horímetro. Medições do gerador: Tensão entre fases e fase-neutro, corrente trifásica, potência aparente (kVA) e frequência. Proteções do motor: Baixa pressão do óleo lubrificante, alta e baixa temperatura do líquido de arrefecimento, alta temperatura do motor, tensão alta e tensão baixa da bateria, falha na partida, sobre-velocidade. Proteção do gerador: Tensão alta e tensão baixa, frequência alta e frequência baixa, perda das amostras de tensão. Funções técnicas: Temporizador de partida, partida/parada elétrica. - PAINEL DE CONTROLE E TRANSFERÊNCIA AUTOMÁTICA: Quadro de transferência automático, composto por um mecanismo de transferência de capacidade 500A preparado para funcionamento em regime de transferência aberta, com interrupção. Quadro de transferência automático equipado com comando e controle, digital, conforme características abaixo: A interface do painel deve possibilitar a visualização de indicação de status da transferência, posição da transferência e indicações de controle. A interface também deve possibilitar a configuração dos parâmetros do sistema e ajustes. Dispositivos de Comando e Sinalização • Botões de Controle: Teste, manual e automático; • Leds de Sinalização: Rede presente, Rede alimentando, Gerador em funcionamento e Gerador alimentando. Dispositivos de Monitoramento e Configuração: • Monitoramento da Rede: sub-tensão e subfrequência; • Configuração do Sistema: tempo de confirmação de falha de rede, tempo de transferência rede-gerador e gerador-rede, tempo de confirmação de retorno de rede, relé horário para partidas programadas, teste com carga e teste sem carga. CARENAGEM 85 dB(A) 1M: Carenagem Metálica revestida internamente com material fonoabsorvente, conforme norma UL94; Admissão de ar frio, para refrigeração do motor, feita pelas laterais frontais da carenagem; Exaustão de ar quente feita pela parte dianteira por meio de duto de exaustão, direcionando o ar e o ruído para cima; Portas para acessos laterais com fechaduras de chave única e de amplas dimensões para um cômodo acesso para serviços e manutenções; Silencioso tipo hospitalar montado no lado interno da carenagem no compartimento de exaustão de ar quente; Botão de emergência de fácil acesso no lado externo da carenagem; Ponto de içamento e movimentação da máquina localizados na base do Grupo Gerador; Projeto acústico de acordo com a norma ISO 8528-10 (Método Paralelepípedo a 1 metro de distância); Carenagem à prova de intempéries, própria para instalação ao tempo; Porta com visor para o painel de comando; Pintura com tinta a pó em base de resina poliéster com aplicação eletrostática, resistente à radiação solar e raios ultravioletas; Espaço adequado para instalação do disjuntor de saída do Grupo Gerador; Saída cabos pela lateral da carenagem; Saída de escape com tampa oscilante; Revestimento térmico na tubulação de escape do motor até o silencioso, evitando acidentes por queimaduras para o operador; Pontos de dreno do tanque de combustível e da contenção da base do gerador. ACESSÓRIOS: Deverão parte da proposta os seguintes acessórios: • Uma bateria 100 A/h; • Um tanque sub-base de 250 litros; • Um segmento elástico em inox; • Um carregador-retificador de baterias; • Um pré-aquecimento do motor; • Um silencioso tipo industrial; • Um disjuntor manual de 250A, instalado na base do Grupo Gerador, que é um dispositivo eletromecânico de proteção, capaz de estabelecer, conduzir e interromper correntes em condições normais do circuito, assim como estabelecer, conduzir por tempo especificado e interromper correntes em condições anormais especificadas do circuito, tais como as de curtocircuito. Interrompendo-a imediatamente antes que os seus efeitos térmicos e mecânicos possam causar danos ao alternador. Capacidade de serem rearmados manualmente. Diferem assim dos fusíveis, que têm a mesma função, mas que ficam inutilizados quando realizam a interrupção. • Um sistema de carenagem atenuada (enclausuramento em torno do grupo gerador), pronta para aplicação e instalação ao tempo, dimensionada para 85 dB a 1 metro; (de acordo com norma ISO 8528); • Um sistema de gerenciamento eletrônico de velocidade (R.E.V.), este que visa estabelecer a rotação do motor diesel em 1.800 RPM, garantindo a geração e estabilidade da frequência em 60 Hz; • Manuais técnicos em mídia digital; • Motor com carga inicial de todos os fluídos (óleo lubrificante e água para radiador com aditivo). • Kit filtros – O kit deve conter os elementos para filtragem dos sistemas de ar, combustível (partícula e água), óleo lubrificante e líquido refrigerante, conforme a aplicação do grupo gerador. - Material dedicado a primeira revisão. - Incluso óleo lubrificante e mão de obra para serviço"
+      }
+    }
+  },
+  "88768080000170/2026/521": {
+    "edital": "São Gabriel/RS, Pregao 68/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "3": {
+        "qtd": 1,
+        "valor": 3459.18,
+        "fonte": "planilha da especificacao do objeto",
+        "texto": "BATEDEIRA TIPO INDUSTRIAL - BATEDEIRA INDUSTRIAL MATERIAL CORPO: AÇO INOX, CAPACIDADE: 12 L, POTÊNCIA MOTOR: 1/2 CV, QUANTIDADE VELOCIDADE: 6, CARACTERÍSTICAS ADICIONAIS: COM TRÊS BATEDORES BIVOLT. SEIS OU MAIS VELOCIDADE, TENSÃO ALIMENTAÇÃO: BIVOLT."
+      },
+      "4": {
+        "qtd": 1,
+        "valor": 2026.48,
+        "fonte": "planilha da especificacao do objeto",
+        "texto": "FOGÃO INDUSTRIAL 6 BOCAS - FOGÃO INDUSTRIAL MATERIAL: AÇO INOXIDÁVEL, FUNCIONAMENTO: GÁS, TIPO ACENDIMENTO: MANUAL, TIPO USO: COZINHAR E ASSAR ALIMENTOS, CARACTERÍSTICAS ADICIONAIS: 3 QUEIMADORES DUPLOS, 3 QUEIMADORES SIMPLES E 2 FO, QUANTIDADE BOCAS: 6 U."
+      },
+      "5": {
+        "qtd": 1,
+        "valor": 3429.66,
+        "fonte": "planilha da especificacao do objeto",
+        "texto": "FREEZER HORIZONTAL - FREEZER TIPO: HORIZONTAL, CAPACIDADE MÍNIMA: 470L, QUANTIDADE TAMPAS: 2 UN, COR: BRANCA, TEMPERATURA OPERAÇÃO: DE 0 A -25 °C, TENSÃO ALIMENTAÇÃO: 220 V, CARACTERÍSTICAS ADICIONAIS: RODÍZIOS FIBRA."
+      },
+      "6": {
+        "qtd": 1,
+        "valor": 3188.06,
+        "fonte": "planilha da especificacao do objeto",
+        "texto": "GELADEIRA DOMÉSTICA - REFRIGERADOR DUPLEX CAPACIDADE REFRIGERAÇÃO: 450L, CAPACIDADE CONGELADOR: 75L, SISTEMA DEGELO: FROST FREE, COR: BRANCA, TENSÃO ALIMENTAÇÃO: 220 V, CARACTERÍSTICAS ADICIONAIS: GAVETAS CONGELADOR, TIPO: VERTICAL."
+      },
+      "9": {
+        "qtd": 1,
+        "valor": 602.44,
+        "fonte": "planilha da especificacao do objeto",
+        "texto": "MICROONDAS - FORNO MICROONDAS MATERIAL: AÇO, CAPACIDADE: 30L, POTÊNCIA: MÍNIMA DE 800W, VOLTAGEM: 110 / 220V, COR: BRANCA."
+      },
+      "10": {
+        "qtd": 1,
+        "valor": 517.8,
+        "fonte": "planilha da especificacao do objeto",
+        "texto": "FORNO ELÉTRICO - FORNO ELÉTRICO APLICAÇÃO: COMERCIAL, VOLTAGEM: 220V, CAPACIDADE: 50L, POTÊNCIA: 1.500W, COR: PRETA, CARACTERÍSTICAS ADICIONAIS: FUNÇÃO TIMER."
+      },
+      "11": {
+        "qtd": 1,
+        "valor": 6219.76,
+        "fonte": "planilha da especificacao do objeto",
+        "texto": "FORNO TURBO ELÉTRICO - FORNO ELÉTRICO APLICAÇÃO: INDUSTRIAL, VOLTAGEM: 110/220V, CAPACIDADE: 750 PÃES / HORA, MATERIAL EXTERNO: FRENTE E PORTA EM AÇO INOXIDÁVEL ESCOVADO, CARACT ADICIONAIS: 10 ESTEIRAS, VISOR DE VIDRO E FECHO REFORÇADO."
+      }
+    }
+  },
+  "45200623000146/2026/28": {
+    "edital": "São José do Barreiro/SP, Pregao 004/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "3": {
+        "qtd": 6,
+        "valor": 436.92,
+        "fonte": "termo de referencia, item 3",
+        "texto": "FORNO DE MICRO-ONDAS Micro-ondas de bancada, capacidade mínima de 20 litros; painel digital; potência mínima aproximada de 700 W; funções aquecer, descongelar e temporizador; níveis de potência; trava de segurança; prato giratório removível; iluminação interna; acabamento de fácil limpeza; eficiência energética conforme regulamentação vigente; tensão 127 V ou 220 V, a ser definida; frequência 60 Hz; plugue padrão brasileiro; garantia mínima de 12 meses. Apresentar catálogo técnico e certificação do INMETRO, quando aplicável."
+      }
+    }
+  },
+  "95719373000123/2026/107": {
+    "edital": "Mercedes/PR, Pregao 89/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "2": {
+        "qtd": 2,
+        "valor": 2925.73,
+        "fonte": "termo de referencia, item 2",
+        "texto": "BEBEDOURO INDUSTRIAL: 50 litros (mín.); 2 torneiras em metal cromado; 127V ou 220V; dimensões: 1.350cm altura x 650cm largura x 550cm profundidade; com termostato regulador de temperatura; em inox 403; reservatório confeccionado em polipropileno atóxico; serpentina interna em inox 304; com boia controladora do nível de água; com pingadeira e dreno; isolante térmico EPS."
       }
     }
   }
