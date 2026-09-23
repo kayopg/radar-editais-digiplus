@@ -420,8 +420,10 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // potes plasticos "pode ser utilizado em freezer" (Marcelandia/MT) e
 // descascador/bolador manual de frutas (Campo Mourao/PR), 23/09/2026
 "porta mantimentos","bolador",
-// churrasqueira nao e cotada (decisao do usuario em 23/09/2026)
-"churrasqueira",
+// churrasqueira e moedor de cafe nao sao cotados (decisao do usuario em
+// 23/09/2026). So o de CAFE: o "cilindro com extrusor e moedor" de
+// Arvorezinha/RS e outra maquina e continua.
+"churrasqueira","moedor de cafe","moinho de cafe",
 // lavadora extratora hospitalar de 50 kg com barreira sanitaria (Sonora/MS,
 // decisao do usuario em 21/09/2026)
 "lavadora de roupas hospitalar","lavadora hospitalar","barreira sanitaria",
