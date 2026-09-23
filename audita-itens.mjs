@@ -21,9 +21,10 @@ const bloco = fonte.slice(fonte.indexOf('const CAT = ['), fonte.indexOf('\n];', 
 const CAT = eval(bloco.replace('const CAT = ', '') + '');
 
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-const NOME = { RF: 'Refrigeração', CL: 'Climatização', CC: 'Cocção', PR: 'Preparo',
-  EP: 'Eletroportáteis', LV: 'Lavanderia', BB: 'Bebedouro', CX: 'Coifa/Exaustão',
-  BL: 'Balanças', LD: 'Lousa digital', GE: 'Geradores', AQ: 'Aquecimento', OT: 'Outros' };
+// Os mesmos rotulos do docs/index.html: a categoria diz o que o aparelho FAZ.
+const NOME = { RF: 'Para gelar', CL: 'Para climatizar', CC: 'Para cozinhar', PR: 'Para preparar',
+  EP: 'Para o dia a dia', LV: 'Para lavar', BB: 'Para beber', CX: 'Para exaustão',
+  BL: 'Balanças', LD: 'Lousa digital', GE: 'Para gerar energia', AQ: 'Para aquecer água', OT: 'Outros' };
 
 const qual = d => {
   for (const [c, ts] of CAT) for (const t of ts) if (d.includes(t)) return [c, t];

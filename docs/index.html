@@ -296,7 +296,11 @@ button.btn{font-family:inherit;cursor:pointer}
 <script src="pdf.js"></script>
 <script src="pdf-le.js"></script>
 <script>
-var CAT={RF:"Refrigeração",CL:"Climatização",CC:"Cocção",PR:"Preparo",EP:"Eletroportáteis",LV:"Lavanderia",BB:"Bebedouro",CX:"Coifa/Exaustão",BL:"Balanças",LD:"Lousa digital",GE:"Geradores",AQ:"Aquecimento",OT:"Outros"};
+// As categorias pelo que o aparelho FAZ, e não pelo nome de catálogo: o usuário
+// pediu assim em 23/09/2026 ("Para gelar: geladeiras, freezer, etc; Para lavar:
+// lavadora, secadora, etc"). BL e LD já não entram na varredura; ficam no mapa
+// só para o dado antigo não aparecer sem nome.
+var CAT={RF:"Para gelar",CL:"Para climatizar",CC:"Para cozinhar",PR:"Para preparar",EP:"Para o dia a dia",LV:"Para lavar",BB:"Para beber",CX:"Para exaustão",BL:"Balanças",LD:"Lousa digital",GE:"Para gerar energia",AQ:"Para aquecer água",OT:"Outros"};
 // [mun, uf, orgao, edital, fecha, qtd, valor, path, itens[[cat,qtd,vunit,desc]]]
 // [mun, uf, orgao, edital, fecha, qtd, valor, path, itens[[cat,qtd,vunit,desc]]]
 var D=[];
@@ -570,10 +574,10 @@ function abreCard(card){
 // Gera arquivo .pdf de verdade e dispara o download, via docs/pdf.js.
 // Nao usa window.print(): a caixa de impressao nunca salva arquivo direto,
 // e no celular ela e um passo a mais entre o usuario e o documento.
-var CATPDF = { RF:"Refrigeracao", CL:"Climatizacao", CC:"Coccao", PR:"Preparo",
-               EP:"Eletroportateis", LV:"Lavanderia", BB:"Bebedouro",
-               CX:"Coifa/Exaustao", OT:"Outros" };
-CATPDF = CAT;   // usa os rotulos acentuados ja definidos no topo
+// O PDF usa os mesmos rotulos da pagina. Havia aqui uma segunda tabela, sem
+// acento, que a linha de baixo sobrescrevia desde que o gerador passou a
+// escrever acentuacao: ela so guardava nomes velhos.
+var CATPDF = CAT;
 
 function moeda(v){
   return "R$ " + v.toLocaleString("pt-BR", {minimumFractionDigits:2, maximumFractionDigits:2});
