@@ -184,6 +184,71 @@ let partesCapas = [];
     + ` ${resto.length} em ${partesCapas.length} arquivo(s) ao lado`
     + partesCapas.map(p => ` capas-${p.n}.js ${(p.tam / 1024 / 1024).toFixed(1)} MB`).join(','));
 }
+// ---------------------------------- edital convertido para PDF
+// O edital-pdf.mjs converte o edital publicado em ZIP, RAR, DOC, DOCX, ODT ou
+// RTF. O indice (leve) vai na pagina, para o card saber que ha PDF; os bytes
+// vao em arquivos ao lado, como as folhas de abertura, e so o do edital
+// clicado e buscado. Sem o editais-pdf.json o card fica como era.
+const ORCAMENTO_EDITAIS_MB = 16;
+let editaisPdf = { editais: {} };
+try { editaisPdf = JSON.parse(doc('editais-pdf.json')); } catch { /* sem conversao nesta maquina */ }
+const mapaEdital = {}, indiceEdital = {};
+let partesEditais = [];
+{
+  const iPath = dados.colunas.indexOf('path');
+  const noRadar = new Set(dados.editais.map(e => e[iPath]));
+  const todos = Object.entries(editaisPdf.editais || {})
+    .filter(([k, v]) => noRadar.has(k) && v && v.b64)
+    .map(([k, v]) => [k, v, Math.round(v.b64.length * 0.75)])
+    .sort((a, b) => a[2] - b[2]);
+  let usado = 0, atual = null, fora = 0;
+  for (const [k, v, bytes] of todos) {
+    const naPagina = bytes * 4 / 3;
+    if (usado + naPagina > ORCAMENTO_EDITAIS_MB * 1024 * 1024) { fora++; continue; }
+    if (!atual || atual.tam + naPagina > PARTE_MB * 1024 * 1024) {
+      atual = { n: partesEditais.length + 1, editais: {}, tam: 0 };
+      partesEditais.push(atual);
+    }
+    atual.editais[k] = v.b64;
+    atual.tam += naPagina; usado += naPagina;
+    mapaEdital[k] = atual.n;
+    indiceEdital[k] = { de: v.de, paginas: v.paginas, nome: v.nome, origem: v.origem };
+  }
+  if (partesEditais.length) fs.mkdirSync(pastaCapas, { recursive: true });
+  for (const p of partesEditais) {
+    fs.writeFileSync(path.join(pastaCapas, 'editais-' + p.n + '.js'),
+      'RADAR_EDITAL_PARTE(' + p.n + ',' + JSON.stringify(p.editais).replace(/</g, '\\u003c') + ');\n', 'utf8');
+  }
+  if (todos.length) console.log(`editais convertidos em PDF: ${Object.keys(indiceEdital).length} em ${partesEditais.length} arquivo(s)`
+    + partesEditais.map(p => ` editais-${p.n}.js ${(p.tam / 1024 / 1024).toFixed(1)} MB`).join(',')
+    + (fora ? ` · ${fora} fora do orcamento de ${ORCAMENTO_EDITAIS_MB} MB` : ''));
+}
+html = html.replace(ancora, `var RADAR_EDITAIS_PDF = ${JSON.stringify(indiceEdital).replace(/</g, '\\u003c')};
+var RADAR_EDITAL_PDF = (function(){
+  var MAPA = ${JSON.stringify(mapaEdital)}, bytes = {}, espera = {};
+  window.RADAR_EDITAL_PARTE = function(n, editais){
+    for (var k in editais) bytes[k] = editais[k];
+    if (espera[n]) espera[n].pronto();
+  };
+  function parte(n){
+    if (!espera[n]) {
+      var pronto, p = new Promise(function(ok){ pronto = ok; });
+      espera[n] = { p: p, pronto: pronto };
+      var s = document.createElement("script");
+      s.src = "editais-" + n + ".js";
+      s.onload = s.onerror = function(){ pronto(); };
+      document.head.appendChild(s);
+    }
+    return espera[n].p;
+  }
+  return function(caminho){
+    if (bytes[caminho]) return Promise.resolve(bytes[caminho]);
+    var n = MAPA[caminho];
+    if (!n) return Promise.resolve(null);
+    return parte(n).then(function(){ return bytes[caminho] || null; });
+  };
+})();
+` + ancora);
 html = html.replace(ancora,
   'var RADAR_ABERTURAS = ' + JSON.stringify(aberturas).replace(/</g, '\\u003c') + ';\n' + ancora);
 // O carregaAberturas do index.html usa esta funcao quando ela existe. Cada

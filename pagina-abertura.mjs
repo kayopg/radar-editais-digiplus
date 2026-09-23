@@ -28,38 +28,13 @@ import { createRequire } from 'node:module';
 import { textoDasPaginas } from './paginas-uteis.mjs';
 import { arquivosPublicados, fontesDe, PDF } from './resumo-pdf.mjs';
 import { abreZip } from './arquivo-oficial.mjs';
-import os from 'node:os';
-import { spawnSync } from 'node:child_process';
+import { pdfDeDocumento } from './pdf-do-documento.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const LE = createRequire(import.meta.url)(path.join(DIR, 'docs', 'pdf-le.js'));
 
-// Edital so em Word (Paranavai/PR, Nova Prata do Iguacu/PR — 18/09/2026): sem
-// PDF a folha de abertura nao existe, porque quem pagina o documento e o editor
-// de texto. Aqui ele e paginado de verdade: LibreOffice se houver, senao o Word
-// pelo COM do Windows. Isto so roda na maquina de quem monta o artefato — o
-// robo do GitHub nao tem nenhum dos dois, e ali o edital segue sem capa.
-function pdfDoWord(bytes, ext) {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'word-'));
-  const ent = path.join(dir, 'edital.' + ext), sai = path.join(dir, 'edital.pdf');
-  fs.writeFileSync(ent, Buffer.from(bytes));
-  try {
-    for (const soffice of ['soffice', 'C:\\Program Files\\LibreOffice\\program\\soffice.exe']) {
-      spawnSync(soffice, ['--headless', '--convert-to', 'pdf', '--outdir', dir, ent], { stdio: 'ignore', timeout: 120000 });
-      if (fs.existsSync(sai)) return new Uint8Array(fs.readFileSync(sai));
-    }
-    if (process.platform === 'win32') {
-      // Documents.Open(arquivo, ConfirmConversions=false, ReadOnly=true);
-      // 17 = wdExportFormatPDF
-      const ps = `$w = New-Object -ComObject Word.Application; $w.Visible = $false; $w.DisplayAlerts = 0; `
-        + `try { $d = $w.Documents.Open('${ent}', $false, $true); $d.ExportAsFixedFormat('${sai}', 17); $d.Close($false) } finally { $w.Quit() }`;
-      spawnSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], { stdio: 'ignore', timeout: 180000 });
-      if (fs.existsSync(sai)) return new Uint8Array(fs.readFileSync(sai));
-    }
-    return null;
-  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
-}
-
+// Edital so em Word, ODT ou RTF: quem converte para PDF e o pdf-do-documento.mjs
+// (LibreOffice ou Word). Sem conversor na maquina, o edital segue sem capa.
 // Os bytes do documento Word que o fontesDe leu como texto: o proprio arquivo
 // publicado, ou o .doc/.docx de dentro do zip (Nova Prata do Iguacu/PR).
 async function wordDe(c, nomeDentro) {
@@ -395,7 +370,7 @@ await pool(alvos, 2, async (e) => {
       const f = await fontesDe(c, [], 12);
       if (!f.pdfs.length && f.texto && /^DOCX?$/.test(f.texto.formato)) {
         const w = await wordDe(c, f.texto.nome);
-        const pdf = w && pdfDoWord(w.bytes, w.ext);
+        const pdf = w && pdfDeDocumento(w.bytes, w.ext);
         if (pdf) f.pdfs = [{ nome: String(f.texto.nome || c.titulo || 'edital') + ' (paginado do Word)', bytes: pdf }];
       }
       const pdfs = [...f.pdfs].sort((a, b) => prioridadeCapa(b.nome, '') - prioridadeCapa(a.nome, ''));

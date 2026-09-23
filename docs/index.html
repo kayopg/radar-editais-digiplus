@@ -490,7 +490,11 @@ function render(){
       +(r[20] ? '<button type="button" class="btn part" data-fora="'+esc(r[20])+'" title="Abre em uma nova aba">'
         +(/^mailto:/i.test(r[20]) ? 'Participar por e-mail' : 'Participar'+portalCurto(r[18], r[20]))+' ↗</button>' : '')
       +'<button type="button" class="btn'+(r[20] ? ' alt' : '')+'" data-fora="https://pncp.gov.br/app/editais/'+r[7]+'" title="Abre em uma nova aba">Abrir no PNCP ↗</button>'
-      +'<a class="btn alt" target="_blank" rel="noopener" href="https://pncp.gov.br/api/pncp/v1/orgaos/'+pp[0]+"/compras/"+pp[1]+"/"+pp[2]+'/arquivos/'+(r[13]||1)+'">'+(r[14]?"Baixar edital ("+String(r[14]).toUpperCase()+")":"Baixar edital (arquivo oficial)")+'</a>'
+      // Edital que o órgão publicou em ZIP, RAR, DOC, DOCX, ODT ou RTF viaja
+      // convertido para PDF (ver edital-pdf.mjs): o botão entrega o PDF e o
+      // link ao lado continua levando ao arquivo original no PNCP.
+      +(convertido(r) ? '<button class="btn alt" type="button" onclick="baixaEditalPdf(this,'+D.indexOf(r)+')" title="'+esc(descreveConvertido(r))+'">Baixar edital (PDF)</button>' : '')
+      +'<a class="btn alt" target="_blank" rel="noopener" href="https://pncp.gov.br/api/pncp/v1/orgaos/'+pp[0]+"/compras/"+pp[1]+"/"+pp[2]+'/arquivos/'+(r[13]||1)+'">'+(convertido(r)?"Arquivo original ("+String(r[14]).toUpperCase()+")":r[14]?"Baixar edital ("+String(r[14]).toUpperCase()+")":"Baixar edital (arquivo oficial)")+'</a>'
       +'<button class="btn alt" type="button" onclick="resumo(this,'+D.indexOf(r)+')">Baixar resumo + edital</button>'
       +notaParticipar(r, fechado)
       +'</div></div></div>';
@@ -990,6 +994,39 @@ function carregaAberturas(caminho){
     .then(function(resp){ return resp.ok ? resp.json() : null; })
     .then(function(j){ ABERTURAS = j && j.editais ? j : { editais:{} }; return ABERTURAS; })
     .catch(function(){ ABERTURAS = { editais:{} }; return ABERTURAS; });
+}
+
+// ------------------------------------ edital convertido para PDF
+// O órgão publica o edital em ZIP, RAR, DOC, DOCX, ODT ou RTF; o
+// edital-pdf.mjs converte fora do navegador e o artefato.mjs embute o índice
+// (RADAR_EDITAIS_PDF) e os bytes (RADAR_EDITAL_PDF, em arquivos ao lado).
+// No site os dois não existem e o card mostra só o link do PNCP, como antes.
+function convertido(r){
+  return (typeof RADAR_EDITAIS_PDF === "object" && RADAR_EDITAIS_PDF && RADAR_EDITAIS_PDF[r[7]]) || null;
+}
+function descreveConvertido(r){
+  var c = convertido(r);
+  if(!c) return "";
+  var de = String(c.de || "").toUpperCase();
+  var como = /convertido/.test(c.origem || "") ? "convertido para PDF" : "tirado de dentro do " + de;
+  return "O órgão publicou em " + de + "; este é o " + (c.nome || "edital") + " "
+       + como + " (" + c.paginas + " páginas).";
+}
+async function baixaEditalPdf(botao, i){
+  var r = D[i]; if(!r || !convertido(r)) return;
+  var rotulo = botao.textContent;
+  botao.disabled = true; botao.textContent = "baixando…";
+  var res = null;
+  try{
+    var b64 = typeof RADAR_EDITAL_PDF === "function" ? await RADAR_EDITAL_PDF(r[7]) : null;
+    if(!b64) throw new Error("o PDF convertido não veio junto");
+    res = await RadarPDF.baixa(bytesDeBase64(b64),
+      nomeArquivo(r[0] + " " + r[1] + " - edital " + numeroEdital(r[3]) + ".pdf"));
+  }catch(e){ res = { ok:false, motivo:e.message }; }
+  botao.disabled = false;
+  var erro = res && res.ok === false && res.motivo;
+  botao.textContent = erro ? "não deu para salvar" : rotulo;
+  if(erro){ console.error("edital em PDF:", res.motivo); setTimeout(function(){ botao.textContent = rotulo; }, 4000); }
 }
 
 function bytesDeBase64(b64){

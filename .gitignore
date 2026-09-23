@@ -24,6 +24,8 @@ resumos.anterior/
 radar-artefato.html
 resumos.*/
 docs/aberturas.json
+# O edital convertido para PDF (edital-pdf.mjs): so viaja dentro do artefato.
+docs/editais-pdf.json
 
 # Capas que nao cabem na pagina do artefato, publicadas ao lado dela.
 radar-capas/
