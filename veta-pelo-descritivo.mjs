@@ -118,7 +118,7 @@ const mostra = process.argv.includes('--mostra');
 let fora = {};
 try { fora = JSON.parse(fs.readFileSync(path.join(DIR, 'editais-fora.json'), 'utf8')); } catch { /* sem lista */ }
 
-let tirados = 0, editaisFora = 0, recategorizados = 0, limpos = 0;
+let tirados = 0, editaisFora = 0, recategorizados = 0, limpos = 0, semDescritivo = 0;
 const ficam = [];
 for (const e of dados.editais) {
   // O HTML e a acentuacao quebrada do PNCP (ver texto-pncp.mjs), tambem no
@@ -161,6 +161,14 @@ for (const e of dados.editais) {
   const itens = e[C.itens].filter(it => {
     const x = (v.itens || []).find(y => y[0] == it[5]);
     const d = norm(x && x[6]);
+    // Item sem descritivo sai: sem a especificacao do edital o card nao serve
+    // para cotar (decisao do usuario em 23/09/2026). O edital que fica sem item
+    // nenhum sai junto, na conta logo abaixo.
+    if (!d) {
+      semDescritivo++;
+      console.log(`sem descritivo · ${it[0]} · ${nome} · item ${it[5]}: ${String(it[3]).replace(/\s+/g, ' ').slice(0, 100)}`);
+      return false;
+    }
     // a instalacao vale tambem no texto do PNCP, que muitas vezes traz a
     // informacao complementar do item colada na descricao
     const noCatalogo = vetoDoCatalogo(norm(it[3]), it[0]) || (!UF_INSTALA.has(e[C.uf]) && exigeInstalacao(norm(it[3])));
@@ -200,9 +208,9 @@ for (const e of ficam) {
 }
 ficam.length = 0; ficam.push(...porNumero.values());
 
-console.log(`${tirados} item(ns) vetado(s) pelo descritivo, ${editaisFora} edital(is) fora, ${recategorizados} item(ns) de categoria corrigida`);
+console.log(`${tirados} item(ns) vetado(s) pelo descritivo, ${semDescritivo} sem descritivo, ${editaisFora} edital(is) fora, ${recategorizados} item(ns) de categoria corrigida`);
 if (limpos) console.log(`${limpos} texto(s) do PNCP limpos de HTML e acentuacao quebrada`);
-if (!mostra && (tirados || editaisFora || recategorizados || limpos)) {
+if (!mostra && (tirados || semDescritivo || editaisFora || recategorizados || limpos)) {
   dados.editais = ficam;
   dados.meta.editais = ficam.length;
   // O porUf vem do publicar.mjs, que rodou ANTES deste veto — sem recalcular
