@@ -424,6 +424,9 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // 23/09/2026). So o de CAFE: o "cilindro com extrusor e moedor" de
 // Arvorezinha/RS e outra maquina e continua.
 "churrasqueira","moedor de cafe","moinho de cafe",
+// enceradeira/lustradeira de piso nao e cotada (decisao do usuario em
+// 23/09/2026). A camara fria, perguntada junto, FICA.
+"enceradeira","lustradeira",
 // fogao de brinquedo: "O fogao devera ser confeccionado em fibra de MADEIRA
 // PRENSADA (MDF) ... botoes reguladores de gas devem possuir mecanismo para ser
 // girados ... similar a um botao de fogao real. Dimensoes: 53 x 37 x 30 cm"
