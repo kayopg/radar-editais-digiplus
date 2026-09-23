@@ -107,7 +107,7 @@ const fases = [
     saiuRot: 'com produto nosso',
     nota: 'lê o item a item de cada edital e guarda só o que a Digiplus cota',
     cortes: [item('sem item publicado', st.semItem), item('item de serviço', st.itemServ),
-      item('objeto de serviço', st.objServ), item('balança médica/laboratório', st.vBalanca),
+      item('objeto de serviço', st.objServ),
       item('abaixo do piso de preço', st.vPiso), item('equipamento científico', st.vCient),
       item('item cancelado', st.vCancel), item('edital repetido', st.dup)] },
   { nome: 'Portal de disputa',

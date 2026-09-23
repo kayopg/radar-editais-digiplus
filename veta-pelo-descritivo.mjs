@@ -43,7 +43,6 @@ const PISO_EDITAL = Number((fonte.match(/const PISO_EDITAL = (\d+)/) || [])[1]) 
 // feita para a descricao curta do catalogo, e no texto do edital "prateleira",
 // "compressor" e "condensador" sao parte da geladeira e do ar-condicionado.
 const VETO = {
-  BL: lista('VETO_BL_MEDICA'),
   // e o freezer de ultrabaixa temperatura, "-50 a -86 °C" (Paranavai/PR,
   // item 24, que o catalogo chama de "Refrigerador Alimentos", 22/09/2026)
   RF: ['imunobiolog', 'termolab', 'hemocompon', 'vacina', '-86', '-80 °c', 'ultrabaix', 'ultra baix'],
@@ -67,7 +66,7 @@ const VETO = {
 // varredura.mjs as aplica: termo novo entra no dados.json ja publicado sem
 // esperar a proxima varredura.
 const VETO_OBJ_SEMPRE = JSON.parse((fonte.match(/const VETO_OBJ_SEMPRE = new Set\((\[[^\]]*\])\)/) || [, '[]'])[1]);
-const VETO_ITEM = lista('VETO_ITEM'), VETO_RF_CIENT = lista('VETO_RF_CIENT'), VETO_BL_MEDICA = lista('VETO_BL_MEDICA');
+const VETO_ITEM = lista('VETO_ITEM'), VETO_RF_CIENT = lista('VETO_RF_CIENT');
 const RE_VAN = /(^|[^a-z])vans?([^a-z]|$)/;       // o mesmo do varredura.mjs
 const VETO_FORA_DE = { projetor: 'LD' };           // idem
 // A tabela de categorias e o limite de posicao do termo, tambem do varredura.mjs:
@@ -83,8 +82,7 @@ const termoMaisCedo = criaPosicaoDoTermo(CAT);
 const vetoItem = criaVetoItem({ VETO_ITEM, VETO_SO_NA_FRENTE: lista('VETO_SO_NA_FRENTE'), VETO_FORA_DE, RE_VAN, posicaoDoTermo: termoMaisCedo });
 const vetoDoCatalogo = (d, cat) => ((termoMaisCedo(d) || { i: 0 }).i > TERMO_LONGE && 'termo da categoria so no fim da descricao')
   || vetoItem(d, cat)
-  || (cat === 'RF' && VETO_RF_CIENT.find(v => d.includes(v)))
-  || (cat === 'BL' && VETO_BL_MEDICA.find(v => d.includes(v)));
+  || (cat === 'RF' && VETO_RF_CIENT.find(v => d.includes(v)));
 
 // Aparelho que o edital manda entregar instalado sai, menos no RS e em SC, onde a
 // Digiplus instala (decisao do usuario, 17/09/2026; o lado do catalogo esta no
@@ -118,7 +116,7 @@ const mostra = process.argv.includes('--mostra');
 let fora = {};
 try { fora = JSON.parse(fs.readFileSync(path.join(DIR, 'editais-fora.json'), 'utf8')); } catch { /* sem lista */ }
 
-let tirados = 0, editaisFora = 0, recategorizados = 0, limpos = 0, semDescritivo = 0;
+let tirados = 0, editaisFora = 0, recategorizados = 0, limpos = 0, semDescritivo = 0, foraDeCategoria = 0;
 const ficam = [];
 for (const e of dados.editais) {
   // O HTML e a acentuacao quebrada do PNCP (ver texto-pncp.mjs), tambem no
@@ -161,6 +159,13 @@ for (const e of dados.editais) {
   const itens = e[C.itens].filter(it => {
     const x = (v.itens || []).find(y => y[0] == it[5]);
     const d = norm(x && x[6]);
+    // Categoria que saiu do radar — BL, as balancas, em 23/09/2026. O item
+    // continua no dados.json publicado ate a proxima varredura, entao sai aqui.
+    if (!CAT.some(([c]) => c === it[0])) {
+      foraDeCategoria++;
+      console.log(`categoria ${it[0]} nao existe mais · ${nome} · item ${it[5]}: ${String(it[3]).replace(/\s+/g, ' ').slice(0, 80)}`);
+      return false;
+    }
     // Item sem descritivo sai: sem a especificacao do edital o card nao serve
     // para cotar (decisao do usuario em 23/09/2026). O edital que fica sem item
     // nenhum sai junto, na conta logo abaixo.
@@ -208,9 +213,9 @@ for (const e of ficam) {
 }
 ficam.length = 0; ficam.push(...porNumero.values());
 
-console.log(`${tirados} item(ns) vetado(s) pelo descritivo, ${semDescritivo} sem descritivo, ${editaisFora} edital(is) fora, ${recategorizados} item(ns) de categoria corrigida`);
+console.log(`${tirados} item(ns) vetado(s) pelo descritivo, ${semDescritivo} sem descritivo, ${foraDeCategoria} de categoria que saiu, ${editaisFora} edital(is) fora, ${recategorizados} item(ns) de categoria corrigida`);
 if (limpos) console.log(`${limpos} texto(s) do PNCP limpos de HTML e acentuacao quebrada`);
-if (!mostra && (tirados || semDescritivo || editaisFora || recategorizados || limpos)) {
+if (!mostra && (tirados || semDescritivo || foraDeCategoria || editaisFora || recategorizados || limpos)) {
   dados.editais = ficam;
   dados.meta.editais = ficam.length;
   // O porUf vem do publicar.mjs, que rodou ANTES deste veto — sem recalcular

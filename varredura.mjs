@@ -59,7 +59,7 @@ const CAT = [
   // CX voltou em 01/09/2026: saiu de manha, quando "coifas" entrou na lista de
   // retirar, e voltou de tarde com "coifa industrial" e "exaustores".
   ["CX",["coifa","coifa industrial","depurador","exaustor","exaustor industrial","coifa de parede","coifa central"]],
-  ["BL",["balanca","balanca comercial","balanca industrial","balanca digital","balanca de plataforma","balanca eletronica"]],
+  // BL (balancas) saiu em 23/09/2026: o usuario nao cota balanca.
   ["LD",["lousa digital","lousa interativa","lousa eletronica","quadro interativo","painel interativo","tela interativa"]],
   // GE entrou em 01/09/2026: gerador nao e climatizacao nem cozinha, e virava
   // "Outros" — categoria que a pagina mostra como se fosse sobra.
@@ -480,47 +480,8 @@ const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 // precisar adivinhar o contexto pelo texto.
 const VETO_RF_CIENT = ['imunobiolog','termolab','hemocompon','laboratori','vacina'];
 
-// 5.3d - balanca medica e de laboratorio (01/09/2026). "balanca" entrou como
-// termo e trouxe 143 itens, dos quais 95 sao de outro mercado: antropometrica
-// (pediatrica, para obeso, de bioimpedancia), analitica de laboratorio com
-// resolucao de 0,0001 g, e ate uma cama hospitalar e uma mesa de apoio para
-// balanca. Sobram 48, que sao as comerciais e industriais: cozinha, plataforma,
-// eletronica digital.
-//
-// Escopado em BL, como o VETO_RF_CIENT e em RF: "paciente" e "corporal" soltos
-// derrubariam item legitimo de outra categoria. "antopometr" nao e erro meu, e
-// como o orgao escreveu ("BALANCA ANTOPOMETRICA ADULTO"). E o veto e por
-// PRODUTO, nao pela palavra: "balanca precisao" veta a balanca de precisao, mas
-// "precisao minima de 5 g" na balanca comercial de 15 kg continua passando.
-const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioimpedanc',
-  'biompedanc','pesar pessoas','obeso','paciente','corporal','balanca analitica',
-  'analitica de precisao','balanca precisao','balanca de precisao','cama hospitalar',
-  'mesa auxiliadora','tipo balanca','paleteira','pilha tipo bateria',
-  // Acrescentados em 04/09/2026, na conferencia item a item dos 291 itens do
-  // lote. Os quatro primeiros nem balanca sao: a palavra aparece no meio da
-  // descricao de outro produto — a incubadora neonatal que tem "modulo ii: c/
-  // balanca", e a placa de PVC escrita "aguarde a sua vez para entrar na
-  // balanca". Os demais sao balanca de pesar gente, que o usuario ja tinha
-  // dito ser outro mercado, escritos de um jeito que a lista nao pegava.
-  'incubadora','placa sinalizadora','sinalizadora','pesagem de pessoas',
-  'balanca infantil','digital infantil','com regua','coluna articulada',
-  // 16/09/2026: a semi-analitica de 0,001 g da UFSM e a rodoviaria de 120
-  // toneladas, instalada e com obra civil, de Alcinopolis/MS
-  'semi-analitica','semi analitica','semianalitica','rodoviaria',
-  // 21/09/2026: balanca de banheiro e de bebe em compra de saude (Pato Branco/PR,
-  // Rio Pardo de Minas/MG, Flores de Goias/GO). 180 kg e a capacidade da
-  // balanca de pesar gente; a de plataforma comercial e 150, 200 ou 300 kg.
-  '180 kg','180kg','de banheiro','plataforma em vidro','em vidro temperado','para bebe','recem-nascido','recem nascido','neonat',
-  // e a portatil de 200 kg com tapete antiderrapante, de pesar paciente na UBS
-  // (Uruguaiana/RS, decisao do usuario em 21/09/2026)
-  'tapete anti-derrapante','tapete antiderrapante','tapete anti derrapante',
-  // "Balanca de laboratorio, tipo analitica, 0,0001 g" (Januaria/MG, 22/09/2026)
-  'tipo analitica','balanca de laboratorio',
-  // "BALANCA DIGITAL ATROPOMETRICA" (sic, Sao Gabriel/RS) e "BALANCA DIGITAL DE
-  // VIDRO TEMPERADO" para a UBS (Timburi/SP)
-  'atropometr','de vidro temperado',
-  // "BALANCA ADULTO DIGITAL 150KG" (Rio Paranaiba/MG, 22/09/2026)
-  'balanca adulto','adulto'];
+// Balancas sairam do radar em 23/09/2026: o usuario nao cota balanca, entao a
+// categoria BL deixou de existir e a lista de vetos dela nao e mais necessaria.
 
 // ---------------------------------------------------------------- utilidades
 // Cada linha de progresso sai carimbada com o tempo decorrido.
@@ -753,7 +714,7 @@ const VETO_FORA_DE = { projetor: 'LD' };
 const vetoDoItem = criaVetoItem({ VETO_ITEM, VETO_SO_NA_FRENTE, VETO_FORA_DE, RE_VAN, posicaoDoTermo });
 const temVeto = (d, cat) => !!vetoDoItem(d, cat);
 
-let vPiso = 0, vCient = 0, vBalanca = 0, vCancel = 0;
+let vPiso = 0, vCient = 0, vCancel = 0;
 const st = { objServ: 0, itemServ: 0, itemInstala: 0, semItem: 0, ok: 0 };
 const bruto = [];
 for (const o of cands) {
@@ -794,7 +755,6 @@ for (const o of cands) {
   for (const [cat, it, d] of interesse) {
     if (temVeto(d, cat)) continue;
     if (cat === 'RF' && VETO_RF_CIENT.some(v => d.includes(v))) { vCient++; continue; }
-    if (cat === 'BL' && VETO_BL_MEDICA.some(v => d.includes(v))) { vBalanca++; continue; }
     if (!itemVivo(it.sit)) { vCancel++; continue; }
     const v = +it.v || 0;
     if (v > 0 && v < PISO_ITEM && !SEM_PISO.some(p => d.includes(p)) && !salvoPeloVolume(v, +it.q || 0)) continue;
@@ -1064,7 +1024,7 @@ for (const e of fin) st.porUf[e.uf] = (st.porUf[e.uf] || 0) + 1;
 // Data em America/Sao_Paulo, nao em UTC: rodando de noite no Brasil o toISOString
 // ja virou o dia e a varredura saia carimbada com a data de amanha.
 const hojeISO = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
-const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vMod, porModalidade, vOrgao, vDevedor, porDevedor, vCient, vBalanca, vCancel, vPiso, vObj, vData, candidatos: cands.length, errItens, ...st };
+const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vMod, porModalidade, vOrgao, vDevedor, porDevedor, vCient, vCancel, vPiso, vObj, vData, candidatos: cands.length, errItens, ...st };
 const bruta = { st: resumo, editais: fin };
 
 // A saida bruta nao vai para o git (uns 320 KB por dia). O que o site consome
