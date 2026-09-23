@@ -591,6 +591,12 @@
         "valor": 1933.33,
         "fonte": "termo de referencia, item 1",
         "texto": "AR CONDICIONADO SPLIT 9.000 BTUS QUENTE/FRIO 220 V."
+      },
+      "8": {
+        "qtd": 2,
+        "valor": 173.67,
+        "fonte": "termo de referencia (tabela escaneada, so o nome esta legivel)",
+        "texto": "VENTILADOR PORTÁTIL."
       }
     }
   },
@@ -705,6 +711,18 @@
         "valor": 2925.73,
         "fonte": "termo de referencia, item 2",
         "texto": "BEBEDOURO INDUSTRIAL: 50 litros (mín.); 2 torneiras em metal cromado; 127V ou 220V; dimensões: 1.350cm altura x 650cm largura x 550cm profundidade; com termostato regulador de temperatura; em inox 403; reservatório confeccionado em polipropileno atóxico; serpentina interna em inox 304; com boia controladora do nível de água; com pingadeira e dreno; isolante térmico EPS."
+      }
+    }
+  },
+  "88000914000101/2026/209": {
+    "edital": "Viamão/RS, Pregao 67/2026",
+    "conferido": "2026-09-22",
+    "itens": {
+      "2": {
+        "qtd": 20,
+        "valor": 3472.33,
+        "fonte": "termo de referencia, item 1 do edital",
+        "texto": "Fogão Industrial com 06 bocas com 01 forno de baixa pressão a gás. Estrutura de aço carbono, com pintura Epóxi. Queimadores fabricados em ferro fundido com alto padrão de dureza. 03 Queimadores Simples e 03 Queimadores Duplos. Dimensão das grelhas de 40x40 cm. Fornos confeccionados em aço inox 430 na frente e na porta, internamente em chapa galvanizada. Capacidade do forno mínimo de 73 Litros. Para utilização de gás GLP. Garantia de 12 (doze) meses"
       }
     }
   }

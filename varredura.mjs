@@ -416,6 +416,10 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // e o purificador de laboratorio por resina de troca ionica (deionizador de
 // 1.800 L/h, Sao Gabriel/RS, pregao 68/2026, 22/09/2026)
 "deionizador","deionizacao",
+// utensilio de cozinha que entrava pela palavra solta do texto: conjunto de
+// potes plasticos "pode ser utilizado em freezer" (Marcelandia/MT) e
+// descascador/bolador manual de frutas (Campo Mourao/PR), 23/09/2026
+"porta mantimentos","bolador",
 // lavadora extratora hospitalar de 50 kg com barreira sanitaria (Sonora/MS,
 // decisao do usuario em 21/09/2026)
 "lavadora de roupas hospitalar","lavadora hospitalar","barreira sanitaria",

@@ -683,6 +683,10 @@ const VALORES_DA_LINHA = [
   // Unidade, colunas numericas e os dois precos no meio da celula: "...ao redor
   // da Un 1 1 1 3.219,31 3.219,31 mesa central" (Nova Fatima/PR).
   /\s(?:Un|UN|Und|UND)\s+\d{1,4}(?:\s+\d{1,4}){0,3}\s+[\d.]+,\d{2}\s+[\d.]+,\d{2}(?=\s)/g,
+  // Quantidade e precos de quatro casas no meio da celula: "Ar-condicionado
+  // tipo Split Piso- 10 11.980,8333 119.808,33 Teto, com capacidade de 60.000
+  // BTU/h" (Maquine/RS, 22/09/2026).
+  /\s\d{1,4}\s+[\d.]+,\d{4}\s+[\d.]+,\d{2}(?=\s)/g,
   // A unidade, a quantidade e os dois precos entre o titulo em caixa alta e a
   // especificacao: "...SPLIT HI-WALL - 12.000 BTU/H UNIDADE 72 R$ 2.013,00 R$ R$
   // 144.936,00 Aparelho de ar-condicionado..." (Bento Goncalves/RS). Vem antes
@@ -2349,6 +2353,7 @@ function descritivosPorItem(secoes, itens) {
     // deste — e do outro.
     const capMinhas = capacidadesDoRotulo(rotulo);
     const btuMeu = btusDe(rotulo);
+    const bocasMinhas = bocasDe(rotulo);
     const capAlheias = new Set();
     itens.forEach((jt, j) => {
       if (j === i || classeDoItem[j] !== classeDoItem[i]) return;
@@ -2373,7 +2378,14 @@ function descritivosPorItem(secoes, itens) {
     // fica quieto. Era o que faltava para o item 107 de Sao Jose da Boa
     // Vista/PR (ventilador de PAREDE), que ficava com a linha do 108 (de TETO)
     // porque a celula certa e curta e a do vizinho e longa.
-    const achouMinhaLinha = numLinha.some(n => n === itens[i][0]);
+    // O numero que o EDITAL usa, quando o rotulo do PNCP o traz na frente:
+    // em Viamao/RS o item 1 do PNCP e o "3 - Fogao Industrial com 04 Bocas" do
+    // edital, e a linha do item 1 (seis bocas) levava o descritivo errado
+    // (22/09/2026). So quando o prefixo discorda do numero do PNCP; se nenhuma
+    // linha abrir com ele, o numero nao decide nada e vale a palavra.
+    const mNumRot = /^\s*(\d{1,3})\s*[-–]\s*(?=\p{L})/u.exec(String(itens[i][1] || ''));
+    const meuNumero = mNumRot && +mNumRot[1] !== itens[i][0] && numLinha.includes(+mNumRot[1]) ? +mNumRot[1] : itens[i][0];
+    const achouMinhaLinha = numLinha.some(n => n === meuNumero);
 
     let vencedor = '', nota = -1, venceuPeloNumero = false, numeroVencedor = null, kVencedor = -1;
     const avaliados = [];
@@ -2384,8 +2396,12 @@ function descritivosPorItem(secoes, itens) {
       // numero do item 2, e o ar de 12.000 BTUs levava o texto do de 18.000.
       // So BTU: litros e faixas ("400 a 480") nao desmentem nada.
       const btuCab = btusDe(t.slice(0, CABECA_ESCOLHA));
-      const confirmado = numLinha[idx] === itens[i][0]
-        && !(btuMeu.size > 0 && btuCab.size > 0 && ![...btuCab].some(v => btuMeu.has(v)));
+      // e as bocas do fogao desmentem do mesmo jeito (Viamao/RS, 22/09/2026)
+      const bocasCab = bocasDe(t.slice(0, CABECA_ESCOLHA));
+      const bocaDeOutro = bocasMinhas.size > 0 && bocasCab.size > 0 && ![...bocasCab].some(v => bocasMinhas.has(v));
+      const confirmado = numLinha[idx] === meuNumero
+        && !(btuMeu.size > 0 && btuCab.size > 0 && ![...btuCab].some(v => btuMeu.has(v)))
+        && !bocaDeOutro;
       const doVizinho = achouMinhaLinha && !confirmado
                      && numLinha[idx] !== null && numerosDoEdital.has(numLinha[idx]);
       const temMeu = nums.some(w => meusSo.has(w));
@@ -2397,6 +2413,7 @@ function descritivosPorItem(secoes, itens) {
       const deOutro = confirmado ? false : (doVizinho
         || (!temMeu && alguemTemMeu)
         || capDeOutro
+        || bocaDeOutro
         || (meusFortes.size > 0 && !nums.some(w => meusFortes.has(w))
             && nums.some(w => fora.has(w) && forte(w))));
       // Ordem de peso: primeiro o trecho que SERVE (as mesmas regras que o
@@ -2968,6 +2985,21 @@ function tiraRepeticao(t) {
 
 // As capacidades em BTU citadas num texto: "9000 BTUs", "12.000 BTU/h",
 // "18 000 btus". Abaixo de 5.000 nao e capacidade de aparelho.
+// Quantas BOCAS o texto anuncia. E o que separa dois fogoes industriais iguais
+// em tudo o mais, e "04"/"06" e curto demais para contar como palavra: em
+// Viamao/RS o fogao de 4 bocas ficou com a linha do de 6 (22/09/2026).
+// So "bocas": os QUEIMADORES contam outra coisa — o mesmo fogao de 6 bocas tem
+// "3 queimadores duplos e 3 simples" (Renascenca/PR) — e o numero solto do
+// meio do texto ("grelhas de 40x40") tambem nao entra.
+function bocasDe(s) {
+  const out = new Set();
+  const poe = n => { if (+n >= 1 && +n <= 12) out.add(+n); };
+  for (const m of String(s || '').matchAll(/\b(\d{1,2})\s*bocas?\b/gi)) poe(m[1]);
+  // "quantidade bocas: 10" e campo de CATALOGO do PNCP, e o catalogo erra: o
+  // fogao de 4 bocas do edital de Pinhal de Sao Bento/PR esta cadastrado como
+  // de 10, e o cooktop de 5 como de 4. Vale o que o EDITAL escreve.
+  return out;
+}
 function btusDe(s) {
   const out = new Set();
   for (const m of String(s || '').matchAll(/(\d{1,3}(?:[.\s]\d{3})|\d{4,6})\s*BTU/gi)) {
@@ -3394,6 +3426,42 @@ for (const e of dados.editais) {
       it[6] = it[6].replace(new RegExp(par + '[\\s\\d.]*$', 'u'), '')
         .replace(new RegExp(par + '(?:\\s+\\d{1,3}(?=\\s+\\p{Ll}))?(?=\\s)', 'u'), '');
     }
+    // O comeco da linha seguinte que sobra no fim: "...COR BRANCA 35" (o
+    // numero do item 35 em Tuneiras do Oeste/PR) e "...garantia mínima de 12
+    // meses. 0045 81754" (numero e codigo em Senador Firmino/MG), 22/09/2026.
+    // (so depois do ponto final: o numero solto no fim do texto costuma ser do
+    // produto — "PACOTE COM 100 UNIDADES PACOTE 100", "EMAI BP 150")
+    it[6] = it[6].replace(/(?<=\.)\s+\d{2,6}(?:\s+\d{2,9})+\s*$/, '');
+    // A unidade que abre a celula: "UND AR-CONDICIONADO SPLIT 9.000 BTUs..."
+    // (Maria Helena/PR, 23/09/2026).
+    it[6] = it[6].replace(/^(?:UNID(?:ADE)?|UND|UN|PC|P[ÇC]|CX)\.?\s+(?=\p{Lu}\p{L})/u, '');
+    // A coluna da quantidade enfiada no meio da celula: "BEBEDOURO INDUSTRIAL
+    // 100 LITROS 2,00 UNI BEBEDOURO INDUSTRIAL DE 100 LITROS...", "FREEZER
+    // HORIZONTAL DE 2 PORTAS 546 LITROS 6,00 UNI 3.913,89 23.483,34. Com
+    // capacidade..." (Santa Amelia/PR, 22/09/2026).
+    it[6] = it[6].replace(/\s+\d{1,4},\d{2}\s+UNI(?:D|DADE|DADES)?\.?(?:\s+[\d.]+,\d{2}){0,2}\.?\s+/gi, ' ');
+    // e a coluna que sobra no fim: "...12000 BTUS QUENTE/FRIO 2 13 R$" (Boa
+    // Vista do Burica/RS); "...COR: BRANCO 91,67% 44,0000 Un 3 - 57622"
+    // (Valparaiso/SP: percentual do beneficio, quantidade, unidade e o codigo
+    // do proximo item); e o codigo do material na frente, "05.1091
+    // REFRIGERADOR 412 LITROS..." (Itanhaem/SP), 22/09/2026.
+    it[6] = it[6].replace(/\s+(?:\d{1,4}\s+){1,3}R\$\s*$/, '')
+      .replace(/\s+\d{1,3},\d{2}%\s+[\d.,]+\s+Un\.?(?:\s+\d+\s*-\s*\d+)?\s*$/i, '')
+      .replace(/^\d{2}\.\d{4}\s+(?=\p{Lu})/u, '')
+      // e a coluna da pesquisa de precos: "...Potência: 100/1550 W, 638859
+      // Média" — codigo do catalogo e o criterio do preco (Cáceres/MT)
+      .replace(/[\s,]+\d{5,7}\s+(?:M[ée]dia|Mediana)\b[\s\S]*$/, '');
+    // A linha ANTERIOR grudada na frente, quando a tabela abre cada linha com o
+    // numero do item e os codigos: "...Tipo: Vertical 1 unidade 15 5581 633899
+    // Condicionador de ar, tipo Split..." (Caxias do Sul/RS, item 15, tabela
+    // "Item Codigo SAMAE CATMAT Descricao Quant. Um.", 22/09/2026). Corta tudo
+    // o que vem antes do numero DESTE item.
+    {
+      const abre = new RegExp('(?:^|[\\s.;:])(?:[\\d.,]{1,6}\\s+)?(?:unidades?|unid|und|un|pe[çc]as?|pc|m²|m2)\\.?\\s+'
+        + it[0] + '\\s+\\d{3,8}\\s+\\d{3,8}\\s+(?=\\p{Lu})', 'u');
+      const m = abre.exec(it[6]);
+      if (m && m.index > 0) it[6] = it[6].slice(m.index + m[0].length).trim();
+    }
     // O rodape do sistema de processo e os relatorios anexos colados depois da
     // especificacao (Campo Grande/MS, 21/09/2026): "... sem lustre. 120 Total:
     // 120 Item 22 1 Un.", "... baixa. Total: 00009636 - Forno ... HASH: ebe0...
@@ -3416,16 +3484,32 @@ for (const e of dados.editais) {
     // Televisor" (Campo Grande/MS, 21/09/2026). Corta onde comeca a descricao do
     // PNCP de outro item (as seis primeiras palavras, de ao menos 30 letras),
     // salvo quando ela abre igual a deste (o mesmo produto em cota reservada).
-    const junta = t => normIgual(t).replace(/s+/g, ' ').trim();
-    const proprio = junta(it[1]), plano = normIgual(it[6]);
+    const junta = t => normIgual(t).replace(/\s+/g, ' ').trim();
+    // A comparacao e so pelas LETRAS: o PNCP de Tuneiras do Oeste/PR escreve o
+    // item 35 como "GELADEIRAREFRIGERADOR FROST FREE DUPLEX 400L" e o edital
+    // como "GELADEIRA/REFRIGERADOR ...", e a barra fazia o corte falhar — o
+    // item 34 saia com o 35 colado no fim (22/09/2026).
+    const soLetras = s => {
+      const n = normIgual(s); let out = ''; const idx = [];
+      for (let i = 0; i < n.length; i++) if (/[a-z0-9]/.test(n[i])) { out += n[i]; idx.push(i); }
+      return { out, idx };
+    };
+    const alvoL = soLetras(it[6]), proprioL = soLetras(it[1]).out;
     let corte = -1;
     for (const x of v.itens) {
       if (x[0] == it[0]) continue;
       const pal = junta(x[1]).split(' ').slice(0, 6);
-      const pre = pal.join(' ');
-      if (pal.length < 6 || pre.length < 30 || proprio.startsWith(pre)) continue;
-      const m = new RegExp(pal.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s*')).exec(plano);
-      if (m && m.index >= 20 && (corte < 0 || m.index < corte)) corte = m.index;
+      if (pal.length < 6) continue;
+      const pre = soLetras(pal.join(' ')).out;
+      // (e nao corta pelo rotulo que o rotulo DESTE item ja contem: em
+      // Timburi/SP o item 11 e "AR-CONDICIONADO TIPO SPLIT HI-WALL, CAPACIDADE
+      // DE 9.000" e o 12 e "AR-CONDICIONADO 12.000 BTU AR-CONDICIONADO TIPO
+      // SPLIT HI-WALL, CAPACIDADE DE 12.000" — o 12 perdia o descritivo inteiro)
+      if (pre.length < 26 || proprioL.includes(pre)) continue;
+      const k = alvoL.out.indexOf(pre);
+      if (k <= 0) continue;
+      const orig = alvoL.idx[k];
+      if (orig >= 20 && (corte < 0 || orig < corte)) corte = orig;
     }
     if (corte > 0) it[6] = it[6].slice(0, corte).replace(/[\s,;:–-]+$/, '').trim();
     if (it[6].length < 30) { it[6] = ''; continue; }
@@ -3505,6 +3589,9 @@ for (const e of dados.editais) {
     if (/Lan[çc]ado\s+por:|Metodologia\s+Menor\s+Valor|Menor\s+Valor\s+Valor\s+Estimado/i.test(it[6])) { it[6] = ''; continue; }
     const btuRot = btusDe(it[1]), btuDesc = btusDe(it[6]);
     if (btuRot.size && btuDesc.size && ![...btuRot].some(b => btuDesc.has(b))) it[6] = '';
+    // e o fogao de 4 bocas nao fica com o descritivo do de 6 (Viamao/RS)
+    const bocaRot = bocasDe(it[1]), bocaDesc = bocasDe(String(it[6]).slice(0, 200));
+    if (bocaRot.size && bocaDesc.size && ![...bocaRot].some(b => bocaDesc.has(b))) it[6] = '';
   }
 
   // O arquivo que nao cita nenhum produto do radar e de OUTRA licitacao: a
