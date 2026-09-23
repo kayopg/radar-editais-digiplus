@@ -46,8 +46,16 @@ async function wordDe(c, nomeDentro) {
   if (hex !== '504b0304') return null;
   const dentro = abreZip(b);
   if (dentro.some(x => x.nome === 'word/document.xml')) return { bytes: b, ext: 'docx' };
-  const w = dentro.find(x => x.nome === nomeDentro) || dentro.find(x => /\.docx?$/i.test(x.nome));
-  return w ? { bytes: w.abre(), ext: w.nome.toLowerCase().endsWith('.doc') ? 'doc' : 'docx' } : null;
+  if (dentro.some(x => x.nome === 'content.xml') && dentro.some(x => x.nome === 'mimetype')) return { bytes: b, ext: 'odt' };
+  // e o documento de dentro do zip: .doc, .docx, .odt ou .rtf — Caxias do
+  // Sul/RS publica o edital so em .odt dentro do zip (23/09/2026).
+  // O nome vem sem a pasta ("Edital.odt"), e dentro do zip ele esta em
+  // "PE_221-26_/Edital.odt": compara so o fim do caminho.
+  const alvo = String(nomeDentro || '').split('/').pop().toLowerCase();
+  const docs = dentro.filter(x => /\.(?:docx?|odt|rtf)$/i.test(x.nome));
+  const w = docs.find(x => x.nome.split('/').pop().toLowerCase() === alvo) || docs[0];
+  if (!w) return null;
+  return { bytes: w.abre(), ext: (w.nome.toLowerCase().match(/\.(docx?|odt|rtf)$/) || [, 'docx'])[1] };
 }
 
 const arg = (n, p) => { const i = process.argv.indexOf(n); return i > 0 && process.argv[i + 1] ? process.argv[i + 1] : p; };
@@ -368,10 +376,18 @@ await pool(alvos, 2, async (e) => {
     procura: for (const c of cands.slice(0, 4)) {
       if (prioridadeCapa(c.titulo, c.tipo) === 0) continue;
       const f = await fontesDe(c, [], 12);
-      if (!f.pdfs.length && f.texto && /^DOCX?$/.test(f.texto.formato)) {
-        const w = await wordDe(c, f.texto.nome);
+      // Converte o documento de texto quando nao ha PDF nenhum OU quando os
+      // PDFs do pacote nao trazem o edital: o zip de Caxias do Sul/RS so tem o
+      // ETP em PDF, e o edital esta em .odt ao lado (23/09/2026).
+      const semEdital = !f.pdfs.some(p => prioridadeCapa(p.nome, '') > 0);
+      // Num zip com PDF o fontesDe devolve os documentos de texto em "textos",
+      // e nao em "texto": vale o de nome mais parecido com edital.
+      const docTexto = f.texto || [...(f.textos || [])]
+        .sort((a, b) => prioridadeCapa(b.nome, '') - prioridadeCapa(a.nome, ''))[0];
+      if (semEdital && docTexto && /^(?:DOCX?|ODT|RTF)$/i.test(docTexto.formato)) {
+        const w = await wordDe(c, docTexto.nome);
         const pdf = w && pdfDeDocumento(w.bytes, w.ext);
-        if (pdf) f.pdfs = [{ nome: String(f.texto.nome || c.titulo || 'edital') + ' (paginado do Word)', bytes: pdf }];
+        if (pdf) f.pdfs = [{ nome: String(docTexto.nome || c.titulo || 'edital') + ' (paginado fora do navegador)', bytes: pdf }, ...f.pdfs];
       }
       const pdfs = [...f.pdfs].sort((a, b) => prioridadeCapa(b.nome, '') - prioridadeCapa(a.nome, ''));
       for (const p of pdfs) {

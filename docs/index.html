@@ -493,7 +493,7 @@ function render(){
       // Edital que o órgão publicou em ZIP, RAR, DOC, DOCX, ODT ou RTF viaja
       // convertido para PDF (ver edital-pdf.mjs): o botão entrega o PDF e o
       // link ao lado continua levando ao arquivo original no PNCP.
-      +(convertido(r) ? '<button class="btn alt" type="button" onclick="baixaEditalPdf(this,'+D.indexOf(r)+')" title="'+esc(descreveConvertido(r))+'">Baixar edital (PDF)</button>' : '')
+      +(convertido(r) ? '<button class="btn alt" type="button" onclick="baixaEditalPdf(this,'+D.indexOf(r)+')" title="'+esc(descreveConvertido(r))+'">Baixar '+rotuloConvertido(r)+' (PDF)</button>' : '')
       +'<a class="btn alt" target="_blank" rel="noopener" href="https://pncp.gov.br/api/pncp/v1/orgaos/'+pp[0]+"/compras/"+pp[1]+"/"+pp[2]+'/arquivos/'+(r[13]||1)+'">'+(convertido(r)?"Arquivo original ("+String(r[14]).toUpperCase()+")":r[14]?"Baixar edital ("+String(r[14]).toUpperCase()+")":"Baixar edital (arquivo oficial)")+'</a>'
       +'<button class="btn alt" type="button" onclick="resumo(this,'+D.indexOf(r)+')">Baixar resumo + edital</button>'
       +notaParticipar(r, fechado)
@@ -1003,6 +1003,15 @@ function carregaAberturas(caminho){
 // No site os dois não existem e o card mostra só o link do PNCP, como antes.
 function convertido(r){
   return (typeof RADAR_EDITAIS_PDF === "object" && RADAR_EDITAIS_PDF && RADAR_EDITAIS_PDF[r[7]]) || null;
+}
+// O pacote nem sempre traz o edital: o de Araguari/MG só tem o termo de
+// referência e o de Conceição das Alagoas/MG só o estudo técnico. O botão diz
+// o que está entregando.
+function rotuloConvertido(r){
+  var c = convertido(r), n = (c && c.nome) || "";
+  if(/termo\s*de\s*refer/i.test(n)) return "termo de referência";
+  if(/estudo\s*t[ée]cnico|\betp\b/i.test(n)) return "estudo técnico";
+  return "edital";
 }
 function descreveConvertido(r){
   var c = convertido(r);
