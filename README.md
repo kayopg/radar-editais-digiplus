@@ -112,6 +112,10 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
 6. **Piso do edital** — descarta edital cujo valor total estimado fique entre R$ 1 e
    R$ 4.000: compra de troco não vale a viagem. Valor **zero** fica, porque é orçamento
    sigiloso e pode ser grande.
+7. **Item sem descritivo sai** — sem a especificação do edital não dá para cotar, então o
+   `veta-pelo-descritivo.mjs` tira o item; o edital que fica sem item nenhum sai junto
+   (decisão do usuário em 23/09/2026). É o que acontece quando o órgão publica só PDF
+   escaneado, publica o edital de outra licitação ou troca o arquivo depois da varredura.
 
 ## Ressalvas
 
