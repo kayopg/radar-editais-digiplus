@@ -22,8 +22,8 @@ const CAT = eval(bloco.replace('const CAT = ', '') + '');
 
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 // Os mesmos rotulos do docs/index.html: a categoria diz o que o aparelho FAZ.
-const NOME = { RF: 'Para gelar', CL: 'Para climatizar', CC: 'Para cozinhar', PR: 'Para preparar',
-  EP: 'Para o dia a dia', LV: 'Para lavar', BB: 'Para beber', CX: 'Para exaustão',
+const NOME = { RF: 'Para gelar', CL: 'Para climatizar', CC: 'Para cozinhar', PR: 'Eletrodomésticos',
+  EP: 'Eletrodomésticos', LV: 'Para lavar', BB: 'Para beber', CX: 'Para exaustão',
   BL: 'Balanças', LD: 'Lousa digital', GE: 'Para gerar energia', AQ: 'Para aquecer água', OT: 'Outros' };
 
 const qual = d => {
@@ -43,7 +43,9 @@ const lista = nome => {
   return eval(fonte.slice(fonte.indexOf('[', i), fonte.indexOf('];', i) + 1));
 };
 if (process.argv.includes('--vetados') || process.argv.includes('--suspeitos')) {
-  const VETO_ITEM = lista('VETO_ITEM'), VETO_BL = lista('VETO_BL_MEDICA'), VETO_RF = lista('VETO_RF_CIENT');
+  // VETO_BL_MEDICA saiu do varredura.mjs junto com a categoria BL (balancas,
+  // 23/09/2026), e a leitura dele quebrava o --vetados inteiro.
+  const VETO_ITEM = lista('VETO_ITEM'), VETO_RF = lista('VETO_RF_CIENT');
   let n = 0;
   for (const e of dados.editais) {
     for (const it of e[C.itens]) {
@@ -51,7 +53,6 @@ if (process.argv.includes('--vetados') || process.argv.includes('--suspeitos')) 
       const [cat, termo] = qual(d);
       const pos = termo ? d.indexOf(termo) : -1;
       const v = VETO_ITEM.find(x => d.includes(x))
-        || (it[0] === 'BL' && VETO_BL.find(x => d.includes(x)))
         || (it[0] === 'RF' && VETO_RF.find(x => d.includes(x)));
       const querVetados = process.argv.includes('--vetados');
       if (querVetados ? !v : (v || pos < 100)) continue;

@@ -298,9 +298,12 @@ button.btn{font-family:inherit;cursor:pointer}
 <script>
 // As categorias pelo que o aparelho FAZ, e não pelo nome de catálogo: o usuário
 // pediu assim em 23/09/2026 ("Para gelar: geladeiras, freezer, etc; Para lavar:
-// lavadora, secadora, etc"). BL e LD já não entram na varredura; ficam no mapa
-// só para o dado antigo não aparecer sem nome.
-var CAT={RF:"Para gelar",CL:"Para climatizar",CC:"Para cozinhar",PR:"Para preparar",EP:"Para o dia a dia",LV:"Para lavar",BB:"Para beber",CX:"Para exaustão",BL:"Balanças",LD:"Lousa digital",GE:"Para gerar energia",AQ:"Para aquecer água",OT:"Outros"};
+// lavadora, secadora, etc"). Na mesma conversa ele juntou "Para preparar" e
+// "Para o dia a dia" num rótulo só, "Eletrodomésticos" — por isso PR e EP
+// levam o mesmo nome; a varredura já grava tudo como PR.
+// BL, LD, CX e AQ saíram da varredura; ficam no mapa só para o dado antigo não
+// aparecer sem nome.
+var CAT={RF:"Para gelar",CL:"Para climatizar",CC:"Para cozinhar",PR:"Eletrodomésticos",EP:"Eletrodomésticos",LV:"Para lavar",BB:"Para beber",CX:"Para exaustão",BL:"Balanças",LD:"Lousa digital",GE:"Para gerar energia",AQ:"Para aquecer água",OT:"Outros"};
 // [mun, uf, orgao, edital, fecha, qtd, valor, path, itens[[cat,qtd,vunit,desc]]]
 // [mun, uf, orgao, edital, fecha, qtd, valor, path, itens[[cat,qtd,vunit,desc]]]
 var D=[];

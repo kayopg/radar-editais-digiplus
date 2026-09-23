@@ -44,31 +44,38 @@ const CAT = [
     "balcao conservacao"]],
   ["BB",["bebedouro","purificador de agua","refresqueira","suqueira","refresqueira industrial"]],
   ["CC",["fogao","forno","microondas","micro-ondas","micro ondas","cooktop","fritadeira","salamandra","char broiler","charbroiler","caldeirao","panela eletrica","churrasqueira","balcao termico","buffet termico","banho maria","banho-maria","estufa para salgados","pista termica"]],
-  ["PR",["liquidificador","batedeira","processador de alimentos","processador alimentos","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador","masseira","amassadeira",
+  // PR e EP viraram uma so em 23/09/2026, a pedido do usuario: na pagina as
+  // duas eram "Para preparar" e "Para o dia a dia", e ele preferiu um rotulo
+  // unico, "Eletrodomesticos". Masseira e amassadeira sairam na mesma conversa.
+  // O aspirador da Digiplus e o de po E AGUA, e o PNCP escreve de varios jeitos:
+  // "aspirador de po e agua", "aspirador po/liquido", "aspirador de po/agua".
+  // So "aspirador de po" nao pega as duas ultimas, que nao tem o "de".
+  ["PR",["liquidificador","batedeira","processador de alimentos","processador alimentos","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador",
     // 18/09/2026: nomes que o PNCP usa e a tabela nao tinha. Mixer so com
     // complemento de cozinha: "mixer" solto e tambem a mesa de som.
     "extrator de suco","centrifuga de fruta","centrifuga de alimento","centrifuga de suco",
     "mixer de alimento","mixer de mao","mixer 2 em 1","mixer 3 em 1","mixer eletrico","mixer portatil",
-    "mixer vertical","mixer profissional","mixer com lamina","mixer com haste"]],
-  // O aspirador da Digiplus e o de po E AGUA, e o PNCP escreve de varios jeitos:
-  // "aspirador de po e agua", "aspirador po/liquido", "aspirador de po/agua".
-  // So "aspirador de po" nao pega as duas ultimas, que nao tem o "de".
-  ["EP",["cafeteira","chaleira","sanduicheira","torradeira","air fryer","airfryer","aspirador de po","aspirador po","aspirador de agua","aspirador agua","grill eletrico","grill"]],
+    "mixer vertical","mixer profissional","mixer com lamina","mixer com haste",
+    "cafeteira","chaleira","sanduicheira","torradeira","air fryer","airfryer","aspirador de po","aspirador po","aspirador de agua","aspirador agua","grill eletrico","grill"]],
   ["LV",["lavadora de roupa","maquina de lavar","secadora","centrifuga de roupa","calandra","tanquinho","lava-loucas","lava loucas","lavadora extratora"]],
   ["CL",["ar-condicionado","ar condicionado","arcondicionado","condicionador de ar","split","climatizador","cortina de ar","ventilador","desumidificador","umidificador","purificador de ar"]],
-  // CX voltou em 01/09/2026: saiu de manha, quando "coifas" entrou na lista de
-  // retirar, e voltou de tarde com "coifa industrial" e "exaustores".
-  ["CX",["coifa","coifa industrial","depurador","exaustor","exaustor industrial","coifa de parede","coifa central"]],
+  // CX (coifa, exaustor, depurador) saiu em 23/09/2026: o usuario nao cota
+  // nenhum deles. Tinha voltado em 01/09 so com coifa industrial e exaustores.
   // BL (balancas) saiu em 23/09/2026: o usuario nao cota balanca.
   ["LD",["lousa digital","lousa interativa","lousa eletronica","quadro interativo","painel interativo","tela interativa"]],
   // GE entrou em 01/09/2026: gerador nao e climatizacao nem cozinha, e virava
   // "Outros" — categoria que a pagina mostra como se fosse sobra.
-  ["GE",["gerador de energia","gerador a diesel","gerador a gasolina","grupo gerador","motogerador",
+  // Sem motogerador e sem grupo gerador desde 23/09/2026: o usuario cota o
+  // gerador portatil, nao o grupo de motor a combustao. Os nomes saem daqui e
+  // entram no VETO_ITEM, porque "gerador de energia" continua pegando a linha.
+  ["GE",["gerador de energia","gerador a gasolina",
     // o catalogo do PNCP escreve "Gerador Energia", sem o "de" (Paranavai/PR,
     // Uniao da Vitoria/PR, Vicosa/MG, 18/09/2026)
-    "gerador energia","gerador de eletricidade","gerador eletrico","grupo moto gerador","moto gerador","gerador - potencia"]],
-  ["AQ",["aquecedor de agua","aquecedor a gas","aquecedor eletrico","boiler","aquecedor de passagem","aquecedor solar"]],
-  ["OT",["enceradeira","aquecedor"]],
+    "gerador energia","gerador de eletricidade","gerador eletrico","gerador - potencia"]],
+  // AQ (aquecedor de agua, boiler, aquecedor solar) saiu em 23/09/2026: o
+  // usuario nao cota aquecimento de agua. O aquecedor de AMBIENTE continua, em
+  // "Outros", pelo "aquecedor" solto da linha de baixo.
+  ["OT",["aquecedor"]],
 ];
 
 // 5.4 - piso por PRODUTO, unico para todas as categorias (decisao do usuario em
@@ -427,6 +434,13 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // enceradeira/lustradeira de piso nao e cotada (decisao do usuario em
 // 23/09/2026). A camara fria, perguntada junto, FICA.
 "enceradeira","lustradeira",
+// e, na mesma conversa: masseira/amassadeira de padaria; aquecimento de agua
+// (aquecedor de agua, boiler, aquecedor solar, aquecedor de passagem — o
+// aquecedor de AMBIENTE continua); e o gerador de motor a combustao, que o
+// PNCP chama de grupo gerador ou motogerador. O gerador portatil fica.
+"masseira","amassadeira",
+"aquecedor de agua","aquecedor d agua","boiler","aquecedor solar","aquecedor de passagem",
+"grupo gerador","motogerador","moto gerador","gerador a diesel",
 // fogao de brinquedo: "O fogao devera ser confeccionado em fibra de MADEIRA
 // PRENSADA (MDF) ... botoes reguladores de gas devem possuir mecanismo para ser
 // girados ... similar a um botao de fogao real. Dimensoes: 53 x 37 x 30 cm"

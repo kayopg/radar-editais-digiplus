@@ -21,8 +21,8 @@ try { st = le('dados', 'ultima.json').st; }
 catch { console.error('aviso: dados/ultima.json nao encontrado, o funil sai so com o meta'); }
 
 // Os mesmos rotulos do docs/index.html: a categoria diz o que o aparelho FAZ.
-const CAT = { RF: 'Para gelar', CL: 'Para climatizar', CC: 'Para cozinhar', PR: 'Para preparar',
-  EP: 'Para o dia a dia', LV: 'Para lavar', BB: 'Para beber', CX: 'Para exaustão',
+const CAT = { RF: 'Para gelar', CL: 'Para climatizar', CC: 'Para cozinhar', PR: 'Eletrodomésticos',
+  EP: 'Eletrodomésticos', LV: 'Para lavar', BB: 'Para beber', CX: 'Para exaustão',
   BL: 'Balanças', LD: 'Lousa digital', GE: 'Para gerar energia', AQ: 'Para aquecer água', OT: 'Outros' };
 const UF_NOME = { PR: 'Paraná', RS: 'Rio Grande do Sul', SP: 'São Paulo', MG: 'Minas Gerais',
   GO: 'Goiás', MT: 'Mato Grosso', MS: 'Mato Grosso do Sul', SC: 'Santa Catarina' };
