@@ -362,6 +362,18 @@ function citaProdutoDoRadar(texto, e) {
   });
 }
 
+// O arquivo se apresenta como ESTE edital? O numero do pregao na primeira
+// folha: "PREGAO ELETRONICO 90.603/2026", "Pregao SRP 40-2026". Sem isso, o
+// edital cuja lista de itens mora em anexo — a planilha de Juiz de Fora/MG, a
+// "Descricao detalhada dos itens" da EBSERH em Santa Maria/RS — nao cita
+// produto nenhum no corpo e perdia a capa (23/09/2026).
+function seApresentaComoEste(texto, e) {
+  const m = String(e[C.edital] || '').match(/(\d{1,6})\s*(?:-\s*\d\s*)?[\/-]\s*(\d{4})(?!\d)/);
+  if (!m) return false;
+  const re = new RegExp('(?:^|\\D)0*' + m[1] + '\\s*[\\/.-]\\s*' + m[2] + '(?!\\d)');
+  return re.test(normTxt(texto));
+}
+
 const saida = { ...jaTem };
 let com = 0, sem = 0, erros = 0, bytesTotal = 0;
 
@@ -403,7 +415,8 @@ await pool(alvos, 2, async (e) => {
         // prefeitura de Marcelandia/MT publicou no pregao 31/2026 (eletrodomesticos)
         // o edital do 029/2026 (materiais pedagogicos), e a capa saia dele
         // (22/09/2026). Sem capa e melhor que com a do edital errado.
-        if (paginas.join(' ').length > 8000 && !citaProdutoDoRadar(paginas.join(' '), e)) {
+        if (paginas.join(' ').length > 8000 && !citaProdutoDoRadar(paginas.join(' '), e)
+            && !seApresentaComoEste(paginas.slice(0, 3).join(' '), e)) {
           console.log(`    ${nome} · ${p.nome || c.titulo}: nenhum produto do radar no arquivo, e de outra licitacao`);
           continue;
         }

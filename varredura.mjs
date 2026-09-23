@@ -424,6 +424,17 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // 23/09/2026). So o de CAFE: o "cilindro com extrusor e moedor" de
 // Arvorezinha/RS e outra maquina e continua.
 "churrasqueira","moedor de cafe","moinho de cafe",
+// fogao de brinquedo: "O fogao devera ser confeccionado em fibra de MADEIRA
+// PRENSADA (MDF) ... botoes reguladores de gas devem possuir mecanismo para ser
+// girados ... similar a um botao de fogao real. Dimensoes: 53 x 37 x 30 cm"
+// (Ervalia/MG, 23/09/2026). O "em mdf" da lista nao pega o "(MDF)" entre
+// parenteses, e o termo aparece depois do nome do produto.
+"madeira prensada",
+// movel de apoio que so cita o aparelho: "Estrado em metalon para armazenar
+// refrigeradores para medicamentos" era o unico item do pregao de prateleiras
+// metalicas de Venancio Aires/RS (23/09/2026). So na frente do produto, para
+// nao derrubar o freezer que tem estrado dentro.
+"estrado",
 // lavadora extratora hospitalar de 50 kg com barreira sanitaria (Sonora/MS,
 // decisao do usuario em 21/09/2026)
 "lavadora de roupas hospitalar","lavadora hospitalar","barreira sanitaria",
@@ -462,7 +473,7 @@ const VETO_SO_NA_FRENTE = ["suporte para tv","suporte de tv","pedestal para","su
 "placa aquecedora","boia para","porca flange","valvula de servico","valvula de servicos","kit placa","bolsa coletora",
 "fita de pvc","micro motor","ima de geladeira","ima geladeira","reservatorio bebedouro","dreno ar condicionado",
 "bomba dreno","termostato aplicacao","grelha material","filme de pvc","filme pvc","papel filme","rolo plastico",
-"suporte para freezer","suportes para freezer","agricol",
+"suporte para freezer","suportes para freezer","agricol","estrado",
 "balde","filtro","suporte","rack","ferramenta","gaiola","jarra plastica","jarra graduada","jarra - do tipo","jarra do tipo","disco","kit manual","utensilio",
 // 21/09/2026: "Tampo e rodatampo em granito para balcao de cozinha ... recorte
 // para cuba, fogao cooktop" (Ipora do Oeste/SC) e "Mesa de apoio para forno"

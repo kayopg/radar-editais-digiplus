@@ -51,6 +51,11 @@ const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLow
 // edital, termo de referencia, o resto.
 function nota(nome) {
   const s = norm(nome);
+  // Decreto, portaria, parecer e matriz de risco nunca sao o edital: o pacote
+  // de Corrego Danta/MG so traz o "Decreto no 978-2024 - REGIONALIZACAO", e ele
+  // saia como "o edital em PDF" do botao (23/09/2026). Nota 9 e recusa: melhor
+  // o card sem o botao do que com o documento errado.
+  if (/(?:^|[^a-z])(?:decreto|portaria|parecer|matriz de risco|mapa de riscos?)(?:[^a-z]|$)/.test(s)) return 9;
   if (/edital|aviso de (?:licitacao|contratacao)/.test(s) && !/minuta|contrato/.test(s)) return 0;
   if (/termo de referencia|(?:^|[^a-z])tr[\s_.-]|especifica|descritiv|memorial/.test(s)) return 1;
   if (/etp|estudo tecnico|formalizacao|mapa de risco|pesquisa|cotacao|preco|planilha|media/.test(s)) return 3;
@@ -93,7 +98,7 @@ function doPacote(entradas, fundo = 1) {
   const uteis = entradas
     .filter(x => !/\/$/.test(x.nome))
     .map(x => ({ x, ext: extDe(x.nome), n: nota(x.nome) }))
-    .filter(x => x.ext === 'pdf' || CONVERSIVEIS.has(x.ext))
+    .filter(x => (x.ext === 'pdf' || CONVERSIVEIS.has(x.ext)) && x.n < 9)
     // PDF antes do documento de texto com a mesma nota: converter e o ultimo recurso
     .sort((a, b) => a.n - b.n || (a.ext === 'pdf' ? 0 : 1) - (b.ext === 'pdf' ? 0 : 1));
   for (const u of uteis) {

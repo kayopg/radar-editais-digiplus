@@ -189,7 +189,12 @@ let partesCapas = [];
 // RTF. O indice (leve) vai na pagina, para o card saber que ha PDF; os bytes
 // vao em arquivos ao lado, como as folhas de abertura, e so o do edital
 // clicado e buscado. Sem o editais-pdf.json o card fica como era.
-const ORCAMENTO_EDITAIS_MB = 16;
+// 8 MB e nao 16: em 23/09/2026 a lista passou de 104 para 139 editais, as capas
+// encheram quatro arquivos ao lado e a VERSAO inteira chegou a 68,9 MB — acima
+// do teto de 64 MB por versao do artefato, que so aparece na hora de publicar.
+// A capa e o que o usuario olha primeiro; o edital convertido e conveniencia,
+// entao quem cede e ele.
+const ORCAMENTO_EDITAIS_MB = 8;
 let editaisPdf = { editais: {} };
 try { editaisPdf = JSON.parse(doc('editais-pdf.json')); } catch { /* sem conversao nesta maquina */ }
 const mapaEdital = {}, indiceEdital = {};
@@ -305,4 +310,20 @@ if (mb > TETO_ARTEFATO - 1.5) {
 for (const p of partesCapas) {
   const t = fs.statSync(path.join(pastaCapas, 'capas-' + p.n + '.js')).size / 1024 / 1024;
   if (t > TETO_ARTEFATO) { console.error(`\nERRO: capas-${p.n}.js tem ${t.toFixed(2)} MB. Baixe o PARTE_MB.`); process.exit(1); }
+}
+// E a VERSAO inteira — pagina mais todos os arquivos ao lado — tem teto de 64
+// MB. Em 23/09/2026 a soma chegou a 68,9 MB e a publicacao so reclamaria no
+// fim; o aviso agora sai aqui, com o que baixar.
+const TETO_VERSAO = 64;
+{
+  let total = fs.statSync(saida).size;
+  for (const f of fs.readdirSync(pastaCapas)) total += fs.statSync(path.join(pastaCapas, f)).size;
+  const tv = total / 1024 / 1024;
+  console.log(`versao inteira: ${tv.toFixed(1)} MB de ${TETO_VERSAO} MB`);
+  if (tv > TETO_VERSAO) {
+    console.error(`\nERRO: a versao passa do teto de ${TETO_VERSAO} MB.`);
+    console.error(`Baixe o ORCAMENTO_EDITAIS_MB (hoje ${ORCAMENTO_EDITAIS_MB} MB) e, se nao bastar, o ORCAMENTO_MB.`);
+    process.exit(1);
+  }
+  if (tv > TETO_VERSAO - 2) console.error(`\naviso: a ${(TETO_VERSAO - tv).toFixed(1)} MB do teto da versao.`);
 }
