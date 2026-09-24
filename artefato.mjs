@@ -194,16 +194,21 @@ let partesCapas = [];
 // do teto de 64 MB por versao do artefato, que so aparece na hora de publicar.
 // A capa e o que o usuario olha primeiro; o edital convertido e conveniencia,
 // entao quem cede e ele.
-const ORCAMENTO_EDITAIS_MB = 8;
+const ORCAMENTO_EDITAIS_MB = 9.5;
 let editaisPdf = { editais: {} };
 try { editaisPdf = JSON.parse(doc('editais-pdf.json')); } catch { /* sem conversao nesta maquina */ }
 const mapaEdital = {}, indiceEdital = {};
 let partesEditais = [];
 {
   const iPath = dados.colunas.indexOf('path');
-  const noRadar = new Set(dados.editais.map(e => e[iPath]));
+  const iFecha = dados.colunas.indexOf('encerramento');
+  // O edital que JA ENCERROU nao gasta orcamento: ninguem manda proposta para
+  // ele, e cada um que sai abre lugar para um que ainda esta de pe. A pagina
+  // continua mostrando o card, apagado, com o link do PNCP.
+  const agora = Date.now();
+  const noRadar = new Map(dados.editais.map(e => [e[iPath], Date.parse(e[iFecha]) || Infinity]));
   const todos = Object.entries(editaisPdf.editais || {})
-    .filter(([k, v]) => noRadar.has(k) && v && v.b64)
+    .filter(([k, v]) => noRadar.has(k) && noRadar.get(k) > agora && v && v.b64)
     .map(([k, v]) => [k, v, Math.round(v.b64.length * 0.75)])
     .sort((a, b) => a[2] - b[2]);
   let usado = 0, atual = null, fora = 0;

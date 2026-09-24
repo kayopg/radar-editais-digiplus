@@ -120,31 +120,58 @@ function doPacote(entradas, fundo = 1) {
   return null;
 }
 
+// O PDF do edital dentro de UM arquivo baixado, seja ele qual for.
+function doArquivo(bruto, e) {
+  const tipo = tipoDe(bruto);
+  if (tipo === 'pdf') return { tipo, achado: { bytes: bruto, nome: 'arquivo publicado', origem: 'ja era PDF' } };
+  if (tipo === 'zip') return { tipo, achado: doPacote(abreZip(bruto)) };
+  if (tipo === 'rar') { const d = abreRar(bruto); return { tipo, achado: d ? doPacote(d) : null }; }
+  if (tipo === 'ole') { const p = pdfDeDocumento(bruto, 'doc'); return { tipo, achado: p && { bytes: p, nome: 'arquivo publicado', origem: 'convertido do doc' } }; }
+  if (tipo === 'rtf' || tipo === 'html' || tipo === 'docx' || tipo === 'odt') {
+    const p = pdfDeDocumento(bruto, tipo);
+    return { tipo, achado: p && { bytes: p, nome: 'arquivo publicado', origem: 'convertido do ' + tipo } };
+  }
+  // sem assinatura conhecida: tenta pela extensao que o PNCP anunciou
+  const ext = String(e[C.arquivoExtensao] || '').toLowerCase();
+  const p = pdfDeDocumento(bruto, ext);
+  return { tipo, achado: p && { bytes: p, nome: 'arquivo publicado', origem: 'convertido do ' + ext } };
+}
+
+// Os OUTROS arquivos publicados no mesmo edital, para quando o que o PNCP
+// anuncia no "arquivoSeq" nao traz edital nenhum: Corrego Danta/MG publica dois
+// zips e o anunciado so tem o "Decreto no 978-2024 - REGIONALIZACAO"; o edital
+// esta no segundo (24/09/2026). Vem na ordem da nota, o edital na frente.
+const arquivosDe = async (e) => {
+  const [c, a, s] = e[C.path].split('/');
+  try {
+    const r = await fetch(`https://pncp.gov.br/api/pncp/v1/orgaos/${c}/compras/${a}/${s}/arquivos`, { signal: AbortSignal.timeout(60000) });
+    if (!r.ok) return [];
+    const j = await r.json();
+    return (Array.isArray(j) ? j : [])
+      .map(x => ({ seq: x.sequencialDocumento, nome: String(x.titulo || '') }))
+      .filter(x => x.seq && x.seq !== (e[C.arquivoSeq] || 1) && nota(x.nome) < 9)
+      .sort((x, y) => nota(x.nome) - nota(y.nome));
+  } catch { return []; }
+};
+
 const saida = { ...jaTem };
 let feitos = 0, semJeito = 0, grandes = 0, erros = 0, total = 0;
 for (const e of dados.editais) {
   if (!alvos.includes(e)) continue;
   const nome = `${e[C.municipio]}/${e[C.uf]} ${e[C.edital]}`;
   const [c, a, s] = e[C.path].split('/');
-  const url = `https://pncp.gov.br/pncp-api/v1/orgaos/${c}/compras/${a}/${s}/arquivos/${e[C.arquivoSeq] || 1}`;
+  const urlDe = seq => `https://pncp.gov.br/pncp-api/v1/orgaos/${c}/compras/${a}/${s}/arquivos/${seq}`;
   try {
-    const bruto = await baixa(url);
+    const bruto = await baixa(urlDe(e[C.arquivoSeq] || 1));
     if (!bruto) { erros++; console.log(`  [erro] ${nome}: nao baixou`); continue; }
-    const tipo = tipoDe(bruto);
-    let achado = null;
-    if (tipo === 'pdf') achado = { bytes: bruto, nome: 'arquivo publicado', origem: 'ja era PDF' };
-    else if (tipo === 'zip') achado = doPacote(abreZip(bruto));
-    else if (tipo === 'rar') { const d = abreRar(bruto); achado = d ? doPacote(d) : null; }
-    else if (tipo === 'ole') { const p = pdfDeDocumento(bruto, 'doc'); achado = p && { bytes: p, nome: 'arquivo publicado', origem: 'convertido do doc' }; }
-    else if (tipo === 'rtf' || tipo === 'html' || tipo === 'docx' || tipo === 'odt') {
-      const p = pdfDeDocumento(bruto, tipo);
-      achado = p && { bytes: p, nome: 'arquivo publicado', origem: 'convertido do ' + tipo };
-    }
-    else {
-      // sem assinatura conhecida: tenta pela extensao que o PNCP anunciou
-      const ext = String(e[C.arquivoExtensao] || '').toLowerCase();
-      const p = pdfDeDocumento(bruto, ext);
-      achado = p && { bytes: p, nome: 'arquivo publicado', origem: 'convertido do ' + ext };
+    let { tipo, achado } = doArquivo(bruto, e);
+    if (!achado) for (const o of await arquivosDe(e)) {
+      const outro = await baixa(urlDe(o.seq));
+      if (!outro) continue;
+      const r = doArquivo(outro, e);
+      if (!r.achado) continue;
+      achado = { ...r.achado, origem: r.achado.origem + ' (arquivo ' + o.seq + ' do PNCP)' };
+      break;
     }
     if (!achado) { semJeito++; delete saida[e[C.path]]; console.log(`  ${nome} · sem como converter (${tipo || e[C.arquivoExtensao]})`); continue; }
     // Confere que o resultado abre mesmo como PDF antes de guardar.

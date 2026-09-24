@@ -1,5 +1,5 @@
 {
-  "_leia": "Editais que saem do radar por exigencia impeditiva conferida a mao no edital, quando a varredura nao conseguiu ler o arquivo (zip, docx, odt, html). Aplicado pelo veta-pelo-descritivo.mjs. A regra e a do usuario (02/09/2026): so sai o que o edital EXIGE; 'caso o TR exija' e 'podera solicitar' ficam.",
+  "_leia": "Editais que saem do radar por conferencia a mao, quando a varredura nao conseguiu decidir sozinha. Aplicado pelo veta-pelo-descritivo.mjs. Dois motivos: exigencia impeditiva que so o arquivo (zip, docx, odt, html) mostra — a regra e a do usuario (02/09/2026): so sai o que o edital EXIGE, \"caso o TR exija\" e \"podera solicitar\" ficam — e disputa em portal fora dos seis da casa, quando o PNCP nao informa o portal e so o texto do edital diz qual e.",
   "18428847000137/2026/131": {
     "edital": "Pirajuba/MG, Pregao Eletronico 039/2026",
     "motivo": "Garantia contratual: item 17.1 do edital, 'sera exigida do licitante vencedor, como condicao para assinatura do contrato, a prestacao de garantia' (art. 96), repetida na clausula 11 da minuta",
@@ -14,5 +14,15 @@
     "edital": "Londrina/PR, PGE/SMGP-107/2026",
     "motivo": "Amostra: 'AVALIACAO DA AMOSTRA - Devera ser apresentada amostra para todos os lotes' no edital do SEI (arquivo .html dentro do zip)",
     "conferido": "2026-09-16"
+  },
+  "01712382000149/2026/8": {
+    "edital": "Pedro de Toledo/SP, Pregao Eletronico 001/2026",
+    "motivo": "Portal fora da lista: \"LOCAL DE REALIZACAO: Plataforma de Licitacoes Eletronicas Licita Mais Brasil www.licitamaisbrasil.com.br\" na folha de rosto. O PNCP nao informou o portal, entao o filtro da varredura nao pegou.",
+    "conferido": "2026-09-24"
+  },
+  "02218683000183/2026/355": {
+    "edital": "Acreuna/GO, Pregao Eletronico 39/2026",
+    "motivo": "Portal fora da lista: \"LOCAL: www.slicx.com.br\" no preambulo. O PNCP nao informou o portal, entao o filtro da varredura nao pegou.",
+    "conferido": "2026-09-24"
   }
 }

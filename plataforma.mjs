@@ -56,6 +56,12 @@ export const PLATAFORMAS = [
   [/ammlicita/i, 'https://app2.ammlicita.org.br', 'no AMM Licita', false],
   [/licitacoes-e\.com\.br|licita[çc][õo]es-e\b/i, 'https://www.licitacoes-e.com.br', 'no Licitações-e do Banco do Brasil', false],
   [/bbmnet/i, 'https://bbmnet.com.br', 'na BBMNET', false],
+  // 24/09/2026: os dois unicos editais da lista que ficaram sem botao
+  // Participar por plataforma desconhecida — Pedro de Toledo/SP ("local de
+  // realizacao: plataforma de licitacoes eletronicas Licita Mais Brasil") e
+  // Acreuna/GO ("local: www.slicx.com.br"). Nao sao da casa.
+  [/licitamaisbrasil|licita\s+mais\s+brasil/i, 'https://www.licitamaisbrasil.com.br', 'no Licita Mais Brasil', false],
+  [/slicx/i, 'https://www.slicx.com.br', 'no SLICX', false],
 ];
 
 // Endereco escrito por extenso para a sessao: "ENDERECO ELETRONICO:
@@ -81,11 +87,28 @@ export function plataformaDoTexto(texto) {
     const url = (/^www\./i.test(s[1]) ? 'https://' + s[1] : s[1]).replace(/[.:]+$/, '');
     return { url, nome: 'no portal de compras próprio do órgão', daCasa: false };
   }
+  // O Compras.gov.br fica de fora da contagem porque "SICAF" e "Compras.gov.br"
+  // aparecem em todo edital como cadastro. Com a UASG ao lado, porem, e o lugar
+  // da disputa: "EDITAL Nº 17/2026 – Sistema Compras.gov.br. CONTRATANTE (UASG)
+  // 456578" (Boa Vista da Aparecida/PR, 24/09/2026).
+  if (/compras\.gov\.br/i.test(t) && /UASG\s*\)?\s*:?\s*\d{5,6}/i.test(t)) {
+    const cg = PLATAFORMAS.find(([, url]) => url.includes('gov.br/compras'));
+    if (cg) return { url: cg[1], nome: cg[2], daCasa: cg[3] };
+  }
   const contagem = PLATAFORMAS
     .filter(([, url]) => !url.includes('gov.br/compras'))
     .map(([re, url, nome, daCasa]) => ({ url, nome, daCasa, n: (t.match(new RegExp(re.source, 'gi')) || []).length }))
     .filter(x => x.n).sort((a, b) => b.n - a.n);
-  return contagem[0] ? { url: contagem[0].url, nome: contagem[0].nome, daCasa: contagem[0].daCasa } : null;
+  if (contagem[0]) return { url: contagem[0].url, nome: contagem[0].nome, daCasa: contagem[0].daCasa };
+  // Por ultimo, o texto sem espaco nenhum. Ha PDF que sai letra por letra — o
+  // edital de Tenente Portela/RS escreve "b l l . o r g . b r", e nenhum padrao
+  // casava; o edital estava na BLL, que e da casa, e o card ficava sem botao
+  // Participar (24/09/2026). O padrao e longo e especifico, entao colar as
+  // letras nao inventa plataforma nenhuma.
+  const colado = t.replace(/\s+/g, '');
+  const grudado = PLATAFORMAS.filter(([, url]) => !url.includes('gov.br/compras'))
+    .find(([re]) => new RegExp(re.source.replace(/\\s\+/g, ''), 'i').test(colado));
+  return grudado ? { url: grudado[1], nome: grudado[2], daCasa: grudado[3] } : null;
 }
 
 // Le o objeto e o comeco dos dois primeiros arquivos do edital (6 folhas do
