@@ -86,9 +86,100 @@
     0x017E:0x9E, 0x0178:0x9F
   };
 
-  // devolve array de bytes WinAnsi; o que nao existe na tabela vira "?"
+  // ------------------------------------------------------- transliteracao
+  // O edital usa sinal que a Helvetica nao desenha, e ate 24/09/2026 cada um
+  // deles virava um "?" aqui. So na lista de 23/09/2026 eram 4.417 deles, de
+  // 40 sinais diferentes, e a maioria esmagadora e MARCADOR DE TOPICO: o
+  // U+25CF (circulo cheio) aparece 1.977 vezes e o U+23AF (fio de separacao)
+  // 1.425. Quem abria o resumo lia "? Capacidade: 430 L ? Cor: branca" e nao
+  // tinha como saber se ali faltava um sinal ou faltava texto.
+  //
+  // Nao e erro de leitura: o sinal esta certo no dados.json e a pagina o
+  // desenha, porque o navegador tem fonte para tudo. Quem nao tem e o PDF, que
+  // usa as fontes padrao do leitor — elas cobrem o WinAnsi e mais nada. Entao
+  // o que falta precisa virar OUTRA COISA legivel, e nao um "?".
+  var TRANS = {};
+  (function () {
+    // muitos sinais para um so, no mesmo estilo da tabela BASE la em cima
+    var g = [
+      // marcador de topico, de lista e de seta viram todos o bullet do WinAnsi
+      ["•", "●○◎◉◦▪▫■□▮" +
+                 "▶▸►▼◆◇◼◾♦❖" +
+                 "‣⁃∙⮚➢➤➔✓✔✗✘"],
+      ["—", "⎯―⎼⎽⸺⸻"],   // fio de separacao
+      ["|", "│┃║"],
+      ["/", "⁄∕"],
+      ["'", "′"],
+      ["\"", "″"],
+      ["°", "˚"],
+      ["µ", "μ"],        // micro: o WinAnsi tem o sinal, em 0xB5
+      [",", "、"], [".", "。"],
+      // largura zero nao desenha nada em lugar nenhum
+      ["", "​‌‍‎‏⁠⁡⁢⁣⁤﻿"],
+      // Homoglifo cirilico: o edital de Sao Gabriel/RS escreve "OBJETO" com o
+      // O russo no fim, e sem isto a palavra sairia "OBJET?".
+      ["A", "А"], ["B", "В"], ["E", "Е"], ["K", "К"],
+      ["M", "М"], ["H", "Н"], ["O", "О"], ["P", "Р"],
+      ["C", "С"], ["T", "Т"], ["X", "Х"],
+      ["a", "а"], ["e", "е"], ["o", "о"], ["p", "р"],
+      ["c", "с"], ["x", "х"], ["y", "у"]
+    ];
+    for (var i = 0; i < g.length; i++)
+      for (var j = 0; j < g[i][1].length; j++) TRANS[g[i][1][j]] = g[i][0];
+
+    // e os que so cabem em mais de uma letra
+    var m = {
+      "☐": "[ ]", "☑": "[X]", "☒": "[X]",   // caixa de marcar
+      "≥": ">=", "≤": "<=", "≠": "!=", "≈": "~",
+      "∞": "inf", "‖": "||",
+      "Ω": "ohm", "Ω": "ohm", "ω": "omega", "Δ": "delta",
+      "σ": "sigma", "φ": "phi", "π": "pi", "λ": "lambda",
+      "α": "alfa", "β": "beta", "γ": "gama", "θ": "teta"
+    };
+    for (var k in m) if (Object.prototype.hasOwnProperty.call(m, k)) TRANS[k] = m[k];
+  })();
+
+  // A ordem importa: tabela, depois faixa, e por ultimo a decomposicao do
+  // proprio Unicode (NFKD), que sozinha resolve 7 dos 40 — "℃" vira "°C", o
+  // indice "₂" vira "2" e a ligadura tipografica vira as duas letras. O "?"
+  // continua existindo para o que nada resolve, mas agora e o ultimo recurso
+  // em vez do primeiro.
+  function traduz(c, nivel) {
+    var k = c.codePointAt(0);
+    if (CP[k] !== undefined) return c;
+    if (TRANS[c] !== undefined) return TRANS[c];
+    if (k >= 0x0300 && k <= 0x036F) return "";                              // acento solto
+    if (k >= 0xFF01 && k <= 0xFF5E) return String.fromCharCode(k - 0xFEE0); // largura dupla
+    if (k >= 0x2080 && k <= 0x2089) return String(k - 0x2080);              // indice
+    if (k >= 0x2500 && k <= 0x257F) return "-";                             // moldura de tabela
+    if (k >= 0x25A0 && k <= 0x25FF) return "•";                        // forma geometrica
+    if (k >= 0x2700 && k <= 0x27BF) return "•";                        // dingbat
+    if (nivel < 2) {
+      var nf = c.normalize("NFKD");
+      if (nf !== c) {
+        var r = "";
+        for (var i = 0; i < nf.length; i++) {
+          var d = nf.charCodeAt(i);
+          r += (d < 256 || CP[d] !== undefined) ? nf.charAt(i) : traduz(nf.charAt(i), nivel + 1);
+        }
+        return r;
+      }
+    }
+    return "?";
+  }
+
+  function paraWinAnsi(s) {
+    // O fio de separacao vem como uma fileira do mesmo sinal — ha descritivo
+    // com 60 seguidos. Um travessao so diz a mesma coisa sem empurrar a linha
+    // inteira para fora da coluna.
+    return s.replace(/[–-‖⎯─-╿]{3,}/g, "—")
+            .replace(/[^\u0000-ÿ]/gu, function (c) { return traduz(c, 0); });
+  }
+
+  // devolve array de bytes WinAnsi; o que nao existe NEM na tabela NEM na
+  // transliteracao acima vira "?"
   function bytesDe(txt) {
-    var out = [], s = String(txt == null ? "" : txt);
+    var out = [], s = paraWinAnsi(String(txt == null ? "" : txt));
     for (var i = 0; i < s.length; i++) {
       var c = s.charCodeAt(i);
       if (c === 0x0A || c === 0x0D || c === 0x09) { out.push(32); continue; }

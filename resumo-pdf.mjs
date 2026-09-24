@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { textoDasPaginas, escolhePaginas, textoUtil, coberturaItens } from './paginas-uteis.mjs';
+import { limpaTextoPncp } from './texto-pncp.mjs';
 import { abreZip, pdfsDoZip, pdfsDasEntradas, abreRar, linhasXlsx, planilhasDoZip, blocosDocx, blocosDoc, extDe, textoOdt, textoHtml, textoRtf, textosDoZip } from './arquivo-oficial.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
@@ -74,7 +75,12 @@ export async function buscaTodosItens(r) {
     const resp = await fetch(`https://pncp.gov.br/api/pncp/v1/orgaos/${pp[0]}/compras/${pp[1]}/${pp[2]}/itens?pagina=1&tamanhoPagina=500`);
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const j = await resp.json();
-    return Array.isArray(j) ? j : [];
+    // A mesma limpeza que o resto do radar aplica ao texto do PNCP. Sem ela a
+    // secao "Demais itens do edital" saia com o mojibake cru do banco deles:
+    // "1.600 PSI;â?¢ Potencia minima" em vez de "1.600 PSI; • Potencia minima"
+    // (General Carneiro/PR, 24/09/2026). O resto do radar ja limpava; so este
+    // caminho, que busca ao vivo na hora de montar o resumo, escapava.
+    return (Array.isArray(j) ? j : []).map(x => ({ ...x, descricao: limpaTextoPncp(x.descricao) }));
   } catch { return null; }
 }
 

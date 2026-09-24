@@ -17,6 +17,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { extraiDescritivo } from './paginas-uteis.mjs';
 import { criaRevisor } from './ortografia.mjs';
+import { arrumaInterrogacao } from './texto-pncp.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const arquivo = path.join(DIR, 'docs', 'descritivos.json');
@@ -3846,6 +3847,13 @@ for (const e of dados.editais) {
     if (!it[6]) itensRicos++;
     it[6] = m.texto;
   }
+
+  // Por ultimo, o sinal que o PDF nao soube desenhar e entregou como "?". Sao
+  // poucos e quase sempre separador de topico ou aspas — "4 TOMADAS 10A ? NBR
+  // 14136" (Crissiumal/RS) e "NA FORMA ?FRONTAL ELEVADA?" (Boa Vista do
+  // Burica/RS). Depois de tudo: a ortografia e a retirada do numero de pagina
+  // ja passaram, entao o que sobrou de "?" e mesmo sinal perdido.
+  for (const it of v.itens) if (it[6]) it[6] = arrumaInterrogacao(it[6]);
 }
 
 fs.writeFileSync(arquivo, JSON.stringify(base), 'utf8');
