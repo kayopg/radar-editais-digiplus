@@ -106,6 +106,17 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    **antes** do aparelho — "Prateleira para geladeira" sai, "Geladeira ... prateleiras de
    vidro" fica (`veto-item.mjs`). E o aparelho citado como uso de outra coisa ("apto para
    micro-ondas", "aplicação: refrigerador") não dá categoria ao item.
+3c. **O que a Digiplus não cota** — diferente do veto por item, que corrige erro de captura:
+   aqui o produto foi entendido certo, só não é da casa. A decisão é do usuário e cada uma
+   entrou na data em que ele pediu. Fora do radar: churrasqueira, balança, moedor/moinho de
+   café, enceradeira e lustradeira de piso, coifa, exaustor e depurador, aquecimento de água
+   (aquecedor de água, boiler, aquecedor solar, aquecedor de passagem), masseira e
+   amassadeira de padaria, e gerador de qualquer tipo. Quando o grupo sai inteiro, a
+   **categoria** sai da tabela `CAT` e o `veta-pelo-descritivo.mjs` tira do `dados.json` já
+   publicado o item que ficou órfão ("categoria que saiu"); quando só um produto sai, o nome
+   entra na `VETO_ITEM`. As duas coisas juntas quando o nome ainda pode entrar pela palavra
+   de outra categoria — um gerador "com ventilador de arrefecimento" cairia em climatização.
+   O aquecedor de **ambiente** continua, em "Outros".
 4. **Piso de preço unitário** de R$ 150 — equipamento de verdade custa. Chaleira elétrica,
    cafeteira, sanduicheira e grill não têm piso, e acima de R$ 140 com mais de 10 unidades o item fica. Itens com valor
    **zero** são mantidos: é orçamento sigiloso, e a página mostra "sigiloso", nunca "R$ 0".

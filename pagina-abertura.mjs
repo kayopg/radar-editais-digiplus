@@ -371,7 +371,12 @@ function seApresentaComoEste(texto, e) {
   const m = String(e[C.edital] || '').match(/(\d{1,6})\s*(?:-\s*\d\s*)?[\/-]\s*(\d{4})(?!\d)/);
   if (!m) return false;
   const re = new RegExp('(?:^|\\D)0*' + m[1] + '\\s*[\\/.-]\\s*' + m[2] + '(?!\\d)');
-  return re.test(normTxt(texto));
+  const t = normTxt(texto);
+  // Tambem sem espaco nenhum: ha PDF que escreve letra por letra, com espaco
+  // entre cada uma — o edital de Tenente Portela/RS sai "E D I T A L D E P R E
+  // GÃO E L E T RÔN I C O Nº 3 7/ 2 0 2 6" (24/09/2026), e assim nem o numero
+  // nem o nome do produto casam. Colando tudo, o numero volta a aparecer.
+  return re.test(t) || re.test(t.replace(/\s+/g, ''));
 }
 
 const saida = { ...jaTem };
