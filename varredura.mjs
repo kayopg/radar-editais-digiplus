@@ -27,7 +27,9 @@ const DIR = path.dirname(fileURLToPath(import.meta.url));
 // termo antigo, entao edital so de ventilador nunca era encontrado.
 const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira","freezer","frigobar","fogao industrial","fogao","forno industrial","forno eletrico","microondas","cooktop","liquidificador industrial","liquidificador","batedeira planetaria","cafeteira","chaleira eletrica","sanduicheira","grill eletrico","fritadeira","lavadora de roupas","maquina de lavar roupas","secadora de roupas","bebedouro","purificador de agua","camara fria","expositor refrigerado","ar condicionado","climatizador","cortina de ar","equipamentos de cozinha","aspirador de po",
 // acrescentados em 01/09/2026
-"ventilador","purificador de ar","gerador de energia","aquecedor de agua","refresqueira","balcao termico","buffet termico","cafeteira expresso",
+// "balcao termico" saiu da busca em 24/09/2026 junto com a categoria; o
+// "buffet termico", que o usuario manteve, continua trazendo o mesmo movel.
+"ventilador","purificador de ar","gerador de energia","aquecedor de agua","refresqueira","buffet termico","cafeteira expresso",
 // segunda leva da lista da Digiplus, 01/09/2026. "coifa" e "exaustor" voltam:
 // tinham saido nesta mesma data, antes de a coifa industrial ser confirmada.
 "coifa","exaustor","balanca","lousa digital","geladeira industrial","climatizador industrial",
@@ -38,12 +40,15 @@ const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira",
 const UFS = ["PR","RS","SP","MG","GO","MT","MS","SC"];
 
 const CAT = [
-  ["RF",["refrigerador","geladeira","frigobar","freezer","congelador","conservadora","camara fria","camara frigorifica","expositor refrigerado","balcao refrigerado","cervejeira","resfriador",
-    // "Balcao Conservacao Alimento ... componentes: pasta fria" e o nome do
-    // catalogo do PNCP para o balcao refrigerado (Bento Goncalves/RS, 18/09/2026)
-    "balcao conservacao"]],
+  // O balcao saiu em 24/09/2026, a pedido do usuario: nem o refrigerado nem o
+  // termico. O "Balcao Conservacao Alimento ... componentes: pasta fria", nome
+  // do catalogo do PNCP para o balcao refrigerado, sai junto.
+  ["RF",["refrigerador","geladeira","frigobar","freezer","congelador","conservadora","camara fria","camara frigorifica","expositor refrigerado","cervejeira","resfriador"]],
   ["BB",["bebedouro","purificador de agua","refresqueira","suqueira","refresqueira industrial"]],
-  ["CC",["fogao","forno","microondas","micro-ondas","micro ondas","cooktop","fritadeira","salamandra","char broiler","charbroiler","caldeirao","panela eletrica","churrasqueira","balcao termico","buffet termico","banho maria","banho-maria","estufa para salgados","pista termica"]],
+  // "buffet termico" fica e "balcao termico" sai, por decisao do usuario em
+  // 24/09/2026 — sao o mesmo movel, e ele quis manter so o nome buffet. A
+  // "pista termica" saiu na mesma resposta ("mantenha apenas buffet termico").
+  ["CC",["fogao","forno","microondas","micro-ondas","micro ondas","cooktop","fritadeira","salamandra","char broiler","charbroiler","caldeirao","panela eletrica","churrasqueira","buffet termico","banho maria","banho-maria","estufa para salgados"]],
   // PR e EP viraram uma so em 23/09/2026, a pedido do usuario: na pagina as
   // duas eram "Para preparar" e "Para o dia a dia", e ele preferiu um rotulo
   // unico, "Eletrodomesticos". Masseira e amassadeira sairam na mesma conversa.
@@ -451,6 +456,18 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // metalicas de Venancio Aires/RS (23/09/2026). So na frente do produto, para
 // nao derrubar o freezer que tem estrado dentro.
 "estrado",
+// Balcao sai inteiro, refrigerado e termico, por decisao do usuario em
+// 24/09/2026. Tirar os termos do CAT ja basta para a varredura nova; estes
+// aqui sao o que tira os 10 itens que JA estavam publicados naquele dia
+// (Bento Goncalves/RS e Santa Maria/RS) sem esperar a proxima varredura.
+//
+// POR EXPRESSAO, e nao pela palavra solta: "balcao" sozinho derrubava
+// "Geladeira frost free 430 litros, instalar ao lado do balcao da copa", que e
+// produto da casa citando o movel. O "buffet termico", que o usuario manteve,
+// nao casa com nenhuma delas — Lajeado/RS pede "BUFFET TERMICO QUENTE" e
+// Planalto/RS "Buffet Termico Aquecido 8 Cubas".
+"balcao termico","balcao refrigerado","balcao conservacao","balcao expositor",
+"balcao self service","balcao de conservacao","balcao frigorifico","pista termica",
 // lavadora extratora hospitalar de 50 kg com barreira sanitaria (Sonora/MS,
 // decisao do usuario em 21/09/2026)
 "lavadora de roupas hospitalar","lavadora hospitalar","barreira sanitaria",
