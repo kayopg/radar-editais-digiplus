@@ -3662,6 +3662,11 @@ for (const e of dados.editais) {
     // QUANTIDADE 01 6502113 - Especificacao Tecnica: Ventilador de Parede; ..."
     // (Secretaria da Saude de SP, pregao 11)
     it[6] = it[6].replace(/^FORNECIMENTO\s*\(SIAF[IÍ]SICO\)[^:]{0,60}?Especifica[çc][ãa]o\s+T[ée]cnica:\s*/i, '');
+    // O GRAU que o PDF perdeu e entregou como interrogacao: "Temperatura do
+    // Forno: 270? Tipo de Porta" (Conceicao das Alagoas/MG, 24/09/2026). So
+    // depois de numero e antes de espaco — "3 x 10?¹ Pa" e outro sinal perdido,
+    // e "tem garantia?" e pergunta de verdade.
+    it[6] = it[6].replace(/(?<=\d)\?(?=\s|$)/g, '°');
     // O quadro-resumo do aviso de contratacao direta, que a celula do ultimo
     // item alcanca por nao ter um proximo para fecha-la: "...Tamanho:
     // 68x42x125cm. VALOR ESTIMADO - ART. 18, § 1º, VI, Lei 14.133/2021 R$

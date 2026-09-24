@@ -18,6 +18,31 @@ const NOMEADAS = {
   ldquo: '“', rdquo: '”', lsquo: '‘', rsquo: '’', sup2: '²', sup3: '³', frac12: '½', frac14: '¼',
   frac34: '¾', times: '×', plusmn: '±', micro: 'µ', copy: '©', reg: '®', trade: '™', euro: '€',
 };
+// UTF-8 lido como LATIN-1 de verdade (ISO-8859-1, nao cp1252): ali os bytes
+// 0x80-0x9F nao tem letra nenhuma e viram "?" — e o simbolo chega ao usuario
+// como ponto de interrogacao, que foi o que ele viu em 24/09/2026.
+//
+//   "×"  = C3 97       -> "Ã" + ? = "Ã?"      "80 Ã? 107 Ã? 83 cm"
+//   "≈"  = E2 89 88    -> "â" + ?? = "â??"    "(â??140 mm)", General Carneiro/PR
+//   "“"  = E2 80 9C    -> "â??"               "â??frost-freeâ?", Jambeiro/SP
+//   "–"  = E2 80 93    -> "â??"
+//
+// O "Ã?" tambem poderia ser Ð, Ñ, Ø... e o "â??" tambem poderia ser outro sinal:
+// quem desempata e a vizinhanca. Entre dois valores e o sinal de vezes; colado
+// num numero e o "aproximadamente"; solto entre espacos e o travessao; e o
+// resto, que aparece grudado na palavra, e aspas.
+const INTERROGACAO = [
+  [/(?<=\S)\s?Ã\?\s?(?=\S)/g, ' × '],
+  [/â\?\?(?=\d)/g, '≈'],
+  [/\sâ\?\??\s/g, ' – '],
+  [/â\?\??/g, '"'],
+  // E o travessao que o proprio PNCP ja entrega como "?", sem mojibake nenhum:
+  // "VENTILADOR DE PAREDE ? 60 CM" (Guia Lopes da Laguna/MS), "Forno Eletrico
+  // 48 litros ? Forno eletrico com capacidade..." (Ervalia/MG). Solto entre
+  // espacos nunca e pergunta: a pergunta gruda na palavra de tras.
+  [/(?<=\S)\s\?\s(?=\S)/g, ' – '],
+];
+
 // UTF-8 lido como Latin-1 (e as vezes com o terceiro byte perdido)
 const QUEBRADOS = [
   [/â\?¢|â€¢|â¢/g, '•'], [/â€“|â\?"/g, '–'], [/â€”/g, '—'], [/â€œ|â€|â€\?/g, '"'],
@@ -30,7 +55,7 @@ const QUEBRADOS = [
 
 export function limpaTextoPncp(s) {
   let t = String(s ?? '');
-  if (!/[<&;ÃÂâ]/.test(t)) return t.replace(/\s+/g, ' ').trim();
+  if (!/[<&;ÃÂâ?]/.test(t)) return t.replace(/\s+/g, ' ').trim();
   // HTML do editor: quebra e item de lista viram espaco e marcador
   t = t.replace(/<\s*br\s*\/?>/gi, ' ').replace(/<\s*li[^>]*>/gi, ' • ').replace(/<\/?[a-z][a-z0-9]*(?:\s[^<>]*)?\/?>/gi, ' ');
   // entidades numericas e nomeadas
@@ -41,5 +66,8 @@ export function limpaTextoPncp(s) {
   t = t.replace(/&?([A-Za-z])(acute|grave|tilde|circ|cedil|uml);/g, (m, l, k) => (l + MARCA[k]).normalize('NFC'));
   t = t.replace(/&([a-z]{2,8}\d?);/gi, (m, n) => NOMEADAS[n.toLowerCase()] ?? m);
   for (const [re, x] of QUEBRADOS) t = t.replace(re, x);
+  // Depois dos QUEBRADOS: o que sobrou de "?" ali ja foi resolvido, e o que
+  // restar e mesmo o simbolo perdido.
+  for (const [re, x] of INTERROGACAO) t = t.replace(re, x);
   return t.replace(/\s+/g, ' ').replace(/\s+([.,;:])/g, '$1').trim();
 }
