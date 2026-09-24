@@ -2,8 +2,9 @@ name: Varredura PNCP
 
 on:
   schedule:
-    # 09:23 UTC = 06:23 em America/Sao_Paulo (o Brasil não tem mais horário de verão).
-    # O GitHub usa sempre UTC; se o fuso mudar, ajuste aqui.
+    # Os horários abaixo são UTC, que é o único fuso que o GitHub aceita. O Brasil
+    # não tem mais horário de verão, então BRT = UTC-3 o ano inteiro; se o fuso
+    # mudar, ajuste aqui.
     #
     # Por que 09:23 e não 10:00: agendamento em repositório gratuito entra numa fila
     # de baixa prioridade, e o topo da hora é o horário mais concorrido — é onde todo
@@ -13,12 +14,40 @@ on:
     #
     # Só que não bastou: em 01/09/2026 o job das 09:23 ainda não tinha pegado vaga
     # 4h21 depois. A fila é best-effort e não há prioridade para comprar, então em vez
-    # de perseguir o horário certo o jeito é tentar de novo. Três janelas: a primeira
+    # de perseguir o horário certo o jeito é tentar de novo. As janelas: a primeira
     # que conseguir vaga publica, e as seguintes olham o dados.json que está no ar,
     # veem a data de hoje e saem na hora — sem gastar os 35 min da varredura.
-    - cron: '23 9 * * 1-5'      # 06:23 BRT — janela principal
-    - cron: '23 11 * * 1-5'     # 08:23 BRT — 1ª repescagem
-    - cron: '23 13 * * 1-5'     # 10:23 BRT — 2ª repescagem
+    #
+    # 24/09/2026 — os horários foram medidos, e não estimados. Nas 19 execuções
+    # agendadas entre 02/09 e 24/09, a espera da janela principal foi:
+    #
+    #   mínimo 4h12 · mediana 4h48 · p90 6h33 · maior 8h04
+    #
+    # Nunca menos de 4h12. E as três janelas do dia entram com as mesmas 2h de
+    # intervalo com que foram agendadas (em 23/09 começaram 11:16, 13:28 e 15:52
+    # BRT), então a fila é um ATRASO CONSTANTE, e não uma hora do dia em que ela
+    # libera. Isso é o que torna o adiantamento útil: antecipar o cron antecipa a
+    # execução na mesma medida — se fosse hora fixa, mudar o cron não mudaria nada.
+    #
+    # Daí 04:23 UTC. Somando a mediana da fila (4h48) e as ~3h do pipeline, a
+    # lista fica pronta por volta das 09h BRT; no pior dia já visto, 12h30. Antes,
+    # com 09:23, a mediana caía às 14h e o pior dia passava das 19h.
+    #
+    # Não adiantar além de 03:00 UTC: abaixo disso o dia em UTC ainda é o de
+    # ontem no Brasil, e o varredura.mjs carimba parte do publicadores.json com a
+    # data UTC (linha 875).
+    #
+    # O preço de rodar mais cedo: o edital publicado durante a manhã em Brasília
+    # passa a entrar na lista do dia seguinte, porque a primeira janela fecha o
+    # dia antes. Aceitável — o encerramento costuma estar a 8 dias úteis ou mais.
+    - cron: '23 4 * * 1-5'      # 01:23 BRT — janela principal (roda ~06:11)
+    - cron: '23 6 * * 1-5'      # 03:23 BRT — 1ª repescagem  (roda ~08:11)
+    - cron: '23 8 * * 1-5'      # 05:23 BRT — 2ª repescagem  (roda ~10:11)
+    # As três acima cabem todas antes do meio-dia. Esta guarda a tarde: é onde a
+    # última tentativa caía com o horário antigo, e sem ela um dia em que as três
+    # primeiras falhassem (como 07/09/2026, em que as três bateram no timeout)
+    # ficaria sem nenhuma chance depois das 10h.
+    - cron: '23 12 * * 1-5'     # 09:23 BRT — última chance   (roda ~14:11)
   workflow_dispatch:      # permite rodar na mão pelo botão "Run workflow"
 
 # Sem isso o job não consegue commitar o dados.json de volta.
@@ -56,7 +85,10 @@ jobs:
     # 150 minutos cobriam so a varredura. Desde 10/09/2026 o job faz o pipeline
     # inteiro — varredura (101 min medidos), extracao do texto de cada edital
     # (50 min) e o recorte por item — e o usuario pediu o resultado pronto por
-    # volta das 9h. Comecando 06:23 BRT, 2h30 de trabalho terminam 08:53.
+    # volta das 9h. Quem manda no horario de entrega nao e o cron, e a fila: com
+    # o cron de 04:23 UTC a execucao comeca perto das 06h BRT e as ~3h de
+    # trabalho terminam por volta das 09h (medidas de 16/09 a 23/09: 112, 128,
+    # 179, 183, 189 e 238 minutos).
     #
     # 300 da o dobro de folga sobre a medida. Sobrar nao custa: a trava da
     # primeira etapa faz a janela extra sair na hora quando o dia ja foi

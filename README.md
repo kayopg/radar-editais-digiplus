@@ -11,8 +11,11 @@ Estados atendidos: PR, RS, SP, MG, GO, MT, MS, SC.
 
 ## Como funciona
 
-O GitHub Actions roda o pipeline inteiro de segunda a sexta, a partir das 6h23 (horário de
-Brasília), com repescagem às 8h23 e 10h23 se a fila do Actions atrasar. Ele grava
+O GitHub Actions roda o pipeline inteiro de segunda a sexta. O agendamento é 1h23 da manhã
+(horário de Brasília), com repescagem às 3h23, 5h23 e 9h23 — mas o horário marcado não é o
+horário em que roda: a fila do Actions em repositório gratuito atrasa a execução entre 4h e
+6h, de forma bem constante, e é por isso que o agendamento é de madrugada. Na prática a
+lista fica pronta por volta das 9h. Ele grava
 `docs/dados.json` e `docs/descritivos.json` e commita. A página busca esses JSON toda vez
 que alguém abre — não é preciso republicar nada, e o link nunca muda.
 
