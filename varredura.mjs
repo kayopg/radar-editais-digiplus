@@ -65,13 +65,10 @@ const CAT = [
   ["LD",["lousa digital","lousa interativa","lousa eletronica","quadro interativo","painel interativo","tela interativa"]],
   // GE entrou em 01/09/2026: gerador nao e climatizacao nem cozinha, e virava
   // "Outros" — categoria que a pagina mostra como se fosse sobra.
-  // Sem motogerador e sem grupo gerador desde 23/09/2026: o usuario cota o
-  // gerador portatil, nao o grupo de motor a combustao. Os nomes saem daqui e
-  // entram no VETO_ITEM, porque "gerador de energia" continua pegando a linha.
-  ["GE",["gerador de energia","gerador a gasolina",
-    // o catalogo do PNCP escreve "Gerador Energia", sem o "de" (Paranavai/PR,
-    // Uniao da Vitoria/PR, Vicosa/MG, 18/09/2026)
-    "gerador energia","gerador de eletricidade","gerador eletrico","gerador - potencia"]],
+  // GE saiu inteira em 24/09/2026: primeiro sairam o grupo gerador e o
+  // motogerador, e depois o usuario tirou tambem o portatil — nao cota gerador
+  // nenhum. Os nomes ficam no VETO_ITEM, porque um gerador ainda pode entrar
+  // pela palavra de OUTRA categoria ("com ventilador de arrefecimento").
   // AQ (aquecedor de agua, boiler, aquecedor solar) saiu em 23/09/2026: o
   // usuario nao cota aquecimento de agua. O aquecedor de AMBIENTE continua, em
   // "Outros", pelo "aquecedor" solto da linha de baixo.
@@ -441,6 +438,8 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 "masseira","amassadeira",
 "aquecedor de agua","aquecedor d agua","boiler","aquecedor solar","aquecedor de passagem",
 "grupo gerador","motogerador","moto gerador","gerador a diesel",
+// e, em 24/09/2026, o gerador portatil tambem: a categoria GE saiu inteira.
+"gerador de energia","gerador energia","gerador de eletricidade","gerador eletrico","gerador a gasolina",
 // fogao de brinquedo: "O fogao devera ser confeccionado em fibra de MADEIRA
 // PRENSADA (MDF) ... botoes reguladores de gas devem possuir mecanismo para ser
 // girados ... similar a um botao de fogao real. Dimensoes: 53 x 37 x 30 cm"
@@ -510,15 +509,9 @@ const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 // precisar adivinhar o contexto pelo texto.
 const VETO_RF_CIENT = ['imunobiolog','termolab','hemocompon','laboratori','vacina'];
 
-// 5.3c - grupo gerador sem o nome. O usuario cota o gerador PORTATIL, nao o
-// grupo de motor a combustao (23/09/2026). "grupo gerador", "motogerador" e
-// "gerador a diesel" ja estao no VETO_ITEM; falta o que nao se apresenta assim:
-// o de Uniao da Vitoria/PR e "Gerador Energia ... numero de fases: 3" no
-// catalogo e "gerador 12,5 kva trifasico ... 1800rpm com acoplamento direto por
-// luva elastica ao motor de 23cv" no edital. Trifasico e 1800 rpm sao a marca
-// do grupo: o portatil e monofasico e gira a 3.600 rpm. So dentro de GE, para
-// nao derrubar o exaustor de motor trifasico.
-const VETO_GE_GRUPO = ['numero de fases: 3','numero de fases:3','trifasico','trifasica','1800 rpm','1.800 rpm','1800rpm'];
+// A VETO_GE_GRUPO, que separava o grupo gerador trifasico do portatil, durou um
+// dia: em 24/09/2026 o usuario tirou o gerador inteiro e a categoria GE saiu da
+// tabela. Os nomes de gerador estao todos no VETO_ITEM.
 
 // Balancas sairam do radar em 23/09/2026: o usuario nao cota balanca, entao a
 // categoria BL deixou de existir e a lista de vetos dela nao e mais necessaria.
@@ -754,7 +747,7 @@ const VETO_FORA_DE = { projetor: 'LD' };
 const vetoDoItem = criaVetoItem({ VETO_ITEM, VETO_SO_NA_FRENTE, VETO_FORA_DE, RE_VAN, posicaoDoTermo });
 const temVeto = (d, cat) => !!vetoDoItem(d, cat);
 
-let vPiso = 0, vCient = 0, vGrupo = 0, vCancel = 0;
+let vPiso = 0, vCient = 0, vCancel = 0;
 const st = { objServ: 0, itemServ: 0, itemInstala: 0, semItem: 0, ok: 0 };
 const bruto = [];
 for (const o of cands) {
@@ -795,7 +788,6 @@ for (const o of cands) {
   for (const [cat, it, d] of interesse) {
     if (temVeto(d, cat)) continue;
     if (cat === 'RF' && VETO_RF_CIENT.some(v => d.includes(v))) { vCient++; continue; }
-    if (cat === 'GE' && VETO_GE_GRUPO.some(v => d.includes(v))) { vGrupo++; continue; }
     if (!itemVivo(it.sit)) { vCancel++; continue; }
     const v = +it.v || 0;
     if (v > 0 && v < PISO_ITEM && !SEM_PISO.some(p => d.includes(p)) && !salvoPeloVolume(v, +it.q || 0)) continue;
@@ -1065,7 +1057,7 @@ for (const e of fin) st.porUf[e.uf] = (st.porUf[e.uf] || 0) + 1;
 // Data em America/Sao_Paulo, nao em UTC: rodando de noite no Brasil o toISOString
 // ja virou o dia e a varredura saia carimbada com a data de amanha.
 const hojeISO = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' });
-const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vMod, porModalidade, vOrgao, vDevedor, porDevedor, vCient, vGrupo, vCancel, vPiso, vObj, vData, candidatos: cands.length, errItens, ...st };
+const resumo = { consultas: jobs.length, errBusca, unicos: res.size, vMod, porModalidade, vOrgao, vDevedor, porDevedor, vCient, vCancel, vPiso, vObj, vData, candidatos: cands.length, errItens, ...st };
 const bruta = { st: resumo, editais: fin };
 
 // A saida bruta nao vai para o git (uns 320 KB por dia). O que o site consome

@@ -66,7 +66,7 @@ const VETO = {
 // varredura.mjs as aplica: termo novo entra no dados.json ja publicado sem
 // esperar a proxima varredura.
 const VETO_OBJ_SEMPRE = JSON.parse((fonte.match(/const VETO_OBJ_SEMPRE = new Set\((\[[^\]]*\])\)/) || [, '[]'])[1]);
-const VETO_ITEM = lista('VETO_ITEM'), VETO_RF_CIENT = lista('VETO_RF_CIENT'), VETO_GE_GRUPO = lista('VETO_GE_GRUPO');
+const VETO_ITEM = lista('VETO_ITEM'), VETO_RF_CIENT = lista('VETO_RF_CIENT');
 const RE_VAN = /(^|[^a-z])vans?([^a-z]|$)/;       // o mesmo do varredura.mjs
 const VETO_FORA_DE = { projetor: 'LD' };           // idem
 // A tabela de categorias e o limite de posicao do termo, tambem do varredura.mjs:
@@ -82,8 +82,7 @@ const termoMaisCedo = criaPosicaoDoTermo(CAT);
 const vetoItem = criaVetoItem({ VETO_ITEM, VETO_SO_NA_FRENTE: lista('VETO_SO_NA_FRENTE'), VETO_FORA_DE, RE_VAN, posicaoDoTermo: termoMaisCedo });
 const vetoDoCatalogo = (d, cat) => ((termoMaisCedo(d) || { i: 0 }).i > TERMO_LONGE && 'termo da categoria so no fim da descricao')
   || vetoItem(d, cat)
-  || (cat === 'RF' && VETO_RF_CIENT.find(v => d.includes(v)))
-  || (cat === 'GE' && VETO_GE_GRUPO.find(v => d.includes(v)));
+  || (cat === 'RF' && VETO_RF_CIENT.find(v => d.includes(v)));
 
 // Aparelho que o edital manda entregar instalado sai, menos no RS e em SC, onde a
 // Digiplus instala (decisao do usuario, 17/09/2026; o lado do catalogo esta no
