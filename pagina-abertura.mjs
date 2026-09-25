@@ -332,7 +332,11 @@ function prioridadeCapa(nome, tipo) {
   if (/^edital|aviso de contratacao/.test(t)) return 3;
   if (/termo de referencia|estudo tecnico/.test(t)) return 0;
   // "Edital e anexos.pdf" e o edital; "Anexo I - minuta do edital" nao.
-  if (/edital/.test(n) && !/^\W*anexo|minuta d[eo] (?:contrato|ata)/.test(n)) return 2;
+  // "aviso de contratacao"/"aviso de dispensa" vale como "edital" tambem pelo
+  // NOME, e nao so pelo tipo: o arquivo de Capivari/SP se chama "Aviso de
+  // contratacao com anexo.pdf" e caia para zero por causa do "anexo", quando e
+  // justamente o documento certo (25/09/2026).
+  if (/edital|aviso de (?:contratacao|dispensa)/.test(n) && !/^\W*anexo|minuta d[eo] (?:contrato|ata)/.test(n)) return 2;
   if (/termo de referencia|(^|[^a-z])tr[\s_.-]|estudo tecnico|(^|[^a-z])etp[\s_.-]|planilha|anexo|historico|quantitativ|estimativa|cotac|orcamento|relacao ?(?:de ?)?itens|mapa de riscos?|matriz de riscos?|(^|[^a-z])dfd[\s_.-]|parecer|portaria|decreto|autorizac|solicitac|memorando|publicac|minuta|contrato|ata de registro|pesquisa de preco/.test(n)) return 0;
   return 1;
 }
@@ -435,7 +439,17 @@ await pool(alvos, 2, async (e) => {
         if (process.env.DEPURA) console.log(`    ${nome} · ${p.nome || c.titulo} · ${paginas.length} p · ${achado ? 'p' + (achado.pagina + 1) + ' ' + achado.via : 'nada'}`
           + paginas.slice(0, 3).map((t, i) => `\n      p${i + 1}${ehAnexo(t) ? ' [anexo]' : ''}: ${topoDe(t).slice(0, 200)}`).join(''));
         if (!achado) continue;
-        const nota = FORCA[achado.via] - (ehPedaco(paginas) ? 3 : 0);
+        // O arquivo que a regra classifica como NAO-edital (ETP, certidao de
+        // publicacao, termo de referencia) so vale como RESERVA. O pulo la em
+        // cima so enxerga dentro do proprio pacote, e quando esse arquivo esta
+        // sozinho no dele ele passava e, achando folha boa, encerrava a busca —
+        // em 25/09/2026 ficaram assim as capas de Sao Valerio do Sul/RS (ETP),
+        // Cocalzinho de Goias/GO (certidao de publicacao) e Pedras de Maria da
+        // Cruz/MG (anexo I), todas com o edital em outro arquivo do pregao.
+        // Com a penalidade ele nao encerra a busca nem ganha do edital, mas
+        // continua servindo quando nao ha mais nada.
+        const reserva = prioridadeCapa(p.nome, '') === 0 ? 10 : 0;
+        const nota = FORCA[achado.via] - (ehPedaco(paginas) ? 3 : 0) - reserva;
         if (!melhor || nota > melhor.nota) melhor = { achado, le, nota, arquivo: p.nome || c.titulo };
         // na ordem de prioridade, a primeira folha boa encerra a busca
         if (nota >= FORCA.imagem) break procura;

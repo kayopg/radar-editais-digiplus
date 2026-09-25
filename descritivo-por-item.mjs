@@ -4037,7 +4037,10 @@ for (const e of dados.editais) {
   // o card nao anunciar como "Descritivo do edital" o que veio do catalogo.
   for (const it of v.itens) {
     if (it[6] || !rotuloServeDeDescritivo(it[1])) continue;
-    it[6] = limpaTextoPncp(it[1]);
+    // O PNCP as vezes escreve o nome duas vezes: "VENTILADOR DE PAREDE DE 60
+    // CM, TENSAO BIVOLT, COR PRETA. - VENTILADOR DE PAREDE DE 60 CM, TENSAO
+    // BIVOLT, COR PRETA." (Iguaracu/PR). Fica so uma.
+    it[6] = limpaTextoPncp(it[1]).replace(/^(.{20,}?)\s*[-–—.]?\s*\1\.?$/i, '$1');
     it[9] = 1;
     doCatalogo++;
   }

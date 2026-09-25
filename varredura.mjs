@@ -241,7 +241,7 @@ const INSTALACAO_NO_MATERIAL = new RegExp(
   + '|entregues? (?:devidamente )?instalad|devidamente instalad'
   + '|instalad[oa]s? e em (?:perfeito )?funcionamento'
   + '|(?:instalacao|montagem) (?:sera |fica |ficara )?(?:por conta|a cargo|sob responsabilidade|de responsabilidade) d');
-const SERVICO_NA_FRENTE = /^(?:re|des)?(?:instalacao|montagem|manutencao|higienizacao|limpeza|recarga|reposicao|substituicao|conserto|reparo|servicos?|mao de obra|calibracao|locacao|troca de|assistencia tecnica)(?![a-z])/;
+const SERVICO_NA_FRENTE = /^(?:re|des)?(?:instalacao|montagem|manutencao|higienizacao|limpeza|recarga|reposicao|substituicao|conserto|reparo|servicos?|mao de obra|calibracao|locacao|troca de|assistencia tecnica|demolicao|remocao|retirada|desmontagem)(?![a-z])/;
 // A descricao que ABRE com "instalacao"/"montagem" derruba o edital inteiro
 // (ver o `servico = true; break` mais abaixo), entao aqui o engano custa caro:
 // um item escrito "Instalacao: parede ou bancada" levaria junto a geladeira e o
@@ -495,6 +495,11 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // produto da casa citando o movel. O "buffet termico", que o usuario manteve,
 // nao casa com nenhuma delas — Lajeado/RS pede "BUFFET TERMICO QUENTE" e
 // Planalto/RS "Buffet Termico Aquecido 8 Cubas".
+// Obra e demolicao, que o rotulo disfarça de produto: "Lote 1 - DEMOLICAO
+// BEBEDOURO C/REMOCAO DE ENTULHOS" (Porto Alegre/RS, item 17, R$ 220,82 x 20),
+// cujo descritivo e "REMOCAO DE ESTRUTURAS 4, 6, 8 e 9... estruturas
+// metalicas". Entrou pela palavra "bebedouro" no meio do nome do servico.
+"demolicao","remocao de entulho","entulho",
 "balcao termico","balcao refrigerado","balcao conservacao","balcao expositor",
 "balcao self service","balcao de conservacao","balcao frigorifico","pista termica",
 // lavadora extratora hospitalar de 50 kg com barreira sanitaria (Sonora/MS,
@@ -825,7 +830,11 @@ for (const o of cands) {
     // (Osorio/RS). A mesma palavra DEPOIS do aparelho e descricao dele.
     // Tem de ABRIR a descricao: "Esponja de limpeza (lava loucas)" e esponja,
     // e derrubava o edital de limpeza de Herculandia/SP com o aspirador junto.
-    const dAberto = d.replace(/^[^a-z]*(?:\d+\s*-\s*)?/, '');
+    // Alem do numero solto na frente, o rotulo de LOTE/ITEM/GRUPO: o item 17 de
+    // Porto Alegre/RS e "Lote 1 - DEMOLICAO BEBEDOURO C/REMOCAO DE ENTULHOS", e
+    // com o "lote 1 - " no caminho a palavra de servico nao abria a descricao
+    // (25/09/2026).
+    const dAberto = d.replace(/^[^a-z]*(?:(?:lote|item|grupo)\s*)?(?:\d+\s*[-–:]\s*)?/, '');
     const serv = SERVICO_NA_FRENTE.exec(dAberto);
     if (serv && serv.index === 0 && !SO_DIZ_A_MONTAGEM.test(dAberto)) {
       if (UF_INSTALA.has(o.uf) && /instalacao|montagem/.test(serv[0]) && !/desinstalacao/.test(serv[0])) continue;
