@@ -17,7 +17,32 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { extraiDescritivo } from './paginas-uteis.mjs';
 import { criaRevisor } from './ortografia.mjs';
-import { arrumaInterrogacao } from './texto-pncp.mjs';
+import { arrumaInterrogacao, limpaTextoPncp } from './texto-pncp.mjs';
+
+// ----------------------------------------- quando o rotulo ja e o descritivo
+// Ha edital cuja tabela e so lista de preco, sem especificacao nenhuma: em
+// Carmo do Rio Verde/GO a linha inteira do item e "54 904787 EXTRATOR DE SUCO
+// 300 W 1/4CV 1750 RPM 220V - UNIDADE 12 406,2000 4.874,40". Nao ha texto para
+// recortar, o item ficava sem descritivo e a regra de 23/09/2026 ("item sem
+// descritivo sai") o tirava do radar. So que ali o ROTULO e a especificacao —
+// potencia, motor, rotacao e tensao — e da para cotar com ele.
+//
+// Custava caro: 40 itens da casa por dia, R$ 5 milhoes, entre eles 279
+// ar-condicionados de Santa Maria/RS. Decisao do usuario em 25/09/2026, depois
+// de ver a conta: aproveitar o rotulo QUANDO ELE JA DIZ O SUFICIENTE.
+//
+// O catalogo do PNCP escreve "atributo: valor, atributo: valor" ("Aparelho Ar
+// Condicionado tipo: split hi wall, capacidade refrigeracao: 12.000"), e a
+// prefeitura costuma escrever tudo corrido com numeros. Entao servem os dois
+// jeitos: dois pares "atributo: valor", ou quatro digitos. Abaixo disso fica
+// como estava — "VENTILADOR OSCILANTE PAREDE DIAMETRO 50" nao da para cotar.
+const rotuloServeDeDescritivo = s => {
+  const t = String(s || '');
+  if (t.length < 40) return false;
+  const pares = (t.match(/\p{L}\s*:\s*[\p{L}\d]/gu) || []).length;
+  const digitos = (t.match(/\d/g) || []).length;
+  return pares >= 2 || digitos >= 4;
+};
 
 // ------------------------------------------------------- rodape da folha
 // O edital repete um rodape em todas as paginas, e quando o item atravessa a
@@ -3273,7 +3298,7 @@ try { manuais = JSON.parse(fs.readFileSync(path.join(DIR, 'descritivos-manuais.j
 
 const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v.secoes || []).map(s => s.texto)));
 
-let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0;
+let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0;
 
 for (const e of dados.editais) {
   const v = base.editais[e[C.path]];
@@ -3936,9 +3961,20 @@ for (const e of dados.editais) {
   // Burica/RS). Depois de tudo: a ortografia e a retirada do numero de pagina
   // ja passaram, entao o que sobrou de "?" e mesmo sinal perdido.
   for (const it of v.itens) if (it[6]) it[6] = arrumaInterrogacao(it[6]);
+
+  // E, por fim, o item que o edital nao especifica em lugar nenhum: se o
+  // proprio rotulo ja serve, ele vira o descritivo — marcado no indice 9, para
+  // o card nao anunciar como "Descritivo do edital" o que veio do catalogo.
+  for (const it of v.itens) {
+    if (it[6] || !rotuloServeDeDescritivo(it[1])) continue;
+    it[6] = limpaTextoPncp(it[1]);
+    it[9] = 1;
+    doCatalogo++;
+  }
 }
 
 fs.writeFileSync(arquivo, JSON.stringify(base), 'utf8');
 console.log(`${comTexto} edital(is) com texto de secao · ${semTexto} sem`);
 console.log(`${itensRicos} de ${itensTotal} itens ganharam descritivo completo`);
+console.log(`${doCatalogo} itens sem especificacao no edital ficaram com o rotulo do catalogo`);
 console.log(`docs/descritivos.json: ${(fs.statSync(arquivo).size / 1024).toFixed(0)} KB`);

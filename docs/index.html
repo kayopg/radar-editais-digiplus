@@ -562,11 +562,14 @@ function abreCard(card){
   carregaDescritivos().then(function(base){
     var d = base && base.editais ? base.editais[r[7]] : null;
     var porNum = {};
-    if(d && d.itens) d.itens.forEach(function(x){ if(x[6]) porNum[x[0]] = x[6]; });
+    // O indice 9 marca o item cujo edital nao traz especificacao nenhuma e que
+    // ficou com o rotulo do catalogo do PNCP (ver descritivo-por-item.mjs). O
+    // texto serve para cotar, mas nao saiu do edital — e o card diz isso.
+    if(d && d.itens) d.itens.forEach(function(x){ if(x[6]) porNum[x[0]] = { t:x[6], catalogo:!!x[9] }; });
     card.querySelectorAll(".idesc").forEach(function(el){
-      var t = porNum[el.dataset.n];
+      var o = porNum[el.dataset.n], t = o && o.t;
       if(!t){ el.innerHTML = '<span class="isem">Sem descritivo no texto do edital — confira o arquivo oficial.</span>'; return; }
-      el.innerHTML = '<span class="irotulo">Descritivo do edital</span><span class="itexto">' + esc(t) + '</span>'
+      el.innerHTML = '<span class="irotulo">' + (o.catalogo ? 'Descrição do catálogo do PNCP' : 'Descritivo do edital') + '</span><span class="itexto">' + esc(t) + '</span>'
         + (t.length > 320 ? '<button type="button" class="imais" onclick="this.parentNode.classList.toggle(\'inteiro\');this.textContent=this.parentNode.classList.contains(\'inteiro\')?\'ver menos\':\'ver completo\'">ver completo</button>' : '');
       if(t.length > 320) el.classList.add("longo");
     });
