@@ -370,7 +370,13 @@ function citaProdutoDoRadar(texto, e) {
 function seApresentaComoEste(texto, e) {
   const m = String(e[C.edital] || '').match(/(\d{1,6})\s*(?:-\s*\d\s*)?[\/-]\s*(\d{4})(?!\d)/);
   if (!m) return false;
-  const re = new RegExp('(?:^|\\D)0*' + m[1] + '\\s*[\\/.-]\\s*' + m[2] + '(?!\\d)');
+  // Sem os zeros A ESQUERDA do numero: o "0*" do padrao aceita os zeros do
+  // TEXTO, mas nao os do proprio edital. Carmo do Rio Verde/GO publica o
+  // "Edital nº 0000012/2026" e o arquivo escreve "PREGAO ELETRONICO 012/2026",
+  // entao a comparacao falhava e a capa era recusada como de outra licitacao
+  // (25/09/2026).
+  const numero = m[1].replace(/^0+(?=\d)/, '');
+  const re = new RegExp('(?:^|\\D)0*' + numero + '\\s*[\\/.-]\\s*' + m[2] + '(?!\\d)');
   const t = normTxt(texto);
   // Tambem sem espaco nenhum: ha PDF que escreve letra por letra, com espaco
   // entre cada uma — o edital de Tenente Portela/RS sai "E D I T A L D E P R E

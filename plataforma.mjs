@@ -64,6 +64,12 @@ export const PLATAFORMAS = [
   [/slicx/i, 'https://www.slicx.com.br', 'no SLICX', false],
 ];
 
+// O link que ja veio pronto e de um dos seis portais da casa? O PNCP as vezes
+// entrega o endereco do edital no portal de TRANSPARENCIA da prefeitura, que e
+// onde o arquivo esta publicado e nao onde se disputa.
+export const linkDaCasa = url =>
+  PLATAFORMAS.some(([re, , , daCasa]) => daCasa && re.test(String(url || '')));
+
 // Endereco escrito por extenso para a sessao: "ENDERECO ELETRONICO:
 // https://scpiiacanga.dcfiorilli.com.br:879/comprasedital/" (Iacanga/SP), portal
 // proprio da prefeitura que nenhuma lista conhece.

@@ -712,16 +712,18 @@ function dataHoraBR(iso){
   var hm = iso.slice(11,16);
   return dataBR(iso) + (hm && hm !== "00:00" ? " às " + hm : "");
 }
-// it[6]: E = exclusiva ME/EPP, C = cota reservada, S = sem beneficio. Quem nao e
-// ME/EPP nem pode disputar o item exclusivo, e sao 41% deles.
-var BENEFICIO = { E:"Exclusivo ME/EPP", C:"Cota reservada ME/EPP", S:"Sem benefício" };
+// it[6]: E = exclusiva ME/EPP, C = cota reservada, S = sem beneficio,
+// N = nao se aplica (o tipoBeneficio 5 do PNCP). Quem nao e ME/EPP nem pode
+// disputar o item exclusivo, e sao 41% deles. O "N" e o "S" nao restringem
+// ninguem, mas sao valores diferentes no PNCP e ficam separados aqui.
+var BENEFICIO = { E:"Exclusivo ME/EPP", C:"Cota reservada ME/EPP", S:"Sem benefício", N:"Não se aplica" };
 function resumoBeneficio(r){
-  var n = {E:0,C:0,S:0}, t = r[8].length;
+  var n = {E:0,C:0,S:0,N:0}, t = r[8].length;
   r[8].forEach(function(it){ if(n[it[6]]!==undefined) n[it[6]]++; });
   if(n.E === t) return "todos os itens exclusivos para ME/EPP";
   if(n.E) return n.E + " de " + t + " itens exclusivos para ME/EPP";
   if(n.C) return n.C + " de " + t + " com cota reservada para ME/EPP";
-  return n.S ? "sem benefício ME/EPP" : "";
+  return (n.S + n.N) ? "sem benefício ME/EPP" : "";
 }
 function qtdItem(it){
   var q = it[1].toLocaleString("pt-BR");

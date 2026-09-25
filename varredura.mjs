@@ -778,6 +778,12 @@ const beneficio = s => {
   if (t.includes('exclusiva')) return 'E';
   if (t.includes('cota')) return 'C';
   if (t.includes('sem beneficio')) return 'S';
+  // "Nao se aplica" e o tipoBeneficio 5 do PNCP, e nao era lido: 152 dos 951
+  // itens de 25/09/2026 (16%), em 24 editais, ficavam sem letra nenhuma e o
+  // card nao dizia nada sobre ME/EPP. Para quem vai disputar, "nao se aplica" e
+  // "sem beneficio" dao no mesmo — ninguem fica de fora —, mas sao valores
+  // diferentes no PNCP, entao vai com letra propria em vez de virar "S".
+  if (t.includes('nao se aplica')) return 'N';
   return '';
 };
 

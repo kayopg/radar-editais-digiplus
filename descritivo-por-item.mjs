@@ -82,6 +82,50 @@ function achaRodape(texto) {
   return { cauda, denominador: melhor.d };
 }
 
+// O TIMBRE que se repete sem contador de pagina nenhum, que o achaRodape nao
+// enxerga. O aviso de dispensa de Cascavel/PR traz sete vezes "Universidade
+// Estadual do Oeste do Parana - UNIOESTE ... Minuta - Aviso de Dispensa_mala
+// <n>", e ele caiu dentro da primeira linha do descritivo da cafeteira:
+// "CAFETEIRA INDUSTRIAL ELETRICA 02 C <timbre> Aquecimento Sistema eletrico...".
+//
+// A ancora aqui e uma PALAVRA LONGA que se repete ("Universidade",
+// "Padronizada"): em volta de todas as suas ocorrencias, o trecho identico e o
+// timbre. Mesma ideia do rodape, so que o que se repete e a palavra, e nao o
+// numero da pagina.
+const MARCA_DE_TIMBRE = /lei\s+(?:federal|n)|decreto|minuta|processo\s*n|cnpj|prefeitura\s+municipal|munic[íi]pio\s+de|estado\s+d[eo]|universidade|hospital\s+universit[áa]rio|secretaria\s+municipal|governo\s+d[eo]|p[áa]gina\s*\d|c[âa]mara\s+municipal|autarquia|funda[çc][ãa]o\s+municipal|cep\s*\d{5}/i;
+
+function achaTimbre(texto) {
+  const onde = new Map();
+  for (const m of texto.matchAll(/\p{Lu}\p{L}{9,}/gu)) {
+    const a = onde.get(m[0]);
+    if (a) a.push(m.index); else onde.set(m[0], [m.index]);
+  }
+  const candidatas = [...onde].filter(([, pos]) => pos.length >= 4 && pos.length <= 200)
+    .sort((a, b) => b[1].length - a[1].length).slice(0, 40);
+  let melhor = null;
+  for (const [palavra, pos] of candidatas) {
+    const antes = pos.map(i => texto.slice(Math.max(0, i - 220), i));
+    const depois = pos.map(i => texto.slice(i + palavra.length, i + palavra.length + 220));
+    let a = 0;
+    while (a < 220 && antes.every(s => s.length > a && s[s.length - 1 - a] === antes[0][antes[0].length - 1 - a])) a++;
+    let b = 0;
+    while (b < 220 && depois.every(s => s.length > b && s[b] === depois[0][b])) b++;
+    const bloco = (antes[0].slice(antes[0].length - a) + palavra + depois[0].slice(0, b)).trim();
+    // curto demais nao e timbre, e um pedaco de frase que o edital repete
+    if (bloco.length < 60) continue;
+    // E PRECISA CHEIRAR A PAPEL TIMBRADO. Sem esta trava o detector confundia
+    // ESPECIFICACAO REPETIDA com timbre: num edital de ar-condicionado os
+    // quatro itens trazem o mesmo texto ("Timer digital 24hs; Gas ecologico...")
+    // mudando so os BTUs, o bloco comum ficava enorme e o "conserto" comia a
+    // especificacao inteira dos quatro. Timbre fala de orgao e de lei; a
+    // especificacao fala do produto.
+    if (!MARCA_DE_TIMBRE.test(bloco)) continue;
+    const peso = bloco.length * pos.length;
+    if (!melhor || peso > melhor.peso) melhor = { bloco, vezes: pos.length, peso };
+  }
+  return melhor;
+}
+
 // Tira o rodape de dentro do descritivo — inteiro, ou o pedaco dele que sobrou
 // quando o recorte do item comecou no meio da folha. O numero grudado na
 // frente so sai quando e a QUANTIDADE do item: e a coluna da tabela que veio
@@ -3949,10 +3993,25 @@ for (const e of dados.editais) {
     it[6] = m.texto;
   }
 
-  // O rodape da folha que entrou no meio do descritivo (ver achaRodape).
+  // O rodape e o timbre da folha, que entram no meio do descritivo quando o
+  // item atravessa a quebra de pagina (ver achaRodape e achaTimbre).
   {
-    const r = achaRodape((v.secoes || []).map(s => s.texto).join('  '));
+    const corpo = (v.secoes || []).map(s => s.texto).join('  ');
+    const r = achaRodape(corpo);
     if (r) for (const it of v.itens) if (it[6]) it[6] = tiraRodapeRepetido(it[6], r, it[2]);
+    const t = achaTimbre(corpo);
+    if (t) {
+      // o numero da folha fica de fora do bloco comum, porque muda a cada
+      // pagina — entao sai junto, logo depois dele
+      const re = new RegExp('\\s*' + t.bloco.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+') + '\\s*\\d{0,3}\\s*', 'g');
+      for (const it of v.itens) {
+        if (!it[6] || !re.test(it[6])) continue;
+        const limpo = it[6].replace(re, ' ').replace(/\s+/g, ' ').trim();
+        // so vale se sobrar descritivo: se o timbre era quase tudo, o item nao
+        // tinha especificacao nenhuma e e melhor deixar como estava
+        if (limpo.length >= 40) it[6] = limpo;
+      }
+    }
   }
 
   // Por ultimo, o sinal que o PDF nao soube desenhar e entregou como "?". Sao
@@ -3961,6 +4020,17 @@ for (const e of dados.editais) {
   // Burica/RS). Depois de tudo: a ortografia e a retirada do numero de pagina
   // ja passaram, entao o que sobrou de "?" e mesmo sinal perdido.
   for (const it of v.itens) if (it[6]) it[6] = arrumaInterrogacao(it[6]);
+
+  // A coluna de QUANTIDADE da tabela grudada no fim: o ar-condicionado do item
+  // 6 de Quarai/RS termina em "Garantia de 01 ano 10 unidade", e "10 unidade" e
+  // a coluna, nao a especificacao. So sai quando o numero BATE com a quantidade
+  // do item — senao levaria junto o "cesto para 10 unidades" de um descritivo
+  // de verdade.
+  for (const it of v.itens) {
+    if (!it[6]) continue;
+    it[6] = it[6].replace(/\s+(\d{1,5})\s+(unidades?|und?|pe[çc]as?|p[çc]|caixas?|cx|pares?|conjuntos?|cj)\.?\s*$/i,
+      (todo, n) => (+n === Math.round(+it[2]) ? '' : todo));
+  }
 
   // E, por fim, o item que o edital nao especifica em lugar nenhum: se o
   // proprio rotulo ja serve, ele vira o descritivo — marcado no indice 9, para

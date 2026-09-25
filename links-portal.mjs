@@ -17,7 +17,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { linkDoPortal, ehComprasGov, montaLinkComprasGov } from './participar.mjs';
-import { plataformaDoEdital } from './plataforma.mjs';
+import { plataformaDoEdital, linkDaCasa } from './plataforma.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const arquivo = path.join(DIR, 'docs', 'dados.json');
@@ -74,7 +74,7 @@ async function pelaBusca(e) {
 let manual = {};
 try { manual = JSON.parse(fs.readFileSync(path.join(DIR, 'participar-manual.json'), 'utf8')); } catch {}
 
-let novos = 0, montados = 0, semLink = 0, falhas = 0, seguidas = 0, manuais = 0, doEdital = 0, reusados = 0, apiFora = false;
+let novos = 0, montados = 0, semLink = 0, forasteiros = 0, falhas = 0, seguidas = 0, manuais = 0, doEdital = 0, reusados = 0, apiFora = false;
 // A versao anterior do dados.json: a que o workflow guarda em /tmp/anterior.json
 // antes da varredura, ou a indicada em DADOS_ANTERIOR.
 const anterior = new Map();
@@ -95,7 +95,17 @@ for (const e of dados.editais) {
     manuais++;
     continue;
   }
-  if (e[C.linkPortal]) continue;
+  // O link que a varredura ja trouxe so encerra o assunto se for de um dos seis
+  // portais da casa. O PNCP as vezes entrega o endereco do edital no portal de
+  // TRANSPARENCIA da prefeitura, que e onde o arquivo esta publicado e nao onde
+  // se disputa: em 25/09/2026, Marcelandia/MT (dois editais) e Pocone/MT
+  // apontavam para o transparencia.agilicloud.com.br e a disputa dos tres era
+  // na Licitanet, que e da casa. O botao levava o usuario para a pagina errada.
+  //
+  // Nao sendo da casa, o link fica guardado como reserva: se o edital nao disser
+  // a plataforma, e melhor o endereco fraco que botao nenhum.
+  const linkFraco = e[C.linkPortal] && !linkDaCasa(e[C.linkPortal]) ? e[C.linkPortal] : '';
+  if (e[C.linkPortal] && !linkFraco) continue;
   // O link do dia anterior: o endereco do edital no portal nao muda, e com a
   // consulta fora do ar a varredura de 22/09/2026 saiu com 151 de 154 cards sem
   // o botao Participar, quando na vespera 91 o tinham.
@@ -130,11 +140,19 @@ for (const e of dados.editais) {
     falhas++;
     if (!apiFora && ++seguidas >= 5) { apiFora = true; console.log('a API de consulta nao responde; os demais so pela plataforma escrita no edital'); }
   }
-  if (!link) {
+  // Sem link, OU com um link que nao e de portal da casa: nos dois casos quem
+  // decide e o proprio edital. O endereco que o PNCP devolve em
+  // linkSistemaOrigem as vezes e o portal de TRANSPARENCIA da prefeitura, que e
+  // onde o arquivo esta publicado e nao onde se disputa — Marcelandia/MT (dois
+  // editais) e Pocone/MT apontavam para o Agili e a disputa dos tres era na
+  // Licitanet (25/09/2026). So troca quando o edital indica portal DA CASA:
+  // trocar um endereco fraco por outro fraco nao ajuda ninguem.
+  if (!link || !linkDaCasa(link)) {
     const p = await plataformaDoEdital(e, e[C.objeto]);
-    if (p) {
+    if (p && (!link || p.daCasa)) {
+      const tinha = !!link;
       link = p.url;
-      e[C.comoParticipar] = `O PNCP não traz o endereço deste edital. O próprio edital indica a disputa ${p.nome}: entre lá e procure o ${String(e[C.edital] || 'edital').split('|')[0].trim().replace(/^Edital\s+/i, 'edital ')} de ${e[C.municipio]}/${e[C.uf]}.`;
+      e[C.comoParticipar] = `${tinha ? 'O PNCP aponta para o portal de transparência da prefeitura, que é onde o arquivo está publicado.' : 'O PNCP não traz o endereço deste edital.'} O próprio edital indica a disputa ${p.nome}: entre lá e procure o ${String(e[C.edital] || 'edital').split('|')[0].trim().replace(/^Edital\s+/i, 'edital ')} de ${e[C.municipio]}/${e[C.uf]}.`;
       doEdital++;
     }
   }
@@ -142,10 +160,13 @@ for (const e of dados.editais) {
     e[C.linkPortal] = link;
     e[C.linkMontado] = montado ? 1 : '';
     if (montado) montados++; else if (!e[C.comoParticipar]) novos++;
+  } else if (linkFraco) {
+    e[C.linkPortal] = linkFraco;          // volta a reserva: melhor que nada
+    forasteiros++;
   } else semLink++;
   await espera(300);
 }
 
 fs.writeFileSync(arquivo, JSON.stringify(dados), 'utf8');
 const com = dados.editais.filter(e => e[C.linkPortal]).length;
-console.log(`links do portal: ${novos} do PNCP · ${montados} montados · ${doEdital} pela plataforma escrita no edital · ${reusados} do dia anterior · ${manuais} do participar-manual.json · ${semLink} sem link · ${falhas} consulta(s) sem resposta · ${com} de ${dados.editais.length} com botao Participar`);
+console.log(`links do portal: ${novos} do PNCP · ${montados} montados · ${doEdital} pela plataforma escrita no edital · ${forasteiros} so com o endereco de transparencia · ${reusados} do dia anterior · ${manuais} do participar-manual.json · ${semLink} sem link · ${falhas} consulta(s) sem resposta · ${com} de ${dados.editais.length} com botao Participar`);

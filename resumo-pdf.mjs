@@ -48,7 +48,9 @@ const qtdItem = it => {
 // it[6]: E = exclusiva ME/EPP, C = cota reservada, S = sem beneficio. Quem nao e
 // ME/EPP nem pode disputar o item exclusivo, e sao 41% deles — por isso o aviso
 // vem em negrito junto do titulo, e nao escondido num campo la embaixo.
-export const BENEFICIO = { E: 'Exclusivo ME/EPP', C: 'Cota reservada ME/EPP', S: 'Sem benefício' };
+// N = "Nao se aplica", o tipoBeneficio 5 do PNCP. Sem ele a coluna saia vazia
+// em 152 dos 951 itens de 25/09/2026 (ver beneficio() no varredura.mjs).
+export const BENEFICIO = { E: 'Exclusivo ME/EPP', C: 'Cota reservada ME/EPP', S: 'Sem benefício', N: 'Não se aplica' };
 const beneficioItem = it => BENEFICIO[it[6]] || '';
 
 // Resumo do beneficio no edital inteiro, para quem le so o cabecalho.
