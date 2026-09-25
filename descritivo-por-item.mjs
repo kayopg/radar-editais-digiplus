@@ -94,6 +94,26 @@ function achaRodape(texto) {
 // numero da pagina.
 const MARCA_DE_TIMBRE = /lei\s+(?:federal|n)|decreto|minuta|processo\s*n|cnpj|prefeitura\s+municipal|munic[íi]pio\s+de|estado\s+d[eo]|universidade|hospital\s+universit[áa]rio|secretaria\s+municipal|governo\s+d[eo]|p[áa]gina\s*\d|c[âa]mara\s+municipal|autarquia|funda[çc][ãa]o\s+municipal|cep\s*\d{5}/i;
 
+// Onde aparece o primeiro termo de produto da casa num texto ja normalizado, ou
+// -1. A tabela vem do proprio varredura.mjs, lida do arquivo, como fazem o
+// veta-pelo-descritivo.mjs e o audita-itens.mjs: duas copias divergiriam.
+let _termosDaCasa = null;
+const termosDaCasa = () => {
+  if (_termosDaCasa) return _termosDaCasa;
+  const f = fs.readFileSync(path.join(DIR, 'varredura.mjs'), 'utf8');
+  const i = f.indexOf('const CAT = [');
+  const cat = eval(f.slice(i, f.indexOf('\n];', i) + 3).replace('const CAT = ', ''));
+  return (_termosDaCasa = cat.flatMap(([, termos]) => termos));
+};
+const termoDaCategoria = t => {
+  let menor = -1;
+  for (const termo of termosDaCasa()) {
+    const k = t.indexOf(termo);
+    if (k >= 0 && (menor === -1 || k < menor)) menor = k;
+  }
+  return menor;
+};
+
 function achaTimbre(texto) {
   const onde = new Map();
   for (const m of texto.matchAll(/\p{Lu}\p{L}{9,}/gu)) {
@@ -3342,7 +3362,7 @@ try { manuais = JSON.parse(fs.readFileSync(path.join(DIR, 'descritivos-manuais.j
 
 const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v.secoes || []).map(s => s.texto)));
 
-let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0;
+let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0;
 
 for (const e of dados.editais) {
   const v = base.editais[e[C.path]];
@@ -3932,6 +3952,55 @@ for (const e of dados.editais) {
   }
   // Por ultimo, o erro de digitacao e a palavra colada que vieram do proprio
   // edital: "na cor brnca", "Atraves Dechave Seletora". Ver ortografia.mjs.
+  // A CABECA PERDIDA: o recorte comecou DEPOIS do nome do produto. Em Santa
+  // Maria/RS o item 39 saiu "CAPACIDADE 340 LITROS, DUPLEX 2 PORTAS..." e a
+  // palavra "GELADEIRA," estava onze caracteres atras; no item 12 o corte caiu
+  // dentro de "CARACTERISTICAS ADICIONAIS: 12 VELOCIDADES", porque o "12"
+  // tambem e o numero do item.
+  //
+  // A recuperacao volta ate a FRONTEIRA DA LINHA da tabela — o codigo CATMAT de
+  // cinco a nove digitos, ou o preco — e traz o que vier dali em diante. Assim
+  // nao invade a linha anterior, que e o item de cima. A que ja existe la em
+  // cima resolve outro caso: quando o descritivo e um pedaco final do ROTULO do
+  // PNCP; esta aqui olha o texto do edital.
+  {
+    const corpo = (v.secoes || []).map(s => s.texto).join('  ');
+    const FRONTEIRA = /\b\d{5,9}\b|R\$\s*[\d.,]+/g;
+    // SO NOS ITENS DO RADAR. Sem esta trava a regra mexeu em tres mesas de
+    // Jambeiro/SP, cujo descritivo estava certo, e colou na frente texto de
+    // outras linhas ("pressao 2,8kPa UN 2 17 Gaveteiro... 18 Liquidificador"):
+    // a cabeca "nomeava produto da casa", so que era o liquidificador do item
+    // seguinte. Mesa nao e produto da casa e nao tinha nada a recuperar.
+    const doRadar = new Set((e[C.itens] || []).map(x => String(x[5])));
+    for (const it of v.itens) {
+      if (!it[6] || it[9] || it[6].length < 40 || !doRadar.has(String(it[0]))) continue;
+      // ja diz o produto nos primeiros 60? entao nao ha cabeca a recuperar
+      const topo = normIgual(it[6]).slice(0, 75);
+      const diz = termoDaCategoria(topo);
+      if (diz !== -1 && diz <= 60) continue;
+      const i = corpo.indexOf(it[6].slice(0, 45));
+      if (i < 40) continue;
+      const janela = corpo.slice(Math.max(0, i - 400), i);
+      // a ULTIMA fronteira antes do corte, e nao a que estiver colada nele: o
+      // que vem entre ela e o corte e justamente a cabeca que se procura
+      let ultima = null;
+      for (const m of janela.matchAll(FRONTEIRA)) ultima = m;
+      if (!ultima) continue;
+      const cabeca = janela.slice(ultima.index + ultima[0].length).replace(/^[^0-9A-Za-zÀ-ÿ]+/, '');
+      // so vale se a cabeca DISSER o produto, e se for curta: um paragrafo
+      // inteiro atras nao e cabeca, e o item anterior.
+      if (!cabeca || cabeca.length > 260 || termoDaCategoria(normIgual(cabeca)) === -1) continue;
+      // A cabeca nao pode ATRAVESSAR uma linha da tabela: "UN 2 17 Gaveteiro"
+      // tem unidade seguida de quantidade e do numero do item seguinte.
+      if (/\b(?:un|und|unid|unidade|cx|caixa|pc|pç|peca|par|cj)\b\s*\.?\s*\d/i.test(cabeca)) continue;
+      // nem repetir o que o descritivo ja diz no comeco (Caceres/MT saia com
+      // "Filtro de bebedouro de agua: Filtro de bebedouro de agua: Filtro...")
+      if (normIgual(it[6]).startsWith(normIgual(cabeca).slice(0, 25))) continue;
+      it[6] = (cabeca + ' ' + it[6]).replace(/\s+/g, ' ').trim();
+      cabecasRecuperadas++;
+    }
+  }
+
   for (const it of v.itens) if (it[6]) it[6] = revisaOrtografia(it[6]);
 
   // O NUMERO DA FOLHA no meio da celula, quando a especificacao passa para a
@@ -4014,6 +4083,7 @@ for (const e of dados.editais) {
     }
   }
 
+
   // Por ultimo, o sinal que o PDF nao soube desenhar e entregou como "?". Sao
   // poucos e quase sempre separador de topico ou aspas — "4 TOMADAS 10A ? NBR
   // 14136" (Crissiumal/RS) e "NA FORMA ?FRONTAL ELEVADA?" (Boa Vista do
@@ -4050,4 +4120,5 @@ fs.writeFileSync(arquivo, JSON.stringify(base), 'utf8');
 console.log(`${comTexto} edital(is) com texto de secao · ${semTexto} sem`);
 console.log(`${itensRicos} de ${itensTotal} itens ganharam descritivo completo`);
 console.log(`${doCatalogo} itens sem especificacao no edital ficaram com o rotulo do catalogo`);
+console.log(cabecasRecuperadas + " descritivo(s) tiveram o nome do produto recuperado na frente");
 console.log(`docs/descritivos.json: ${(fs.statSync(arquivo).size / 1024).toFixed(0)} KB`);
