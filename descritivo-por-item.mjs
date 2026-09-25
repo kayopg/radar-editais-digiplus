@@ -4091,6 +4091,33 @@ for (const e of dados.editais) {
   // ja passaram, entao o que sobrou de "?" e mesmo sinal perdido.
   for (const it of v.itens) if (it[6]) it[6] = arrumaInterrogacao(it[6]);
 
+  // O COMECO DA LINHA SEGUINTE grudado no fim do descritivo. Sao tres formas,
+  // todas vistas em 25/09/2026 e todas do mesmo tipo: a tabela recomeca e o
+  // recorte levou o cabecalho da proxima linha junto.
+  //
+  //   "...o Selo INMETRO no equipamento. 106 - 143189"  (item + CATMAT)
+  //   "...certificacoes vigentes aplicaveis 0026 81755" (dois codigos)
+  //   "...FILTRO ANTI ACARO ANTI FUNG Caracteristicas"  (rotulo do campo)
+  //
+  // Nos numeros a trava e o TAMANHO: "tensao 220" e "capacidade 12000" ficam,
+  // porque um numero de ate cinco digitos sozinho ainda e especificacao. So sai
+  // o par de numeros com um deles longo, ou o numero de seis digitos para cima,
+  // que ai e codigo de catalogo e nao medida de aparelho.
+  for (const it of v.itens) {
+    if (!it[6]) continue;
+    it[6] = it[6]
+      .replace(/\s+\d{1,4}\s*[-–]\s*\d{5,9}\s*$/, '')
+      .replace(/\s+\d{6,9}\s*$/, '')
+      .replace(/((?:\s+\d{1,6}){2,})\s*$/, (todo) =>
+        /\b\d{5,6}\b/.test(todo) ? '' : todo)
+      // O rotulo so sai quando e ROTULO. Em Bento Goncalves/RS a mesma palavra
+      // fecha a frase — "para comprovacao das especificacoes;" — e tirar deixava
+      // o descritivo terminando em "das". Artigo ou preposicao na frente
+      // significa que a palavra e parte do texto, nao cabecalho de campo.
+      .replace(/[\s:]+(?<!\b(?:d[aeo]s?|[ao]s?|su[ao]s|se[ou]s|n[ao]s?|com|sem|em|para|por|todas|todos)\s)(?:caracter[íi]sticas?|especifica[çc][õo]es?|descri[çc][ãa]o|observa[çc][õo]es?)\s*:?\s*$/i, '')
+      .trim();
+  }
+
   // A coluna de QUANTIDADE da tabela grudada no fim: o ar-condicionado do item
   // 6 de Quarai/RS termina em "Garantia de 01 ano 10 unidade", e "10 unidade" e
   // a coluna, nao a especificacao. So sai quando o numero BATE com a quantidade
