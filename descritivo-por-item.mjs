@@ -19,6 +19,69 @@ import { extraiDescritivo } from './paginas-uteis.mjs';
 import { criaRevisor } from './ortografia.mjs';
 import { arrumaInterrogacao } from './texto-pncp.mjs';
 
+// ------------------------------------------------------- rodape da folha
+// O edital repete um rodape em todas as paginas, e quando o item atravessa a
+// quebra de pagina esse rodape entra DENTRO do descritivo. Em Pelotas/RS
+// (24/09/2026) o freezer terminava com "...expedida pelo INMETRO. 16 -
+// DEPARTAMENTO DE COMPRAS GOVERNAMENTAIS - 43/75", e em tres outros itens o
+// rodape caiu no meio da frase: "corpo interno e externo em aco 26 -
+// DEPARTAMENTO DE COMPRAS GOVERNAMENTAIS - 44/75 inoxidavel".
+//
+// Quem denuncia e o CONTADOR DE PAGINAS: um mesmo denominador que aparece
+// muitas vezes com o numerador mudando ("43/75", "44/75", "45/75"...) so pode
+// ser paginacao. O rodape e entao o trecho identico que vem antes dele em
+// todas as ocorrencias. Assim nao e preciso uma regra por prefeitura — o
+// proprio documento diz qual e o seu rodape.
+function achaRodape(texto) {
+  const porDenominador = new Map();
+  for (const m of texto.matchAll(/(?<![\d,./])(\d{1,3})\s*\/\s*(\d{2,4})(?![\d,./])/g)) {
+    if (+m[1] > +m[2] || +m[1] < 1) continue;          // "43/75" e pagina, "75/43" nao
+    if (!porDenominador.has(m[2])) porDenominador.set(m[2], []);
+    porDenominador.get(m[2]).push(m);
+  }
+  let melhor = null;
+  for (const [d, ms] of porDenominador) {
+    // paginas diferentes, e nao a mesma fracao repetida ("1/2 CV" mil vezes)
+    if (ms.length < 5 || new Set(ms.map(m => m[1])).size < 5) continue;
+    if (!melhor || ms.length > melhor.ms.length) melhor = { d, ms };
+  }
+  if (!melhor) return null;
+  const antes = melhor.ms.map(m => texto.slice(Math.max(0, m.index - 160), m.index));
+  let n = 0;
+  while (n < 160 && antes.every(a => a.length > n
+    && a[a.length - 1 - n] === antes[0][antes[0].length - 1 - n])) n++;
+  const cauda = antes[0].slice(antes[0].length - n);
+  // precisa ser texto de verdade: numeracao de itens ("1/75", "2/75") daria
+  // uma cauda de espaco e pontuacao, que casaria com qualquer coisa.
+  if (n < 12 || !/\p{L}{4}/u.test(cauda)) return null;
+  return { cauda, denominador: melhor.d };
+}
+
+// Tira o rodape de dentro do descritivo — inteiro, ou o pedaco dele que sobrou
+// quando o recorte do item comecou no meio da folha. O numero grudado na
+// frente so sai quando e a QUANTIDADE do item: e a coluna da tabela que veio
+// junto, e exigir que bata evita comer um "500" que fosse da especificacao.
+function tiraRodapeRepetido(txt, r, qtd) {
+  if (!r || !txt) return txt;
+  const re = new RegExp('(?<![\\d,./])(\\d{1,3})\\s*/\\s*' + r.denominador + '(?![\\d,./])', 'g');
+  const cortes = [];
+  for (const m of txt.matchAll(re)) {
+    const antes = txt.slice(0, m.index);
+    let k = 0;
+    while (k < r.cauda.length && antes.length > k
+      && antes[antes.length - 1 - k] === r.cauda[r.cauda.length - 1 - k]) k++;
+    if (k < 10) continue;                     // casou de raspao: e fracao, nao rodape
+    let ini = antes.length - k;
+    const q = /(?:^|\s)(\d{1,5})\s*$/.exec(txt.slice(0, ini));
+    if (q && qtd && +q[1] === Math.round(+qtd)) ini = q.index + (/^\s/.test(q[0]) ? 1 : 0);
+    cortes.push([ini, m.index + m[0].length]);
+  }
+  if (!cortes.length) return txt;
+  let out = txt;
+  for (const [a, b] of cortes.reverse()) out = out.slice(0, a) + ' ' + out.slice(b);
+  return out.replace(/\s+/g, ' ').replace(/\s+([.,;:])/g, '$1').trim();
+}
+
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const arquivo = path.join(DIR, 'docs', 'descritivos.json');
 const base = JSON.parse(fs.readFileSync(arquivo, 'utf8'));
@@ -383,6 +446,19 @@ const FIM_DE_LINHA = [
   /Anexo ao Termo de Refer[\u00eae]ncia/i,
   /\s\d{14}(?=\s)/
   ,
+  // A TABELA DE PESQUISA DE PRECOS que o edital cola depois do item, com as
+  // compras que outros orgaos ja fizeram. O bebedouro do item 1 de Vicosa/MG
+  // (edital 218/2026) terminava a especificacao em "4 torneiras geladas" e
+  // seguia por 500 caracteres de "Esfera UASG Nome UASG Forma Federal 160034 6\u00ba
+  // BATALHAO DE POLICIA DO EXERCITO SISPP Fornecedor Ni Fornecedor Marca/modelo
+  // Modalidade PRISMA COMERCIO DE MATERIAIS DE CONSTRUCAO LTDA...".
+  //
+  // So os cabecalhos com UASG e "Ni Fornecedor", que sao do painel de precos do
+  // Compras.gov.br e nunca aparecem numa especificacao. "Marca/modelo" sozinho
+  // NAO serve: e texto legitimo em "ADMITIDA MARCA/MODELO SIMILAR OU SUPERIOR"
+  // (Pirajuba/MG) e em "Marca/Modelo de Referencia: Electrolux MEO44"
+  // (Mercedes/PR), que ate ajuda a cotar.
+  /\s(?:Esfera\s+UASG|Nome\s+UASG|Ni\s+Fornecedor)\b/i,
   // Cauda de formulario e de rodape. A especificacao do produto ja terminou; o
   // que vem depois e o campo em branco para preencher, o endereco de entrega,
   // o carimbo do sistema ou o cabecalho da folha seguinte.
@@ -3846,6 +3922,12 @@ for (const e of dados.editais) {
     }
     if (!it[6]) itensRicos++;
     it[6] = m.texto;
+  }
+
+  // O rodape da folha que entrou no meio do descritivo (ver achaRodape).
+  {
+    const r = achaRodape((v.secoes || []).map(s => s.texto).join('  '));
+    if (r) for (const it of v.itens) if (it[6]) it[6] = tiraRodapeRepetido(it[6], r, it[2]);
   }
 
   // Por ultimo, o sinal que o PDF nao soube desenhar e entregou como "?". Sao
