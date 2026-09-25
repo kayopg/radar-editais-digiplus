@@ -107,6 +107,52 @@ const EXIGE_INSTALACAO = [
 ];
 const exigeInstalacao = d => (EXIGE_INSTALACAO.find(r => r.test(d)) || '') && 'entrega instalada';
 
+// A EXIGENCIA NO CORPO DO EDITAL, e nao na descricao do item (usuario,
+// 25/09/2026: "algumas vezes nao vem escrito no descritivo do item se solicita
+// instalacao ou nao, pode vir tambem no corpo do edital").
+//
+// Aqui a peneira e MUITO mais fina que a do item, e por medida: varrendo as
+// secoes dos 124 editais de 25/09, a palavra "instalacao" aparecia em 12 deles
+// fora do RS/SC, e 10 NAO eram exigencia nenhuma —
+//
+//   Pirajuba/MG:  "a instalacao dos equipamentos NAO INTEGRA o objeto"
+//   Jaguariuna/SP:"a instalacao ... a ser CONDUZIDO PELA SECRETARIA"
+//   Pinhal/PR:    "todos os ACESSORIOS PARA montagem e instalacao"
+//   Paranavai/PR: "entrega e, QUANDO APLICAVEL, instalacao dos equipamentos"
+//
+// Os dois que sobraram tambem nao eram clausula geral: um estava dentro da
+// linha de um armario de MDP e o outro era responsabilidade por avaria
+// ("arcar com qualquer prejuizo causado durante a entrega e instalacao").
+//
+// Por isso so entram as formas que nao tem outra leitura, e ainda assim com as
+// travas abaixo. "montagem e instalacao", "instalacao dos equipamentos" e
+// "entrega e instalacao" ficaram DE FORA de proposito: sao justamente as que
+// produzem os falsos positivos.
+const CLAUSULA_INSTALACAO = [
+  [/instala[çc][ãa]o[^.;]{0,30}(?:ser[áa]|fica(?:r[áa])?|[ée])[^.;]{0,30}(?:por conta|de responsabilidade|a cargo|sob responsabilidade) d[ao]s? (?:contratad|licitant|fornecedor|empresa|vencedor)/,
+    'a instalacao e por conta da contratada'],
+  [/contratada[^.;]{0,70}(?:dever[áa]|obriga-se a|fica obrigada a)[^.;]{0,50}(?:realizar|efetuar|executar|promover|providenciar|proceder)[^.;]{0,20}instala[çc][ãa]o/,
+    'a contratada devera instalar'],
+  [/dever[ãa]o? ser entregues? e instalad[oa]s?/, 'entregues e instalados'],
+  [/entregues? instalad[oa]s? e em (?:perfeito )?funcionamento/, 'entregues instalados e funcionando'],
+];
+// O que desarma a clausula na vizinhanca dela: negacao, condicao, obrigacao de
+// outro, ou a peca que acompanha o produto.
+// A primeira alternativa e O QUE se instala: rede eletrica do predio, software
+// e afins nao sao o aparelho, e a Digiplus nao os instalaria de todo jeito.
+const NAO_OBRIGA = /instala[çc][ãa]o (?:d[oa]s? )?(?:software|aplicativo|sistema|programa|el[ée]tric|hidr[áa]ulic|predial|sanit[áa]ri|de g[áa]s|rede|ponto)|n[ãa]o (?:integra|faz parte|est[áa] inclu|ser[áa] inclu|compreende|abrange)|(?:conduzid|realizad|executad|providenciad)[oa]s? pel[ao] (?:secretaria|municip|prefeitura|contratante|[óo]rg[ãa]o|administra)|por conta d[ao]s? (?:contratante|municip|prefeitura|[óo]rg[ãa]o|secretaria|administra)|quando aplic[áa]v|quando necess[áa]ri|se aplic[áa]v|caso (?:seja|haja)|se houver|quando couber|(?:acess[óo]rios?|pe[çc]as?|componentes?|materia(?:l|is)|kits?) (?:para|de)|manual (?:de|para)/;
+
+// A clausula vale para o edital inteiro, entao devolve o motivo uma vez so.
+const clausulaDeInstalacao = corpo => {
+  for (const [re, rot] of CLAUSULA_INSTALACAO) {
+    const m = re.exec(corpo);
+    if (!m) continue;
+    if (NAO_OBRIGA.test(corpo.slice(Math.max(0, m.index - 110), m.index + 130))) continue;
+    return rot;
+  }
+  return '';
+};
+
 const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ');
 const mostra = process.argv.includes('--mostra');
 
@@ -116,7 +162,7 @@ const mostra = process.argv.includes('--mostra');
 let fora = {};
 try { fora = JSON.parse(fs.readFileSync(path.join(DIR, 'editais-fora.json'), 'utf8')); } catch { /* sem lista */ }
 
-let tirados = 0, editaisFora = 0, recategorizados = 0, limpos = 0, semDescritivo = 0, foraDeCategoria = 0;
+let tirados = 0, porClausula = 0, editaisFora = 0, recategorizados = 0, limpos = 0, semDescritivo = 0, foraDeCategoria = 0;
 const ficam = [];
 for (const e of dados.editais) {
   // O HTML e a acentuacao quebrada do PNCP (ver texto-pncp.mjs), tambem no
@@ -137,6 +183,17 @@ for (const e of dados.editais) {
     editaisFora++;
     console.log(`  sai o edital ${nome}: objeto "${vetoObj}"`);
     continue;
+  }
+  // A clausula de instalacao escondida no corpo do edital (ver acima). Vale
+  // para todos os itens, entao o edital sai inteiro — fora do RS e de SC.
+  if (!UF_INSTALA.has(e[C.uf])) {
+    const clausula = clausulaDeInstalacao(norm((v.secoes || []).map(s => s.texto).join(' ')));
+    if (clausula) {
+      editaisFora++;
+      porClausula++;
+      console.log(`  sai o edital ${nome}: ${clausula} (clausula no corpo do edital)`);
+      continue;
+    }
   }
   for (const it of e[C.itens]) {
     const m = termoMaisCedo(norm(it[3]));
@@ -213,7 +270,7 @@ for (const e of ficam) {
 }
 ficam.length = 0; ficam.push(...porNumero.values());
 
-console.log(`${tirados} item(ns) vetado(s) pelo descritivo, ${semDescritivo} sem descritivo, ${foraDeCategoria} de categoria que saiu, ${editaisFora} edital(is) fora, ${recategorizados} item(ns) de categoria corrigida`);
+console.log(`${tirados} item(ns) vetado(s) pelo descritivo, ${semDescritivo} sem descritivo, ${foraDeCategoria} de categoria que saiu, ${editaisFora} edital(is) fora (${porClausula} por clausula de instalacao no corpo), ${recategorizados} item(ns) de categoria corrigida`);
 if (limpos) console.log(`${limpos} texto(s) do PNCP limpos de HTML e acentuacao quebrada`);
 if (!mostra && (tirados || semDescritivo || foraDeCategoria || editaisFora || recategorizados || limpos)) {
   dados.editais = ficam;
