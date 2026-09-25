@@ -220,8 +220,37 @@ const soInstala = (d, uf) => UF_INSTALA.has(uf) && SERV_INSTALA.some(v => d.incl
 //     solicitam instalacao pode remover"); no RS e em SC fica.
 // O item de servico (m != 'M') segue como antes.
 const SERVICO_NO_MATERIAL = /servicos? de (?:manutencao|higienizacao|limpeza)|manutencao (?:preventiva|corretiva)|contrato de manutencao|desinstalacao|recarga de gas|limpeza de ar(?:-| )?condicionad|mao de obra(?! de (?:instalacao|montagem))/;
-const INSTALACAO_NO_MATERIAL = /(?:servicos? de |mao de obra de |incluindo (?:a )?|incluir (?:a )?|inclusa (?:a )?|inclusive (?:a )?|fornecimento e |confeccao e )(?:instalacao|montagem)|(?:instalacao|montagem) (?:inclusa|incluida|inclusive|completa|no local|no ato)|com (?:instalacao|montagem)(?! (?:em|na|no|de|tipo|a|sobre|embutid))|entregues? (?:devidamente )?instalad|devidamente instalad|instalad[oa]s? e em (?:perfeito )?funcionamento|(?:instalacao|montagem) (?:sera |fica |ficara )?(?:por conta|a cargo|sob responsabilidade|de responsabilidade) d/;
+// COMO O APARELHO SE MONTA, e nao servico contratado: "cortina de ar para
+// instalacao horizontal sobre portas", "INSTALACAO: PAREDE OU BANCADA",
+// "instalacao no piso". Decisao do usuario em 25/09/2026: quando vem assim, o
+// edital esta descrevendo o MODELO do produto — o ar-condicionado de parede, o
+// split cassete, a cortina de ar horizontal —, nao pedindo que alguem instale.
+//
+// Vale para as duas regras abaixo: a palavra que vem DEPOIS de "instalacao"
+// decide. Se for orientacao, lugar de fixacao ou tipo de aparelho, nao e
+// servico.
+// O LUGAR onde o aparelho se fixa, ou a orientacao dele. So isto e montagem.
+const LUGAR_DE_MONTAGEM = '(?:horizontal|vertical|parede|teto|piso|bancada|mesa|janela|embutid|cassete|hi[- ]?wall|coluna|sobre|direta|fixa|compativel)';
+// Depois de "com instalacao" a lista e mais larga, porque ali as preposicoes ja
+// bastavam antes ("com instalacao em parede", "com instalacao de teto").
+const MONTAGEM_DO_APARELHO = '(?:' + LUGAR_DE_MONTAGEM + '|em|na|no|de|tipo|a)';
+const INSTALACAO_NO_MATERIAL = new RegExp(
+  '(?:servicos? de |mao de obra de |incluindo (?:a )?|incluir (?:a )?|inclusa (?:a )?|inclusive (?:a )?|fornecimento e |confeccao e )(?:instalacao|montagem)'
+  + '|(?:instalacao|montagem) (?:inclusa|incluida|inclusive|completa|no local|no ato)'
+  + '|com (?:instalacao|montagem)(?! ' + MONTAGEM_DO_APARELHO + ')'
+  + '|entregues? (?:devidamente )?instalad|devidamente instalad'
+  + '|instalad[oa]s? e em (?:perfeito )?funcionamento'
+  + '|(?:instalacao|montagem) (?:sera |fica |ficara )?(?:por conta|a cargo|sob responsabilidade|de responsabilidade) d');
 const SERVICO_NA_FRENTE = /^(?:re|des)?(?:instalacao|montagem|manutencao|higienizacao|limpeza|recarga|reposicao|substituicao|conserto|reparo|servicos?|mao de obra|calibracao|locacao|troca de|assistencia tecnica)(?![a-z])/;
+// A descricao que ABRE com "instalacao"/"montagem" derruba o edital inteiro
+// (ver o `servico = true; break` mais abaixo), entao aqui o engano custa caro:
+// um item escrito "Instalacao: parede ou bancada" levaria junto a geladeira e o
+// fogao do mesmo pregao. "Desinstalacao" segue sendo servico.
+// Aqui NAO valem as preposicoes sozinhas: "instalacao de ar condicionado" e
+// servico, e so "instalacao de parede" e montagem. Por isso o lugar tem de
+// aparecer, com ou sem a preposicao na frente.
+const SO_DIZ_A_MONTAGEM = new RegExp(
+  '^(?:instalacao|montagem)\\s*:?\\s*(?:(?:em|na|no|de|do|da|para|tipo)\\s+)?' + LUGAR_DE_MONTAGEM + '\\b');
 // "kit de instalacao" no OBJETO e acessorio, nao servico: "ar condicionado tipo
 // split Hi Wall Inverter e kits de instalacao" (Jaguariuna/SP) caia inteiro.
 const objetoSemKit = obj => obj.replace(/(?:kits?|materia(?:l|is)|acessorios?) (?:de|para) (?:instalacao|montagem)/g, ' ')
@@ -790,8 +819,9 @@ for (const o of cands) {
     // (Osorio/RS). A mesma palavra DEPOIS do aparelho e descricao dele.
     // Tem de ABRIR a descricao: "Esponja de limpeza (lava loucas)" e esponja,
     // e derrubava o edital de limpeza de Herculandia/SP com o aspirador junto.
-    const serv = SERVICO_NA_FRENTE.exec(d.replace(/^[^a-z]*(?:\d+\s*-\s*)?/, ''));
-    if (serv && serv.index === 0) {
+    const dAberto = d.replace(/^[^a-z]*(?:\d+\s*-\s*)?/, '');
+    const serv = SERVICO_NA_FRENTE.exec(dAberto);
+    if (serv && serv.index === 0 && !SO_DIZ_A_MONTAGEM.test(dAberto)) {
       if (UF_INSTALA.has(o.uf) && /instalacao|montagem/.test(serv[0]) && !/desinstalacao/.test(serv[0])) continue;
       servico = true; break;
     }
