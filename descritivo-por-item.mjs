@@ -41,7 +41,18 @@ const rotuloServeDeDescritivo = s => {
   if (t.length < 40) return false;
   const pares = (t.match(/\p{L}\s*:\s*[\p{L}\d]/gu) || []).length;
   const digitos = (t.match(/\d/g) || []).length;
-  return pares >= 2 || digitos >= 4;
+  if (pares >= 2 || digitos >= 4) return true;
+  // E o rotulo em FRASE CORRIDA, que nao tem nem pares nem numeros bastantes,
+  // mas diz o que importa (28/09/2026): "Lavadora de roupas, com capacidade de
+  // ate 11,5 kg, destinada a lavagem de roupas e tecidos" (Inaja/PR) e
+  // "purificador de agua refrigerado ... bivolt. Com refil com tecnologia de
+  // filtragem" (Marcelandia/MT). Precisa ser longo e trazer uma MEDIDA com
+  // unidade ou duas caracteristicas de aparelho — "conforme termo de
+  // referencia, capacidade conforme anexo" continua nao servindo.
+  if (t.length < 70) return false;
+  const medida = /\d+(?:[.,]\d+)?\s*(?:kg|l\b|litros?|w\b|watts?|v\b|volts?|btus?|cm|mm|polegadas?)/i.test(t);
+  const caracteristicas = (t.match(/bivolt|refrigerad|inox|autom[áa]tic|frost\s*free|digital|inverter/gi) || []).length;
+  return medida || caracteristicas >= 2;
 };
 
 // ------------------------------------------------------- rodape da folha

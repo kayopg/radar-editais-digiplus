@@ -55,14 +55,28 @@ const CAT = [
   // O aspirador da Digiplus e o de po E AGUA, e o PNCP escreve de varios jeitos:
   // "aspirador de po e agua", "aspirador po/liquido", "aspirador de po/agua".
   // So "aspirador de po" nao pega as duas ultimas, que nao tem o "de".
-  ["PR",["liquidificador","batedeira","processador de alimentos","processador alimentos","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador",
+  // "processador industrial" (28/09/2026): "PROCESSADOR INDUSTRIAL DE ALIMENTOS
+  // BM 116-NR + DISCO DE CORTE 8MM" (Minacu/GO, R$ 5.715) nao casava com
+  // "processador de alimentos" por causa do "industrial" no meio; o produto so
+  // era achado depois, em "fatiador", e o "disco" do acessorio incluso — que
+  // veta quando vem antes do produto — tirava o item.
+  ["PR",["liquidificador","batedeira","processador de alimentos","processador alimentos","processador industrial","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador",
     // 18/09/2026: nomes que o PNCP usa e a tabela nao tinha. Mixer so com
     // complemento de cozinha: "mixer" solto e tambem a mesa de som.
     "extrator de suco","centrifuga de fruta","centrifuga de alimento","centrifuga de suco",
     "mixer de alimento","mixer de mao","mixer 2 em 1","mixer 3 em 1","mixer eletrico","mixer portatil",
     "mixer vertical","mixer profissional","mixer com lamina","mixer com haste",
     "cafeteira","chaleira","sanduicheira","torradeira","air fryer","airfryer","aspirador de po","aspirador po","aspirador de agua","aspirador agua","grill eletrico","grill"]],
-  ["LV",["lavadora de roupa","maquina de lavar","secadora","centrifuga de roupa","calandra","tanquinho","lava-loucas","lava loucas","lavadora extratora"]],
+  // O catalogo do PNCP chama a maquina de lavar de "Maquina Lavar Roupa", SEM o
+  // "de", e a secadora de "Maquina Secar Roupa" — e a tabela so tinha "maquina
+  // de lavar" e "lavadora de roupa". Na lista de 28/09/2026 ficaram fora onze
+  // aparelhos de editais que ja estavam no radar por outros itens (Congonhal/MG,
+  // Cocalzinho/GO, Caxias do Sul/RS, Pinhal de Sao Bento/PR, Bela Vista do
+  // Paraiso/PR, Renascenca/PR...), fora os editais que so compravam isso e nem
+  // chegavam. "Lavadora automatica/semiautomatica" e o jeito da prefeitura de
+  // escrever o mesmo. A de piso continua vetada (VETO_ITEM).
+  ["LV",["lavadora de roupa","maquina de lavar","secadora","centrifuga de roupa","calandra","tanquinho","lava-loucas","lava loucas","lavadora extratora",
+    "maquina lavar","maquina secar","maquina lavadora","lavadora automatica","lavadora semiautomatica","lavadora semi automatica","lavadora semi-automatica"]],
   ["CL",["ar-condicionado","ar condicionado","arcondicionado","condicionador de ar","split","climatizador","cortina de ar","ventilador","desumidificador","umidificador","purificador de ar"]],
   // CX (coifa, exaustor, depurador) saiu em 23/09/2026: o usuario nao cota
   // nenhum deles. Tinha voltado em 01/09 so com coifa industrial e exaustores.
@@ -304,7 +318,7 @@ const vetoDoObjeto = txt => {
 };
 
 // 5.3 — veto por item (lista viva, construída de falsos positivos reais)
-const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
+const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","peca/acessorio","peca / acessorio","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
 // acrescentados em 30/08/2026
 "torneira de parede","torneira para pia","tubo de ferro","tubo de cobre","tubo cobre","pecas /","pecas/","para pedreiro","suporte para televis","suporte de televis","suporte de videocassete","embalag","espaco destinado","onibus","caminhao","impressao 3d","sem funcionamento","quarto de hotel","diaria","estadia","hospedagem","locacao de","prestacao de","autoclave","concentrador de","tampao","projetor","resistencia aquecedor","luva termica","frigideira","prato fundo","alicate","removedor de","coador pano","ralador/fatiador","carro balde","chave controle","elemento filtrante","filtro purificacao","liner","projeto executivo","fantasia","formula infantil","nutricao oral","nutricao geral","placa aquecedora","boia para","controle universal","controle remoto universal",
 // acrescentados em 03/09/2026: EPI casando com "purificador de ar". Montes
@@ -434,7 +448,7 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // (Cascavel/PR), air bike e simuladores de academia (Santa Vitoria/MG,
 // Saudade do Iguacu/PR), balde espremedor de mop, secadora de instrumental
 // cirurgico e o kit de iluminacao para foto.
-"secadora de piso","lavadora de piso","secadora automatica de piso","split-bolt","parafuso fendido",
+"secadora de piso","lavadora de piso","lavadora de pisos","secadora automatica de piso","automatica de piso","split-bolt","parafuso fendido",
 "manta termica","p/ paciente","para paciente","circuito paciente","circuito respiratorio",
 "aquario","air bike","eliptico","simulador de esqui","mop","instrumentais","produtos para saude",
 "fotografia","caixa de desumidificacao","notebook","computador portatil",
@@ -739,14 +753,17 @@ if (semItens.length) {
 // e o numero impresso — conferido no texto do edital de Santo Antonio do
 // Caiua/PR (01, 02, 03), Barra do Garcas/MT (8), Itapirapua/GO (02) e Vale de
 // Sao Domingos/MT (82).
+//
+// Contigua nao e preciso (28/09/2026): Inaja/PR publica IDs com buracos
+// (8038590, 8038592, 8038624...) e o card mostrava "item 8038586" onde o
+// edital imprime "07 Geladeira/refrigerador". Todos acima de 10.000 e em ordem
+// crescente basta. Mesma regra no itens-embutidos.mjs.
 function corrigeNumeracao(lista) {
   if (!Array.isArray(lista) || lista.length < 2) return lista;
   const ns = lista.map(x => x.n);
-  if (ns.some(n => !Number.isInteger(n))) return lista;
-  const contigua = ns.every((n, i) => i === 0 || n === ns[i - 1] + 1);
-  if (!contigua || ns[0] <= 10000 || ns[0] <= lista.length) return lista;
-  const base = ns[0];
-  for (const x of lista) x.n = x.n - base + 1;
+  if (ns.some(n => !Number.isInteger(n) || n <= 10000)) return lista;
+  if (!ns.every((n, i) => i === 0 || n > ns[i - 1])) return lista;
+  lista.forEach((x, i) => { x.n = i + 1; });
   return lista;
 }
 let idTrocado = 0;
@@ -800,7 +817,12 @@ const itemVivo = s => !norm(s).includes('anulado');
 // mas lousa digital costuma ser descrita "com projetor integrado" e seria
 // derrubada junto. Escopar o veto para fora da categoria LD resolve sem ter de
 // adivinhar o contexto pelo texto — mesmo recurso do VETO_RF_CIENT.
-const VETO_FORA_DE = { projetor: 'LD' };
+// "em mdf"/"de mdf" vetam movel (torre de micro-ondas, rack de TV) em qualquer
+// ponto da descricao, mas em climatizacao o MDF e a PA do ventilador de teto:
+// "Ventilador de teto com 3 pas de MDF, com luminaria" (Votuporanga/SP, item
+// 213, 28/09/2026) saia do radar. Nenhum aparelho de climatizacao e feito de
+// MDF, entao ali o termo nao veta.
+const VETO_FORA_DE = { projetor: 'LD', 'em mdf': 'CL', 'de mdf': 'CL' };
 const vetoDoItem = criaVetoItem({ VETO_ITEM, VETO_SO_NA_FRENTE, VETO_FORA_DE, RE_VAN, posicaoDoTermo });
 const temVeto = (d, cat) => !!vetoDoItem(d, cat);
 

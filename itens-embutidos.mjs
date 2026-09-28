@@ -55,14 +55,20 @@ async function itensDe(p, tent = 4) {
 // 7965701, 7965702, 7965703 e o edital imprime 01, 02, 03): corrida contigua
 // que comeca alto demais para ser numeracao, e como a leitura parte da pagina
 // 1, a posicao na lista e o numero impresso.
+//
+// A corrida nao precisa ser CONTIGUA (28/09/2026): Inaja/PR publica 8038580 ...
+// 8038590, 8038592, 8038624 ... 8039351 — IDs com buracos — e o card mostrava
+// "item 8038586", enquanto o edital imprime "07 Geladeira/refrigerador", a
+// setima da lista. Numero acima de 10.000 em TODOS os itens nao e numeracao de
+// edital nenhum; basta a lista vir em ordem crescente para a posicao ser o
+// numero impresso. A mesma regra esta no varredura.mjs — as duas tem de andar
+// juntas, senao o card e o descritivo se desencontram.
 function corrigeNumeracao(itens) {
   if (itens.length < 2) return itens;
   const ns = itens.map(x => x[0]);
-  if (ns.some(n => !Number.isInteger(n) || n < 1)) return itens;
-  const contigua = ns.every((n, k) => k === 0 || n === ns[k - 1] + 1);
-  if (!contigua || ns[0] <= 10000 || ns[0] <= itens.length) return itens;
-  const base = ns[0];
-  for (const x of itens) x[0] = x[0] - base + 1;
+  if (ns.some(n => !Number.isInteger(n) || n <= 10000)) return itens;
+  if (!ns.every((n, k) => k === 0 || n > ns[k - 1])) return itens;
+  itens.forEach((x, k) => { x[0] = k + 1; });
   return itens;
 }
 
