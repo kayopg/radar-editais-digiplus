@@ -3362,7 +3362,7 @@ try { manuais = JSON.parse(fs.readFileSync(path.join(DIR, 'descritivos-manuais.j
 
 const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v.secoes || []).map(s => s.texto)));
 
-let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0;
+let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0;
 
 for (const e of dados.editais) {
   const v = base.editais[e[C.path]];
@@ -3980,16 +3980,52 @@ for (const e of dados.editais) {
       if (diz !== -1 && diz <= 60) continue;
       const i = corpo.indexOf(it[6].slice(0, 45));
       if (i < 40) continue;
-      const janela = corpo.slice(Math.max(0, i - 400), i);
+
+      // O TEXTO DE OUTRA LINHA: o descritivo e o fim do item ANTERIOR, e o do
+      // proprio item vem logo depois, aberto pelo numero dele. Em Curitiba/PR
+      // (edital 367/2026) a geladeira do item 6 mostrava "ALIMENTACAO: BIVOLT OU
+      // 110V. ACESSORIOS INCLUSOS: BANDEJAS, FUSIVEL DE PROTECAO..." — o fim da
+      // estufa do item 5 — e o texto certo estava ali adiante: "...R$ 4.503,24
+      // 6 GELADEIRA FROST FREE DUPLEX 380 A 385 LITROS. COR BRANCA. 127V...".
+      // Nessa tabela o numero abre a linha e o preco a fecha, e o recorte leu
+      // ao contrario.
+      //
+      // Troca so quando o texto seguinte comeca com o NUMERO DESTE ITEM e diz
+      // produto da casa logo em seguida; vai ate o fim da linha (unidade/preco).
+      {
+        const fim = i + it[6].length;
+        const adiante = corpo.slice(fim, fim + 700);
+        const m = new RegExp('^[\\s\\S]{0,90}?\\s0*' + it[0] + '\\s+(?=\\S)').exec(adiante);
+        if (m) {
+          const resto = adiante.slice(m[0].length);
+          const corte = /\s(?:unidade|und|unid|un)\s+\d|\sR\$\s*\d/i.exec(resto);
+          let novo = (corte ? resto.slice(0, corte.index) : resto.slice(0, 500)).trim();
+          // rotulo de campo pendurado no fim ("LARGURA:") e virgula solta saem
+          novo = novo.replace(/[,;]?\s*[A-ZÀ-Ý ]{3,20}:\s*$/, '').replace(/[,;]\s*$/, '').trim();
+          const d0 = termoDaCategoria(normIgual(novo).slice(0, 70));
+          if (novo.length >= 30 && d0 !== -1 && d0 <= 40) {
+            it[6] = novo;
+            linhasTrocadas++;
+            continue;
+          }
+        }
+      }
+
+      const janela = corpo.slice(Math.max(0, i - 650), i);
       // a ULTIMA fronteira antes do corte, e nao a que estiver colada nele: o
       // que vem entre ela e o corte e justamente a cabeca que se procura
       let ultima = null;
       for (const m of janela.matchAll(FRONTEIRA)) ultima = m;
       if (!ultima) continue;
       const cabeca = janela.slice(ultima.index + ultima[0].length).replace(/^[^0-9A-Za-zÀ-ÿ]+/, '');
-      // so vale se a cabeca DISSER o produto, e se for curta: um paragrafo
-      // inteiro atras nao e cabeca, e o item anterior.
-      if (!cabeca || cabeca.length > 260 || termoDaCategoria(normIgual(cabeca)) === -1) continue;
+      // So vale se a cabeca DISSER o produto, e se nao for longa demais. O teto
+      // era 260 e deixava de fora o micro-ondas do item 33 de Santa Maria/RS,
+      // cujo nome esta 430 caracteres atras do corte ("FORNO MICRO-ONDAS
+      // CONSTRUIDO EM ACO INOXIDAVEL. CARACTERISTICAS: TRAVA E DISPOSITIVO DE
+      // SEGURANCA ... POTENCIA MINIMA:" e o corte caiu em "900 (W)"). A trava
+      // contra pegar a linha anterior e a fronteira — codigo CATMAT ou preco —
+      // e a proibicao de atravessar "UN 12" logo abaixo, nao o tamanho.
+      if (!cabeca || cabeca.length > 600 || termoDaCategoria(normIgual(cabeca)) === -1) continue;
       // A cabeca nao pode ATRAVESSAR uma linha da tabela: "UN 2 17 Gaveteiro"
       // tem unidade seguida de quantidade e do numero do item seguinte.
       if (/\b(?:un|und|unid|unidade|cx|caixa|pc|pç|peca|par|cj)\b\s*\.?\s*\d/i.test(cabeca)) continue;
@@ -4148,4 +4184,5 @@ console.log(`${comTexto} edital(is) com texto de secao · ${semTexto} sem`);
 console.log(`${itensRicos} de ${itensTotal} itens ganharam descritivo completo`);
 console.log(`${doCatalogo} itens sem especificacao no edital ficaram com o rotulo do catalogo`);
 console.log(cabecasRecuperadas + " descritivo(s) tiveram o nome do produto recuperado na frente");
+console.log(linhasTrocadas + " descritivo(s) trocados pelo texto da propria linha, que vinha logo depois");
 console.log(`docs/descritivos.json: ${(fs.statSync(arquivo).size / 1024).toFixed(0)} KB`);
