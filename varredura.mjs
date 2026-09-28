@@ -66,7 +66,10 @@ const CAT = [
     "extrator de suco","centrifuga de fruta","centrifuga de alimento","centrifuga de suco",
     "mixer de alimento","mixer de mao","mixer 2 em 1","mixer 3 em 1","mixer eletrico","mixer portatil",
     "mixer vertical","mixer profissional","mixer com lamina","mixer com haste",
-    "cafeteira","chaleira","sanduicheira","torradeira","air fryer","airfryer","aspirador de po","aspirador po","aspirador de agua","aspirador agua","grill eletrico","grill"]],
+    "cafeteira","chaleira","sanduicheira","torradeira","air fryer","airfryer","aspirador de po","aspirador po","aspirador de agua","aspirador agua","grill eletrico","grill",
+    // Maquina de waffle: a Digiplus cota (usuario, 28/09/2026). Pelo nome do
+    // APARELHO, e nao "waffle" solto, que pegaria o biscoito da merenda.
+    "maquina de waffle","maquina de fazer waffle","maquina para waffle","maquina waffle","maquina de waffles","waffleira","wafleira"]],
   // O catalogo do PNCP chama a maquina de lavar de "Maquina Lavar Roupa", SEM o
   // "de", e a secadora de "Maquina Secar Roupa" — e a tabela so tinha "maquina
   // de lavar" e "lavadora de roupa". Na lista de 28/09/2026 ficaram fora onze
@@ -107,8 +110,10 @@ const PISO_ITEM = 150;
 // fogao continua fora, porque nao casa com "eletrica" nem "industrial" — e
 // panela, nao eletrodomestico. Quem decide se o edital vale a viagem continua
 // sendo o PISO_EDITAL, nao este.
-// Sanduicheira e grill tambem (decisao do usuario em 22/09/2026).
-const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira','sanduicheira','grill'];
+// Sanduicheira e grill tambem (decisao do usuario em 22/09/2026). A maquina de
+// waffle entrou junto com a categoria (28/09/2026): e o mesmo aparelho de chapa
+// da sanduicheira, e a domestica sai por menos de R$ 150.
+const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira','sanduicheira','grill','waffle','wafleira'];
 
 // 5.4c - volume salva o item de preco quase no piso (decisao do usuario em
 // 18/09/2026): acima de R$ 140 e com mais de 10 unidades, o item fica. A
@@ -514,6 +519,11 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // cujo descritivo e "REMOCAO DE ESTRUTURAS 4, 6, 8 e 9... estruturas
 // metalicas". Entrou pela palavra "bebedouro" no meio do nome do servico.
 "demolicao","remocao de entulho","entulho",
+// Lavadora de alta pressao (lava-jato) a Digiplus nao cota (usuario,
+// 28/09/2026). Nao era capturada por nenhum termo, mas a "maquina lavadora"
+// que entrou no mesmo dia pegaria "Maquina lavadora de alta pressao". O prefixo
+// "pres" cobre "PRESSAO" e o "PRESAO" que aparece escrito assim (Cocalzinho/GO).
+"lavadora de alta pres","lavadora alta pres","lava-jato","lava jato","lavajato","hidrolavadora",
 "balcao termico","balcao refrigerado","balcao conservacao","balcao expositor",
 "balcao self service","balcao de conservacao","balcao frigorifico","pista termica",
 // lavadora extratora hospitalar de 50 kg com barreira sanitaria (Sonora/MS,
