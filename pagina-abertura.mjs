@@ -337,6 +337,9 @@ function prioridadeCapa(nome, tipo) {
   // contratacao com anexo.pdf" e caia para zero por causa do "anexo", quando e
   // justamente o documento certo (25/09/2026).
   if (/edital|aviso de (?:contratacao|dispensa)/.test(n) && !/^\W*anexo|minuta d[eo] (?:contrato|ata)/.test(n)) return 2;
+  // e o arquivo que se chama so pelo codigo do pregao ("PE251-26.odt", Caxias
+  // do Sul/RS, 28/09/2026) — mesma regra do edital-pdf.mjs
+  if (/^(?:pe|pp|pregao|cc|tp|dl|ce|rp)\s*[-_.]?\s*n?[ºo°]?\s*\d{1,4}\s*[-_./]?\s*\d{2,4}(?!\d)/.test(n.toLowerCase())) return 2;
   if (/termo de referencia|(^|[^a-z])tr[\s_.-]|estudo tecnico|(^|[^a-z])etp[\s_.-]|planilha|anexo|historico|quantitativ|estimativa|cotac|orcamento|relacao ?(?:de ?)?itens|mapa de riscos?|matriz de riscos?|(^|[^a-z])dfd[\s_.-]|parecer|portaria|decreto|autorizac|solicitac|memorando|publicac|minuta|contrato|ata de registro|pesquisa de preco/.test(n)) return 0;
   return 1;
 }

@@ -49,6 +49,11 @@ if (SO.length) alvos = alvos.filter(e => SO.includes(e[C.path]));
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 // Qual documento do pacote e o edital. A ordem e a mesma do resumo-pdf.mjs:
 // edital, termo de referencia, o resto.
+// Nome que e so o codigo do procedimento: "PE251-26", "PE 0492026 itens de
+// cozinha", "PP_12-2026". Tem de COMECAR pelo codigo e ter numero logo depois,
+// para nao pegar "PE_ETP" ou "pesquisa".
+export const CODIGO_DO_PREGAO = /^(?:pe|pp|pregao|cc|tp|dl|ce|rp)\s*[-_.]?\s*n?[ºo°]?\s*\d{1,4}\s*[-_./]?\s*\d{2,4}(?!\d)/;
+
 function nota(nome) {
   const s = norm(nome);
   // Decreto, portaria, parecer e matriz de risco nunca sao o edital: o pacote
@@ -57,6 +62,11 @@ function nota(nome) {
   // o card sem o botao do que com o documento errado.
   if (/(?:^|[^a-z])(?:decreto|portaria|parecer|matriz de risco|mapa de riscos?)(?:[^a-z]|$)/.test(s)) return 9;
   if (/edital|aviso de (?:licitacao|contratacao)/.test(s) && !/minuta|contrato/.test(s)) return 0;
+  // O arquivo que se chama so pelo CODIGO DO PREGAO tambem e o edital: o zip de
+  // Caxias do Sul/RS traz "PE251-26.odt" ao lado de "Anexo I - Termo de
+  // Referencia.odt" e "Anexo II - Minuta de Termo de Contrato.odt", e sem esta
+  // linha o botao "Baixar edital" entregava o Termo de Referencia (28/09/2026).
+  if (CODIGO_DO_PREGAO.test(s)) return 0;
   if (/termo de referencia|(?:^|[^a-z])tr[\s_.-]|especifica|descritiv|memorial/.test(s)) return 1;
   if (/etp|estudo tecnico|formalizacao|mapa de risco|pesquisa|cotacao|preco|planilha|media/.test(s)) return 3;
   return 2;

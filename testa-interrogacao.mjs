@@ -1,0 +1,41 @@
+// Prova que a limpeza do texto do PNCP recupera o sinal perdido que chega como
+// "?" — e deixa em paz o "?" que e pergunta de verdade.
+//
+// Todos os casos sao reais, colhidos entre 24 e 28/09/2026. A ordem das regras
+// em texto-pncp.mjs importa: em 28/09 uma regra nova ("?" entre letra e
+// pontuacao) passou a rodar antes da das aspas e comeu a aspa de fechamento de
+// "igual a ?zero?," (Votuporanga/SP). Este teste pega esse tipo de erro.
+//
+// Uso: node testa-interrogacao.mjs   (sai com codigo 1 se algum caso falhar)
+import { limpaTextoPncp } from './texto-pncp.mjs';
+
+const CASOS = [
+  // [texto do PNCP, como deve ficar — null quando deve ficar igual]
+  ['igual a ?zero?, ou próximo de ?zero?, e', 'igual a “zero”, ou próximo de “zero”, e'],   // Votuporanga/SP
+  ['Gás do produto: R600? Tipo de degelo: Manual', 'Gás do produto: R600a Tipo de degelo: Manual'], // Pontão/RS
+  ['gás refrigerante R134? e compressor', 'gás refrigerante R134a e compressor'],
+  ['NA FORMA ?FRONTAL ELEVADA? (PADRÃO)', 'NA FORMA “FRONTAL ELEVADA” (PADRÃO)'],             // Boa Vista do Buricá/RS
+  ['1KG. DESCRIC?A?O DETALHADA: CARACTERI?STICAS FI?SICAS', '1KG. DESCRICAO DETALHADA: CARACTERISTICAS FISICAS'], // Goiânia/GO
+  ['(AxLxP).? ? ? ? Quatro pés em tubo', '(AxLxP). Quatro pés em tubo'],                       // Quaraí/RS
+  ['ponteiras de borracha, sendo?  ?  quatro para cada', 'ponteiras de borracha, sendo quatro para cada'],
+  ['MESA SECRETÁRIA COM DUAS GAVETAS? :MESA: Tampo', 'MESA SECRETÁRIA COM DUAS GAVETAS:MESA: Tampo'],
+  ['1.600 PSI;â?¢ Potencia minima: 1.600 W', '1.600 PSI;• Potencia minima: 1.600 W'],       // General Carneiro/PR
+  ['VENTILADOR DE PAREDE ? 60 CM', 'VENTILADOR DE PAREDE – 60 CM'],                            // Guia Lopes da Laguna/MS
+  ['4 TOMADAS 10A ? NBR 14136', '4 TOMADAS 10A – NBR 14136'],                                  // Crissiumal/RS
+  // o que tem de ficar como esta
+  ['OPTANTE PELO SIMPLES? SIM ( ) NÃO( )', null],                // pergunta de verdade
+  ['jogo educativo "qual é a pergunta ?, material', null],       // nome do brinquedo (Cáceres/MT)
+  ['ACIONAMENTO PARA ALT?ROTAÇÃO (AR), COM', null],             // falta letra, nao acento (Poconé/MT)
+  ['TELA LCD 2.5? COM DISPLAY', null],                          // polegada ou grau: sem contexto, fica
+];
+
+let erros = 0;
+for (const [ent, esp] of CASOS) {
+  const saiu = limpaTextoPncp(ent);
+  const alvo = esp === null ? ent.replace(/\s+/g, ' ').trim() : esp;
+  if (saiu === alvo) { console.log(`ok    ${ent.slice(0, 60)}`); continue; }
+  erros++;
+  console.log(`ERRO  ${ent.slice(0, 60)}\n        saiu    : ${saiu}\n        esperado: ${alvo}`);
+}
+console.log(`\n${CASOS.length - erros} de ${CASOS.length} corretos`);
+process.exit(erros ? 1 : 0);

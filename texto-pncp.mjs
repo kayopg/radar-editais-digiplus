@@ -46,6 +46,22 @@ const INTERROGACAO = [
   [/â\?\?(?=\d)/g, '≈'],
   [/\sâ\?\??\s/g, ' – '],
   [/â\?\??/g, '"'],
+  // Aspas que o PDF perdeu nas DUAS pontas: "NA FORMA ?FRONTAL ELEVADA?
+  // (PADRAO)" (Boa Vista do Burica/RS). O que separa das outras interrogacoes
+  // e estarem GRUDADAS no conteudo — a de abertura colada na primeira letra e
+  // a de fechamento colada na ultima. Pergunta de verdade nao abre assim, e o
+  // travessao mais abaixo anda solto entre espacos.
+  //
+  // TEM de rodar antes das regras de "?" isolado que vem a seguir. Em
+  // 28/09/2026 a de "letra + ? + pontuacao" comia a aspa de FECHAMENTO de
+  // "igual a ?zero?, ou proximo de ?zero?," (Votuporanga/SP, item 176), e a de
+  // abertura ficava orfa: "igual a ?zero, ou".
+  [/(?<=[\s(])\?(\S[^?\n]{0,58}\S)\?(?=[\s).,;:]|$)/g, '“$1”'],
+  // O gas refrigerante R600a e R134a com o "a" perdido: "Gas do produto:
+  // R600? Tipo de degelo: Manual" (Pontao/RS, item 8, frigobar, 28/09/2026). O
+  // edital escreve o "a" com a letra CIRILICA, que nao sobreviveu ao caminho ate
+  // o PNCP. Sao os dois gases de refrigerador e frigobar; o codigo e fixo.
+  [/\b(R-?(?:600|134))\?(?=[\s,.;)]|$)/g, '$1a'],
   // ACENTO PERDIDO: o PNCP guarda "DESCRIC?A?O DETALHADA: CARACTERI?STICAS
   // FI?SICAS" e "DIMENSO?ES" (Goiania/GO, item 74, 25/09/2026) — o cedilha e o
   // til viraram "?" antes de chegar la. Nao da para saber QUAL acento era, mas
@@ -82,12 +98,6 @@ const INTERROGACAO = [
   // O espaco no meio existe: o PNCP guarda "GAVETAS? :MESA:", e a colagem do
   // espaco antes da pontuacao so acontece no fim desta funcao.
   [/(?<=\p{L})\?(?=\s*[:;,])/gu, ''],
-  // Aspas que o PDF perdeu nas DUAS pontas: "NA FORMA ?FRONTAL ELEVADA?
-  // (PADRAO)" (Boa Vista do Burica/RS). O que separa das outras interrogacoes
-  // e estarem GRUDADAS no conteudo — a de abertura colada na primeira letra e
-  // a de fechamento colada na ultima. Pergunta de verdade nao abre assim, e o
-  // travessao da regra seguinte anda solto entre espacos.
-  [/(?<=[\s(])\?(\S[^?\n]{0,58}\S)\?(?=[\s).,;:]|$)/g, '“$1”'],
   // E o travessao que o proprio PNCP ja entrega como "?", sem mojibake nenhum:
   // "VENTILADOR DE PAREDE ? 60 CM" (Guia Lopes da Laguna/MS), "Forno Eletrico
   // 48 litros ? Forno eletrico com capacidade..." (Ervalia/MG). Solto entre

@@ -3362,7 +3362,7 @@ try { manuais = JSON.parse(fs.readFileSync(path.join(DIR, 'descritivos-manuais.j
 
 const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v.secoes || []).map(s => s.texto)));
 
-let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0;
+let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0;
 
 for (const e of dados.editais) {
   const v = base.editais[e[C.path]];
@@ -4165,6 +4165,27 @@ for (const e of dados.editais) {
       (todo, n) => (+n === Math.round(+it[2]) ? '' : todo));
   }
 
+  // TEXTO DE HABILITACAO no lugar do produto. A geladeira do item 2 de
+  // Santos/SP (aviso 098/2026) saiu com "Registro Comercial, no caso de empresa
+  // individual." — o recorte ancorou no "1.2." da lista de documentos exigidos,
+  // achando que era o item 2, porque o rotulo do PNCP ("RefrigeradorGeladeira")
+  // nao aparece no texto (28/09/2026).
+  //
+  // Descritivo que NAO cita produto da casa em lugar nenhum e fala de documento
+  // de empresa nao e especificacao de nada: sai, e o item cai na regra abaixo
+  // (descricao do catalogo do PNCP), que ai e a informacao certa.
+  {
+    const HABILITACAO = /registro comercial|contrato social|ato constitutivo|empresa individual|certidao negativa|habilitacao juridica|regularidade fiscal|balanco patrimonial|sociedade (?:empresaria|por acoes)|procuracao|documentos de eleicao/;
+    const doRadar = new Set((e[C.itens] || []).map(x => String(x[5])));
+    for (const it of v.itens) {
+      if (!it[6] || it[9] || !doRadar.has(String(it[0]))) continue;
+      const t = normIgual(it[6]);
+      if (termoDaCategoria(t) !== -1 || !HABILITACAO.test(t)) continue;
+      it[6] = '';
+      habilitacaoTirada++;
+    }
+  }
+
   // E, por fim, o item que o edital nao especifica em lugar nenhum: se o
   // proprio rotulo ja serve, ele vira o descritivo — marcado no indice 9, para
   // o card nao anunciar como "Descritivo do edital" o que veio do catalogo.
@@ -4185,4 +4206,5 @@ console.log(`${itensRicos} de ${itensTotal} itens ganharam descritivo completo`)
 console.log(`${doCatalogo} itens sem especificacao no edital ficaram com o rotulo do catalogo`);
 console.log(cabecasRecuperadas + " descritivo(s) tiveram o nome do produto recuperado na frente");
 console.log(linhasTrocadas + " descritivo(s) trocados pelo texto da propria linha, que vinha logo depois");
+console.log(habilitacaoTirada + " descritivo(s) que eram texto de habilitacao sairam");
 console.log(`docs/descritivos.json: ${(fs.statSync(arquivo).size / 1024).toFixed(0)} KB`);
