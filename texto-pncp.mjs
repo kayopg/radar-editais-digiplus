@@ -46,6 +46,42 @@ const INTERROGACAO = [
   [/â\?\?(?=\d)/g, '≈'],
   [/\sâ\?\??\s/g, ' – '],
   [/â\?\??/g, '"'],
+  // ACENTO PERDIDO: o PNCP guarda "DESCRIC?A?O DETALHADA: CARACTERI?STICAS
+  // FI?SICAS" e "DIMENSO?ES" (Goiania/GO, item 74, 25/09/2026) — o cedilha e o
+  // til viraram "?" antes de chegar la. Nao da para saber QUAL acento era, mas
+  // tirar o "?" devolve a palavra legivel: "DESCRICAO", "CARACTERISTICAS".
+  //
+  // So depois de VOGAL ou C, que sao as letras que levam acento em portugues, e
+  // so colado na letra seguinte. Assim nao mexe em "ALT?ROTACAO" (Pocone/MT),
+  // onde o "?" comeu um "A " inteiro depois de um T: ali falta letra, nao
+  // acento, e juntar as palavras seria pior que deixar o sinal de que algo
+  // sumiu. Pergunta de verdade nunca vem grudada entre duas letras.
+  [/(?<=[aeiouAEIOUcC])\?(?=\p{L})/gu, ''],
+  // FILEIRA DE MARCADORES depois do ponto final: "1270x1200x435 mm (AxLxP).? ?
+  // ? ? Quatro pes em tubo de aco" (Quarai/RS, item 2). A frase ja terminou no
+  // ponto, entao eles somem — a regra do travessao, mais abaixo, transformava
+  // so alguns e deixava ".? – ? – Quatro", que e pior que o original.
+  [/(?<=[.;:])\s*(?:\?\s*){1,8}(?=\p{L})/gu, ' '],
+  // e a fileira solta, fora do fim de frase, vira UM separador so
+  [/(?<=\S)\s(?:\?\s+){2,}(?=\S)/g, ' – '],
+  // QUEBRA DE LINHA perdida no meio da frase. O texto de Quarai/RS traz
+  // "ponteiras de borracha, sendo?  ?  quatro para cada cabeceira" e "(parede
+  // 1½)?  ?  chapa 16": o primeiro "?" vem COLADO na palavra e os seguintes
+  // soltos, entao a regra da fileira logo acima, que pede espaco antes do
+  // primeiro, deixava "sendo? – quatro".
+  //
+  // O que garante que nao e pergunta e a palavra SEGUINTE ser minuscula:
+  // pergunta termina a frase e a proxima comeca com maiuscula, como em "OPTANTE
+  // PELO SIMPLES? SIM ( ) NAO( )". Isso tambem protege "TELA LCD 2.5? COM"
+  // (polegada) e "ALT?ROTACAO" (letra comida), que continuam como estao.
+  [/(?<=\S)\?(?:\s+\?)*\s+(?=\p{Ll})/gu, ' '],
+  // e o mesmo sinal perdido grudado entre letra e pontuacao: "MESA SECRETARIA
+  // COM DUAS GAVETAS?:MESA: Tampo (1400x600mm)" (Quarai/RS, item 13). Pergunta
+  // nao vem seguida de dois-pontos; e a de Caceres/MT ("qual e a pergunta ?,")
+  // tem espaco na frente e continua intacta.
+  // O espaco no meio existe: o PNCP guarda "GAVETAS? :MESA:", e a colagem do
+  // espaco antes da pontuacao so acontece no fim desta funcao.
+  [/(?<=\p{L})\?(?=\s*[:;,])/gu, ''],
   // Aspas que o PDF perdeu nas DUAS pontas: "NA FORMA ?FRONTAL ELEVADA?
   // (PADRAO)" (Boa Vista do Burica/RS). O que separa das outras interrogacoes
   // e estarem GRUDADAS no conteudo — a de abertura colada na primeira letra e
