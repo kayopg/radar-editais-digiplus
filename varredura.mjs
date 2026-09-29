@@ -544,7 +544,13 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 "palitos de churrasco","palito de churrasco","tubo de ensaio","suqueira cristal","suqueira dispenser",
 "suqueira acrilic","suqueira plastic","suqueira de plastico","ultrafreezer","ultra freezer","ultracongelador",
 // e os de peca/utensilio, que so vetam na frente do produto (VETO_SO_NA_FRENTE)
-"balde","filtro","suporte","rack","ferramenta","gaiola","jarra plastica","jarra graduada","jarra - do tipo","jarra do tipo","disco","kit manual","utensilio","tampo","granito","mesa de apoio","borracha vedacao","borracha de vedacao","marmore"];
+"balde","filtro","suporte","rack","ferramenta","gaiola","jarra plastica","jarra graduada","jarra - do tipo","jarra do tipo","disco","kit manual","utensilio","tampo","granito","mesa de apoio","borracha vedacao","borracha de vedacao","marmore",
+// 29/09/2026: "BEBEDOURO PET - CMVBG" (Bento Goncalves/RS), bebedouro de
+// cachorro em praca, no mesmo edital de bancos e "lixeira dog"; e "Painel
+// montado com fusivel ultra rapido soft. Start ... disjuntor de comando e
+// ventilador" (Vicentinopolis/GO), painel eletrico de bomba.
+"bebedouro pet","bebedouro para pet","bebedouro para animais","bebedouro para caes","bebedouro canino","bebedouro dog",
+"painel montado","painel eletrico","quadro de comando","soft start","soft. start"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
@@ -569,7 +575,10 @@ const VETO_SO_NA_FRENTE = ["suporte para tv","suporte de tv","pedestal para","su
 // 21/09/2026: "Tampo e rodatampo em granito para balcao de cozinha ... recorte
 // para cuba, fogao cooktop" (Ipora do Oeste/SC) e "Mesa de apoio para forno"
 // (Arvorezinha/RS). "Fogao ... com tampo de vidro" fica.
-"tampo","granito","mesa de apoio","borracha vedacao","borracha de vedacao","marmore"];
+"tampo","granito","mesa de apoio","borracha vedacao","borracha de vedacao","marmore",
+// 29/09/2026: painel eletrico de bomba que termina em "e ventilador"
+// (Vicentinopolis/GO). "Ar condicionado ... painel eletronico" fica.
+"painel montado","painel eletrico","quadro de comando","soft start","soft. start"];
 
 const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 
