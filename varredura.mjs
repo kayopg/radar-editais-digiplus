@@ -262,6 +262,10 @@ const INSTALACAO_NO_MATERIAL = new RegExp(
   + '|com (?:instalacao|montagem)(?! ' + MONTAGEM_DO_APARELHO + ')'
   + '|entregues? (?:devidamente )?instalad|devidamente instalad'
   + '|instalad[oa]s? e em (?:perfeito )?funcionamento'
+  // montado conta como instalacao (usuario, 29/09/2026); "medidas do fogao
+  // montado" e "diametro montado" descrevem o produto e ficam
+  + '|entreg(?:ar|ue|ues|a|ado|ados) (?:(?:o|a|os|as) [a-z]+ )?(?:devidamente )?montad|devidamente montad'
+  + '|fornecid[oa]s? (?:completos?,? )?montad|montad[oa]s? (?:e em (?:perfeito )?funcionamento|no local)'
   + '|(?:instalacao|montagem) (?:sera |fica |ficara )?(?:por conta|a cargo|sob responsabilidade|de responsabilidade) d');
 const SERVICO_NA_FRENTE = /^(?:re|des)?(?:instalacao|montagem|manutencao|higienizacao|limpeza|recarga|reposicao|substituicao|conserto|reparo|servicos?|mao de obra|calibracao|locacao|troca de|assistencia tecnica|demolicao|remocao|retirada|desmontagem)(?![a-z])/;
 // A descricao que ABRE com "instalacao"/"montagem" derruba o edital inteiro

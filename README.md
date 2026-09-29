@@ -95,7 +95,11 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    derrubam o edital, e o item de serviço que só instala sai da lista sem levar o edital junto.
    Fora dessas duas UFs, o `veta-pelo-descritivo.mjs` tira também o aparelho que o edital
    manda entregar instalado ("entregues instalados e em perfeito funcionamento") ou diz que o
-   preço inclui a instalação ("Inclui instalação padrão completa", 29/09/2026).
+   preço inclui a instalação ("Inclui instalação padrão completa", 29/09/2026). **Montado conta
+   como instalação** (usuário, 29/09/2026): "entregar o fogão montado", "entregues montados no
+   local", "a montagem ... correrão por conta da contratada" saem fora do RS e de SC; "medidas do
+   fogão montado", "diâmetro montado" e "kit de montagem" descrevem o produto e ficam. A frase
+   dentro do descritivo de um item vale só para aquele item, não para o edital inteiro.
 2. **Veto por objeto** — derruba o edital inteiro quando o objeto é de veículo, trator,
    alimento, material de limpeza e afins. Veículos casam com a busca porque têm
    ar-condicionado de fábrica. Se o objeto também compra eletrodoméstico ("Móveis,

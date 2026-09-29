@@ -113,8 +113,22 @@ const EXIGE_INSTALACAO = [
   // "com mao de obra de instalacao e drenos" (Sertanopolis/PR, 21/09/2026)
   /(mao de obra|servicos?) de (instalacao|montagem)/,
   /instalacao (sera |fica |ficara )?(por conta|a cargo|sob responsabilidade|de responsabilidade) d[ao] (contratad|fornecedor|licitante|empresa)/,
+  // MONTADO conta como instalacao (usuario, 29/09/2026): "entregar o fogao
+  // montado" (Pedras de Maria da Cruz/MG), "produto entregue montado ou montagem
+  // por conta do fornecedor" (Uberlandia/MG), "equipamentos entregues montados no
+  // local" (Avare/SP). O que descreve o produto fica: "medidas do fogao
+  // montado", "diametro montado: 107 cm", "montado sobre 4 rodizios", "kit de
+  // montagem", "facil montagem", "necessita apenas da montagem dos pes".
+  /entreg(ar|ue|ues|a|ado|ados)\s+((o|a|os|as)\s+[a-z]+\s+)?(devidamente\s+)?montad[oa]s?/,
+  /devidamente montad[oa]s?/,
+  /fornecid[oa]s?\s+(completos?,?\s+)?montad[oa]s?/,
+  /montad[oa]s? (e em (perfeito )?funcionamento|no local)/,
+  /fornecimento e montagem/,
+  /montagem (inclusa|incluida|inclusive)/,
+  /(incluindo|inclusa|incluida|inclusive|(?<!nao )inclui) (a )?montagem/,
+  /montagem (sera |fica |ficara )?(por conta|a cargo|sob responsabilidade|de responsabilidade) d[ao] (contratad|fornecedor|licitante|empresa)/,
 ];
-const exigeInstalacao = d => (EXIGE_INSTALACAO.find(r => r.test(d)) || '') && 'entrega instalada';
+const exigeInstalacao = d => (EXIGE_INSTALACAO.find(r => r.test(d)) || '') && 'entrega instalada ou montada';
 
 // A EXIGENCIA NO CORPO DO EDITAL, e nao na descricao do item (usuario,
 // 25/09/2026: "algumas vezes nao vem escrito no descritivo do item se solicita
@@ -144,19 +158,32 @@ const CLAUSULA_INSTALACAO = [
     'a contratada devera instalar'],
   [/dever[ãa]o? ser entregues? e instalad[oa]s?/, 'entregues e instalados'],
   [/entregues? instalad[oa]s? e em (?:perfeito )?funcionamento/, 'entregues instalados e funcionando'],
+  // e montado, que conta como instalacao (usuario, 29/09/2026)
+  [/montagem[^.;]{0,30}(?:ser[áa]|fica(?:r[áa])?|[ée])[^.;]{0,30}(?:por conta|de responsabilidade|a cargo|sob responsabilidade) d[ao]s? (?:contratad|licitant|fornecedor|empresa|vencedor)/,
+    'a montagem e por conta da contratada'],
+  [/dever[ãa]o? ser entregues? (?:e )?montad[oa]s?/, 'entregues montados'],
+  [/entregues? montad[oa]s? (?:e em (?:perfeito )?funcionamento|no local)/, 'entregues montados'],
 ];
 // O que desarma a clausula na vizinhanca dela: negacao, condicao, obrigacao de
 // outro, ou a peca que acompanha o produto.
 // A primeira alternativa e O QUE se instala: rede eletrica do predio, software
 // e afins nao sao o aparelho, e a Digiplus nao os instalaria de todo jeito.
-const NAO_OBRIGA = /instala[çc][ãa]o (?:d[oa]s? )?(?:software|aplicativo|sistema|programa|el[ée]tric|hidr[áa]ulic|predial|sanit[áa]ri|de g[áa]s|rede|ponto)|n[ãa]o (?:integra|faz parte|est[áa] inclu|ser[áa] inclu|compreende|abrange)|(?:conduzid|realizad|executad|providenciad)[oa]s? pel[ao] (?:secretaria|municip|prefeitura|contratante|[óo]rg[ãa]o|administra)|por conta d[ao]s? (?:contratante|municip|prefeitura|[óo]rg[ãa]o|secretaria|administra)|quando aplic[áa]v|quando necess[áa]ri|se aplic[áa]v|caso (?:seja|haja)|se houver|quando couber|(?:acess[óo]rios?|pe[çc]as?|componentes?|materia(?:l|is)|kits?) (?:para|de)|manual (?:de|para)/;
+// (e a alternativa: "devera ser entregue montado OU acompanhado de manual e
+// todos os acessorios necessarios para montagem", na cadeira de Renascenca/PR)
+const NAO_OBRIGA = /montad[oa]s?,? ou (?:acompanhad|com manual|desmontad)|instala[çc][ãa]o (?:d[oa]s? )?(?:software|aplicativo|sistema|programa|el[ée]tric|hidr[áa]ulic|predial|sanit[áa]ri|de g[áa]s|rede|ponto)|n[ãa]o (?:integra|faz parte|est[áa] inclu|ser[áa] inclu|compreende|abrange)|(?:conduzid|realizad|executad|providenciad)[oa]s? pel[ao] (?:secretaria|municip|prefeitura|contratante|[óo]rg[ãa]o|administra)|por conta d[ao]s? (?:contratante|municip|prefeitura|[óo]rg[ãa]o|secretaria|administra)|quando aplic[áa]v|quando necess[áa]ri|se aplic[áa]v|caso (?:seja|haja)|se houver|quando couber|(?:acess[óo]rios?|pe[çc]as?|componentes?|materia(?:l|is)|kits?) (?:para|de)|manual (?:de|para)/;
 
 // A clausula vale para o edital inteiro, entao devolve o motivo uma vez so.
-const clausulaDeInstalacao = corpo => {
+// A frase que esta DENTRO do descritivo de um item vale so para aquele item, e a
+// regra do item ja cuida dele: "entrega: equipamentos entregues montados no
+// local indicado pelo IFSP" e do conjunto de cafe (item 6) de Avare/SP, e o
+// edital tem ainda a cafeteira do item 1 (29/09/2026).
+const clausulaDeInstalacao = (corpo, descritivos = []) => {
   for (const [re, rot] of CLAUSULA_INSTALACAO) {
     const m = re.exec(corpo);
     if (!m) continue;
     if (NAO_OBRIGA.test(corpo.slice(Math.max(0, m.index - 110), m.index + 130))) continue;
+    const trecho = corpo.slice(Math.max(0, m.index - 40), m.index + m[0].length);
+    if (descritivos.some(d => d.includes(trecho))) continue;
     return rot;
   }
   return '';
@@ -196,7 +223,8 @@ for (const e of dados.editais) {
   // A clausula de instalacao escondida no corpo do edital (ver acima). Vale
   // para todos os itens, entao o edital sai inteiro — fora do RS e de SC.
   if (!UF_INSTALA.has(e[C.uf])) {
-    const clausula = clausulaDeInstalacao(norm((v.secoes || []).map(s => s.texto).join(' ')));
+    const clausula = clausulaDeInstalacao(norm((v.secoes || []).map(s => s.texto).join(' ')),
+      (v.itens || []).map(x => norm(x[6])).filter(t => t.length > 60));
     if (clausula) {
       editaisFora++;
       porClausula++;
