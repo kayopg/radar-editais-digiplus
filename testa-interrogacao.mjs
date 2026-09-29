@@ -22,11 +22,17 @@ const CASOS = [
   ['1.600 PSI;â?¢ Potencia minima: 1.600 W', '1.600 PSI;• Potencia minima: 1.600 W'],       // General Carneiro/PR
   ['VENTILADOR DE PAREDE ? 60 CM', 'VENTILADOR DE PAREDE – 60 CM'],                            // Guia Lopes da Laguna/MS
   ['4 TOMADAS 10A ? NBR 14136', '4 TOMADAS 10A – NBR 14136'],                                  // Crissiumal/RS
+  ['Tela: IPS Full HD de 23.8?, ajuste de altura', 'Tela: IPS Full HD de 23.8", ajuste de altura'], // Chapadão do Sul/MS
+  ['Tamanho do setor: 512/512e; Forma: 3,5?; as unidades', 'Tamanho do setor: 512/512e; Forma: 3,5"; as unidades'],
+  ['TELA LCD 2.5? COM DISPLAY', 'TELA LCD 2.5" COM DISPLAY'],                                  // Crissiumal/RS: "tela" diz que e polegada
+  ['Jato de tinta Heat-Free MicroPiezo®?. Resolução', 'Jato de tinta Heat-Free MicroPiezo®. Resolução'],
+  ['Windows Server®? 2003 (SP2) ou mais', 'Windows Server® 2003 (SP2) ou mais'],
+  ['28 segundos por página em cores (200 dpi)???. Conectividade:', '28 segundos por página em cores (200 dpi). Conectividade:'],
   // o que tem de ficar como esta
   ['OPTANTE PELO SIMPLES? SIM ( ) NÃO( )', null],                // pergunta de verdade
   ['jogo educativo "qual é a pergunta ?, material', null],       // nome do brinquedo (Cáceres/MT)
   ['ACIONAMENTO PARA ALT?ROTAÇÃO (AR), COM', null],             // falta letra, nao acento (Poconé/MT)
-  ['TELA LCD 2.5? COM DISPLAY', null],                          // polegada ou grau: sem contexto, fica
+  ['TEMPERATURA DE 2.5? A 8?', null],                           // grau ou polegada: sem palavra de tela, fica
 ];
 
 let erros = 0;

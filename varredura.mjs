@@ -79,7 +79,9 @@ const CAT = [
   // chegavam. "Lavadora automatica/semiautomatica" e o jeito da prefeitura de
   // escrever o mesmo. A de piso continua vetada (VETO_ITEM).
   ["LV",["lavadora de roupa","maquina de lavar","secadora","centrifuga de roupa","calandra","tanquinho","lava-loucas","lava loucas","lavadora extratora",
-    "maquina lavar","maquina secar","maquina lavadora","lavadora automatica","lavadora semiautomatica","lavadora semi automatica","lavadora semi-automatica"]],
+    "maquina lavar","maquina secar","maquina lavadora","lavadora automatica","lavadora semiautomatica","lavadora semi automatica","lavadora semi-automatica",
+    // "Lavadora de louça industrial" (Santa Maria/RS, item 22, 29/09/2026)
+    "lavadora de louca","lava louca","lava-louca"]],
   ["CL",["ar-condicionado","ar condicionado","arcondicionado","condicionador de ar","split","climatizador","cortina de ar","ventilador","desumidificador","umidificador","purificador de ar"]],
   // CX (coifa, exaustor, depurador) saiu em 23/09/2026: o usuario nao cota
   // nenhum deles. Tinha voltado em 01/09 so com coifa industrial e exaustores.
@@ -254,7 +256,8 @@ const LUGAR_DE_MONTAGEM = '(?:horizontal|vertical|parede|teto|piso|bancada|mesa|
 // bastavam antes ("com instalacao em parede", "com instalacao de teto").
 const MONTAGEM_DO_APARELHO = '(?:' + LUGAR_DE_MONTAGEM + '|em|na|no|de|tipo|a)';
 const INSTALACAO_NO_MATERIAL = new RegExp(
-  '(?:servicos? de |mao de obra de |incluindo (?:a )?|incluir (?:a )?|inclusa (?:a )?|inclusive (?:a )?|fornecimento e |confeccao e )(?:instalacao|montagem)'
+  // "Inclui instalacao padrao completa por profissional habilitado" (Goioxim/PR, 29/09/2026)
+  '(?:servicos? de |mao de obra de |incluindo (?:a )?|incluir (?:a )?|(?<!nao )inclui (?:a )?|inclusa (?:a )?|inclusive (?:a )?|fornecimento e |confeccao e )(?:instalacao|montagem)'
   + '|(?:instalacao|montagem) (?:inclusa|incluida|inclusive|completa|no local|no ato)'
   + '|com (?:instalacao|montagem)(?! ' + MONTAGEM_DO_APARELHO + ')'
   + '|entregues? (?:devidamente )?instalad|devidamente instalad'

@@ -53,9 +53,15 @@ async function wordDe(c, nomeDentro) {
   // "PE_221-26_/Edital.odt": compara so o fim do caminho.
   const alvo = String(nomeDentro || '').split('/').pop().toLowerCase();
   const docs = dentro.filter(x => /\.(?:docx?|odt|rtf)$/i.test(x.nome));
-  const w = docs.find(x => x.nome.split('/').pop().toLowerCase() === alvo) || docs[0];
+  const nomeDe = x => x.nome.split('/').pop();
+  // Sem nome pedido, o de nome mais parecido com edital — e nunca anexo ou
+  // minuta: o zip de Leopoldina/MG traz TR e ETP em PDF e o edital so em .doc,
+  // que o fontesDe nao le (29/09/2026).
+  const w = docs.find(x => nomeDe(x).toLowerCase() === alvo)
+    || (alvo ? docs[0] : docs.filter(x => prioridadeCapa(nomeDe(x), '') > 0)
+      .sort((a, b) => prioridadeCapa(nomeDe(b), '') - prioridadeCapa(nomeDe(a), ''))[0]);
   if (!w) return null;
-  return { bytes: w.abre(), ext: (w.nome.toLowerCase().match(/\.(docx?|odt|rtf)$/) || [, 'docx'])[1] };
+  return { bytes: w.abre(), ext: (w.nome.toLowerCase().match(/\.(docx?|odt|rtf)$/) || [, 'docx'])[1], nome: nomeDe(w) };
 }
 
 const arg = (n, p) => { const i = process.argv.indexOf(n); return i > 0 && process.argv[i + 1] ? process.argv[i + 1] : p; };
@@ -340,7 +346,10 @@ function prioridadeCapa(nome, tipo) {
   // e o arquivo que se chama so pelo codigo do pregao ("PE251-26.odt", Caxias
   // do Sul/RS, 28/09/2026) — mesma regra do edital-pdf.mjs
   if (/^(?:pe|pp|pregao|cc|tp|dl|ce|rp)\s*[-_.]?\s*n?[ºo°]?\s*\d{1,4}\s*[-_./]?\s*\d{2,4}(?!\d)/.test(n.toLowerCase())) return 2;
-  if (/termo de referencia|(^|[^a-z])tr[\s_.-]|estudo tecnico|(^|[^a-z])etp[\s_.-]|planilha|anexo|historico|quantitativ|estimativa|cotac|orcamento|relacao ?(?:de ?)?itens|mapa de riscos?|matriz de riscos?|(^|[^a-z])dfd[\s_.-]|parecer|portaria|decreto|autorizac|solicitac|memorando|publicac|minuta|contrato|ata de registro|pesquisa de preco/.test(n)) return 0;
+  // "TR984767_000186_2026.pdf" e "ETP984767_..." sao o TR e o ETP do Compras.gov,
+  // com o numero da UASG colado na sigla (Leopoldina/MG, 29/09/2026): sem isso
+  // passavam por edital e o .doc do edital de verdade nunca era convertido.
+  if (/termo de referencia|(^|[^a-z])tr(?:[\s_.-]|\d{5})|estudo tecnico|(^|[^a-z])etp(?:[\s_.-]|\d{5})|planilha|anexo|historico|quantitativ|estimativa|cotac|orcamento|relacao ?(?:de ?)?itens|mapa de riscos?|matriz de riscos?|(^|[^a-z])dfd[\s_.-]|parecer|portaria|decreto|autorizac|solicitac|memorando|publicac|minuta|contrato|ata de registro|pesquisa de preco/.test(n)) return 0;
   return 1;
 }
 const FORCA = { quadro: 6, capa: 5, embaralhado: 4, imagem: 3, objeto: 2, primeira: 1 };
@@ -414,10 +423,13 @@ await pool(alvos, 2, async (e) => {
       // e nao em "texto": vale o de nome mais parecido com edital.
       const docTexto = f.texto || [...(f.textos || [])]
         .sort((a, b) => prioridadeCapa(b.nome, '') - prioridadeCapa(a.nome, ''))[0];
-      if (semEdital && docTexto && /^(?:DOCX?|ODT|RTF)$/i.test(docTexto.formato)) {
-        const w = await wordDe(c, docTexto.nome);
+      // E o .doc de dentro de zip com PDF, que nao chega em "textos": o wordDe
+      // procura pelo nome (Leopoldina/MG, 29/09/2026).
+      const querWord = docTexto ? /^(?:DOCX?|ODT|RTF)$/i.test(docTexto.formato) : f.pdfs.some(p => p.zip);
+      if (semEdital && querWord) {
+        const w = await wordDe(c, docTexto && docTexto.nome);
         const pdf = w && pdfDeDocumento(w.bytes, w.ext);
-        if (pdf) f.pdfs = [{ nome: String(docTexto.nome || c.titulo || 'edital') + ' (paginado fora do navegador)', bytes: pdf }, ...f.pdfs];
+        if (pdf) f.pdfs = [{ nome: String((docTexto && docTexto.nome) || w.nome || c.titulo || 'edital') + ' (paginado fora do navegador)', bytes: pdf }, ...f.pdfs];
       }
       const pdfs = [...f.pdfs].sort((a, b) => prioridadeCapa(b.nome, '') - prioridadeCapa(a.nome, ''));
       for (const p of pdfs) {

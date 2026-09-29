@@ -94,7 +94,8 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    serviço. No RS e em SC a Digiplus instala: ali instalação e montagem não
    derrubam o edital, e o item de serviço que só instala sai da lista sem levar o edital junto.
    Fora dessas duas UFs, o `veta-pelo-descritivo.mjs` tira também o aparelho que o edital
-   manda entregar instalado ("entregues instalados e em perfeito funcionamento").
+   manda entregar instalado ("entregues instalados e em perfeito funcionamento") ou diz que o
+   preço inclui a instalação ("Inclui instalação padrão completa", 29/09/2026).
 2. **Veto por objeto** — derruba o edital inteiro quando o objeto é de veículo, trator,
    alimento, material de limpeza e afins. Veículos casam com a busca porque têm
    ar-condicionado de fábrica. Se o objeto também compra eletrodoméstico ("Móveis,
@@ -112,7 +113,9 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
 3c. **O que a Digiplus não cota** — diferente do veto por item, que corrige erro de captura:
    aqui o produto foi entendido certo, só não é da casa. A decisão é do usuário e cada uma
    entrou na data em que ele pediu. Fora do radar: churrasqueira, balança, moedor/moinho de
-   café, enceradeira e lustradeira de piso, coifa, exaustor e depurador, aquecimento de água
+   café, enceradeira e lustradeira de piso, coifa, exaustor e depurador (também quando o
+   catálogo chama o exaustor de "Ventilador Axial" e só o descritivo do edital diz o que ele
+   é, 29/09/2026), aquecimento de água
    (aquecedor de água, boiler, aquecedor solar, aquecedor de passagem), masseira e
    amassadeira de padaria, gerador de qualquer tipo, **lavadora de alta pressão** (lava-jato,
    28/09/2026), e **balcão** — térmico, refrigerado e

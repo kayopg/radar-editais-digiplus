@@ -62,6 +62,17 @@ const INTERROGACAO = [
   // edital escreve o "a" com a letra CIRILICA, que nao sobreviveu ao caminho ate
   // o PNCP. Sao os dois gases de refrigerador e frigobar; o codigo e fixo.
   [/\b(R-?(?:600|134))\?(?=[\s,.;)]|$)/g, '$1a'],
+  // A POLEGADA perdida, com palavra de tela ou de formato logo antes: "Tela: IPS
+  // Full HD de 23.8?, ajuste de altura" (monitor) e "Forma: 3,5?; as unidades"
+  // (disco), Chapadao do Sul/MS, 29/09/2026. Sem essa palavra antes, o numero
+  // pode ser grau e o "?" fica.
+  [/(?<=\b(?:tela|monitor|display|lcd|led|full hd|polegadas?|forma(?:to)?|tamanho)\b[^?\n]{0,20}?\d+(?:[.,]\d{1,2})?)\?(?=[\s,.;:)]|$)/gi, '"'],
+  // o simbolo que vinha colado na marca registrada: "Jato de tinta Heat-Free
+  // MicroPiezo®?.", "Windows Server®? 2003" (Chapadao do Sul/MS)
+  [/([®™])\?+/g, '$1'],
+  // e as chamadas de nota depois do parentese: "28 segundos por pagina em cores
+  // (200 dpi)???. Conectividade:" (Chapadao do Sul/MS)
+  [/(?<=\))\?{2,}(?=[\s.,;:]|$)/g, ''],
   // ACENTO PERDIDO: o PNCP guarda "DESCRIC?A?O DETALHADA: CARACTERI?STICAS
   // FI?SICAS" e "DIMENSO?ES" (Goiania/GO, item 74, 25/09/2026) — o cedilha e o
   // til viraram "?" antes de chegar la. Nao da para saber QUAL acento era, mas

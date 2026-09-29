@@ -61,6 +61,13 @@ const VETO = {
   // 22/09/2026).
   TODAS: ['longarina de espera', 'absorvedor de umidade', 'gel de silica', 'saco de absorcao', 'caixa de desumidificacao'],
 };
+// O descritivo que ABRE com produto que a Digiplus nao cota (regra 3c do
+// README; exaustor, coifa e depurador sairam em 23/09/2026): o item 7 de Foz do
+// Iguacu/PR e "Ventilador Axial tipo: helice, tipo corpo: semiduto" no catalogo
+// e "Exaustor de ar - tipo: exaustor de ar; ... adequado para instalacao em
+// parede" no edital (29/09/2026). So na abertura: "ventilador com funcao
+// exaustor" continua ventilador.
+const ABRE_FORA_DO_RADAR = /^[^a-z]*(exaustor|coifa|depurador)\b/;
 
 // E as listas do catalogo, sobre a descricao do PNCP, do mesmo jeito que o
 // varredura.mjs as aplica: termo novo entra no dados.json ja publicado sem
@@ -100,6 +107,8 @@ const EXIGE_INSTALACAO = [
   /fornecimento e instalacao/,
   /instalacao (inclusa|incluida|inclusive)/,
   /(incluindo|inclusa|incluida|inclusive) (a )?instalacao/,
+  // "Inclui instalacao padrao completa por profissional habilitado" (Goioxim/PR, 29/09/2026)
+  /(?<!nao )inclui (a )?instalacao/,
   /instalacao e assistencia tecnica/,
   // "com mao de obra de instalacao e drenos" (Sertanopolis/PR, 21/09/2026)
   /(mao de obra|servicos?) de (instalacao|montagem)/,
@@ -235,7 +244,8 @@ for (const e of dados.editais) {
     // informacao complementar do item colada na descricao
     const noCatalogo = vetoDoCatalogo(norm(it[3]), it[0]) || (!UF_INSTALA.has(e[C.uf]) && exigeInstalacao(norm(it[3])));
     const termo = noCatalogo || (d && ((VETO[it[0]] || []).find(t => d.includes(t)) || VETO.TODAS.find(t => d.includes(t))
-      || (!UF_INSTALA.has(e[C.uf]) && exigeInstalacao(d))));
+      || (!UF_INSTALA.has(e[C.uf]) && exigeInstalacao(d))
+      || (ABRE_FORA_DO_RADAR.exec(d) || [])[1]));
     if (!termo) return true;
     tirados++;
     console.log(`veta "${termo}" ${noCatalogo ? 'no PNCP' : 'no edital'} · ${it[0]} · ${nome} · item ${it[5]}: ${String(noCatalogo ? it[3] : x[6]).replace(/\s+/g, ' ').slice(0, 140)}`);

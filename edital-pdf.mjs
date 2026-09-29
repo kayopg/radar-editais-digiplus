@@ -67,7 +67,8 @@ function nota(nome) {
   // Referencia.odt" e "Anexo II - Minuta de Termo de Contrato.odt", e sem esta
   // linha o botao "Baixar edital" entregava o Termo de Referencia (28/09/2026).
   if (CODIGO_DO_PREGAO.test(s)) return 0;
-  if (/termo de referencia|(?:^|[^a-z])tr[\s_.-]|especifica|descritiv|memorial/.test(s)) return 1;
+  // "TR984767_000186_2026.pdf": TR do Compras.gov com a UASG colada (ver pagina-abertura.mjs)
+  if (/termo de referencia|(?:^|[^a-z])tr(?:[\s_.-]|\d{5})|especifica|descritiv|memorial/.test(s)) return 1;
   if (/etp|estudo tecnico|formalizacao|mapa de risco|pesquisa|cotacao|preco|planilha|media/.test(s)) return 3;
   return 2;
 }

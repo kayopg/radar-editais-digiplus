@@ -250,7 +250,8 @@ export async function anexaOficial(doc, r, opts = {}) {
 function classe(nome, tipo) {
   const s = normSimples(nome) + ' ' + normSimples(tipo);
   if (/edital|aviso de contratacao/.test(s)) return 'edital';
-  if (/termo de referencia|(^|[^a-z])tr[\s_.-]|especifica|descritiv|memorial|descricao (?:detalhada|dos itens)|relacao d[eo]s? itens/.test(s)) return 'tr';
+  // "TR984767_000186_2026.pdf": TR do Compras.gov com a UASG colada (Leopoldina/MG, 29/09/2026)
+  if (/termo de referencia|(^|[^a-z])tr(?:[\s_.-]|\d{5})|especifica|descritiv|memorial|descricao (?:detalhada|dos itens)|relacao d[eo]s? itens/.test(s)) return 'tr';
   return 'outro';
 }
 const ORDEM = { edital: 0, tr: 1, outro: 2 };

@@ -983,6 +983,26 @@ const VALORES_DA_LINHA = [
   /,?\s*acesse\s+https?:\/\/\S+\s+e\s+informe o c[\u00f3o]digo\s+[\w-]+/gi
 ];
 
+// O cabecalho da tabela numa fonte que troca cada letra pela seguinte, colado
+// no fim da celula com a unidade e a quantidade: "...REGISTRO INMETRO. UND 10 -
+// - A upubmAftujnbepAA NA jufnA eftdsj\u00e8\u00e4pA voeA rouA" e "total estimado",
+// "item", "descri\u00e7\u00e3o", "und", "qtd" (Firminopolis/GO, 29/09/2026). Duas palavras
+// diferentes dessas, desfeitas, e o texto e cabecalho: corta ali e leva a
+// unidade junto.
+const PALAVRAS_DO_CABECALHO = new Set(['total', 'estimado', 'item', 'descricao', 'und', 'qtd', 'valor', 'unitario', 'quantidade', 'unidade']);
+const desloca = w => [...w].map(c => String.fromCharCode(c.charCodeAt(0) - 1)).join('').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+// Onde comeca o cabecalho cifrado no texto, ou -1.
+const achaCifrado = t => {
+  const achados = [...t.matchAll(/[a-z\u00e0-\u00ff]{3,}/g)].filter(m => PALAVRAS_DO_CABECALHO.has(desloca(m[0])));
+  return new Set(achados.map(m => desloca(m[0]))).size < 2 ? -1 : achados[0].index;
+};
+export function tiraCabecalhoCifrado(t) {
+  let i = achaCifrado(t);
+  if (i < 0) return t;
+  while (i > 0 && !/\s/.test(t[i - 1])) i--;
+  return t.slice(0, i).replace(/\s+(?:UNIDADES?|UNID|UND|UN)\.?\s+\d{1,5}(?:\s*[-\u2013]+)*(?:\s+[A-Z])?\s*$/i, '').trim();
+}
+
 // O TIMBRE de cada edital, aprendido do proprio edital.
 //
 // Perseguir o cabecalho de cada prefeitura com uma expressao nao acaba: "AVENIDA
@@ -3384,6 +3404,15 @@ for (const e of dados.editais) {
   if (!secoes) { semTexto++; continue; }
   comTexto++;
 
+  // Rodando de novo sobre um arquivo ja recortado, o descritivo que veio do
+  // catalogo na rodada anterior (indice 9) volta a ser "sem descritivo", e o
+  // recorte e a regra do catalogo decidem outra vez. Sem isto a marca ficava
+  // grudada num texto novo: a geladeira do item 2 de Santos/SP saiu com
+  // "Registro Comercial, no caso de empresa individual." marcada como descricao
+  // do catalogo, e a limpeza de habilitacao, que pula o que vem do catalogo,
+  // nao a tirou (29/09/2026).
+  for (const it of v.itens) if (it[9]) { it[6] = ''; it.length = 9; }
+
   const { textos: recortes, lotes } = descritivosPorItem(secoes, v.itens);
   for (const [i, texto] of celulasPorLote(secoes, v.itens, timbresDoEdital(secoes))) recortes.set(i, { texto, confirmado: true });
   const textoPlano = secoes.replace(/\s+/g, ' ');
@@ -3714,7 +3743,16 @@ for (const e of dados.editais) {
       .replace(/^\d{2}\.\d{4}\s+(?=\p{Lu})/u, '')
       // e a coluna da pesquisa de precos: "...Potência: 100/1550 W, 638859
       // Média" — codigo do catalogo e o criterio do preco (Cáceres/MT)
-      .replace(/[\s,]+\d{5,7}\s+(?:M[ée]dia|Mediana)\b[\s\S]*$/, '');
+      .replace(/[\s,]+\d{5,7}\s+(?:M[ée]dia|Mediana)\b[\s\S]*$/, '')
+      // e as colunas da unidade e da origem, que a tabela escreve depois de
+      // cada item: "...garantia minima de 12 meses. | Unidade: Und | Item de
+      // origem PE 27/2026: 21" (Goioxim/PR, 29/09/2026)
+      .replace(/\s*\|\s*Unidade:\s*[^|]{0,20}(?:\|[\s\S]*)?$/, '')
+      // Glifo de icone da fonte, que o PDF devolve como letras: "TIRA MANCHAS
+      // O caO ADVANCED" (Arvorezinha/RS), "RS – O O caO Capital Gaucha" (timbre
+      // de Salto do Jacui/RS), 29/09/2026.
+      .replace(/\s[A-Z]\s[a-z]{2,3}[A-Z](?=\s)/g, '');
+    it[6] = tiraCabecalhoCifrado(it[6]);
     // A linha ANTERIOR grudada na frente, quando a tabela abre cada linha com o
     // numero do item e os codigos: "...Tipo: Vertical 1 unidade 15 5581 633899
     // Condicionador de ar, tipo Split..." (Caxias do Sul/RS, item 15, tabela
@@ -3877,7 +3915,11 @@ for (const e of dados.editais) {
       // (a unidade minuscula da coluna seguinte nao e continuacao: "...Ideal
       // para uso domestico e escritorio un 200,00", Sao Valerio do Sul/RS)
       const depois = plano.slice(k + fim.length, k + fim.length + 24);
-      if (k >= 0 && /^ [a-zà-ÿ]/.test(depois) && !/^ (?:un|und|unid|pc|p[çc]|cx|kit|cj|cjt|par|jg|pct)\.?\s+[\d.,]/.test(depois) && p > it[6].length * 0.6)
+      // (nem o cabecalho cifrado da tabela, que tambem vem em minusculas:
+      // "...* GARANTIA TOTAL MINIMA 1 ANO upubmAftujnbepAA", Firminopolis/GO)
+      const cifrado = achaCifrado(plano.slice(k + fim.length, k + fim.length + 120));
+      if (k >= 0 && /^ [a-zà-ÿ]/.test(depois) && !/^ (?:un|und|unid|pc|p[çc]|cx|kit|cj|cjt|par|jg|pct)\.?\s+[\d.,]/.test(depois)
+          && !(cifrado >= 0 && cifrado <= 3) && p > it[6].length * 0.6)
         it[6] = it[6].slice(0, p + 1);
     }
     // Celula cortada pela virada de folha que termina pendurada numa
@@ -3983,13 +4025,39 @@ for (const e of dados.editais) {
     // a cabeca "nomeava produto da casa", so que era o liquidificador do item
     // seguinte. Mesa nao e produto da casa e nao tinha nada a recuperar.
     const doRadar = new Set((e[C.itens] || []).map(x => String(x[5])));
+    const corpoN = normIgual(corpo);
     for (const it of v.itens) {
       if (!it[6] || it[9] || it[6].length < 40 || !doRadar.has(String(it[0]))) continue;
+      const i = corpo.indexOf(it[6].slice(0, 45));
+      // A LINHA DESTE ITEM, aberta pelo numero dele e pelos codigos de catalogo,
+      // bem antes do corte: "unidade 2 22 445455 6000421 155125 Lavadora de
+      // louça industrial, Detalhes Técnicos: Construída em aço inoxidável..." —
+      // e o descritivo so comecava 1.300 caracteres depois, em "Temperatura
+      // maquina lavar:" (Santa Maria/RS, item 22, 29/09/2026). O "maquina lavar"
+      // do subtitulo enganava o teste logo abaixo ("ja diz o produto"). Com essa
+      // ancora a cabeca pode ser longa: o numero do item e os codigos dizem que a
+      // linha e esta; so nao pode atravessar unidade com quantidade nem preco.
+      // (procurado sem acento: a ortografia ja devolveu o "máquina" que o edital
+      // escreve "maquina")
+      const iN = corpoN.indexOf(normIgual(it[6]).slice(0, 45));
+      if (iN >= 40) {
+        const antes = corpo.slice(Math.max(0, iN - 2500), iN);
+        const re = new RegExp('(?:^|\\s)0*' + it[0] + '(?:\\s+\\d{5,9}){2,3}\\s+(?=\\p{Lu})', 'gu');
+        let ancora = null;
+        for (const m of antes.matchAll(re)) ancora = m;
+        const cabeca = ancora ? antes.slice(ancora.index + ancora[0].length).trim() : '';
+        if (cabeca && termoDaCategoria(normIgual(cabeca).slice(0, 80)) !== -1
+            && !/\b(?:un|und|unid|unidade|cx|caixa|pc|pç|peca|par|cj)\b\s*\.?\s*\d|R\$\s*\d/i.test(cabeca)
+            && !normIgual(it[6]).startsWith(normIgual(cabeca).slice(0, 25))) {
+          it[6] = (cabeca + ' ' + it[6]).replace(/\s+/g, ' ').trim();
+          cabecasRecuperadas++;
+          continue;
+        }
+      }
       // ja diz o produto nos primeiros 60? entao nao ha cabeca a recuperar
       const topo = normIgual(it[6]).slice(0, 75);
       const diz = termoDaCategoria(topo);
       if (diz !== -1 && diz <= 60) continue;
-      const i = corpo.indexOf(it[6].slice(0, 45));
       if (i < 40) continue;
 
       // O TEXTO DE OUTRA LINHA: o descritivo e o fim do item ANTERIOR, e o do
