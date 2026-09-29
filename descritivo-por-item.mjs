@@ -451,7 +451,9 @@ const FIM_DE_LINHA = [
   // fechando. A rede eletrica dela tambem e especificacao: "ALIMENTACAO
   // ELETRICA EM TENSAO COMPATIVEL COM A REDE ELETRICA DA CONTRATANTE, PODENDO
   // SER 127 V, 220 V..." (Bento Goncalves/RS, edital 151, 23/09/2026).
-  /\s(?:pessoa jur[íi]dica de direito|de um lado,?\s+[ao]\s+PREFEITURA|CL[ÁA]USULA\s+(?:PRIMEIRA|SEGUNDA|[IVX]+)|(?<!(?:necessidade|crit[ée]rio|interesse|escolha|solicita[çc][ãa]o|demanda|rede\s+el[ée]trica)\s+d[ao]\s)CONTRATANTE\b|(?<!-\s*A\s)CONTRATADA\b|doravante denominad)/i
+  // (e quem fornece o ponto: "Ponto elétrico e hidráulico será por conta do
+  // contratante", no climatizador de Aguas Frias/SC, 29/09/2026)
+  /\s(?:pessoa jur[íi]dica de direito|de um lado,?\s+[ao]\s+PREFEITURA|CL[ÁA]USULA\s+(?:PRIMEIRA|SEGUNDA|[IVX]+)|(?<!(?:necessidade|crit[ée]rio|interesse|escolha|solicita[çc][ãa]o|demanda|rede\s+el[ée]trica|conta|cargo|responsabilidade)\s+d[ao]\s)CONTRATANTE\b|(?<!-\s*A\s)CONTRATADA\b|doravante denominad)/i
   ,
   // A CLAUSULA que abre o contrato, com o ordinal por extenso. O padrao antigo
   // so listava PRIMEIRA e SEGUNDA, e os itens 7 e 14 de Descalvado/SP — as
@@ -3547,6 +3549,33 @@ function linhaEntreNumeroEUnidade(plano, it, timbres) {
   return melhor;
 }
 
+// E a lista que ABRE cada linha com numero, quantidade e unidade, sem preco
+// nenhum: "10 1 UN FOGÃO INDUSTRIAL 06 BOCAS - com queimadores duplos ... -
+// Fogão industrial central de 6 bocas com forno ... Entregar Montado. 11 1 UN
+// FORNO ELÉTRICO..." (Assis/SP, 29/09/2026). O descritivo parava no titulo, e
+// a descricao — com o "Entregar Montado" — ficava de fora. A linha vai do
+// "10 1 UN" ate o "11 N UN" do seguinte.
+function linhaPelaAbertura(plano, it, timbres) {
+  const n = +it[0], q = Math.round(+it[2] || 0);
+  if (!n || !q) return null;
+  const abre = new RegExp('(?:^|\\s)0*' + n + '\\s+0*' + q + '(?:,0+)?\\s+' + UNID_COL + '\\.?\\s+(?=\\p{Lu})', 'giu');
+  const prox = new RegExp('\\s0*' + (n + 1) + '\\s+\\d{1,5}(?:,\\d+)?\\s+' + UNID_COL + '\\.?\\s+(?=\\p{Lu})', 'iu');
+  let melhor = null;
+  for (const ma of plano.matchAll(abre)) {
+    const resto = plano.slice(ma.index + ma[0].length, ma.index + ma[0].length + 6000);
+    const mp = prox.exec(resto);
+    if (!mp) continue;
+    const linha = resto.slice(0, mp.index);
+    // nem outra linha no meio, aberta do mesmo jeito
+    if (PRECO_DE_OUTRA.test(linha) || new RegExp('\\s\\d{1,4}\\s+\\d{1,5}(?:,\\d+)?\\s+' + UNID_COL + '\\.?\\s+\\p{Lu}', 'u').test(linha)) continue;
+    const t = limpaCelula(linha, timbres).replace(/\s{2,}/g, ' ').trim();
+    if (t.length < 30 || comecaNoMeio(t) || AINDA_SUJO.test(t) || LIXO_DE_LINHA.test(t)) continue;
+    if (termoDaCategoria(normIgual(t).slice(0, 120)) === -1 && !falaDoMesmoProduto(it[1], t)) continue;
+    if (!melhor || t.length > melhor.length) melhor = t;
+  }
+  return melhor;
+}
+
 // A numeracao da tabela e a do PNCP quando a maioria das linhas fala do produto
 // do rotulo com o mesmo numero — as que tem rotulo para julgar.
 function tabelaBate(tabela, itens) {
@@ -3564,7 +3593,7 @@ try { manuais = JSON.parse(fs.readFileSync(path.join(DIR, 'descritivos-manuais.j
 
 const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v.secoes || []).map(s => s.texto)));
 
-let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, linhasPeloPreco = 0, linhasCompletadas = 0;
+let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, linhasPeloPreco = 0, linhasCompletadas = 0, restosPelaCopia = 0;
 
 for (const e of dados.editais) {
   const v = base.editais[e[C.path]];
@@ -3673,7 +3702,8 @@ for (const e of dados.editais) {
     const so = s => normIgual(s).replace(/[^a-z0-9]+/g, ' ').trim();
     for (const it of v.itens) {
       if (!doRadar.has(String(it[0]))) continue;
-      const t = linhaEntreNumeroEPreco(textoPlano, it, timbres) || linhaEntreNumeroEUnidade(textoPlano, it, timbres);
+      const t = linhaEntreNumeroEPreco(textoPlano, it, timbres) || linhaEntreNumeroEUnidade(textoPlano, it, timbres)
+        || linhaPelaAbertura(textoPlano, it, timbres);
       if (process.env.DEPURA_ITEM === e[C.path] + '#' + it[0]) console.error('DEPURA atual:', it[6], '\nDEPURA linha:', t, '\nDEPURA termo:', termoDaCategoria(normIgual(it[6]).slice(0, 300)), 'fala:', falaDoMesmoProduto(it[1], it[6]), 'palavras:', palavrasDoItem(it[1]));
       if (!t) continue;
       // O rotulo do PNCP que ja traz a linha INTEIRA ganha dela quando a tabela
@@ -4337,6 +4367,59 @@ for (const e of dados.editais) {
     }
   }
 
+  // O RESTO PELA OUTRA COPIA (29/09/2026, "verifique os editais com
+  // descritivos cortados, todos eles"). A tabela do edital corta a celula e o
+  // termo de referencia do mesmo edital traz o texto inteiro: "...ALIMENTAÇÃO
+  // BIVOL 4 UN R$ 2.508,13" na tabela e "...alimentação bivolt. 4 Refrigerador"
+  // no termo (Timburi/SP, item 15); "...Luz indicadora de func 3 70 Unidades" na
+  // lista e "...Luz indicadora de funcionamento, Base com local para
+  // armazenamento do cordão elétrico, Jarra sem fio, ... metal e plástico." no
+  // detalhamento do Banco de Precos (Tenente Portela/RS, item 10).
+  //
+  // So no descritivo com cara de cortado — sem pontuacao no fim — e so onde o
+  // texto seguinte CONTINUA o dele: a mesma palavra colada, ou virgula, ou
+  // minuscula. O que acaba em ponto final nao e tocado: o item vizinho de mesmo
+  // comeco (os micro-ondas 32 e 33 de Santa Maria/RS) emendaria o resto dele.
+  {
+    const doRadar = new Set((e[C.itens] || []).map(x => String(x[5])));
+    const plano = secoes.replace(/\s+/g, ' ');
+    const planoN = normIgual(plano);
+    const timbres = timbresDoEdital(secoes);
+    const FIM_DO_RESTO = /\s(?:\d{1,5}(?:,\d+)?\s+(?:UN|UND|Und|Unid|Unidades?|UNIDADES?|UNID|PC|P[ÇC]|CX|KIT|PCT|JG|CJ)\b|R\s?\$|Relat[óo]rio gerado|Fonte:|Pre[çc]o \(|Data:|Modalidade:|CNPJ|Marca:|Item \d+:|\d{1,3}\)\s|\d+ \/ \d+\s)|\.\s+\d{1,4}\s+(?=\p{Lu})/u;
+    for (const it of v.itens) {
+      if (!it[6] || it[9] || !doRadar.has(String(it[0]))) continue;
+      const t = it[6].replace(/\s+/g, ' ').trim();
+      if (/[.;:!?)\]"”»]$/.test(t) || t.length < 40) continue;
+      const cauda = normIgual(t.slice(-35));
+      const noMeio = /\p{L}$/u.test(t);
+      let melhor = null;
+      for (let k = planoN.indexOf(cauda); k >= 0; k = planoN.indexOf(cauda, k + 1)) {
+        const resto = plano.slice(k + cauda.length, k + cauda.length + 1500);
+        // So a palavra cortada no meio: a continuacao por virgula ou minuscula
+        // emendava a pesquisa de precos, a estimativa do contrato e o item
+        // seguinte em seis itens na primeira versao (Sao Valerio do Sul/RS,
+        // Minacu/GO, Caxias do Sul/RS...).
+        const colada = noMeio && /^\p{L}/u.test(resto);
+        if (!colada) continue;
+        const f = FIM_DO_RESTO.exec(resto);
+        let ext = resto.slice(0, f ? f.index + (f[0][0] === '.' ? 1 : 0) : 700);
+        if (!f) { const p = ext.lastIndexOf('. '); if (p < 0) continue; ext = ext.slice(0, p + 1); }
+        ext = limpaCelula(ext, timbres).replace(/\s{2,}/g, ' ');
+        ext = ext.trim();
+        if (!ext || TIMBRE_NO_MEIO.test(ext) || PRECO_DE_OUTRA.test(ext)) continue;
+        // colada na mesma palavra ou com virgula, sem espaco; o resto, com
+        if (!melhor || ext.length > melhor.ext.length) melhor = { ext, junto: colada || /^[,;]/.test(ext) };
+      }
+      if (melhor) {
+        // a outra copia pode estar em outra caixa: "BIVOL" + "t." vira "BIVOLT."
+        let ext = melhor.ext;
+        if (/\p{Lu}{2}$/u.test(t)) ext = ext.replace(/^\p{L}+[^\s]*/u, w => w.toUpperCase());
+        it[6] = (t + (melhor.junto ? '' : ' ') + ext).replace(/\s{2,}/g, ' ').trim();
+        restosPelaCopia++;
+      }
+    }
+  }
+
   rastro('antes da ortografia');
   for (const it of v.itens) if (it[6]) it[6] = revisaOrtografia(it[6]);
 
@@ -4482,7 +4565,32 @@ for (const e of dados.editais) {
       // o numero e o codigo do seguinte no fim: "...contados a partir da data de
       // entrega 03 33.084" (Tupancireta/RS, item 2)
       t = t.replace(new RegExp('\\s+0*' + (n + 1) + '\\s+\\d{2}\\.\\d{3}\\s*$'), '');
+      // e o numero e a quantidade que ABREM a linha do seguinte: "...Voltagem 220V
+      // 35 10" (Rialma/GO, itens 34 a 36: "35 10 AR CONDICIONADO INVERTER...")
+      t = t.replace(new RegExp('\\s+0*' + (n + 1) + '\\s+\\d{1,5}\\s*$'), '');
+      // ou so o numero dele, depois de outro numero: "...Consumo kWh/dia
+      // (60Hz):4,7 53" (Rialma/GO, item 52)
+      if (n + 1 >= 10) t = t.replace(new RegExp('(?<=[\\d)])\\s+0*' + (n + 1) + '\\s*$'), '');
+      // e o numero e a quantidade DESTE item caidos no meio: "...degelo
+      // automático natural 52 06 Prateleiras: 4 níveis" (Rialma/GO, item 52)
+      if (q) t = t.replace(new RegExp('\\s0*' + n + '\\s+0*' + q + '\\s+(?=\\p{Lu})', 'u'), ' ');
     }
+    // a palavra que fecha a linha de cima, na frente do nome: "Transporte
+    // GELADEIRA/REFRIGERADOR COMERCIAL..." ("...01 Saco para Transporte", Rialma/GO)
+    {
+      const r = normIgual(it[1]).replace(/\s+/g, ' ').trim().slice(0, 25);
+      const m = /^(\p{L}{3,14})\s+/u.exec(t);
+      if (r.length >= 15 && m && !normIgual(t).startsWith(r) && normIgual(t.slice(m[0].length)).startsWith(r)) t = t.slice(m[0].length);
+    }
+    // a palavra repetida na frente, da coluna do nome e da descricao: "GELADEIRA
+    // GELADEIRA FROST FREE..." (Timburi/SP)
+    t = t.replace(/^(\p{L}{4,})\s+\1(?=\s)/iu, '$1');
+    // o "U" do "UN" da coluna ao lado, sozinho no fim: "...QUANTIDADE PÁS: 3 U"
+    // (Vicosa/MG, edital 218)
+    t = t.replace(/(?<=\d)\s+U$/, '');
+    // e a coluna "Unidade" no meio do titulo: "BEBEDOURO COLUNA Unidade 25L"
+    // (Ressaquinha/MG, item 7; o edital escreve "BEBEDOURO COLUNA 25L")
+    t = t.replace(/(?<=[A-ZÀ-Ú]{3})\s(?:Unidade|Und|Unid)\.?\s(?=\d)/g, ' ');
     if (q) {
       // a quantidade e a unidade caidas no meio: "...alta resistência 01 Unidade
       // 39 Voltagem: 220 V" (Tupancireta/RS)
@@ -4550,5 +4658,5 @@ console.log(`${doCatalogo} itens sem especificacao no edital ficaram com o rotul
 console.log(cabecasRecuperadas + " descritivo(s) tiveram o nome do produto recuperado na frente");
 console.log(linhasTrocadas + " descritivo(s) trocados pelo texto da propria linha, que vinha logo depois");
 console.log(habilitacaoTirada + " descritivo(s) que eram texto de habilitacao sairam");
-console.log(`${linhasPeloPreco} item(ns) do radar achados pela linha entre o numero e o preco · ${linhasCompletadas} descritivo(s) cortados completados por ela`);
+console.log(`${linhasPeloPreco} item(ns) do radar achados pela linha entre o numero e o preco · ${linhasCompletadas} descritivo(s) cortados completados por ela · ${restosPelaCopia} completados pela outra copia do edital`);
 console.log(`docs/descritivos.json: ${(fs.statSync(arquivo).size / 1024).toFixed(0)} KB`);
