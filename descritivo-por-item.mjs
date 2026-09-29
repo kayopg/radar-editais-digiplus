@@ -3990,6 +3990,9 @@ for (const e of dados.editais) {
       // cada item: "...garantia minima de 12 meses. | Unidade: Und | Item de
       // origem PE 27/2026: 21" (Goioxim/PR, 29/09/2026)
       .replace(/\s*\|\s*Unidade:\s*[^|]{0,20}(?:\|[\s\S]*)?$/, '')
+      // o total do lote colado no ultimo item dele: "...PISO-TETO 55K BTUS S/F +
+      // FRETE Total Lote 3 R$ 19.395,10" (Ipora/PR, item 8, 29/09/2026)
+      .replace(/\s+Total\s+(?:do\s+)?Lote\s+\d+\s+R\$\s*[\d.,]+\s*$/i, '')
       // Glifo de icone da fonte, que o PDF devolve como letras: "TIRA MANCHAS
       // O caO ADVANCED" (Arvorezinha/RS), "RS – O O caO Capital Gaucha" (timbre
       // de Salto do Jacui/RS), 29/09/2026.
@@ -4588,6 +4591,9 @@ for (const e of dados.editais) {
     // o "U" do "UN" da coluna ao lado, sozinho no fim: "...QUANTIDADE PÁS: 3 U"
     // (Vicosa/MG, edital 218)
     t = t.replace(/(?<=\d)\s+U$/, '');
+    // o total do lote colado no ultimo item dele: "...PISO-TETO 55K BTUS S/F +
+    // FRETE Total Lote 3 R$ 19.395,10" (Ipora/PR, item 8)
+    t = t.replace(/\s+Total\s+(?:do\s+)?Lote\s+\d+\s+R\$\s*[\d.,]+\s*$/i, '');
     // e a coluna "Unidade" no meio do titulo: "BEBEDOURO COLUNA Unidade 25L"
     // (Ressaquinha/MG, item 7; o edital escreve "BEBEDOURO COLUNA 25L")
     t = t.replace(/(?<=[A-ZÀ-Ú]{3})\s(?:Unidade|Und|Unid)\.?\s(?=\d)/g, ' ');
