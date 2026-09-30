@@ -159,12 +159,22 @@ function julga(texto, pos, termo) {
   };
   const sanDist = perto(SANCAO);
   const conDist = perto(CONDICIONAL);
+  // A lista de custos que o fornecedor assume: "responsabilizarem-se pelas
+  // despesas dos tributos, encargos trabalhistas, [...], fretes, seguros,
+  // deslocamento de pessoal, prestacao de garantia e quaisquer outras que
+  // incidam" (Sao Joao d'Alianca/GO, 30/09/2026). Pagar o custo de uma garantia,
+  // se houver, nao e exigencia de garantia — e o "deverao" da frase seguinte
+  // derrubava o edital. So vale na enumeracao (duas virgulas ou mais desde a
+  // palavra de custo): "as despesas com o envio das amostras" fica como esta.
+  const custo = /(?:despesas|encargos|custos|onus)\b([^.;]*)$/.exec(ctx.slice(Math.max(0, rel - 220), rel));
+  const naListaDeCustos = !!custo && (custo[1].match(/,/g) || []).length >= 2;
 
   // Ordem importa. Sancao e condicional vem ANTES de qualquer conclusao de
   // exigencia: os dois usam os mesmos verbos ("apresentar amostra") e sem essa
   // precedencia o edital cai por uma clausula de penalidade que ele nem aplica.
   let veredito;
   if (sanDist <= 130) veredito = 'sancao';
+  else if (naListaDeCustos) veredito = 'custo';
   else if (conDist <= 100) veredito = 'condicional';
   else if (negDist <= 90) veredito = 'dispensa';      // negacao colada no termo
   else if (exiDist <= 120) veredito = 'exige';

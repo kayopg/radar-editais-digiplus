@@ -943,34 +943,8 @@ for (const o of cands) {
   st.ok++;
 }
 
-// 5.5 — duplicatas: mesmo municipio+uf+dia de encerramento+quantidade+valor.
-// Usa o DIA e nao o horario exato: o mesmo edital republicado sai com alguns
-// minutos de diferenca (ex. 12:30 e 13:01) e escapava do agrupamento.
-const grupo = new Map();
-for (const e of bruto) {
-  const k = `${e.mun}|${e.uf}|${e.fecha.slice(0, 10)}|${e.qtd}|${e.val}`;
-  const a = grupo.get(k);
-  if (!a) grupo.set(k, e);
-  else if (e.fecha < a.fecha || (e.fecha === a.fecha && +e.path.split('/')[2] < +a.path.split('/')[2])) grupo.set(k, e);
-}
-// E o mesmo orgao com o mesmo numero de edital no mesmo dia, quando os dois
-// registros nao batem em quantidade e valor: o pregao 138/2026 de Bento
-// Goncalves/RS entrou no PNCP pelo sistema da prefeitura (31 itens, R$ 1,01 mi)
-// e pelo Pregao Banrisul como "0138/2026" (33 itens, R$ 1,05 mi) e saia duas
-// vezes (22/09/2026). Fica o registro com mais itens; empatado, o mais novo.
-const numEd = e => { const m = String(e.ed).match(/(\d+)\s*\/\s*(\d{4})/); return m ? (+m[1]) + '/' + m[2] : null; };
-const porNumero = new Map();
-for (const e of grupo.values()) {
-  const n = numEd(e);
-  const k = n ? `${e.path.split('/')[0]}|${e.mod}|${e.fecha.slice(0, 10)}|${n}` : e.path;
-  const a = porNumero.get(k);
-  if (!a || e.it.length > a.it.length || (e.it.length === a.it.length && +e.path.split('/')[2] > +a.path.split('/')[2])) porNumero.set(k, e);
-}
-grupo.clear();
-for (const [k, e] of porNumero) grupo.set(k, e);
-const fin = [...grupo.values()].sort((a, b) => a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : (a.mun < b.mun ? -1 : 1));
-
-st.dup = bruto.length - fin.length;
+// As duplicatas (5.5) sao decididas DEPOIS do filtro por portal (4c) — ver la.
+const fin = [...bruto];
 
 // ------------------------------------------------ 4c. filtro por portal
 // Serializado de proposito: a API de consulta tem cota curta e uma rajada
@@ -1054,6 +1028,42 @@ const finP = fin.filter(e => {
 });
 process.stderr.write(`  ${vPortal} fora dos portais da casa, ${vPortalTexto} ficam pela plataforma escrita no edital, ${errPortal} sem resposta${pulados ? ` (${pulados} nem consultados: API fora do ar)` : ''}\n`);
 fin.length = 0; fin.push(...finP);
+
+// 5.5 — duplicatas: mesmo municipio+uf+dia de encerramento+quantidade+valor.
+// Depois do filtro por portal, e nao antes: o pregao 27/2026 de Sao Joao
+// d'Alianca/GO esta no PNCP pela prefeitura, publicado pela BNC, e pelo Fundo
+// Municipal de Assistencia Social, publicado pelo sistema de gestao (Megasoft).
+// Com as duplicatas antes, ficou o registro da Megasoft (sequencial menor), o
+// filtro por portal tirou esse, e o edital sumiu da lista de 30/09/2026 — a
+// copia da BNC, que ficaria, ja tinha sido descartada.
+// Usa o DIA e nao o horario exato: o mesmo edital republicado sai com alguns
+// minutos de diferenca (ex. 12:30 e 13:01) e escapava do agrupamento.
+const grupo = new Map();
+for (const e of fin) {
+  const k = `${e.mun}|${e.uf}|${e.fecha.slice(0, 10)}|${e.qtd}|${e.val}`;
+  const a = grupo.get(k);
+  if (!a) grupo.set(k, e);
+  else if (e.fecha < a.fecha || (e.fecha === a.fecha && +e.path.split('/')[2] < +a.path.split('/')[2])) grupo.set(k, e);
+}
+// E o mesmo orgao com o mesmo numero de edital no mesmo dia, quando os dois
+// registros nao batem em quantidade e valor: o pregao 138/2026 de Bento
+// Goncalves/RS entrou no PNCP pelo sistema da prefeitura (31 itens, R$ 1,01 mi)
+// e pelo Pregao Banrisul como "0138/2026" (33 itens, R$ 1,05 mi) e saia duas
+// vezes (22/09/2026). Fica o registro com mais itens; empatado, o mais novo.
+const numEd = e => { const m = String(e.ed).match(/(\d+)\s*\/\s*(\d{4})/); return m ? (+m[1]) + '/' + m[2] : null; };
+const porNumero = new Map();
+for (const e of grupo.values()) {
+  const n = numEd(e);
+  const k = n ? `${e.path.split('/')[0]}|${e.mod}|${e.fecha.slice(0, 10)}|${n}` : e.path;
+  const a = porNumero.get(k);
+  if (!a || e.it.length > a.it.length || (e.it.length === a.it.length && +e.path.split('/')[2] > +a.path.split('/')[2])) porNumero.set(k, e);
+}
+grupo.clear();
+for (const [k, e] of porNumero) grupo.set(k, e);
+const unicos = [...grupo.values()].sort((a, b) => a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : (a.mun < b.mun ? -1 : 1));
+
+st.dup = fin.length - unicos.length;
+fin.length = 0; fin.push(...unicos);
 
 
 
