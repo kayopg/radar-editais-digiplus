@@ -100,6 +100,11 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    local", "a montagem ... correrão por conta da contratada" saem fora do RS e de SC; "medidas do
    fogão montado", "diâmetro montado" e "kit de montagem" descrevem o produto e ficam. A frase
    dentro do descritivo de um item vale só para aquele item, não para o edital inteiro.
+   "Para instalação horizontal sobre portas", "instalação em parede ou teto" dizem **como** o
+   aparelho é instalado, não que o fornecedor instala (usuário, 29/09/2026). E a instalação
+   condicional — "entregues e instalados, **se necessário**", "quando aplicável" — não derruba
+   o edital inteiro: saem só os aparelhos que precisam ser instalados (split, cortina de ar), e
+   fogão, forno e liquidificador ficam (São João d'Aliança/GO, 30/09/2026).
 2. **Veto por objeto** — derruba o edital inteiro quando o objeto é de veículo, trator,
    alimento, material de limpeza e afins. Veículos casam com a busca porque têm
    ar-condicionado de fábrica. Se o objeto também compra eletrodoméstico ("Móveis,

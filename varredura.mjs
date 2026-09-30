@@ -44,7 +44,8 @@ const CAT = [
   // termico. O "Balcao Conservacao Alimento ... componentes: pasta fria", nome
   // do catalogo do PNCP para o balcao refrigerado, sai junto.
   ["RF",["refrigerador","geladeira","frigobar","freezer","congelador","conservadora","camara fria","camara frigorifica","expositor refrigerado","cervejeira","resfriador"]],
-  ["BB",["bebedouro","purificador de agua","refresqueira","suqueira","refresqueira industrial"]],
+  // "PURIFICADOR/FILTRO DE AGUA INSTALACAO: PAREDE OU BANCADA" (Pedras de Maria da Cruz/MG, 29/09/2026)
+  ["BB",["bebedouro","purificador de agua","purificador/filtro de agua","refresqueira","suqueira","refresqueira industrial"]],
   // "buffet termico" fica e "balcao termico" sai, por decisao do usuario em
   // 24/09/2026 — sao o mesmo movel, e ele quis manter so o nome buffet. A
   // "pista termica" saiu na mesma resposta ("mantenha apenas buffet termico").
@@ -60,10 +61,11 @@ const CAT = [
   // "processador de alimentos" por causa do "industrial" no meio; o produto so
   // era achado depois, em "fatiador", e o "disco" do acessorio incluso — que
   // veta quando vem antes do produto — tirava o item.
-  ["PR",["liquidificador","batedeira","processador de alimentos","processador alimentos","processador industrial","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador",
+  ["PR",["liquidificador","batedeira","processador de alimentos","processador alimentos","processador industrial","mini processador","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador",
     // 18/09/2026: nomes que o PNCP usa e a tabela nao tinha. Mixer so com
     // complemento de cozinha: "mixer" solto e tambem a mesa de som.
-    "extrator de suco","centrifuga de fruta","centrifuga de alimento","centrifuga de suco",
+    // "EXTRATOR SUCO; MATERIAL: ACO INOX" (Minacu/GO, item 29): o catalogo sem o "de"
+    "extrator de suco","extrator suco","centrifuga de fruta","centrifuga de alimento","centrifuga de suco",
     "mixer de alimento","mixer de mao","mixer 2 em 1","mixer 3 em 1","mixer eletrico","mixer portatil",
     "mixer vertical","mixer profissional","mixer com lamina","mixer com haste",
     "cafeteira","chaleira","sanduicheira","torradeira","air fryer","airfryer","aspirador de po","aspirador po","aspirador de agua","aspirador agua","grill eletrico","grill",
@@ -82,7 +84,13 @@ const CAT = [
     "maquina lavar","maquina secar","maquina lavadora","lavadora automatica","lavadora semiautomatica","lavadora semi automatica","lavadora semi-automatica",
     // "Lavadora de louça industrial" (Santa Maria/RS, item 22, 29/09/2026)
     "lavadora de louca","lava louca","lava-louca"]],
-  ["CL",["ar-condicionado","ar condicionado","arcondicionado","condicionador de ar","split","climatizador","cortina de ar","ventilador","desumidificador","umidificador","purificador de ar"]],
+  // "Cortina Ar material: metal e plastico, comprimento: 120..." e "CORTINA AR,
+  // MATERIAL: CAIXA METALICA" sao o nome do catalogo do PNCP, sem o "de" (como
+  // a "Maquina Lavar Roupa"), e "CORTINAS DE AR PARA PORTAS" vem no plural: as
+  // tres cortinas do IFFar de Santa Maria/RS (itens 25 a 27), a de Mariopolis/PR,
+  // as duas de Minacu/GO e as tres de Iguaracu/PR ficavam fora (29/09/2026). Com
+  // o espaco ou a virgula depois do "ar", para nao pegar "cortina articulada".
+  ["CL",["ar-condicionado","ar condicionado","arcondicionado","condicionador de ar","split","climatizador","cortina de ar","cortinas de ar","cortina ar ","cortina ar,","cortinas ar ","ventilador","desumidificador","umidificador","purificador de ar"]],
   // CX (coifa, exaustor, depurador) saiu em 23/09/2026: o usuario nao cota
   // nenhum deles. Tinha voltado em 01/09 so com coifa industrial e exaustores.
   // BL (balancas) saiu em 23/09/2026: o usuario nao cota balanca.
@@ -291,10 +299,11 @@ const objetoSemKit = obj => obj.replace(/(?:kits?|materia(?:l|is)|acessorios?) (
 // instalacao e testes" (Boa Esperanca/PR) levavam fogao, geladeira e lavadora
 // junto. Fora do RS e de SC saem so os itens que se instalam — ar-condicionado,
 // cortina de ar, coifa e exaustor, aquecedor de agua —; o resto fica.
-const OBJ_CONDICIONAL = /caso seja aplicavel|quando aplicavel|se aplicavel|quando couber/;
+// "INCLUINDO MONTAGEM E INSTALACAO, SE NECESSARIAS" (Sao Joao d'Alianca/GO, 29/09/2026)
+const OBJ_CONDICIONAL = /caso seja aplicavel|quando aplicavel|se aplicavel|quando couber|(?:quando|se|caso) necessari/;
 const objetoMisto = obj => /mobiliario|moveis/.test(obj) && /eletrodomestic|eletroportat/.test(obj);
 const instalavel = (d, cat) => cat === 'CX' || cat === 'AQ'
-  || (cat === 'CL' && /split|ar[- ]?condicionad|arcondicionad|condicionador|cortina de ar/.test(d));
+  || (cat === 'CL' && /split|ar[- ]?condicionad|arcondicionad|condicionador|cortinas? (?:de )?ar(?![a-z])/.test(d));
 
 // 5.2 — veto por objeto
 const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motociclet","automov","trator","maquinas agricolas","brinquedo","material de construcao","processamento de dados","formulas aliment","dieta enteral","generos aliment","material de limpeza","higiene e limpeza","sucata","velorio","tecidos aviamento",
