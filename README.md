@@ -104,8 +104,11 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    "Para instalação horizontal sobre portas", "instalação em parede ou teto" dizem **como** o
    aparelho é instalado, não que o fornecedor instala (usuário, 29/09/2026). E a instalação
    condicional — "entregues e instalados, **se necessário**", "quando aplicável" — não derruba
-   o edital inteiro: saem só os aparelhos que precisam ser instalados (split, cortina de ar), e
-   fogão, forno e liquidificador ficam (São João d'Aliança/GO, 30/09/2026).
+   o edital inteiro: saem só os aparelhos que precisam ser instalados (split, cortina de ar,
+   climatizador evaporativo de parede, que pede abertura na alvenaria), e fogão, forno,
+   liquidificador e o climatizador portátil ficam (São João d'Aliança/GO e Assis
+   Chateaubriand/PR, 30/09/2026). Vale também no objeto: "com instalação quando necessária".
+   "Incluso: instalação do equipamento" é exigência, como "inclui instalação".
 2. **Veto por objeto** — derruba o edital inteiro quando o objeto é de veículo, trator,
    alimento, material de limpeza e afins. Veículos casam com a busca porque têm
    ar-condicionado de fábrica. Se o objeto também compra eletrodoméstico ("Móveis,

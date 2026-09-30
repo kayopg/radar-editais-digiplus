@@ -638,6 +638,20 @@ const FIM_DE_LINHA = [
   // "COTA RESERVADA" abrindo o bloco seguinte da tabela, logo antes do
   // cabecalho repetido (Descalvado/SP).
   /\sCOTA\s+(?:RESERVADA|PRINCIPAL)(?=\s+Item\b)/i,
+  // O rodape do modelo da AGU com o "Camara" perdido na virada, e o nome do
+  // arquivo de onde saiu: "...BOMBA DE 3800LT/H Nacional de Modelos de Licitacoes
+  // e Contratos da Consultoria-Geral da Unia 14.133, de 2021. Fonte:
+  // 14-133-nov-25.docx"; e o total da cota com a declaracao do modelo de
+  // proposta: "...(P.BR30) TOTAL COTA RESERVADA.....R$ Pela presente, declaro
+  // inteira submissao aos preceitos legais" (Assis Chateaubriand/PR, 30/09/2026)
+  /\s(?:C[âa]mara\s+)?Nacional\s+de\s+Modelos\s+de\s+Licita[çc][õo]es\s+e\s+Contratos/i,
+  /\sFonte:\s*[\w.-]+\.docx?\b/i,
+  /\sTOTAL(?:\s+[A-ZÀ-Ú]{2,}){0,3}\s*\.{4,}/,
+  /\sPela\s+presente,?\s+declar/i,
+  // A unidade partida ("Un d") com as quantidades por secretaria e o preco:
+  // "...do fabricante. Un d 02 05 07 R$2.761,00 R$19.32 7,00 (34) 3423-0100"
+  // (Comendador Gomes/MG, 30/09/2026)
+  /\sUn\s?d\s+(?:\d{1,4}\s+){1,4}R\$/,
   // Codigo de catalogo, unidade e quantidade fechando a linha: "...TENSAO: 220 V
   // 618525 UN 20", em Chapadao do Sul/MS.
   /\s\d{5,9}\s+(?:UNIDADES?|UNID|UND|UN)\.?\s+\d{1,4}(?=[\s,]|$)/,
@@ -3595,7 +3609,7 @@ try { manuais = JSON.parse(fs.readFileSync(path.join(DIR, 'descritivos-manuais.j
 
 const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v.secoes || []).map(s => s.texto)));
 
-let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, linhasPeloPreco = 0, linhasCompletadas = 0, restosPelaCopia = 0;
+let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, sobrasTiradas = 0, linhasPeloPreco = 0, linhasCompletadas = 0, restosPelaCopia = 0;
 
 for (const e of dados.editais) {
   const v = base.editais[e[C.path]];
@@ -4643,6 +4657,23 @@ for (const e of dados.editais) {
       it[6] = '';
       habilitacaoTirada++;
     }
+    // E a SOBRA do item anterior: o liquidificador de 2 L do item 15 de Palmeiras
+    // de Goias/GO saiu com "Garantia minima de 12 meses; Manual em portugues.", o
+    // fim da linha do liquidificador industrial do item 14 — a tabela nao tem o
+    // numero do item e a linha nao foi achada (30/09/2026). Curto, sem produto
+    // nenhum, e o rotulo do PNCP ja e a especificacao: vale o rotulo.
+    for (const it of v.itens) {
+      if (!it[6] || it[9] || !doRadar.has(String(it[0]))) continue;
+      const t = normIgual(it[6]);
+      if (t.length >= 120 || termoDaCategoria(t) !== -1) continue;
+      if (termoDaCategoria(normIgual(it[1])) === -1 || !rotuloServeDeDescritivo(it[1])) continue;
+      // nem a primeira palavra do rotulo: "ASPIRADOR INDUSTRIAL 2000W 70L 220V"
+      // (Ressaquinha/MG) e o texto curto do proprio edital, e fica
+      const nome = (normIgual(it[1]).match(/[a-z]{4,}/) || [''])[0];
+      if (nome && t.includes(nome)) continue;
+      it[6] = '';
+      sobrasTiradas++;
+    }
   }
 
   // E, por fim, o item que o edital nao especifica em lugar nenhum: se o
@@ -4665,6 +4696,6 @@ console.log(`${itensRicos} de ${itensTotal} itens ganharam descritivo completo`)
 console.log(`${doCatalogo} itens sem especificacao no edital ficaram com o rotulo do catalogo`);
 console.log(cabecasRecuperadas + " descritivo(s) tiveram o nome do produto recuperado na frente");
 console.log(linhasTrocadas + " descritivo(s) trocados pelo texto da propria linha, que vinha logo depois");
-console.log(habilitacaoTirada + " descritivo(s) que eram texto de habilitacao sairam");
+console.log(habilitacaoTirada + " descritivo(s) que eram texto de habilitacao sairam · " + sobrasTiradas + " sobra(s) do item anterior trocadas pelo rotulo");
 console.log(`${linhasPeloPreco} item(ns) do radar achados pela linha entre o numero e o preco · ${linhasCompletadas} descritivo(s) cortados completados por ela · ${restosPelaCopia} completados pela outra copia do edital`);
 console.log(`docs/descritivos.json: ${(fs.statSync(arquivo).size / 1024).toFixed(0)} KB`);

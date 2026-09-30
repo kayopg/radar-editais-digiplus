@@ -20,7 +20,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { criaVetoItem, criaPosicaoDoTermo } from './veto-item.mjs';
+import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 import { marcaCotas } from './cota.mjs';
 
@@ -110,6 +110,11 @@ const EXIGE_INSTALACAO = [
   /(incluindo|inclusa|incluida|inclusive) (a )?instalacao/,
   // "Inclui instalacao padrao completa por profissional habilitado" (Goioxim/PR, 29/09/2026)
   /(?<!nao )inclui (a )?instalacao/,
+  // "INCLUSO: INSTALACAO DO EQUIPAMENTO INCLUINDO CORTE DA PAREDE" e "A
+  // INSTALACAO DO APARELHO NO LOCAL INDICADO PELO REQUISITANTE DEVE ESTAR
+  // INCLUIDA NO PRECO" (Assis Chateaubriand/PR, 30/09/2026)
+  /inclus[oa]s?:? (a )?instalacao/,
+  /instalacao[^.;]{0,80}deve(ra)? estar inclu(sa|ida) no preco/,
   /instalacao e assistencia tecnica/,
   // "com mao de obra de instalacao e drenos" (Sertanopolis/PR, 21/09/2026)
   /(mao de obra|servicos?) de (instalacao|montagem)/,
@@ -251,6 +256,14 @@ for (const e of dados.editais) {
       it[0] = abre.c; recategorizados++;
     }
   }
+  // O objeto com instalacao CONDICIONAL ("com instalacao quando necessaria",
+  // Assis Chateaubriand/PR): fora do RS e de SC sai o aparelho que se instala,
+  // como na varredura (5.1e). Aqui vale tambem para o que a regra ganhou
+  // depois de o edital entrar — o climatizador de parede, em 30/09/2026.
+  const objN = norm(e[C.objeto]);
+  // (o objeto misto, moveis e eletrodomesticos com instalacao, tambem, como la)
+  const instalaNoObjeto = !UF_INSTALA.has(e[C.uf]) && /instalacao|montagem/.test(objN)
+    && (OBJ_CONDICIONAL.test(objN) || (/mobiliario|moveis/.test(objN) && /eletrodomestic|eletroportat/.test(objN)));
   const itens = e[C.itens].filter(it => {
     const x = (v.itens || []).find(y => y[0] == it[5]);
     const d = norm(x && x[6]);
@@ -274,6 +287,7 @@ for (const e of dados.editais) {
     const noCatalogo = vetoDoCatalogo(norm(it[3]), it[0]) || (!UF_INSTALA.has(e[C.uf]) && exigeInstalacao(norm(it[3])));
     const termo = noCatalogo || (d && ((VETO[it[0]] || []).find(t => d.includes(t)) || VETO.TODAS.find(t => d.includes(t))
       || (!UF_INSTALA.has(e[C.uf]) && exigeInstalacao(d))
+      || (instalaNoObjeto && instalavel(norm(it[3]), it[0]) && 'instalacao quando necessaria, e o aparelho se instala')
       || (ABRE_FORA_DO_RADAR.exec(d) || [])[1]));
     if (!termo) return true;
     tirados++;

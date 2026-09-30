@@ -23,6 +23,19 @@
 // Termo curto como palavra inteira: "mop" casava dentro de "terMOPlastico" e
 // vetava a "Cafeteira Eletrica ... material: termoplastico/metal" de Sao
 // Paulo/SP (18/09/2026).
+// O objeto com instalacao CONDICIONAL ("quando necessaria", "caso seja
+// aplicavel") e o aparelho que se instala — a mesma regra no varredura.mjs (5.1e)
+// e no veta-pelo-descritivo.mjs. Fora do RS e de SC sai so o que precisa ser
+// instalado; o resto do edital fica.
+// "INCLUINDO MONTAGEM E INSTALACAO, SE NECESSARIAS" (Sao Joao d'Alianca/GO, 29/09/2026)
+export const OBJ_CONDICIONAL = /caso seja aplicavel|quando aplicavel|se aplicavel|quando couber|(?:quando|se|caso) necessari/;
+// O climatizador evaporativo industrial DE PAREDE pede a abertura na alvenaria
+// ("ABERTURA MINIMA DE PAREDE (MM) A: 1390 X L: 2780", Assis Chateaubriand/PR,
+// 30/09/2026): e aparelho que se instala, como o split. O portatil nao.
+export const instalavel = (d, cat) => cat === 'CX' || cat === 'AQ'
+  || (cat === 'CL' && (/split|ar[- ]?condicionad|arcondicionad|condicionador|cortinas? (?:de )?ar(?![a-z])/.test(d)
+    || /climatizador[^.;]{0,90}(?:de parede|abertura (?:minima )?(?:de|na) parede)/.test(d)));
+
 const FRONTEIRA = new Map([['trator', 'inicio'], ['mop', 'palavra'], ['rack', 'palavra'], ['aquario', 'palavra']]);
 
 // A categoria e a do primeiro termo da tabela que aparece como PRODUTO — nao

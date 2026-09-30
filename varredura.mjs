@@ -11,7 +11,7 @@ import { analisaExigencias } from './exigencias.mjs';
 import { devedorDe } from './devedores.mjs';
 import { linkDoPortal, ehComprasGov, montaLinkComprasGov } from './participar.mjs';
 import { portalOk, plataformaDoEdital } from './plataforma.mjs';
-import { criaVetoItem, criaPosicaoDoTermo } from './veto-item.mjs';
+import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 
 // fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
@@ -265,7 +265,8 @@ const LUGAR_DE_MONTAGEM = '(?:horizontal|vertical|parede|teto|piso|bancada|mesa|
 const MONTAGEM_DO_APARELHO = '(?:' + LUGAR_DE_MONTAGEM + '|em|na|no|de|tipo|a)';
 const INSTALACAO_NO_MATERIAL = new RegExp(
   // "Inclui instalacao padrao completa por profissional habilitado" (Goioxim/PR, 29/09/2026)
-  '(?:servicos? de |mao de obra de |incluindo (?:a )?|incluir (?:a )?|(?<!nao )inclui (?:a )?|inclusa (?:a )?|inclusive (?:a )?|fornecimento e |confeccao e )(?:instalacao|montagem)'
+  // "INCLUSO: INSTALACAO DO EQUIPAMENTO INCLUINDO CORTE DA PAREDE" (Assis Chateaubriand/PR, 30/09/2026)
+  '(?:servicos? de |mao de obra de |incluindo (?:a )?|incluir (?:a )?|(?<!nao )inclui (?:a )?|inclus[ao]s?:? (?:a )?|inclusive (?:a )?|fornecimento e |confeccao e )(?:instalacao|montagem)'
   + '|(?:instalacao|montagem) (?:inclusa|incluida|inclusive|completa|no local|no ato)'
   + '|com (?:instalacao|montagem)(?! ' + MONTAGEM_DO_APARELHO + ')'
   + '|entregues? (?:devidamente )?instalad|devidamente instalad'
@@ -299,11 +300,9 @@ const objetoSemKit = obj => obj.replace(/(?:kits?|materia(?:l|is)|acessorios?) (
 // instalacao e testes" (Boa Esperanca/PR) levavam fogao, geladeira e lavadora
 // junto. Fora do RS e de SC saem so os itens que se instalam — ar-condicionado,
 // cortina de ar, coifa e exaustor, aquecedor de agua —; o resto fica.
-// "INCLUINDO MONTAGEM E INSTALACAO, SE NECESSARIAS" (Sao Joao d'Alianca/GO, 29/09/2026)
-const OBJ_CONDICIONAL = /caso seja aplicavel|quando aplicavel|se aplicavel|quando couber|(?:quando|se|caso) necessari/;
+// O OBJ_CONDICIONAL e o instalavel vem do veto-item.mjs, que o veto pelo
+// descritivo tambem usa.
 const objetoMisto = obj => /mobiliario|moveis/.test(obj) && /eletrodomestic|eletroportat/.test(obj);
-const instalavel = (d, cat) => cat === 'CX' || cat === 'AQ'
-  || (cat === 'CL' && /split|ar[- ]?condicionad|arcondicionad|condicionador|cortinas? (?:de )?ar(?![a-z])/.test(d));
 
 // 5.2 — veto por objeto
 const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motociclet","automov","trator","maquinas agricolas","brinquedo","material de construcao","processamento de dados","formulas aliment","dieta enteral","generos aliment","material de limpeza","higiene e limpeza","sucata","velorio","tecidos aviamento",
@@ -339,7 +338,7 @@ const vetoDoObjeto = txt => {
 };
 
 // 5.3 — veto por item (lista viva, construída de falsos positivos reais)
-const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","peca/acessorio","peca / acessorio","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
+const VETO_ITEM = ["evaporador de agua","ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","peca/acessorio","peca / acessorio","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
 // acrescentados em 30/08/2026
 "torneira de parede","torneira para pia","tubo de ferro","tubo de cobre","tubo cobre","pecas /","pecas/","para pedreiro","suporte para televis","suporte de televis","suporte de videocassete","embalag","espaco destinado","onibus","caminhao","impressao 3d","sem funcionamento","quarto de hotel","diaria","estadia","hospedagem","locacao de","prestacao de","autoclave","concentrador de","tampao","projetor","resistencia aquecedor","luva termica","frigideira","prato fundo","alicate","removedor de","coador pano","ralador/fatiador","carro balde","chave controle","elemento filtrante","filtro purificacao","liner","projeto executivo","fantasia","formula infantil","nutricao oral","nutricao geral","placa aquecedora","boia para","controle universal","controle remoto universal",
 // acrescentados em 03/09/2026: EPI casando com "purificador de ar". Montes
@@ -571,7 +570,10 @@ const VETO_ITEM = ["ventilador mecanic","ventilador pulmon","ventilacao mecanic"
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
 // termos da VETO_ITEM vetam em qualquer ponto da descricao.
-const VETO_SO_NA_FRENTE = ["suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
+// "EVAPORADOR DE AGUA PARA AR CONDICIONADO ... INCLUINDO MODELOS SPLIT E DE
+// JANELA" (Guiratinga/MT, 30/09/2026): o acessorio que evapora a agua do dreno,
+// e nao o aparelho — entrava pelo "split".
+const VETO_SO_NA_FRENTE = ["evaporador de agua","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
 "embalagem","embalag","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po",
 "refil","filtro refil","unidade filtrante","elemento filtrante","filtro purificacao","disco abrasivo","manta abrasiva",
 "cooler","gabinete","nobreak","no-break","conector","gas refrigerante","gas refrigeracao","pecas e acessorios","pecas /","pecas/",

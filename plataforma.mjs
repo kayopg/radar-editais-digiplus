@@ -48,7 +48,8 @@ export const portalOk = nome => {
 export const PLATAFORMAS = [
   // Sem "www": o certificado do Banrisul nao cobre o www, e o navegador recusa
   // a pagina com erro de seguranca (Brochier/RS, 29/09/2026).
-  [/pregaobanrisul|preg[ãa]o\s+(?:online\s+)?banrisul/i, 'https://pregaobanrisul.com.br/', 'no Pregão Banrisul', true],
+  // "www.pregaoonlinebanrisul.com.br", tudo junto (Independencia/RS, 30/09/2026)
+  [/preg[ãa]o\s*(?:online\s*)?banrisul/i, 'https://pregaobanrisul.com.br/', 'no Pregão Banrisul', true],
   [/bnccompras|bnc\s+compras|bolsa\s+nacional\s+de\s+compras/i, 'https://bnccompras.com', 'na BNC', true],
   [/bllcompras|bll\.org\.br|bll\.com\.br|plataforma\s+(?:da\s+)?bll\b|bolsa\s+de\s+licita[çc][õo]es\s+e\s+leil/i, 'https://bllcompras.com', 'na BLL', true],
   [/portaldecompraspublicas|portal\s+de\s+compras\s+p[úu]blicas/i, 'https://www.portaldecompraspublicas.com.br', 'no Portal de Compras Públicas', true],
