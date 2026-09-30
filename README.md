@@ -144,7 +144,7 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    O aquecedor de **ambiente** continua, em "Outros" — menos o **halógeno**, que saiu em
    30/09/2026 (só na categoria dele: a "lâmpada halógena" do forno não derruba o forno).
 4. **Piso de preço unitário** de R$ 150 — equipamento de verdade custa. Chaleira elétrica,
-   cafeteira, sanduicheira, grill, máquina de waffle e cooktop (30/09/2026) não têm piso, e acima de R$ 140 com mais de 10 unidades o item fica. Itens com valor
+   cafeteira, sanduicheira, grill e máquina de waffle não têm piso, e acima de R$ 140 com mais de 10 unidades o item fica. Itens com valor
    **zero** são mantidos: é orçamento sigiloso, e a página mostra "sigiloso", nunca "R$ 0".
 5. **Duplicatas** — o mesmo edital sai duas vezes (publicação direta e via portal
    intermediário). Agrupa por município + UF + dia de encerramento + quantidade + valor,

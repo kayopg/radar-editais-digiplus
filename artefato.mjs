@@ -53,7 +53,7 @@ catch { console.error('aviso: docs/descritivos.json nao encontrado — o resumo 
 // O peso nao esta na lista de itens: esta no descritivo completo de cada um,
 // que so os itens cotados usam. Os demais entram como topico resumido no
 // resumo (pedido do usuario em 08/09/2026), e para isso basta o nome — entao
-// deles vao so o numero e o comeco da descricao. Guardar tudo levava a pagina
+// deles vao so o numero, o comeco da descricao e o valor unitario. Guardar tudo levava a pagina
 // a 4,8 MB; assim fica em pouco mais de 3.
 {
   const C = dados.colunas.reduce((o, n, i) => (o[n] = i, o), {});
@@ -73,9 +73,11 @@ catch { console.error('aviso: docs/descritivos.json nao encontrado — o resumo 
     enxuto[e[C.path]] = {
       ...semSecoes,
       total: (v.itens || []).length,
+      // e o valor unitario (x[4]), que o resumo mostra ao lado de cada um dos
+      // demais itens desde 30/09/2026
       itens: (v.itens || []).map(x => (querNum.has(x[0]) || querDesc.has(uma(x[1])))
         ? x
-        : [x[0], String(x[1] || '').slice(0, 80)])
+        : [x[0], String(x[1] || '').slice(0, 80), null, null, +x[4] || 0])
     };
   }
   descritivos = { ...descritivos, editais: enxuto };

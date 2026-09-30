@@ -785,10 +785,12 @@ function indexaDescritivos(r, base){
 
 // Os demais itens do edital em tópicos curtos, para caberem na mesma folha.
 //
-// Não é a tabela de novo com outro nome: aqui vai só o nome do produto, sem
-// quantidade, valor nem especificação. Serve para ver o que mais está sendo
-// comprado junto — se são três fogões ou três fogões no meio de 275 itens de
-// limpeza — e não para cotar.
+// Não é a tabela de novo com outro nome: aqui vai o nome do produto e o valor
+// unitário, sem quantidade nem especificação. Serve para ver o que mais está
+// sendo comprado junto — se são três fogões ou três fogões no meio de 275 itens
+// de limpeza — e não para cotar. O valor entrou a pedido do usuário em
+// 30/09/2026: o cooktop de R$ 138,37 que o piso de R$ 150 deixa de fora
+// (Arvorezinha/RS) aparece aqui com o preço, para ver e decidir.
 //
 // Repetido vira um tópico com contagem: o edital de Salto/SP lista o mesmo
 // ventilador de parede em dois itens, e duas linhas iguais não informam nada.
@@ -815,17 +817,29 @@ function resumeOutros(r, d){
     if(nome.length > 58) nome = nome.slice(0, 58).replace(/\s+\S*$/, "") + "…";
     if(!nome) return;
     var chave = nome.toLowerCase();
-    if(!contagem[chave]){ contagem[chave] = { nome:nome, n:0 }; ordem.push(chave); }
+    if(!contagem[chave]){ contagem[chave] = { nome:nome, n:0, precos:[] }; ordem.push(chave); }
     contagem[chave].n++;
+    var v = Math.round((+x[4] || 0) * 100) / 100;
+    if(contagem[chave].precos.indexOf(v) < 0) contagem[chave].precos.push(v);
   });
 
   var LIMITE = 28;   // acima disso a lista deixa de caber na folha
   var tops = ordem.slice(0, LIMITE).map(function(k){
-    return contagem[k].nome + (contagem[k].n > 1 ? " (" + contagem[k].n + "×)" : "");
+    return contagem[k].nome + (contagem[k].n > 1 ? " (" + contagem[k].n + "×)" : "") + precoDosOutros(contagem[k].precos);
   });
   var sobra = ordem.length - LIMITE;
   if(sobra > 0) tops.push("e mais " + sobra + " tipo(s) de item");
   return tops;
+}
+// O valor unitário ao lado do tópico: um preço, dois ("R$ 150,00 e R$ 180,00")
+// ou a faixa, quando o mesmo nome aparece com mais preços. Zero é orçamento
+// sigiloso.
+function precoDosOutros(precos){
+  var p = precos.filter(function(v){ return v > 0; }).sort(function(a, b){ return a - b; });
+  if(!p.length) return precos.length ? " — sigiloso" : "";
+  if(p.length === 1) return " — " + moeda(p[0]) + " cada";
+  if(p.length === 2) return " — " + moeda(p[0]) + " e " + moeda(p[1]) + " cada";
+  return " — de " + moeda(p[0]) + " a " + moeda(p[p.length - 1]) + " cada";
 }
 // Como o item se identifica na tabela.
 //

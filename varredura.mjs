@@ -123,9 +123,10 @@ const PISO_ITEM = 150;
 // Sanduicheira e grill tambem (decisao do usuario em 22/09/2026). A maquina de
 // waffle entrou junto com a categoria (28/09/2026): e o mesmo aparelho de chapa
 // da sanduicheira, e a domestica sai por menos de R$ 150.
-// O cooktop tambem (usuario, 30/09/2026): o "COOKTOP ELETRICO PORTATIL, 02
-// BOCAS" de Arvorezinha/RS sai por R$ 138,37 e ficava fora pelo piso.
-const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira','sanduicheira','grill','waffle','wafleira','cooktop'];
+// O cooktop nao: o usuario pediu a isencao e voltou atras no mesmo dia
+// (30/09/2026) — o piso fica, e o cooktop barato aparece com o preco em "Demais
+// itens do edital", no resumo.
+const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira','sanduicheira','grill','waffle','wafleira'];
 
 // 5.4c - volume salva o item de preco quase no piso (decisao do usuario em
 // 18/09/2026): acima de R$ 140 e com mais de 10 unidades, o item fica. A
