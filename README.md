@@ -141,12 +141,14 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    publicado o item que ficou órfão ("categoria que saiu"); quando só um produto sai, o nome
    entra na `VETO_ITEM`. As duas coisas juntas quando o nome ainda pode entrar pela palavra
    de outra categoria — um gerador "com ventilador de arrefecimento" cairia em climatização.
-   O aquecedor de **ambiente** continua, em "Outros".
+   O aquecedor de **ambiente** continua, em "Outros" — menos o **halógeno**, que saiu em
+   30/09/2026 (só na categoria dele: a "lâmpada halógena" do forno não derruba o forno).
 4. **Piso de preço unitário** de R$ 150 — equipamento de verdade custa. Chaleira elétrica,
-   cafeteira, sanduicheira e grill não têm piso, e acima de R$ 140 com mais de 10 unidades o item fica. Itens com valor
+   cafeteira, sanduicheira, grill, máquina de waffle e cooktop (30/09/2026) não têm piso, e acima de R$ 140 com mais de 10 unidades o item fica. Itens com valor
    **zero** são mantidos: é orçamento sigiloso, e a página mostra "sigiloso", nunca "R$ 0".
 5. **Duplicatas** — o mesmo edital sai duas vezes (publicação direta e via portal
-   intermediário). Agrupa por município + UF + dia de encerramento + quantidade + valor.
+   intermediário). Agrupa por município + UF + dia de encerramento + quantidade + valor,
+   depois do filtro por portal: das cópias, fica a que passou por ele (30/09/2026).
 6. **Piso do edital** — descarta edital cujo valor total estimado fique entre R$ 1 e
    R$ 4.000: compra de troco não vale a viagem. Valor **zero** fica, porque é orçamento
    sigiloso e pode ser grande.

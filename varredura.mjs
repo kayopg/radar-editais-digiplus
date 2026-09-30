@@ -123,7 +123,9 @@ const PISO_ITEM = 150;
 // Sanduicheira e grill tambem (decisao do usuario em 22/09/2026). A maquina de
 // waffle entrou junto com a categoria (28/09/2026): e o mesmo aparelho de chapa
 // da sanduicheira, e a domestica sai por menos de R$ 150.
-const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira','sanduicheira','grill','waffle','wafleira'];
+// O cooktop tambem (usuario, 30/09/2026): o "COOKTOP ELETRICO PORTATIL, 02
+// BOCAS" de Arvorezinha/RS sai por R$ 138,37 e ficava fora pelo piso.
+const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira','sanduicheira','grill','waffle','wafleira','cooktop'];
 
 // 5.4c - volume salva o item de preco quase no piso (decisao do usuario em
 // 18/09/2026): acima de R$ 140 e com mais de 10 unidades, o item fica. A
@@ -610,6 +612,12 @@ const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 // (Rio Verde/GO), que e produto legitimo. Escopar na categoria resolve sem
 // precisar adivinhar o contexto pelo texto.
 const VETO_RF_CIENT = ['imunobiolog','termolab','hemocompon','laboratori','vacina'];
+// O aquecedor HALOGENO saiu do radar (usuario, 30/09/2026: "pode remover
+// aquecedor alogenio"): Arvorezinha/RS e Borrazopolis/PR, os dois de 1.200 W. O
+// aquecedor de ambiente de outro tipo (ceramico, a oleo, termoventilador)
+// continua em "Outros". So na categoria dele: "lampada halogena" e a luz do
+// forno, e o forno fica.
+const VETO_OT_HALOGENO = ['halogen','alogen'];
 
 // A VETO_GE_GRUPO, que separava o grupo gerador trifasico do portatil, durou um
 // dia: em 24/09/2026 o usuario tirou o gerador inteiro e a categoria GE saiu da
@@ -909,6 +917,7 @@ for (const o of cands) {
   for (const [cat, it, d] of interesse) {
     if (temVeto(d, cat)) continue;
     if (cat === 'RF' && VETO_RF_CIENT.some(v => d.includes(v))) { vCient++; continue; }
+    if (cat === 'OT' && VETO_OT_HALOGENO.some(v => d.includes(v))) continue;
     if (!itemVivo(it.sit)) { vCancel++; continue; }
     const v = +it.v || 0;
     if (v > 0 && v < PISO_ITEM && !SEM_PISO.some(p => d.includes(p)) && !salvoPeloVolume(v, +it.q || 0)) continue;

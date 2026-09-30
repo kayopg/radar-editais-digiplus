@@ -54,6 +54,9 @@ const VETO = {
   CX: ['soldagem', 'fumaca de bancada'],
   // lavanderia hospitalar (Sonora/MS, 21/09/2026)
   LV: ['hospitalar', 'barreira sanitaria'],
+  // o aquecedor halogeno saiu do radar (usuario, 30/09/2026); a mesma lista do
+  // varredura.mjs (VETO_OT_HALOGENO), so na categoria dele
+  OT: ['halogen', 'alogen'],
   // Em qualquer categoria: o item 16 da EBSERH Santa Maria/RS e "Ventilador
   // tipo: parede, potencia motor: 500" no catalogo e "Longarina de espera com
   // 03 (tres) lugares de assento" no anexo de descricao detalhada (18/09/2026).
