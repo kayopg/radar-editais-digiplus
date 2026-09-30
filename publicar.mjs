@@ -63,7 +63,7 @@ const saida = {
             'publicacao', 'arquivoSeq', 'arquivoExtensao',
             'aberturaPropostas', 'esfera', 'situacao', 'portal', 'naoAvaliado', 'linkPortal', 'linkMontado', 'comoParticipar'],
   colunasItem: ['categoria', 'quantidade', 'valorUnitario', 'descricao',
-                'unidadeMedida', 'numeroItem', 'beneficio'],
+                'unidadeMedida', 'numeroItem', 'beneficio', 'cota'],
   editais: linhas,
 };
 

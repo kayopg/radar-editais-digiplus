@@ -3112,8 +3112,10 @@ function cortaOrcamento(t) {
   // Machado/RS; e as colunas de cota da planilha de Sapezal/MT ("... 12 (DOZE)
   // MESES ITEM PARA AMPLA PARTICIPACAO.", "COTA DO ITEM 04 PARA ME E EPP (Art.
   // 48, III da LC 147/2014). UN: unidade"); e o que vem depois do item na tabela
-  // de Triunfo/RS, que numera por extenso: "... industrial. Item 2 – 01 Suporte"
-  const clausula = /\s(?:Image(?:m|ns)\s+(?:(?:apenas|meramente|somente)\s+)?ilustrativ[ao]s?|ITEM\s+PARA\s+AMPLA\s+PARTICIPA|COTA\s+DO\s+ITEM\s+\d{1,3}\s+PARA\s+ME\b|UN:\s*unidade|Item\s+\d{1,3}\s+[–-]\s+\d{1,3}\s+[A-ZÀ-Ú]|O\s+prazo\s+de\s+vig[êe]ncia\s+d[ao]\s+contrat|O\s+fornecedor\s+dever[áa]\s+enviar\s+o\s+produto)/i.exec(t);
+  // de Triunfo/RS, que numera por extenso: "... industrial. Item 2 – 01 Suporte";
+  // e a unidade e a quantidade com o titulo da secao seguinte do TR de Santos/SP:
+  // "... GARANTIA MINIMA DE 1(UM) ANO. UNI 795 1. DA EXECUCAO DO OBJETO" (30/09/2026)
+  const clausula = /\s(?:Image(?:m|ns)\s+(?:(?:apenas|meramente|somente)\s+)?ilustrativ[ao]s?|ITEM\s+PARA\s+AMPLA\s+PARTICIPA|(?:UNI|UNID\.?|UNIDADE|UN|UND)\s+[\d.]{1,7}\s+\d{1,2}\.\s+D[AO]S?\s+[A-ZÀ-Ú]{3}|COTA\s+DO\s+ITEM\s+\d{1,3}\s+PARA\s+ME\b|UN:\s*unidade|Item\s+\d{1,3}\s+[–-]\s+\d{1,3}\s+[A-ZÀ-Ú]|O\s+prazo\s+de\s+vig[êe]ncia\s+d[ao]\s+contrat|O\s+fornecedor\s+dever[áa]\s+enviar\s+o\s+produto)/i.exec(t);
   if (clausula && clausula.index > 60) t = t.slice(0, clausula.index);
   // o codigo do catalogo da prefeitura fechando a especificacao, com a linha
   // seguinte logo depois: "...pes antiderrapantes. 1004389 6 ME/", "...(1 p/

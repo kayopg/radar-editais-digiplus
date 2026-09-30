@@ -5,6 +5,7 @@
 // pagina e servida sem build e sem modulos, entao nao ha como ela importar isto.
 // Mudou o layout la, mude aqui — sao dois lugares, nao tres.
 import path from 'node:path';
+import { textoCota } from './cota.mjs';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { textoDasPaginas, escolhePaginas, textoUtil, coberturaItens } from './paginas-uteis.mjs';
@@ -51,17 +52,26 @@ const qtdItem = it => {
 // N = "Nao se aplica", o tipoBeneficio 5 do PNCP. Sem ele a coluna saia vazia
 // em 152 dos 951 itens de 25/09/2026 (ver beneficio() no varredura.mjs).
 export const BENEFICIO = { E: 'Exclusivo ME/EPP', C: 'Cota reservada ME/EPP', S: 'Sem benefício', N: 'Não se aplica' };
-const beneficioItem = it => BENEFICIO[it[6]] || '';
+// it[7]: a cota reservada (ver cota.mjs), que vale mais que o beneficio do PNCP
+const beneficioItem = it => textoCota(it) || BENEFICIO[it[6]] || '';
 
 // Resumo do beneficio no edital inteiro, para quem le so o cabecalho.
 export function resumoBeneficio(r) {
-  const n = { E: 0, C: 0, S: 0 };
-  for (const it of r[8]) if (n[it[6]] !== undefined) n[it[6]]++;
+  const n = { E: 0, S: 0, N: 0 };
+  let res = 0;
+  for (const it of r[8]) {
+    const c = String(it[7] || '')[0];
+    if (c === 'R' || (!c && it[6] === 'C')) res++;
+    else if (c !== 'P' && n[it[6]] !== undefined) n[it[6]]++;
+  }
   const t = r[8].length;
   if (n.E === t) return 'todos os itens exclusivos para ME/EPP';
-  if (n.E) return n.E + ' de ' + t + ' itens exclusivos para ME/EPP';
-  if (n.C) return n.C + ' de ' + t + ' com cota reservada para ME/EPP';
-  return n.S ? 'sem benefício ME/EPP' : '';
+  if (res === t) return 'todos os itens em cota reservada para ME/EPP';
+  const partes = [];
+  if (n.E) partes.push(n.E + ' de ' + t + ' itens exclusivos para ME/EPP');
+  if (res) partes.push(res + ' de ' + t + ' em cota reservada para ME/EPP');
+  if (partes.length) return partes.join(', ');
+  return n.S + n.N ? 'sem benefício ME/EPP' : '';
 }
 
 export const urlArquivo = r => {
@@ -594,8 +604,9 @@ export async function montaResumo(r, opts = {}) {
                   it[2] ? 'Total ' + moeda(it[1] * it[2]) : '',
                   { tam: 8.5, negritoDir: true });
     const b = beneficioItem(it);
-    if (b) doc.parOposto(b, '', { tam: 8, negritoEsq: it[6] === 'E',
-                                  corEsq: it[6] === 'E' ? [0.55, 0.1, 0.1] : [0.42, 0.42, 0.42] });
+    const restrito = b && !b.startsWith('Cota principal') && (it[6] === 'E' || it[6] === 'C' || String(it[7] || '')[0] === 'R');
+    if (b) doc.parOposto(b, '', { tam: 8, negritoEsq: restrito,
+                                  corEsq: restrito ? [0.55, 0.1, 0.1] : [0.42, 0.42, 0.42] });
   });
 
   const todos = opts.todos !== undefined ? opts.todos : await buscaTodosItens(r);

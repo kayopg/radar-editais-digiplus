@@ -22,6 +22,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { criaVetoItem, criaPosicaoDoTermo } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
+import { marcaCotas } from './cota.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const arqDados = path.join(DIR, 'docs', 'dados.json');
@@ -308,9 +309,32 @@ for (const e of ficam) {
 }
 ficam.length = 0; ficam.push(...porNumero.values());
 
+// A cota reservada de ME/EPP, item a item, em it[7] (ver cota.mjs): 'R',
+// 'R:n' (a principal no item n) ou 'P:n' (a reservada no item n). E o
+// principal que saiu do recorte com a marca "(COTA EXCLUSIVA...)" copiada da
+// reservada perde a marca no descritivos.json.
+let cotas = 0, descLimpos = 0;
+if (!dados.colunasItem.includes('cota')) { dados.colunasItem.push('cota'); cotas++; }
+for (const e of ficam) {
+  const v = desc.editais[e[C.path]];
+  if (!v) continue;
+  const { marcas, limpos } = marcaCotas(v.itens || [], norm((v.secoes || []).map(s => s.texto).join(' ')));
+  for (const it of e[C.itens]) {
+    const m = marcas.get(+it[5]) || '';
+    if ((it[7] || '') === m) continue;
+    if (m) it[7] = m; else it.length = 7;
+    cotas++;
+  }
+  for (const [n, t] of limpos) {
+    const x = (v.itens || []).find(y => +y[0] === n);
+    if (x && x[6] !== t) { x[6] = t; descLimpos++; }
+  }
+}
+
 console.log(`${tirados} item(ns) vetado(s) pelo descritivo, ${semDescritivo} sem descritivo, ${foraDeCategoria} de categoria que saiu, ${editaisFora} edital(is) fora (${porClausula} por clausula de instalacao no corpo), ${recategorizados} item(ns) de categoria corrigida`);
 if (limpos) console.log(`${limpos} texto(s) do PNCP limpos de HTML e acentuacao quebrada`);
-if (!mostra && (tirados || semDescritivo || foraDeCategoria || editaisFora || recategorizados || limpos)) {
+if (cotas) console.log(`${cotas} marca(s) de cota ME/EPP mudaram` + (descLimpos ? `, ${descLimpos} descritivo(s) de cota principal sem a marca da reservada` : ''));
+if (!mostra && (tirados || semDescritivo || foraDeCategoria || editaisFora || recategorizados || limpos || cotas)) {
   dados.editais = ficam;
   dados.meta.editais = ficam.length;
   // O porUf vem do publicar.mjs, que rodou ANTES deste veto — sem recalcular
@@ -321,4 +345,8 @@ if (!mostra && (tirados || semDescritivo || foraDeCategoria || editaisFora || re
   dados.meta.porUf = porUf;
   fs.writeFileSync(arqDados, JSON.stringify(dados), 'utf8');
   console.log(`docs/dados.json: ${ficam.length} editais`);
+}
+if (!mostra && descLimpos) {
+  fs.writeFileSync(path.join(DIR, 'docs', 'descritivos.json'), JSON.stringify(desc), 'utf8');
+  console.log('docs/descritivos.json: ' + descLimpos + ' descritivo(s) corrigido(s)');
 }

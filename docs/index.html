@@ -129,6 +129,7 @@ input[type=search]:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0
 .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
 .tag{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--brand-soft);color:var(--brand-ink)}
 .tag.alerta{background:var(--hot-soft);color:var(--hot)}
+.tag.cota{background:var(--warn-soft);color:var(--warn)}
 .chead::after{content:"";width:9px;height:9px;border-right:2.5px solid var(--ink3);border-bottom:2.5px solid var(--ink3);transform:rotate(45deg);margin:6px 2px 0 4px;transition:transform .2s;flex:0 0 auto;align-self:center}
 .card.open .chead::after{transform:rotate(-135deg) translate(-4px,-4px)}
 .body{display:none;border-top:1px dashed var(--line);padding:14px 18px 16px 22px;background:linear-gradient(180deg,var(--line2),var(--panel) 120px)}
@@ -143,6 +144,8 @@ td.d{color:var(--ink);padding-right:16px}
 td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-weight:700;color:var(--ink)}
 .scroller{overflow-x:auto}
 .inum{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--brand-ink);margin-bottom:2px}
+.inum .icota{color:var(--warn)}
+.inum .icota.p{color:var(--ok)}
 .irot{color:var(--ink);font-weight:700;font-size:13px;line-height:1.45}
 .idesc{margin-top:7px;padding:9px 11px;border-radius:10px;background:var(--bg);border:1px solid var(--line2)}
 .idesc:empty{display:none}
@@ -462,10 +465,14 @@ function render(){
     // vermelho. O pregao 42 de Salto/SP (R$ 5,9 milhoes) estava "Suspensa" em
     // 17/09/2026 e o card parecia um edital normal.
     if(situacaoAlerta(r)) tagh='<span class="tag alerta">'+esc(r[17])+"</span>"+tagh;
+    var nres=r[8].filter(reservada).length;
+    if(nres) tagh+='<span class="tag cota">cota reservada ME/EPP · '+nres+(nres===1?" item":" itens")+"</span>";
     // Cada item com o numero, o nome do PNCP e — quando o card abre — o
     // descritivo do edital, que antes so aparecia no resumo em PDF.
     var itens=r[8].map(function(i){
-      return "<tr><td class='d'><div class='inum'>"+(i[5]?"Item "+i[5]+" · ":"")+(CAT[i[0]]||"")+"</div>"
+      var ct=cotaItem(i);
+      return "<tr><td class='d'><div class='inum'>"+(i[5]?"Item "+i[5]+" · ":"")+(CAT[i[0]]||"")
+        +(ct?" · <span class='icota"+(String(i[7]||"").charAt(0)==="P"?" p":"")+"'>"+esc(ct)+"</span>":"")+"</div>"
         +"<div class='irot'>"+esc(i[3])+"</div><div class='idesc' data-n='"+(i[5]||"")+"'></div></td>"
         +"<td class='n'>"+i[1]+"</td><td class='n'>"+(i[2]?"R$ "+i[2].toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}):"—")+"</td></tr>";
     }).join("");
@@ -717,12 +724,32 @@ function dataHoraBR(iso){
 // disputar o item exclusivo, e sao 41% deles. O "N" e o "S" nao restringem
 // ninguem, mas sao valores diferentes no PNCP e ficam separados aqui.
 var BENEFICIO = { E:"Exclusivo ME/EPP", C:"Cota reservada ME/EPP", S:"Sem benefício", N:"Não se aplica" };
+// it[7]: a cota reservada de ME/EPP (cota.mjs), que junta o PNCP, a linha do
+// edital e o par de itens iguais: "R", "R:n" (a principal no item n) ou "P:n"
+// (a reservada no item n). O PNCP sozinho errava: o IFFar de Santa Maria/RS
+// escreve "COTA RESERVADA (BENEFÍCIO TIPO III)" e o PNCP diz "exclusiva", e em
+// Santos/SP a principal e a reservada vêm as duas "sem benefício" (30/09/2026).
+function cotaItem(it){
+  var c = String(it[7] || ""), n = c.split(":")[1];
+  if(c.charAt(0) === "R") return "Cota reservada ME/EPP" + (n ? " (principal: item " + n + ")" : "");
+  if(c.charAt(0) === "P") return "Cota principal, ampla" + (n ? " (reservada: item " + n + ")" : "");
+  if(it[6] === "C") return "Cota reservada ME/EPP";
+  if(it[6] === "E") return "Exclusivo ME/EPP";
+  return "";
+}
+function reservada(it){ var c = String(it[7] || "").charAt(0); return c === "R" || (!c && it[6] === "C"); }
 function resumoBeneficio(r){
-  var n = {E:0,C:0,S:0,N:0}, t = r[8].length;
-  r[8].forEach(function(it){ if(n[it[6]]!==undefined) n[it[6]]++; });
+  var n = {E:0,S:0,N:0}, t = r[8].length, res = 0;
+  r[8].forEach(function(it){
+    if(reservada(it)) res++;
+    else if(String(it[7] || "").charAt(0) !== "P" && n[it[6]] !== undefined) n[it[6]]++;
+  });
   if(n.E === t) return "todos os itens exclusivos para ME/EPP";
-  if(n.E) return n.E + " de " + t + " itens exclusivos para ME/EPP";
-  if(n.C) return n.C + " de " + t + " com cota reservada para ME/EPP";
+  if(res === t) return "todos os itens em cota reservada para ME/EPP";
+  var partes = [];
+  if(n.E) partes.push(n.E + " de " + t + " itens exclusivos para ME/EPP");
+  if(res) partes.push(res + " de " + t + " em cota reservada para ME/EPP");
+  if(partes.length) return partes.join(", ");
   return (n.S + n.N) ? "sem benefício ME/EPP" : "";
 }
 function qtdItem(it){
@@ -909,7 +936,7 @@ async function montaResumo(r){
                // O item exclusivo de ME/EPP nem pode ser disputado por quem não
                // é, e são 41% deles: some da tabela seria perder a informação
                // que mais muda a decisão.
-               it[6] === "E" ? "Exclusivo ME/EPP" : it[6] === "C" ? "Cota ME/EPP" : "—",
+               cotaItem(it) || "—",
                umaLinha(descritivoDoItem(r, it) || it[3]) ];
     }),
     { tam:8 });
