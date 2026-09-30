@@ -94,7 +94,11 @@ jobs:
     # primeira etapa faz a janela extra sair na hora quando o dia ja foi
     # publicado, e o repositorio e publico, onde o minuto de Actions nao e
     # cobrado.
-    timeout-minutes: 300
+    # Em 30/09/2026 a varredura sozinha levou 182 minutos, o job chegou ao passo
+    # de publicar com 273, e o recorte refeito (o codigo tinha mudado no main)
+    # bateu nos 300: o dia se perdeu no ultimo passo. 360 e o teto do GitHub
+    # para o runner hospedado, e o passo de publicar agora olha o relogio.
+    timeout-minutes: 360
 
     steps:
       - uses: actions/checkout@v4
@@ -111,6 +115,7 @@ jobs:
       - name: A varredura de hoje já está publicada?
         id: guarda
         run: |
+          date +%s > /tmp/inicio-job
           hoje=$(TZ=America/Sao_Paulo date +%F)
           git fetch --depth=1 origin +refs/heads/main:refs/remotes/origin/main
           pub=$(git show origin/main:docs/dados.json | grep -o '"varredura":"[0-9-]\{10\}"' | head -1 | cut -d'"' -f4)
@@ -200,12 +205,15 @@ jobs:
         run: node descritivos.mjs --faltantes
 
       # A copia do texto antes do recorte serve ao passo de publicar, que refaz
-      # o recorte se o codigo mudar no main durante o job.
+      # o recorte se o codigo mudar no main durante o job. A copia depois de
+      # embutir os itens poupa os ~25 minutos deste passo quando o que mudou foi
+      # so o recorte ou o veto.
       - name: Embutir a lista de itens de cada edital
         if: steps.guarda.outputs.rodar == 'sim'
         run: |
           cp docs/descritivos.json /tmp/textos.json
           node itens-embutidos.mjs
+          cp docs/descritivos.json /tmp/embutidos.json
 
       - name: Recortar o descritivo de cada item
         if: steps.guarda.outputs.rodar == 'sim'
@@ -266,12 +274,28 @@ jobs:
             git reset --hard origin/main
             cp /tmp/gerado/dados.json /tmp/gerado/descritivos.json docs/
             cp /tmp/gerado/publicadores.json .
+            # Refazer o recorte e melhor que publicar o do codigo velho, mas nao a
+            # ponto de perder o dia: em 30/09/2026 o job chegou aqui com 273
+            # minutos e o recorte refeito (25 min, com o embutir dos itens)
+            # passou do teto. Com mais de 320 minutos de job, publica o que tem.
+            decorrido=$(( ($(date +%s) - $(cat /tmp/inicio-job 2>/dev/null || date +%s)) / 60 ))
             if ! git diff --quiet "$GITHUB_SHA" origin/main -- '*.mjs' ortografia editais-fora.json descritivos-manuais.json; then
-              echo "O codigo mudou no main durante o job: refazendo o recorte."
-              cp /tmp/textos.json docs/descritivos.json
-              if ! { node itens-embutidos.mjs && node descritivo-por-item.mjs && node veta-pelo-descritivo.mjs; }; then
-                echo "O recorte novo falhou: publicando o do codigo antigo."
-                cp /tmp/gerado/descritivos.json docs/
+              if [ "$decorrido" -gt 320 ]; then
+                echo "O codigo mudou no main, mas o job ja tem $decorrido minutos: publicando o recorte do codigo antigo."
+              elif git diff --quiet "$GITHUB_SHA" origin/main -- itens-embutidos.mjs && [ -f /tmp/embutidos.json ]; then
+                echo "O codigo do recorte mudou no main durante o job: refazendo o recorte ($decorrido min de job)."
+                cp /tmp/embutidos.json docs/descritivos.json
+                if ! { node descritivo-por-item.mjs && node veta-pelo-descritivo.mjs; }; then
+                  echo "O recorte novo falhou: publicando o do codigo antigo."
+                  cp /tmp/gerado/dados.json /tmp/gerado/descritivos.json docs/
+                fi
+              else
+                echo "O codigo mudou no main durante o job: refazendo o recorte desde o embutir ($decorrido min de job)."
+                cp /tmp/textos.json docs/descritivos.json
+                if ! { node itens-embutidos.mjs && node descritivo-por-item.mjs && node veta-pelo-descritivo.mjs; }; then
+                  echo "O recorte novo falhou: publicando o do codigo antigo."
+                  cp /tmp/gerado/dados.json /tmp/gerado/descritivos.json docs/
+                fi
               fi
             fi
             if git diff --quiet -- docs/dados.json docs/descritivos.json publicadores.json; then
