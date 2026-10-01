@@ -4012,7 +4012,15 @@ for (const e of dados.editais) {
       // Glifo de icone da fonte, que o PDF devolve como letras: "TIRA MANCHAS
       // O caO ADVANCED" (Arvorezinha/RS), "RS – O O caO Capital Gaucha" (timbre
       // de Salto do Jacui/RS), 29/09/2026.
-      .replace(/\s[A-Z]\s[a-z]{2,3}[A-Z](?=\s)/g, '');
+      .replace(/\s[A-Z]\s[a-z]{2,3}[A-Z](?=\s)/g, '')
+      // O rodape da folha no meio da celula, ancorado no "[Digite aqui]" do
+      // modelo do Word — com a quantidade da coluna ao lado, o resto do link da
+      // assinatura e o timbre ate o e-mail: "...ciclo 05 /k0ikzHM92t9g7e_1_8
+      // [Digite aqui] Prefeitura Municipal de Sapucaia do Sul – ... (51)
+      // 3451-8021 ou 8023 – licitacoes.compras@sapucaiadosul.rs.gov.br quente e
+      // frio..." (Sapucaia do Sul/RS, itens 8 e 12, 01/10/2026)
+      .replace(/(?:\s+\d{1,3})?(?:\s+\/?[\w-]{8,})?\s*\[Digite aqui\][^@]{0,300}@[\w.-]+\.(?:gov|com|org)(?:\.br)?\b\s*/g, ' ')
+      .trim();
     it[6] = tiraCabecalhoCifrado(it[6]);
     // O objeto da secao seguinte emendado no fim: "...Tensão: Bivolt Aquisição de
     // cadeiras com braço fixa e cadeira de Obeso. Cadeira universitária..."

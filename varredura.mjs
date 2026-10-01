@@ -341,7 +341,7 @@ const vetoDoObjeto = txt => {
 };
 
 // 5.3 — veto por item (lista viva, construída de falsos positivos reais)
-const VETO_ITEM = ["evaporador de agua","ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","peca/acessorio","peca / acessorio","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
+const VETO_ITEM = ["evaporador de agua","mangueira","ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","peca/acessorio","peca / acessorio","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
 // acrescentados em 30/08/2026
 "torneira de parede","torneira para pia","tubo de ferro","tubo de cobre","tubo cobre","pecas /","pecas/","para pedreiro","suporte para televis","suporte de televis","suporte de videocassete","embalag","espaco destinado","onibus","caminhao","impressao 3d","sem funcionamento","quarto de hotel","diaria","estadia","hospedagem","locacao de","prestacao de","autoclave","concentrador de","tampao","projetor","resistencia aquecedor","luva termica","frigideira","prato fundo","alicate","removedor de","coador pano","ralador/fatiador","carro balde","chave controle","elemento filtrante","filtro purificacao","liner","projeto executivo","fantasia","formula infantil","nutricao oral","nutricao geral","placa aquecedora","boia para","controle universal","controle remoto universal",
 // acrescentados em 03/09/2026: EPI casando com "purificador de ar". Montes
@@ -576,7 +576,10 @@ const VETO_ITEM = ["evaporador de agua","ventilador mecanic","ventilador pulmon"
 // "EVAPORADOR DE AGUA PARA AR CONDICIONADO ... INCLUINDO MODELOS SPLIT E DE
 // JANELA" (Guiratinga/MT, 30/09/2026): o acessorio que evapora a agua do dreno,
 // e nao o aparelho — entrava pelo "split".
-const VETO_SO_NA_FRENTE = ["evaporador de agua","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
+// e a "MANGUEIRA PARA DRENO DE AR CONDICIONADO" (Corumba/MS, item 100, 01/10/2026):
+// a mangueira na frente e o acessorio; depois do aparelho ("bicos e mangueiras"
+// do aspirador) ela fica
+const VETO_SO_NA_FRENTE = ["evaporador de agua","mangueira","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
 "embalagem","embalag","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po",
 "refil","filtro refil","unidade filtrante","elemento filtrante","filtro purificacao","disco abrasivo","manta abrasiva",
 "cooler","gabinete","nobreak","no-break","conector","gas refrigerante","gas refrigeracao","pecas e acessorios","pecas /","pecas/",
@@ -1050,12 +1053,20 @@ fin.length = 0; fin.push(...finP);
 // copia da BNC, que ficaria, ja tinha sido descartada.
 // Usa o DIA e nao o horario exato: o mesmo edital republicado sai com alguns
 // minutos de diferenca (ex. 12:30 e 13:01) e escapava do agrupamento.
+// Das copias que passaram, fica a que o PROPRIO portal da disputa publicou: em
+// 01/10/2026 as duas de Sao Joao d'Alianca passaram (a da Megasoft pela BNC
+// escrita no edital), e ficou a do Fundo Municipal, pelo sequencial menor —
+// "Edital nº (11749) | 27-0/2026", com o botao Participar na pagina inicial da
+// BNC; a da prefeitura tinha o link do processo. Empatado, como antes: a que
+// encerra primeiro, e entao o sequencial menor.
+const doPortal = e => (e.portal && portalOk(e.portal) ? 1 : 0);
 const grupo = new Map();
 for (const e of fin) {
   const k = `${e.mun}|${e.uf}|${e.fecha.slice(0, 10)}|${e.qtd}|${e.val}`;
   const a = grupo.get(k);
   if (!a) grupo.set(k, e);
-  else if (e.fecha < a.fecha || (e.fecha === a.fecha && +e.path.split('/')[2] < +a.path.split('/')[2])) grupo.set(k, e);
+  else if (doPortal(e) > doPortal(a) || (doPortal(e) === doPortal(a)
+    && (e.fecha < a.fecha || (e.fecha === a.fecha && +e.path.split('/')[2] < +a.path.split('/')[2])))) grupo.set(k, e);
 }
 // E o mesmo orgao com o mesmo numero de edital no mesmo dia, quando os dois
 // registros nao batem em quantidade e valor: o pregao 138/2026 de Bento
