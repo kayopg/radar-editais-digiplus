@@ -98,8 +98,11 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    manda entregar instalado ("entregues instalados e em perfeito funcionamento") ou diz que o
    preço inclui a instalação ("Inclui instalação padrão completa", 29/09/2026). **Montado conta
    como instalação** (usuário, 29/09/2026): "entregar o fogão montado", "entregues montados no
-   local", "a montagem ... correrão por conta da contratada" saem fora do RS e de SC; "medidas do
-   fogão montado", "diâmetro montado" e "kit de montagem" descrevem o produto e ficam. A frase
+   local", "a montagem ... correrão por conta da contratada" saem fora do RS e de SC —
+   também quando a cláusula é geral, no corpo do edital: "o transporte, a descarga, a
+   montagem, a instalação e os testes serão de responsabilidade da contratada" (Goioxim/PR,
+   confirmado pelo usuário em 01/10/2026). "Medidas do fogão montado", "diâmetro montado" e
+   "kit de montagem" descrevem o produto e ficam. A frase
    dentro do descritivo de um item vale só para aquele item, não para o edital inteiro.
    "Para instalação horizontal sobre portas", "instalação em parede ou teto" dizem **como** o
    aparelho é instalado, não que o fornecedor instala (usuário, 29/09/2026). E a instalação

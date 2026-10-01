@@ -167,7 +167,10 @@ const CLAUSULA_INSTALACAO = [
     'a contratada devera instalar'],
   [/dever[ãa]o? ser entregues? e instalad[oa]s?/, 'entregues e instalados'],
   [/entregues? instalad[oa]s? e em (?:perfeito )?funcionamento/, 'entregues instalados e funcionando'],
-  // e montado, que conta como instalacao (usuario, 29/09/2026)
+  // e montado, que conta como instalacao (usuario, 29/09/2026). A clausula geral
+  // tambem tira o edital: "4.5. o transporte, a descarga, a montagem, a instalacao
+  // e os testes serao de responsabilidade da contratada" (Goioxim/PR) — "pode
+  // remover, pois solicita a montagem" (usuario, 01/10/2026)
   [/montagem[^.;]{0,30}(?:ser[áa]|fica(?:r[áa])?|[ée])[^.;]{0,30}(?:por conta|de responsabilidade|a cargo|sob responsabilidade) d[ao]s? (?:contratad|licitant|fornecedor|empresa|vencedor)/,
     'a montagem e por conta da contratada'],
   [/dever[ãa]o? ser entregues? (?:e )?montad[oa]s?/, 'entregues montados'],
