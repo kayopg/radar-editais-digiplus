@@ -154,7 +154,7 @@ let partesCapas = [];
     // de dentro de zip vem com acento quebrado ("Preg?o", com um caractere de substituicao no lugar do a), e o publicador
     // recusa o arquivo inteiro por um caractere de substituicao.
     // ("paginas": 2 quando o quadro de abertura continua na folha seguinte)
-    .map(([k, v]) => [k, { pagina: v.pagina, via: v.via, ...(v.paginas ? { paginas: v.paginas } : {}), b64: v.b64 }, Math.round((v.b64 || '').length * 0.75)])
+    .map(([k, v]) => [k, { pagina: v.pagina, via: v.via, ...(v.paginas ? { paginas: v.paginas } : {}), ...(v.tira ? { tira: v.tira } : {}), b64: v.b64 }, Math.round((v.b64 || '').length * 0.75)])
     .sort((a, b) => a[2] - b[2]);
 
   const dentro = {}, resto = [];

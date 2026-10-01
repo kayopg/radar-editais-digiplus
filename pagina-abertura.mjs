@@ -23,9 +23,10 @@
 //   DEPURA=1 node pagina-abertura.mjs ...   -> mostra o topo das paginas de cada arquivo olhado
 import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
-import { textoDasPaginas, linhasDaPagina } from './paginas-uteis.mjs';
+import { textoDasPaginas, linhasDaPagina, fluxoDe } from './paginas-uteis.mjs';
 import { arquivosPublicados, fontesDe, PDF } from './resumo-pdf.mjs';
 import { abreZip } from './arquivo-oficial.mjs';
 import { pdfDeDocumento } from './pdf-do-documento.mjs';
@@ -253,6 +254,9 @@ function continuaNaSeguinte(paginas, i) {
 // pode quebrar em linhas coladas, a menos de 18 pontos). A primeira linha que
 // nao e nem uma coisa nem outra abre o corpo do edital, e a folha e cortada
 // logo abaixo da ultima resposta. Sem achar o fim, vai a folha inteira.
+// Em cima a tira comeca logo acima da primeira linha de texto, sem o cabecalho
+// da folha: ela vai no ALTO da primeira pagina do resumo, juntada a ela (o
+// usuario, 01/10/2026: "ao inves de cortar, pode juntar com a folha de baixo").
 const ROTULO_DA_LINHA = /^(?:VALOR\s+(?:TOTAL\s+)?(?:ESTIMADO|DA\s+CONTRATA)|DATA\s+DA\s+SESS|SESS[ÃA]O\s+P[ÚU]BLICA|CRIT[ÉE]RIO\s+DE\s+JULGAMENTO|MODO\s+DE\s+DISPUTA|TRATAMENTO\s+FAVORECIDO|MARGEM\s+DE\s+PREFER|OBJETO\b|CONTRATANTE|UASG\b)/i;
 function corteDoQuadro(linhas) {
   const ls = linhas.map(l => ({ y: l.y, t: String(l.t).replace(/\s+/g, ' ').trim() })).filter(l => l.t);
@@ -261,17 +265,29 @@ function corteDoQuadro(linhas) {
     if (ROTULO_DA_LINHA.test(l.t)) { viuRotulo = true; esperaResposta = true; ultima = l; continue; }
     if (!viuRotulo || esperaResposta) { esperaResposta = false; ultima = l; continue; }
     if (ultima && ultima.y - l.y < 18) { ultima = l; continue; }
-    return ultima ? Math.max(ultima.y - 12, l.y + 14) : null;
+    if (!ultima) return null;
+    return { baixo: Math.round(Math.max(ultima.y - 12, l.y + 14)), topo: Math.round(ls[0].y + 18) };
   }
   return null;
 }
-// A folha copiada fica mais baixa: o MediaBox (e o CropBox) comecam no corte.
-function encurta(pacote, id, y0) {
+// A tira: o MediaBox (e o CropBox) da folha copiada passam a ser so o pedaco,
+// e o conteudo vira um fluxo so, descompactado — o resumo desenha a tira como
+// Form XObject, que tem um fluxo de conteudo e nao uma lista deles.
+async function viraTira(pacote, id, le, i, corte) {
   const o = pacote.objetos.find(x => x.id === id);
   const d = o && o.valor && o.valor.__dict;
-  if (!d || !Array.isArray(d.MediaBox) || !(y0 > d.MediaBox[1] && y0 < d.MediaBox[3])) return false;
-  d.MediaBox = [d.MediaBox[0], y0, d.MediaBox[2], d.MediaBox[3]];
-  if (Array.isArray(d.CropBox)) d.CropBox = [d.CropBox[0], Math.max(d.CropBox[1], y0), d.CropBox[2], d.CropBox[3]];
+  const mb = d && d.MediaBox;
+  if (!Array.isArray(mb) || !(corte.baixo > mb[1] && corte.topo > corte.baixo + 20)) return false;
+  const topo = Math.min(corte.topo, mb[3]);
+  const c = le.pagina(i).dict.Contents;
+  const partes = [];
+  for (const x of (Array.isArray(c) ? c : [c])) if (x) partes.push(Buffer.from(await fluxoDe(le, x)));
+  if (!partes.some(p => p.length)) return false;
+  pacote.objetos.push({ id: id + '-conteudo', valor: { __fluxo: true, dict: LE.Dict({ Filter: LE.Nome('FlateDecode') }),
+    bruto: new Uint8Array(zlib.deflateSync(Buffer.concat(partes.flatMap(p => [p, Buffer.from('\n')])))) } });
+  d.Contents = LE.Ref(id + '-conteudo', 0);
+  d.MediaBox = [mb[0], corte.baixo, mb[2], topo];
+  if (Array.isArray(d.CropBox)) d.CropBox = [mb[0], corte.baixo, mb[2], topo];
   return true;
 }
 
@@ -525,21 +541,22 @@ await pool(alvos, 2, async (e) => {
     const { achado, le, folhas } = melhor;
 
     // PDF de carona: a(s) pagina(s) original(is) na frente, a branca do novo()
-    // atras. "paginas" diz quantas a pagina do navegador tira da frente.
+    // atras. "paginas" diz quantas a pagina do navegador tira da frente, e
+    // "tira" que a segunda e so o fim do quadro, para ir no alto do resumo.
     const carona = PDF.novo({ rodape: '' });
     const pacote = await LE.extraiPaginas(le, folhas === 2 ? [achado.pagina, achado.pagina + 1] : [achado.pagina]);
     let corte = null;
     if (folhas === 2) {
       try { corte = corteDoQuadro(await linhasDaPagina(le, achado.pagina + 1)); } catch { corte = null; }
-      if (corte && !encurta(pacote, 'P1', Math.round(corte))) corte = null;
+      if (corte && !(await viraTira(pacote, 'P1', le, achado.pagina + 1, corte))) corte = null;
     }
     carona.anexaExternas(pacote, true);
     const bytes = carona.bytes();
     saida[e[C.path]] = { pagina: achado.pagina + 1, campos: achado.campos, via: achado.via, arquivo: melhor.arquivo,
-                         ...(folhas === 2 ? { paginas: 2, ...(corte ? { corte: Math.round(corte) } : {}) } : {}), b64: Buffer.from(bytes).toString('base64') };
+                         ...(folhas === 2 ? { paginas: 2, ...(corte ? { tira: [corte.baixo, corte.topo] } : {}) } : {}), b64: Buffer.from(bytes).toString('base64') };
     bytesTotal += bytes.length;
     com++;
-    console.log(`  ${nome} · pagina ${achado.pagina + 1}${folhas === 2 ? ' e ' + (achado.pagina + 2) + (corte ? ' ate y=' + Math.round(corte) : ' inteira') + ' (o quadro continua)' : ''} · ${achado.via} · ${melhor.arquivo} · ${(bytes.length / 1024).toFixed(0)} KB`);
+    console.log(`  ${nome} · pagina ${achado.pagina + 1}${folhas === 2 ? ' e ' + (achado.pagina + 2) + (corte ? ` so de y=${corte.topo} a ${corte.baixo}` : ' inteira') + ' (o quadro continua)' : ''} · ${achado.via} · ${melhor.arquivo} · ${(bytes.length / 1024).toFixed(0)} KB`);
   } catch (err) {
     erros++;
     console.log(`  [erro] ${nome}: ${err.message}`);

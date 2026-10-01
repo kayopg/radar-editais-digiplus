@@ -370,6 +370,45 @@
         return api;
       },
 
+      // Desenha uma pagina copiada (RadarPDFLe.extraiPaginas) DENTRO da pagina
+      // atual, no tamanho original, com o alto dela no cursor. A pagina vira
+      // Form XObject: a caixa e o MediaBox dela (ja recortado na origem) e o
+      // conteudo e o mesmo fluxo, que tem de ser um so. Serve a tira com o fim
+      // do quadro de abertura que quebrou de folha, no alto da primeira pagina
+      // do resumo (pedido do usuario em 01/10/2026).
+      desenhaExterna: function (pacote, id) {
+        var LE = raiz.RadarPDFLe;
+        if (!pacote || !pacote.objetos || !LE) return api;
+        var porId = {};
+        for (var i = 0; i < pacote.objetos.length; i++) porId[pacote.objetos[i].id] = pacote.objetos[i];
+        var pg = porId[id];
+        if (!pg || !LE.ehDict(pg.valor)) return api;
+        var d = pg.valor.__dict, mb = d.MediaBox, ct = d.Contents;
+        if (!Array.isArray(mb) || !LE.ehRef(ct) || !porId[ct.num] || !porId[ct.num].valor.__fluxo) return api;
+        var ja = {};
+        for (var j = 0; j < externos.length; j++) ja[externos[j].id] = 1;
+        for (var k = 0; k < pacote.objetos.length; k++) {
+          var ob = pacote.objetos[k];
+          if (ob.id !== id && !ja[ob.id]) externos.push(ob);
+        }
+        var fluxo = porId[ct.num].valor, fd = {};
+        for (var ch in fluxo.dict.__dict) if (ch !== "Length") fd[ch] = fluxo.dict.__dict[ch];
+        fd.Type = LE.Nome("XObject");
+        fd.Subtype = LE.Nome("Form");
+        fd.BBox = mb;
+        if (d.Resources) fd.Resources = d.Resources;
+        var idForma = id + "-forma";
+        externos.push({ id: idForma, valor: { __fluxo: true, dict: LE.Dict(fd), bruto: fluxo.bruto } });
+        var alt = mb[3] - mb[1];
+        garante(alt);
+        if (!pag.formas) pag.formas = {};
+        var nome = "Fx" + (Object.keys(pag.formas).length + 1);
+        pag.formas[nome] = idForma;
+        pag.push("q 1 0 0 1 0 " + (y - mb[3]).toFixed(2) + " cm /" + nome + " Do Q");
+        y -= alt;
+        return api;
+      },
+
       novaPagina: function () { novaPagina(); return api; },
 
       // --------------------------------------------------------- tabela
@@ -471,9 +510,13 @@
         corpo[4] = "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>";
 
         for (var q = 0; q < meus; q++) {
+          var formas = paginas[q].formas, xobj = "";
+          if (formas) xobj = " /XObject << " + Object.keys(formas).map(function (nm) {
+            return "/" + nm + " " + mapa[formas[nm]] + " 0 R";
+          }).join(" ") + " >>";
           corpo[idPag[q]] =
             "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + A4.l + " " + A4.a + "] " +
-            "/Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents " + idCont[q] + " 0 R >>";
+            "/Resources << /Font << /F1 3 0 R /F2 4 0 R >>" + xobj + " >> /Contents " + idCont[q] + " 0 R >>";
           var fluxo = paginas[q].join("\n");
           corpo[idCont[q]] = "<< /Length " + bytesDe(fluxo).length + " >>\nstream\n" + fluxo + "\nendstream";
         }

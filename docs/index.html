@@ -1111,9 +1111,21 @@ async function abrePelaPaginaOriginal(doc, r){
     // documento inteiro, e a última chamada manda. Hoje esta é a única, porque
     // o ANEXAR_OFICIAL está desligado; ligando-o, a chamada dele (com antes
     // falso) jogaria esta folha para o fim do arquivo.
-    // Duas folhas quando o quadro de abertura continua na seguinte ("paginas":
-    // 2, do pagina-abertura.mjs): o pregão 411/2026 da UFPel quebra no
-    // "TRATAMENTO FAVORECIDO" e a resposta fica na página 2 (01/10/2026).
+    // Quando o quadro de abertura continua na folha seguinte ("paginas": 2, do
+    // pagina-abertura.mjs) — o pregão 411/2026 da UFPel quebra no "TRATAMENTO
+    // FAVORECIDO" e a resposta fica na página 2 —, o que faltou vem como uma
+    // TIRA ("tira": só o fim do quadro, sem o resto da página) desenhada no alto
+    // da primeira página do resumo, com um espaço antes do título: o usuário
+    // pediu juntar com a folha de baixo em vez de uma folha à parte
+    // (01/10/2026). Sem a tira recortada, vai a segunda folha inteira.
+    if((+a.paginas || 1) >= 2 && a.tira){
+      var pac = await RadarPDFLe.extraiPaginas(le, [0, 1]);
+      var capa = pac.paginas[0], tira = pac.paginas[1];
+      doc.anexaExternas({ objetos: pac.objetos.filter(function(o){ return o.id !== tira; }), paginas: [capa] }, true);
+      doc.desenhaExterna(pac, tira);
+      doc.espaco(16);
+      return;
+    }
     var folhas = [0];
     for(var k = 1; k < Math.min(+a.paginas || 1, 3); k++) folhas.push(k);
     doc.anexaExternas(await RadarPDFLe.extraiPaginas(le, folhas), true);
