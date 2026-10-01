@@ -1111,7 +1111,12 @@ async function abrePelaPaginaOriginal(doc, r){
     // documento inteiro, e a última chamada manda. Hoje esta é a única, porque
     // o ANEXAR_OFICIAL está desligado; ligando-o, a chamada dele (com antes
     // falso) jogaria esta folha para o fim do arquivo.
-    doc.anexaExternas(await RadarPDFLe.extraiPaginas(le, [0]), true);
+    // Duas folhas quando o quadro de abertura continua na seguinte ("paginas":
+    // 2, do pagina-abertura.mjs): o pregão 411/2026 da UFPel quebra no
+    // "TRATAMENTO FAVORECIDO" e a resposta fica na página 2 (01/10/2026).
+    var folhas = [0];
+    for(var k = 1; k < Math.min(+a.paginas || 1, 3); k++) folhas.push(k);
+    doc.anexaExternas(await RadarPDFLe.extraiPaginas(le, folhas), true);
   }catch(e){ /* sem a folha, o resumo sai como saía */ }
 }
 

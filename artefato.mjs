@@ -153,7 +153,8 @@ let partesCapas = [];
     // So o que o navegador usa. O nome do arquivo de origem fica de fora: nome
     // de dentro de zip vem com acento quebrado ("Preg?o", com um caractere de substituicao no lugar do a), e o publicador
     // recusa o arquivo inteiro por um caractere de substituicao.
-    .map(([k, v]) => [k, { pagina: v.pagina, via: v.via, b64: v.b64 }, Math.round((v.b64 || '').length * 0.75)])
+    // ("paginas": 2 quando o quadro de abertura continua na folha seguinte)
+    .map(([k, v]) => [k, { pagina: v.pagina, via: v.via, ...(v.paginas ? { paginas: v.paginas } : {}), b64: v.b64 }, Math.round((v.b64 || '').length * 0.75)])
     .sort((a, b) => a[2] - b[2]);
 
   const dentro = {}, resto = [];

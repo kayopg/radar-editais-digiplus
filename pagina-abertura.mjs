@@ -227,6 +227,24 @@ function casa(re, t) {
   return semEspaco.get(re).test(t.replace(/\s+/g, ''));
 }
 
+// O quadro que CONTINUA na folha seguinte. O do pregao 411/2026 da UFPel
+// (Pelotas/RS) — a mesma pagina que o usuario mandou de exemplo em 08/09 —
+// quebra em "TRATAMENTO FAVORECIDO ME/EPP/EQUIPARADAS", e a resposta ("SIM") e
+// a "MARGEM DE PREFERENCIA PARA ALGUM ITEM: NAO" ficam no alto da pagina 2. O
+// usuario pediu a capa inteira (01/10/2026): vao as duas folhas originais.
+// Continua quando o ALTO da seguinte traz um rotulo do quadro que a primeira
+// nao tem — no corpo do edital esses rotulos nao abrem pagina.
+const ROTULOS_DO_QUADRO = [
+  /VALOR\s+(?:TOTAL\s+)?ESTIMADO/, /SESS[ÃA]O\s+P[ÚU]BLICA/, /CRIT[ÉE]RIO\s+DE\s+JULGAMENTO/,
+  /MODO\s+DE\s+DISPUTA/, /TRATAMENTO\s+FAVORECIDO/, /MARGEM\s+DE\s+PREFER[ÊE]NCIA/
+];
+function continuaNaSeguinte(paginas, i) {
+  const prox = paginas[i + 1];
+  if (!prox) return false;
+  const topo = String(prox).replace(/\s+/g, ' ').trim().slice(0, 400);
+  return ROTULOS_DO_QUADRO.some(re => casa(re, topo) && !casa(re, paginas[i]));
+}
+
 function achaAbertura(paginas, alvo, alvoObjeto) {
   alvo = alvo || [];
   alvoObjeto = alvoObjeto || [];
@@ -465,7 +483,8 @@ await pool(alvos, 2, async (e) => {
         // continua servindo quando nao ha mais nada.
         const reserva = prioridadeCapa(p.nome, '') === 0 ? 10 : 0;
         const nota = FORCA[achado.via] - (ehPedaco(paginas) ? 3 : 0) - reserva;
-        if (!melhor || nota > melhor.nota) melhor = { achado, le, nota, arquivo: p.nome || c.titulo };
+        const folhas = achado.via === 'quadro' && continuaNaSeguinte(paginas, achado.pagina) ? 2 : 1;
+        if (!melhor || nota > melhor.nota) melhor = { achado, le, nota, arquivo: p.nome || c.titulo, folhas };
         // na ordem de prioridade, a primeira folha boa encerra a busca
         if (nota >= FORCA.imagem) break procura;
       }
@@ -473,17 +492,18 @@ await pool(alvos, 2, async (e) => {
     // (e com --so, a capa antiga sai: refazer e para corrigir, nao para manter)
     if (!abertos) { sem++; delete saida[e[C.path]]; console.log(`  ${nome} · sem PDF legivel`); return; }
     if (!melhor) { sem++; delete saida[e[C.path]]; console.log(`  ${nome} · sem folha de abertura`); return; }
-    const { achado, le } = melhor;
+    const { achado, le, folhas } = melhor;
 
-    // PDF de carona: a pagina original na frente, a branca do novo() atras.
+    // PDF de carona: a(s) pagina(s) original(is) na frente, a branca do novo()
+    // atras. "paginas" diz quantas a pagina do navegador tira da frente.
     const carona = PDF.novo({ rodape: '' });
-    carona.anexaExternas(await LE.extraiPaginas(le, [achado.pagina]), true);
+    carona.anexaExternas(await LE.extraiPaginas(le, folhas === 2 ? [achado.pagina, achado.pagina + 1] : [achado.pagina]), true);
     const bytes = carona.bytes();
     saida[e[C.path]] = { pagina: achado.pagina + 1, campos: achado.campos, via: achado.via, arquivo: melhor.arquivo,
-                         b64: Buffer.from(bytes).toString('base64') };
+                         ...(folhas === 2 ? { paginas: 2 } : {}), b64: Buffer.from(bytes).toString('base64') };
     bytesTotal += bytes.length;
     com++;
-    console.log(`  ${nome} · pagina ${achado.pagina + 1} · ${achado.via} · ${melhor.arquivo} · ${(bytes.length / 1024).toFixed(0)} KB`);
+    console.log(`  ${nome} · pagina ${achado.pagina + 1}${folhas === 2 ? ' e ' + (achado.pagina + 2) + ' (o quadro continua)' : ''} · ${achado.via} · ${melhor.arquivo} · ${(bytes.length / 1024).toFixed(0)} KB`);
   } catch (err) {
     erros++;
     console.log(`  [erro] ${nome}: ${err.message}`);
