@@ -25,7 +25,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
-import { textoDasPaginas } from './paginas-uteis.mjs';
+import { textoDasPaginas, linhasDaPagina } from './paginas-uteis.mjs';
 import { arquivosPublicados, fontesDe, PDF } from './resumo-pdf.mjs';
 import { abreZip } from './arquivo-oficial.mjs';
 import { pdfDeDocumento } from './pdf-do-documento.mjs';
@@ -243,6 +243,36 @@ function continuaNaSeguinte(paginas, i) {
   if (!prox) return false;
   const topo = String(prox).replace(/\s+/g, ' ').trim().slice(0, 400);
   return ROTULOS_DO_QUADRO.some(re => casa(re, topo) && !casa(re, paginas[i]));
+}
+
+// Da folha seguinte vai SO o que faltou do quadro, e nao a pagina inteira: o
+// usuario mostrou o "Torna-se publico..." e o "1. DO OBJETO" que vinham junto
+// e disse que eram desnecessarios (01/10/2026). As linhas da folha, de cima
+// para baixo: antes do primeiro rotulo vem o cabecalho e a resposta do ultimo
+// rotulo da folha anterior; depois, rotulo e resposta se alternam (a resposta
+// pode quebrar em linhas coladas, a menos de 18 pontos). A primeira linha que
+// nao e nem uma coisa nem outra abre o corpo do edital, e a folha e cortada
+// logo abaixo da ultima resposta. Sem achar o fim, vai a folha inteira.
+const ROTULO_DA_LINHA = /^(?:VALOR\s+(?:TOTAL\s+)?(?:ESTIMADO|DA\s+CONTRATA)|DATA\s+DA\s+SESS|SESS[ÃA]O\s+P[ÚU]BLICA|CRIT[ÉE]RIO\s+DE\s+JULGAMENTO|MODO\s+DE\s+DISPUTA|TRATAMENTO\s+FAVORECIDO|MARGEM\s+DE\s+PREFER|OBJETO\b|CONTRATANTE|UASG\b)/i;
+function corteDoQuadro(linhas) {
+  const ls = linhas.map(l => ({ y: l.y, t: String(l.t).replace(/\s+/g, ' ').trim() })).filter(l => l.t);
+  let viuRotulo = false, esperaResposta = false, ultima = null;
+  for (const l of ls) {
+    if (ROTULO_DA_LINHA.test(l.t)) { viuRotulo = true; esperaResposta = true; ultima = l; continue; }
+    if (!viuRotulo || esperaResposta) { esperaResposta = false; ultima = l; continue; }
+    if (ultima && ultima.y - l.y < 18) { ultima = l; continue; }
+    return ultima ? Math.max(ultima.y - 12, l.y + 14) : null;
+  }
+  return null;
+}
+// A folha copiada fica mais baixa: o MediaBox (e o CropBox) comecam no corte.
+function encurta(pacote, id, y0) {
+  const o = pacote.objetos.find(x => x.id === id);
+  const d = o && o.valor && o.valor.__dict;
+  if (!d || !Array.isArray(d.MediaBox) || !(y0 > d.MediaBox[1] && y0 < d.MediaBox[3])) return false;
+  d.MediaBox = [d.MediaBox[0], y0, d.MediaBox[2], d.MediaBox[3]];
+  if (Array.isArray(d.CropBox)) d.CropBox = [d.CropBox[0], Math.max(d.CropBox[1], y0), d.CropBox[2], d.CropBox[3]];
+  return true;
 }
 
 function achaAbertura(paginas, alvo, alvoObjeto) {
@@ -497,13 +527,19 @@ await pool(alvos, 2, async (e) => {
     // PDF de carona: a(s) pagina(s) original(is) na frente, a branca do novo()
     // atras. "paginas" diz quantas a pagina do navegador tira da frente.
     const carona = PDF.novo({ rodape: '' });
-    carona.anexaExternas(await LE.extraiPaginas(le, folhas === 2 ? [achado.pagina, achado.pagina + 1] : [achado.pagina]), true);
+    const pacote = await LE.extraiPaginas(le, folhas === 2 ? [achado.pagina, achado.pagina + 1] : [achado.pagina]);
+    let corte = null;
+    if (folhas === 2) {
+      try { corte = corteDoQuadro(await linhasDaPagina(le, achado.pagina + 1)); } catch { corte = null; }
+      if (corte && !encurta(pacote, 'P1', Math.round(corte))) corte = null;
+    }
+    carona.anexaExternas(pacote, true);
     const bytes = carona.bytes();
     saida[e[C.path]] = { pagina: achado.pagina + 1, campos: achado.campos, via: achado.via, arquivo: melhor.arquivo,
-                         ...(folhas === 2 ? { paginas: 2 } : {}), b64: Buffer.from(bytes).toString('base64') };
+                         ...(folhas === 2 ? { paginas: 2, ...(corte ? { corte: Math.round(corte) } : {}) } : {}), b64: Buffer.from(bytes).toString('base64') };
     bytesTotal += bytes.length;
     com++;
-    console.log(`  ${nome} · pagina ${achado.pagina + 1}${folhas === 2 ? ' e ' + (achado.pagina + 2) + ' (o quadro continua)' : ''} · ${achado.via} · ${melhor.arquivo} · ${(bytes.length / 1024).toFixed(0)} KB`);
+    console.log(`  ${nome} · pagina ${achado.pagina + 1}${folhas === 2 ? ' e ' + (achado.pagina + 2) + (corte ? ' ate y=' + Math.round(corte) : ' inteira') + ' (o quadro continua)' : ''} · ${achado.via} · ${melhor.arquivo} · ${(bytes.length / 1024).toFixed(0)} KB`);
   } catch (err) {
     erros++;
     console.log(`  [erro] ${nome}: ${err.message}`);
