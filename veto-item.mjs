@@ -35,6 +35,14 @@
 export const amassadeiraRapida = d => /amassadeira/.test(d) && /(?<!semi[- ])\brapida\b/.test(d)
   && !/lenta|semi[- ]?r?rapida/.test(d);
 
+// Mato Grosso so com ar-condicionado (usuario, 05/10/2026: primeiro "todos os
+// editais de MT, pode remover", e logo depois "Mato Grosso so cotamos editais de
+// Ar Condicionado"). Nas UFs desta lista fica so o item de ar-condicionado — o
+// split, o condicionador de ar —, e o edital sem ele sai. Climatizador,
+// ventilador e cortina de ar, que sao da mesma categoria, nao.
+export const UF_SO_AR_CONDICIONADO = new Set(['MT']);
+export const ehArCondicionado = d => /ar[- ]?condicionad|arcondicionad|condicionador(?:es)? de ar|\bsplit\b/.test(d);
+
 export const OBJ_CONDICIONAL = /caso seja aplicavel|quando aplicavel|se aplicavel|quando couber|(?:quando|se|caso) necessari/;
 // O climatizador evaporativo industrial DE PAREDE pede a abertura na alvenaria
 // ("ABERTURA MINIMA DE PAREDE (MM) A: 1390 X L: 2780", Assis Chateaubriand/PR,

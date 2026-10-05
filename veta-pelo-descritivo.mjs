@@ -20,7 +20,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida } from './veto-item.mjs';
+import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, UF_SO_AR_CONDICIONADO, ehArCondicionado } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 import { marcaCotas } from './cota.mjs';
 
@@ -122,6 +122,11 @@ const EXIGE_INSTALACAO = [
   /inclus[oa]s?:? (a )?instalacao/,
   /instalacao[^.;]{0,80}deve(ra)? estar inclu(sa|ida) no preco/,
   /instalacao e assistencia tecnica/,
+  // "...GARANTIA TOTAL DE NO MINIMO 12 MESES, INCLUINDO COMPRESSOR E PROTECAO
+  // ANTI-CORROSIVO, COM INSTALACAO" no fim da frase (Guiratinga/MT, edital 047,
+  // item 2, 05/10/2026). "Com instalacao em parede" e "compativel com
+  // instalacao" continuam, que ali a frase segue.
+  /(?<!(?:sem|nao) )\bcom (a )?instalacao\s*(?:[.;]|$)/,
   // "com mao de obra de instalacao e drenos" (Sertanopolis/PR, 21/09/2026)
   /(mao de obra|servicos?) de (instalacao|montagem)/,
   /instalacao (sera |fica |ficara )?(por conta|a cargo|sob responsabilidade|de responsabilidade) d[ao] (contratad|fornecedor|licitante|empresa)/,
@@ -303,6 +308,7 @@ for (const e of dados.editais) {
       || (!UF_INSTALA.has(e[C.uf]) && exigeInstalacao(d))
       || (instalaNoObjeto && instalavel(norm(it[3]), it[0]) && 'instalacao quando necessaria, e o aparelho se instala')
       || (it[0] === 'PR' && amassadeiraRapida(d + ' ' + norm(it[3])) && 'amassadeira rapida')
+      || (UF_SO_AR_CONDICIONADO.has(e[C.uf]) && !(it[0] === 'CL' && ehArCondicionado(norm(it[3]))) && e[C.uf] + ' so ar-condicionado')
       || (ABRE_FORA_DO_RADAR.exec(d) || [])[1]));
     if (!termo) return true;
     tirados++;

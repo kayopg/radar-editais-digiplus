@@ -4704,6 +4704,103 @@ for (const e of dados.editais) {
     // e a unidade, a quantidade e o numero da folha no meio da frase:
     // "características adicionais: UN 2 4 de 12 oscilante" (Leopoldina, item 9)
     if (q) t = t.replace(new RegExp('\\s(?:UN|UND|UNID|Unid|Und)\\.?\\s+0*' + q + '(?:\\s+\\d{1,3}\\s+de\\s+\\d{1,3})?\\s+(?=\\p{Ll})', 'gu'), ' ');
+    // Os restos da planilha e da folha que a conferencia de 05/10/2026 achou
+    // ("confira edital por edital, descritivo por descritivo"). No FIM do texto,
+    // cortando dali em diante:
+    {
+      const corta = re => { const m = re.exec(t); if (m && m.index > 20) t = t.slice(0, m.index); };
+      // o cabecalho da coluna de valor, em maiusculas: "...1ª linha. VALOR TOTAL
+      // MÁXIMO ESTIMADO (R$)" (Votuporanga/SP, item 213); "...2 PORTAS 01
+      // unidade VALOR ESTIMADO GLOBAL: R$ 5.609,33 (cinco mil..." (Avaré/SP, aviso 068)
+      corta(/\s(?:UNIDADE\s+)?VALOR\s+(?:TOTAL|ESTIMADO)\s+(?:\(R\$\)|M[ÁA]XIMO|GERAL|DA\s+LICITA|GLOBAL)/);
+      // a pesquisa de precos da IN 75/2021 depois do nome: "...Tipos B e C IN
+      // 75/2021 Art. 5 Incico i: 13890,000..." (Caarapó/MS, PE 35, itens 20 e 22)
+      corta(/\sIN\s+\d{1,3}\/\d{4}\s+Art\.?\s*\d/);
+      // e o timbre "P. M. CAARAPÓ-MS" com a planilha atras (o mesmo edital, item 82)
+      corta(/\sP\.\s?M\.\s+[A-ZÀ-Ú]{3,}/);
+      corta(/\s\(Valores expressos em Reais/);
+      // a cidade, a unidade e a quantidade da planilha, e os precos: "...3 UN.
+      // LAVRAS UNIDADE 39, -R$ 230,30-..." (Lavras/MG, edital 370, item 34)
+      corta(/\s[A-ZÀ-Ú][A-ZÀ-Ú ]{2,30}\s+UNIDADE\s+\d{1,5},?\s+-?R\$/);
+      // o preco, o numero, a quantidade, o codigo e o nome do item seguinte:
+      // "...para item R$ 597,95 30 1 420876 CORTINA DE AR – 150 CM" (Itaberaí/GO,
+      // edital 178, itens 30 e 31)
+      corta(/\sR\$\s*[\d.]+,\d{2}\s+\d{1,4}\s+\d{1,4}\s+\d{5,7}\s+[A-ZÀ-Ú]/);
+      // ou o preco unitario e o total com quatro casas, e o numero e o nome do
+      // seguinte: "ESPREMEDOR INDUSTRIAL 1043,2667 3129,8000 41 FACA 1000,00
+      // UNIDADE" (Guatapará/SP, item 40)
+      if (n) corta(new RegExp('\\s[\\d.]+,\\d{4}\\s+[\\d.]+,\\d{4}\\s+0*' + (n + 1) + '\\s+\\p{Lu}', 'u'));
+      // o quadro do aviso depois do objeto: "...ANEXO I. CONDIÇÃO DA PARTICIPAÇÃO
+      // EXCLUSIVA PARA EPPS..." (Caxias do Sul/RS, aviso 51)
+      corta(/\sCONDI[ÇC][ÃA]O DA PARTICIPA[ÇC][ÃA]O/);
+      // e o que sobra ali e o OBJETO ("APARELHO DE AR CONDICIONADO PARA O NOVO
+      // AUDITÓRIO ..., CONFORME TERMO DE REFERÊNCIA – ANEXO I."), sem medida
+      // nenhuma: nao e especificacao, e o rotulo do catalogo fica no lugar
+      if (t.length < 300 && !/\d/.test(t) && /conforme\s+(?:o\s+)?termo\s+de\s+refer[êe]ncia/i.test(t)) t = '';
+      // o nome do orgao, em maiusculas, depois do ponto final: "...12 MESES.
+      // HOSPITAL BENEFICENTE DR. CÉSAR SANTOS." (Passo Fundo/RS, edital 38)
+      t = t.replace(/(?<=\.)\s+(?:HOSPITAL|PREFEITURA|C[ÂA]MARA|SECRETARIA|FUNDA[ÇC][ÃA]O|INSTITUTO|UNIVERSIDADE|CONS[ÓO]RCIO)\s[A-ZÀ-Ú .]{3,80}$/, '');
+      // o codigo do catalogo e a unidade: "...acionamento da água. 307496
+      // unidade" (São Paulo/SP, edital 613, item 3)
+      t = t.replace(/\s+\d{5,7}\s+(?:unidade|UNIDADE|und|UND|un|UN)\.?$/, '');
+      // e a quantidade da linha que o corte deixou no fim ("...2 PORTAS 01 unidade")
+      if (q) t = t.replace(/\s+(\d{1,5})\s+(unidades?|und?|pe[çc]as?)\.?\s*$/i, (todo, k) => (+k === q ? '' : todo));
+      // No MEIO do texto, tirando so o pedaco: o cabecalho da tabela que a folha
+      // nova repete ("LOTE ITEM ESPECIFICAÇÃO CATMAT UNID DE MEDIDA QUANT TOTAL
+      // VALOR UNITÁRIO VALOR TOTAL", São Paulo/SP, edital 132, item 7), o timbre
+      // da Camara com o numero da folha ("CÂMARA MUNICIPAL DE PARANAVAÍ Estado do
+      // Paraná - 6 -", Paranavaí/PR, itens 1 a 4) e o rodape com o CEP e o lema
+      // da cidade (": 99440-000 20 Capital Gaúcha da Energia Elétrica", Salto do
+      // Jacuí/RS, itens 2, 3, 27 e 39)
+      t = t.replace(/\s*\bLOTE\s+ITEM\s+ESPECIFICA[ÇC][ÃA]O(?:\s+CATMAT)?\s+UNID(?:ADE)?\.?(?:\s+DE\s+MEDIDA)?\s+QUANT(?:IDADE)?\.?(?:\s+TOTAL)?\s+VALOR\s+UNIT[ÁA]RIO\s+VALOR\s+TOTAL\s*/g, ' ')
+        .replace(/\s*\b(?:C[ÂA]MARA|PREFEITURA)\s+MUNICIPAL\s+DE\s+[A-ZÀ-Ú][A-ZÀ-Ú ]{2,40}?\s+Estado\s+d[oe]\s+\S+(?:\s+\S+){0,3}?\s+-\s*\d{1,3}\s*-\s*/g, ' ')
+        .replace(/\s*(?:CEP\s*)?:?\s*\d{5}-\d{3}\s+\S{1,4}\s+Capital\s+Ga[úu]cha\s+da\s+Energia\s+El[ée]trica\s*/g, ' ');
+      // as colunas de quantidade e preco de quatro casas decimais: "AR
+      // CONDICIONADO 9000 BTUS SPLIT INVERTER 17,0000 UNIDA 2.220,3175
+      // 37.745,3975 CONDICIONADOR DE AR...", "PROTEÇÃO ANTI- UNIDADE 50,0000 5
+      // CORROSIVO" e o "UNIDADE" no fim (Guiratinga/MT, edital 047)
+      t = t.replace(/\s\d{1,3}(?:\.\d{3})*,0000\s+UNIDA(?:DE)?\s+[\d.]+,\d{4}\s+[\d.]+,\d{4}(?=\s)/g, '')
+        .replace(/\s+UNIDADE\s+\d{1,3}(?:\.\d{3})*,0000\s+\d{1,3}(?=\s)/g, '')
+        .replace(/(?<=\S)\s+UNIDA(?:DE)?$/, '')
+        // o cabecalho do relatorio de cotacao no meio da faixa de temperatura:
+        // "AJUSTÁVEL ENTRE -18 UNIDADE de Hospital Beneficente Dr. César Santos
+        // 22/09/2026 13:31 MARISA PICCININI BERTAO 5 Cotações de Preços ºC E 8°C"
+        // (Passo Fundo/RS, edital 38, item 4)
+        .replace(/\s*(?:UNIDADE\s+)?de\s+[^\d]{5,80}?\s+\d{2}\/\d{2}\/\d{4}\s+\d{2}:\d{2}\s+[A-ZÀ-Ú ]{3,60}?\s+\d{1,3}\s+Cota[çc][õo]es\s+de\s+Pre[çc]os\s*/g, '')
+        // o rodape do edital padrao da Prefeitura de Sao Paulo, com a linha de
+        // autenticidade embaralhada: "...seletores de autenticidade na deste
+        // documento. dchs`k L oqdfân ... Edital de Pregão – Bens e Serviços - Lei
+        // nº 14.133, de 2021 temperatura independentes" (edital 132, item 7)
+        .replace(/\s+autenticidade\s.{0,40}?deste\s+documento\..{0,220}?Lei\s+n[º°o]\s*14\.133,?\s+de\s+2021(?=\s)/g, '')
+        // a coluna "UNIDADE" impressa por cima da palavra: "8 FUNIDADEÇÕES" e
+        // "8 FUNÇÕES" (Carmo do Rio Verde/GO, item 60). So na frente do Ç, que
+        // nenhuma palavra tem — "COMUNIDADES" fica como esta.
+        .replace(/(?<=\p{Lu})UNIDADE(?=Ç)/gu, 'UN')
+        // e o carimbo lido no meio da linha do motor: "(1,5A) estado de Minas
+        // Gerais ERA a e) Lu LE 190W" (Ressaquinha/MG, item 7)
+        .replace(/\s+estado\s+de\s+Minas\s+Gerais\s+ERA\b[^\d]{0,20}?(?=\s\d)/g, '')
+        // a coluna "CÓD." que fecha a linha (Paranavaí/PR, itens 1 a 4)
+        .replace(/\s+C[ÓO]D\.?$/, '')
+        // e o aviso da foto, que nao vem junto: "...Com controle remoto
+        // Considerar foto como referências para item" (Itaberaí/GO, itens 30 e 31)
+        .replace(/\s*Considerar\s+(?:a\s+)?foto\s+como\s+refer[êe]ncias?(?:\s+para\s+(?:o\s+)?item)?\.?$/i, '');
+      // o numero do item anterior entre a unidade e o campo seguinte:
+      // "Potência: 62 W 29 Tensão: 220 V" no item 30 (Itaberaí/GO)
+      if (n > 1) t = t.replace(new RegExp('(?<=\\d\\s?(?:W|V|cm|CM|mm|kg|L|Hz))\\s+0*' + (n - 1) + '\\s+(?=\\p{Lu}\\p{Ll}+:)', 'u'), ' ');
+      // e o preco do proprio item entre duas medidas: "...59,00 cm x R$17.567,55
+      // 84,50 cm" (Planalto/RS, edital 39, item 1)
+      if (+it[4] > 0) {
+        const [ip, dp] = (+it[4]).toFixed(2).split('.');
+        const valor = ip.replace(/\B(?=(\d{3})+$)/g, '.').replace(/\./g, '\\.?') + ',' + dp;
+        t = t.replace(new RegExp('\\s*R\\$\\s?' + valor + '(?![\\d,])', 'g'), '');
+      }
+      // O nome duas vezes, que e o que o corte deixou: "VENTILADOR DE PAREDE- 60
+      // CM- 127V - VENTILADOR DE PAREDE- 60 CM- 127V" (Caarapó/MS, item 82)
+      t = t.replace(/^(.{20,}?)\s*[-–—.]?\s*\1\.?$/i, '$1')
+      // e o travessao que ligava ao "UNIDADE" que saiu: "...2 TIGELAS 220V -
+      // UNIDADE" (Carmo do Rio Verde/GO, itens 53 a 59)
+        .replace(/(?<=\S)\s+[-–]\s*$/, '');
+    }
     // O comeco do timbre da folha seguinte, com o nome do MUNICIPIO do edital, e
     // o numero e o codigo da linha seguinte antes dele: "...GARANTIA DE 12 MESES
     // 8 113588 DE PORTO BELO" (Porto Belo/SC, item 7, 05/10/2026) — o resto do
@@ -4767,7 +4864,12 @@ for (const e of dados.editais) {
     // O PNCP as vezes escreve o nome duas vezes: "VENTILADOR DE PAREDE DE 60
     // CM, TENSAO BIVOLT, COR PRETA. - VENTILADOR DE PAREDE DE 60 CM, TENSAO
     // BIVOLT, COR PRETA." (Iguaracu/PR). Fica so uma.
-    it[6] = limpaTextoPncp(it[1]).replace(/^(.{20,}?)\s*[-–—.]?\s*\1\.?$/i, '$1');
+    // E a clausula do aviso que o orgao colou na descricao do catalogo:
+    // "...inverter Havendo divergência entre o código CATMAT, conforme tabela
+    // ..., prevalecerá, sempre, a descrição do item constante do Aviso" (Caxias
+    // do Sul/RS, aviso 51, 05/10/2026)
+    it[6] = limpaTextoPncp(it[1]).replace(/\s*Havendo\s+diverg[êe]ncia\s+entre\s+o\s+c[óo]digo\s+CATMAT\b.*$/i, '')
+      .replace(/^(.{20,}?)\s*[-–—.]?\s*\1\.?$/i, '$1');
     it[9] = 1;
     doCatalogo++;
   }
