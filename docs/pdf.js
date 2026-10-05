@@ -253,6 +253,18 @@
     var externos = [];            // [{id, valor}] na ordem de emissao
     var paginasExternas = [];     // ids (dentro de `externos`) que sao pagina
     var externasAntes = false;
+    var carimbos = {};            // id da pagina copiada -> id da anotacao do selo
+
+    // O selo: caixa branca com borda e o texto em negrito, 20 pt. Devolve o
+    // tamanho e o fluxo de desenho, com a origem no canto inferior esquerdo da
+    // caixa e a fonte chamada /FS.
+    function seloDe(texto) {
+      var tam = 20, pad = 7;
+      var l = largura(texto, tam, true) + pad * 2, a = tam + pad * 2 - 2;
+      var f = "q 1 1 1 rg 0.55 0.1 0.1 RG 1.6 w 0.8 0.8 " + (l - 1.6).toFixed(2) + " " + (a - 1.6).toFixed(2) + " re B Q "
+            + "0.55 0.1 0.1 rg BT /FS " + tam + " Tf " + pad + " " + (pad + 1).toFixed(2) + " Td " + literal(texto) + " Tj ET";
+      return { l: l, a: a, fluxo: f };
+    }
 
     function novaPagina() {
       pag = [];
@@ -409,6 +421,48 @@
         return api;
       },
 
+      // Um selo no canto superior direito de uma pagina COPIADA (a capa do
+      // edital): a porcentagem da UF que o usuario pediu em 05/10/2026. Vai
+      // como anotacao com aparencia propria — a pagina original fica intacta,
+      // e o selo aparece em qualquer leitor e sai na impressao (F 4).
+      carimbaExterna: function (pacote, id, texto) {
+        var LE = raiz.RadarPDFLe;
+        if (!pacote || !pacote.objetos || !LE || !texto) return api;
+        var pg = null;
+        for (var i = 0; i < pacote.objetos.length; i++) if (pacote.objetos[i].id === id) pg = pacote.objetos[i];
+        if (!pg || !LE.ehDict(pg.valor) || !Array.isArray(pg.valor.__dict.MediaBox)) return api;
+        var mb = pg.valor.__dict.MediaBox;
+        if (Array.isArray(pg.valor.__dict.CropBox)) mb = pg.valor.__dict.CropBox;
+        var sel = seloDe(texto);
+        var x1 = mb[2] - 14, y1 = mb[3] - 14;
+        var rect = [x1 - sel.l, y1 - sel.a, x1, y1];
+        var idAp = id + "-selo-ap", idAnot = id + "-selo";
+        var fonte = LE.Dict({ Type: LE.Nome("Font"), Subtype: LE.Nome("Type1"),
+                              BaseFont: LE.Nome("Helvetica-Bold"), Encoding: LE.Nome("WinAnsiEncoding") });
+        var fluxo = sel.fluxo;
+        var bruto = new Uint8Array(fluxo.length);
+        for (var k = 0; k < fluxo.length; k++) bruto[k] = fluxo.charCodeAt(k) & 0xFF;
+        externos.push({ id: idAp, valor: { __fluxo: true, bruto: bruto,
+          dict: LE.Dict({ Type: LE.Nome("XObject"), Subtype: LE.Nome("Form"), BBox: [0, 0, sel.l, sel.a],
+                          Resources: LE.Dict({ Font: LE.Dict({ FS: fonte }) }) }) } });
+        externos.push({ id: idAnot, valor: LE.Dict({ Type: LE.Nome("Annot"), Subtype: LE.Nome("Stamp"), Rect: rect, F: 4,
+                          AP: LE.Dict({ N: LE.Ref(idAp, 0) }) }) });
+        carimbos[id] = idAnot;
+        return api;
+      },
+      // o mesmo selo numa pagina GERADA (o resumo do edital que ficou sem capa),
+      // sem mexer no cursor
+      carimbo: function (texto) {
+        if (!texto) return api;
+        var sel = seloDe(texto);
+        var x0 = A4.l - 14 - sel.l, y0 = A4.a - 14 - sel.a;
+        pag.push("q 1 0 0 1 " + x0.toFixed(2) + " " + y0.toFixed(2) + " cm " + sel.fluxo.replace(/\/FS /g, "/F2 ") + " Q");
+        // e o que vem depois comeca abaixo dele: o titulo tem o valor no canto
+        // direito, bem onde o selo fica
+        if (y > y0 - 6) y = y0 - 6;
+        return api;
+      },
+
       novaPagina: function () { novaPagina(); return api; },
 
       // --------------------------------------------------------- tabela
@@ -537,6 +591,7 @@
               var pd = {};
               for (var c2 in v.__dict) pd[c2] = v.__dict[c2];
               pd.Parent = LE.Ref(-1, 0);
+              if (carimbos[externos[x].id]) pd.Annots = [LE.Ref(carimbos[externos[x].id], 0)];
               v = LE.Dict(pd);
             }
             corpo[num] = LE.serializa(v, remapeia);

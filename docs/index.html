@@ -893,7 +893,7 @@ function descritivoDoItem(r, it){
 async function montaResumo(r){
   var doc = RadarPDF.novo({ rodape: "Radar de Editais Digiplus · varredura de " + varreduraTxt() });
   try { indexaDescritivos(r, await carregaDescritivos()); } catch(e){ DESC_ATUAL = null; }
-  await abrePelaPaginaOriginal(doc, r);
+  if(!(await abrePelaPaginaOriginal(doc, r))) doc.carimbo(PORCENTAGEM_UF[r[1]] || "");
 
   // --------------------------------------------------------- identificacao
   // O valor ja sai no titulo, entao nao se repete como campo abaixo. O caminho
@@ -1097,11 +1097,19 @@ function bytesDeBase64(b64){
   return u;
 }
 
+// A porcentagem de cada UF no canto superior da capa do resumo, a pedido do
+// usuário em 05/10/2026: RS, SC e PR 30%; SP, MG, MS e GO 35%; MT 40%.
+// (MT, que era 40%, saiu do radar no mesmo dia)
+var PORCENTAGEM_UF = { RS:"30%", SC:"30%", PR:"30%", SP:"35%", MG:"35%", MS:"35%", GO:"35%" };
+
+// Devolve true quando a capa entrou; sem ela, quem chama põe o selo da
+// porcentagem na primeira página do resumo.
 async function abrePelaPaginaOriginal(doc, r){
   var base;
-  try { base = await carregaAberturas(r[7]); } catch(e){ return; }
+  try { base = await carregaAberturas(r[7]); } catch(e){ return false; }
   var a = base.editais[r[7]];
-  if(!a || !a.b64) return;
+  if(!a || !a.b64) return false;
+  var selo = PORCENTAGEM_UF[r[1]] || "";
   try{
     var le = await RadarPDFLe.abre(bytesDeBase64(a.b64));
     // "antes" põe a folha na frente das páginas do resumo, sem tocar em nada
@@ -1121,15 +1129,19 @@ async function abrePelaPaginaOriginal(doc, r){
     if((+a.paginas || 1) >= 2 && a.tira){
       var pac = await RadarPDFLe.extraiPaginas(le, [0, 1]);
       var capa = pac.paginas[0], tira = pac.paginas[1];
+      doc.carimbaExterna(pac, capa, selo);
       doc.anexaExternas({ objetos: pac.objetos.filter(function(o){ return o.id !== tira; }), paginas: [capa] }, true);
       doc.desenhaExterna(pac, tira);
       doc.espaco(16);
-      return;
+      return true;
     }
     var folhas = [0];
     for(var k = 1; k < Math.min(+a.paginas || 1, 3); k++) folhas.push(k);
-    doc.anexaExternas(await RadarPDFLe.extraiPaginas(le, folhas), true);
-  }catch(e){ /* sem a folha, o resumo sai como saía */ }
+    var pac2 = await RadarPDFLe.extraiPaginas(le, folhas);
+    doc.carimbaExterna(pac2, pac2.paginas[0], selo);
+    doc.anexaExternas(pac2, true);
+    return true;
+  }catch(e){ /* sem a folha, o resumo sai como saía */ return false; }
 }
 
 var DESCRITIVOS = null;

@@ -7,7 +7,7 @@ sem manutenção.
 
 **Página:** https://kayopg.github.io/radar-editais-digiplus/
 
-Estados atendidos: PR, RS, SP, MG, GO, MT, MS, SC.
+Estados atendidos: PR, RS, SP, MG, GO, MS, SC (MT saiu em 05/10/2026: a Digiplus não cota mais lá).
 
 ## Como funciona
 

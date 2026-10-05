@@ -104,6 +104,9 @@ const vetoDoCatalogo = (d, cat) => ((termoMaisCedo(d) || { i: 0 }).i > TERMO_LON
 // Mariopolis/PR ("devidamente instalado, no local de entrega") e Santa Rita do
 // Passa Quatro/SP (BEC: "treinamento, instalacao e assistencia tecnica").
 const UF_INSTALA = new Set(['RS', 'SC']);
+// As UFs atendidas, do varredura.mjs: o edital de UF que saiu (MT, em 05/10/2026)
+// sai tambem da lista ja publicada, sem esperar a proxima varredura.
+const UFS_ATENDIDAS = new Set(JSON.parse((fonte.match(/const UFS = (\[[^\]]*\])/) || [, '[]'])[1]));
 const EXIGE_INSTALACAO = [
   /entregues? (devidamente )?instalad[oa]s?/,
   /devidamente instalad[oa]s?/,
@@ -219,6 +222,11 @@ for (const e of dados.editais) {
   { const l = limpaTextoPncp(e[C.objeto]); if (l !== e[C.objeto]) { e[C.objeto] = l; limpos++; } }
   const v = desc.editais[e[C.path]] || {};
   const nome = e[C.municipio] + '/' + e[C.uf] + ' ' + e[C.edital];
+  if (UFS_ATENDIDAS.size && !UFS_ATENDIDAS.has(e[C.uf])) {
+    editaisFora++;
+    console.log(`  sai o edital ${nome}: ${e[C.uf]} nao e mais atendida`);
+    continue;
+  }
   if (fora[e[C.path]] && e[C.path] !== '_leia') {
     editaisFora++;
     console.log(`  sai o edital ${nome}: ${fora[e[C.path]].motivo}`);
