@@ -83,9 +83,11 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    Presencial em RS e SC. Leilão, credenciamento e concorrência ficam de fora. É o que
    elimina na origem os leilões de veículo sucateado, que casavam com a busca por causa
    do "ar-condicionado" no descritivo.
-0b. **Tipo de órgão** — só município (prefeitura, câmara, fundo, autarquia — via o campo
-   `esfera_nome` do PNCP), mais instituições de ensino e de saúde de qualquer esfera.
-   Tribunais, agências, saneamento, militares e polícia ficam de fora.
+0b. **Tipo de órgão** — município (prefeitura, câmara, fundo, autarquia — via o campo
+   `esfera_nome` do PNCP), instituições de ensino e de saúde de qualquer esfera e, desde
+   05/10/2026, **tribunais** de qualquer esfera (TJ, TRF, TRT, TRE, tribunal de contas) e
+   **secretarias de estado**. Agências, saneamento, Ministério Público, militares e polícia
+   ficam de fora.
 1. **Só material** — descarta itens de serviço (`materialOuServico !== 'M'`) e o material que é
    serviço: descrição que **abre** com instalação, higienização, reposição, substituição,
    serviço, calibração ("Instalação Split", "Reposição de gás para Split"), ou que contrata

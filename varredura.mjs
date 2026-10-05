@@ -167,10 +167,22 @@ const VETO_ORGAO = ['comando do exercito','comando da marinha','comando da aeron
   'exercito brasileiro','ministerio da defesa','policia militar','policia civil',
   'policia rodoviaria','corpo de bombeiros','batalhao','quartel','hospital militar'];
 
+// Tribunais de qualquer esfera e secretarias de estado entraram em 05/10/2026, a
+// pedido do usuario ("pode adicionar secretarias de estado e tribunais"). No PNCP
+// o tribunal vem como "TRIBUNAL DE JUSTICA DO ESTADO DO RIO G.DO SUL" (orgao "RIO
+// GRANDE DO SUL PODER JUDICIARIO") ou "TRIBUNAL REGIONAL FEDERAL DA 4 REGIAO", e a
+// secretaria com esfera Estadual e "SECRETARIA" no nome do orgao ou da unidade.
+// A secretaria de seguranca entra, mas as policias dela continuam no VETO_ORGAO.
+const TRIBUNAL = ['tribunal','poder judiciario','justica federal','justica do trabalho',
+  'justica eleitoral','justica militar'];
+const ESFERA_ESTADUAL = /estadual|distrital/;
+
 function orgaoOk(o) {
   const txt = norm((o.orgao_nome || '') + ' ' + (o.unidade_nome || ''));
   if (VETO_ORGAO.some(v => txt.includes(v))) return false;
   if (norm(o.esfera_nome) === 'municipal') return true;            // prefeitura, camara, autarquia
+  if (TRIBUNAL.some(v => txt.includes(v))) return true;
+  if (ESFERA_ESTADUAL.test(norm(o.esfera_nome)) && txt.includes('secretaria')) return true;
   return ENSINO.some(v => txt.includes(v)) || SAUDE.some(v => txt.includes(v));
 }
 
