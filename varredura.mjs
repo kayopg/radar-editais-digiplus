@@ -52,7 +52,9 @@ const CAT = [
   ["CC",["fogao","forno","microondas","micro-ondas","micro ondas","cooktop","fritadeira","salamandra","char broiler","charbroiler","caldeirao","panela eletrica","churrasqueira","buffet termico","banho maria","banho-maria","estufa para salgados"]],
   // PR e EP viraram uma so em 23/09/2026, a pedido do usuario: na pagina as
   // duas eram "Para preparar" e "Para o dia a dia", e ele preferiu um rotulo
-  // unico, "Eletrodomesticos". Masseira e amassadeira sairam na mesma conversa.
+  // unico, "Eletrodomesticos". Masseira e amassadeira sairam na mesma conversa, e
+  // voltaram em 05/10/2026: "amassadeira industrial pode deixar tambem, e um
+  // produto que cotamos" (masseira e o outro nome da mesma maquina).
   // O aspirador da Digiplus e o de po E AGUA, e o PNCP escreve de varios jeitos:
   // "aspirador de po e agua", "aspirador po/liquido", "aspirador de po/agua".
   // So "aspirador de po" nao pega as duas ultimas, que nao tem o "de".
@@ -61,7 +63,7 @@ const CAT = [
   // "processador de alimentos" por causa do "industrial" no meio; o produto so
   // era achado depois, em "fatiador", e o "disco" do acessorio incluso — que
   // veta quando vem antes do produto — tirava o item.
-  ["PR",["liquidificador","batedeira","processador de alimentos","processador alimentos","processador industrial","mini processador","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador",
+  ["PR",["liquidificador","batedeira","amassadeira","masseira","processador de alimentos","processador alimentos","processador industrial","mini processador","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador",
     // 18/09/2026: nomes que o PNCP usa e a tabela nao tinha. Mixer so com
     // complemento de cozinha: "mixer" solto e tambem a mesa de som.
     // "EXTRATOR SUCO; MATERIAL: ACO INOX" (Minacu/GO, item 29): o catalogo sem o "de"
@@ -502,11 +504,11 @@ const VETO_ITEM = ["evaporador de agua","mangueira","ventilador mecanic","ventil
 // enceradeira/lustradeira de piso nao e cotada (decisao do usuario em
 // 23/09/2026). A camara fria, perguntada junto, FICA.
 "enceradeira","lustradeira",
-// e, na mesma conversa: masseira/amassadeira de padaria; aquecimento de agua
-// (aquecedor de agua, boiler, aquecedor solar, aquecedor de passagem — o
-// aquecedor de AMBIENTE continua); e o gerador de motor a combustao, que o
-// PNCP chama de grupo gerador ou motogerador. O gerador portatil fica.
-"masseira","amassadeira",
+// e, na mesma conversa: aquecimento de agua (aquecedor de agua, boiler,
+// aquecedor solar, aquecedor de passagem — o aquecedor de AMBIENTE continua);
+// e o gerador de motor a combustao, que o PNCP chama de grupo gerador ou
+// motogerador. O gerador portatil fica. A masseira/amassadeira de padaria
+// saiu junto e voltou em 05/10/2026 (ver CAT, PR).
 "aquecedor de agua","aquecedor d agua","boiler","aquecedor solar","aquecedor de passagem",
 "grupo gerador","motogerador","moto gerador","gerador a diesel",
 // e, em 24/09/2026, o gerador portatil tambem: a categoria GE saiu inteira.

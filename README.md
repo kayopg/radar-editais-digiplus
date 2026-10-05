@@ -132,8 +132,7 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    café, enceradeira e lustradeira de piso, coifa, exaustor e depurador (também quando o
    catálogo chama o exaustor de "Ventilador Axial" e só o descritivo do edital diz o que ele
    é, 29/09/2026), aquecimento de água
-   (aquecedor de água, boiler, aquecedor solar, aquecedor de passagem), masseira e
-   amassadeira de padaria, gerador de qualquer tipo, **lavadora de alta pressão** (lava-jato,
+   (aquecedor de água, boiler, aquecedor solar, aquecedor de passagem), gerador de qualquer tipo, **lavadora de alta pressão** (lava-jato,
    28/09/2026), e **balcão** — térmico, refrigerado e
    de conservação (24/09/2026). Nessa mesma conversa o usuário mandou **manter o buffet
    térmico**, que é o mesmo móvel com outro nome, então ali o corte é pelo nome e não pelo
