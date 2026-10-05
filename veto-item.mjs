@@ -28,6 +28,13 @@
 // e no veta-pelo-descritivo.mjs. Fora do RS e de SC sai so o que precisa ser
 // instalado; o resto do edital fica.
 // "INCLUINDO MONTAGEM E INSTALACAO, SE NECESSARIAS" (Sao Joao d'Alianca/GO, 29/09/2026)
+// A amassadeira que a Digiplus cota e a industrial LENTA ou SEMI-RAPIDA
+// (usuario, 05/10/2026). Sai a que se diz rapida sem falar em lenta nem em
+// semi-rapida; "lenta/semirrapida" (Lajeado/RS) fica — o "semirrapida" junto
+// nem tem "rapida" como palavra.
+export const amassadeiraRapida = d => /amassadeira/.test(d) && /(?<!semi[- ])\brapida\b/.test(d)
+  && !/lenta|semi[- ]?r?rapida/.test(d);
+
 export const OBJ_CONDICIONAL = /caso seja aplicavel|quando aplicavel|se aplicavel|quando couber|(?:quando|se|caso) necessari/;
 // O climatizador evaporativo industrial DE PAREDE pede a abertura na alvenaria
 // ("ABERTURA MINIMA DE PAREDE (MM) A: 1390 X L: 2780", Assis Chateaubriand/PR,

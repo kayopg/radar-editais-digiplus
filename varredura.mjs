@@ -11,7 +11,7 @@ import { analisaExigencias } from './exigencias.mjs';
 import { devedorDe } from './devedores.mjs';
 import { linkDoPortal, ehComprasGov, montaLinkComprasGov } from './participar.mjs';
 import { portalOk, plataformaDoEdital } from './plataforma.mjs';
-import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel } from './veto-item.mjs';
+import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 
 // fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
@@ -54,7 +54,9 @@ const CAT = [
   // duas eram "Para preparar" e "Para o dia a dia", e ele preferiu um rotulo
   // unico, "Eletrodomesticos". Masseira e amassadeira sairam na mesma conversa, e
   // voltaram em 05/10/2026: "amassadeira industrial pode deixar tambem, e um
-  // produto que cotamos" (masseira e o outro nome da mesma maquina).
+  // produto que cotamos". A masseira nao ("masseira nao cotamos, apenas
+  // amassadeira industrial lenta/semi rapida", no mesmo dia): fica no VETO_ITEM,
+  // e a amassadeira rapida sai pelo amassadeiraRapida do veto-item.mjs.
   // O aspirador da Digiplus e o de po E AGUA, e o PNCP escreve de varios jeitos:
   // "aspirador de po e agua", "aspirador po/liquido", "aspirador de po/agua".
   // So "aspirador de po" nao pega as duas ultimas, que nao tem o "de".
@@ -63,7 +65,7 @@ const CAT = [
   // "processador de alimentos" por causa do "industrial" no meio; o produto so
   // era achado depois, em "fatiador", e o "disco" do acessorio incluso — que
   // veta quando vem antes do produto — tirava o item.
-  ["PR",["liquidificador","batedeira","amassadeira","masseira","processador de alimentos","processador alimentos","processador industrial","mini processador","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador",
+  ["PR",["liquidificador","batedeira","amassadeira","processador de alimentos","processador alimentos","processador industrial","mini processador","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador",
     // 18/09/2026: nomes que o PNCP usa e a tabela nao tinha. Mixer so com
     // complemento de cozinha: "mixer" solto e tambem a mesa de som.
     // "EXTRATOR SUCO; MATERIAL: ACO INOX" (Minacu/GO, item 29): o catalogo sem o "de"
@@ -343,7 +345,7 @@ const vetoDoObjeto = txt => {
 };
 
 // 5.3 — veto por item (lista viva, construída de falsos positivos reais)
-const VETO_ITEM = ["evaporador de agua","mangueira","ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","peca/acessorio","peca / acessorio","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
+const VETO_ITEM = ["evaporador de agua","mangueira","masseira","ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","peca/acessorio","peca / acessorio","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
 // acrescentados em 30/08/2026
 "torneira de parede","torneira para pia","tubo de ferro","tubo de cobre","tubo cobre","pecas /","pecas/","para pedreiro","suporte para televis","suporte de televis","suporte de videocassete","embalag","espaco destinado","onibus","caminhao","impressao 3d","sem funcionamento","quarto de hotel","diaria","estadia","hospedagem","locacao de","prestacao de","autoclave","concentrador de","tampao","projetor","resistencia aquecedor","luva termica","frigideira","prato fundo","alicate","removedor de","coador pano","ralador/fatiador","carro balde","chave controle","elemento filtrante","filtro purificacao","liner","projeto executivo","fantasia","formula infantil","nutricao oral","nutricao geral","placa aquecedora","boia para","controle universal","controle remoto universal",
 // acrescentados em 03/09/2026: EPI casando com "purificador de ar". Montes
@@ -508,7 +510,7 @@ const VETO_ITEM = ["evaporador de agua","mangueira","ventilador mecanic","ventil
 // aquecedor solar, aquecedor de passagem — o aquecedor de AMBIENTE continua);
 // e o gerador de motor a combustao, que o PNCP chama de grupo gerador ou
 // motogerador. O gerador portatil fica. A masseira/amassadeira de padaria
-// saiu junto e voltou em 05/10/2026 (ver CAT, PR).
+// saiu junto; a amassadeira voltou em 05/10/2026 (ver CAT, PR), a masseira nao.
 "aquecedor de agua","aquecedor d agua","boiler","aquecedor solar","aquecedor de passagem",
 "grupo gerador","motogerador","moto gerador","gerador a diesel",
 // e, em 24/09/2026, o gerador portatil tambem: a categoria GE saiu inteira.
@@ -581,7 +583,7 @@ const VETO_ITEM = ["evaporador de agua","mangueira","ventilador mecanic","ventil
 // e a "MANGUEIRA PARA DRENO DE AR CONDICIONADO" (Corumba/MS, item 100, 01/10/2026):
 // a mangueira na frente e o acessorio; depois do aparelho ("bicos e mangueiras"
 // do aspirador) ela fica
-const VETO_SO_NA_FRENTE = ["evaporador de agua","mangueira","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
+const VETO_SO_NA_FRENTE = ["evaporador de agua","mangueira","masseira","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
 "embalagem","embalag","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po",
 "refil","filtro refil","unidade filtrante","elemento filtrante","filtro purificacao","disco abrasivo","manta abrasiva",
 "cooler","gabinete","nobreak","no-break","conector","gas refrigerante","gas refrigeracao","pecas e acessorios","pecas /","pecas/",
@@ -924,6 +926,7 @@ for (const o of cands) {
     if (temVeto(d, cat)) continue;
     if (cat === 'RF' && VETO_RF_CIENT.some(v => d.includes(v))) { vCient++; continue; }
     if (cat === 'OT' && VETO_OT_HALOGENO.some(v => d.includes(v))) continue;
+    if (cat === 'PR' && amassadeiraRapida(d)) continue;
     if (!itemVivo(it.sit)) { vCancel++; continue; }
     const v = +it.v || 0;
     if (v > 0 && v < PISO_ITEM && !SEM_PISO.some(p => d.includes(p)) && !salvoPeloVolume(v, +it.q || 0)) continue;
