@@ -648,6 +648,10 @@ const FIM_DE_LINHA = [
   /\sFonte:\s*[\w.-]+\.docx?\b/i,
   /\sTOTAL(?:\s+[A-ZÀ-Ú]{2,}){0,3}\s*\.{4,}/,
   /\sPela\s+presente,?\s+declar/i,
+  // A clausula numerada do edital depois do ultimo item da tabela: "...
+  // PROFUNDIDADE 58CM - 8.1- A empresa fornecedora devera apresentar..." (Porto
+  // Belo/SC, item 121, 05/10/2026)
+  /\s\d{1,2}\.\d{1,2}(?:\.\d{1,2})?\s?-\s+(?:A|O|As|Os)\s+[a-zà-ú]/,
   // A unidade partida ("Un d") com as quantidades por secretaria e o preco:
   // "...do fabricante. Un d 02 05 07 R$2.761,00 R$19.32 7,00 (34) 3423-0100"
   // (Comendador Gomes/MG, 30/09/2026)
@@ -815,6 +819,15 @@ const FIM_DE_LINHA = [
 // cabecalho, em duas versoes no mesmo edital ("Modelo de Edital", "Modelo de
 // Termo de Referencia"), e cai no meio da celula na virada: Governador
 // Valadares/MG, Vicosa/MG, Botucatu/SP, Montes Claros/MG.
+// O timbre da prefeitura que abre cada folha, do estado ate o telefone, caindo
+// no meio da linha da tabela: "...ACESSORIOS: JARRA, TAMPA, PENEIRA, COPO;
+// ESTADO DE SANTA CATARINA MUNICIPIO DE PORTO BELO SECRETARIA DA ADMINISTRACAO
+// COMISSAO PERMANENTE DE LICITACOES “Porto Belo Capital Catarinense dos
+// Transatlanticos” Centro Administrativo ... – Fone/Fax: 0**47 – 3369-4111
+// COMPRIMENTO DO FIO 1M; BIVOLT..." (Porto Belo/SC, 05/10/2026). Sai o bloco, e
+// as duas pontas da linha se emendam — cortar ali perdia o resto do item.
+const CABECALHO_SECRETARIA = /\s(?:ESTADO\s+D[EO]\s+(?:[A-ZÀ-Ú]+\s+){1,3})?(?:(?:MUNIC[ÍI]PIO|PREFEITURA(?:\s+MUNICIPAL)?)\s+)?(?:DE\s+(?:[A-ZÀ-Ú]+\s+){1,4})?SECRETARIA\s+(?:MUNICIPAL\s+)?D[AE]\s+ADMINISTRA[ÇC][ÃA]O\b[\s\S]{0,400}?Fone(?:\/Fax)?:\s*[\d*()\s]{2,12}[–-]?\s*\d{4}-?\d{4}/g;
+
 const CABECALHO_AGU = /\s*(?:UASG\s+\d{5,6}\s+)?C[\u00e2a]mara Nacional de Modelos de Licita[\u00e7c][\u00f5o]es e Contratos da Consultoria-Geral da Uni[\u00e3a]o\s+Modelo de[\s\S]{0,200}?Identidade visual pela Secretaria de Gest[\u00e3a]o e Inova[\u00e7c][\u00e3a]o(?:\s+Atualiza[\u00e7c][\u00e3a]o:\s*[A-Z]{3}\/\d{4}\.?)?(?:\s+\d{1,3}\s+de\s+\d{1,3})?/gi;
 
 // O carimbo de assinatura e o cabecalho que o HU/USP (Sao Paulo/SP) repetem em
@@ -3592,6 +3605,39 @@ function linhaPelaAbertura(plano, it, timbres) {
   return melhor;
 }
 
+// E a tabela que poe a DESCRICAO DEPOIS DO PRECO: "14 130802 5,00 UN 246,50
+// 1.232,50 LIQUIDIFICADOR - CARACTERISTICA: COM 12 VELOCIDADES... 15 115786
+// 5,00 UN 549,21 2.746,05 LIQUIDIFICADOR INDUSTRIAL..." (Porto Belo/SC,
+// 05/10/2026) — numero, codigo, quantidade, unidade, preco unitario e total, e
+// so entao o nome. O item 14 saia com o texto da bacia de 14 litros e o 20 com
+// o fim do item 19 na frente. A linha abre no numero com a quantidade e o
+// preco do PNCP e vai ate a abertura da seguinte, do mesmo jeito.
+const precoBR = v => {
+  const [i, d] = (+v).toFixed(2).split('.');
+  return i.replace(/\B(?=(\d{3})+(?!\d))/g, '\\.?') + ',' + d;
+};
+function linhaDepoisDoPreco(plano, it, timbres) {
+  const n = +it[0], q = Math.round(+it[2] || 0), p = +it[4] || 0;
+  if (!n || !q || !p) return null;
+  const abre = new RegExp('(?:^|\\s)0*' + n + '\\s+\\d{4,9}\\s+0*' + q + '(?:,0+)?\\s+' + UNID_COL
+    + '\\.?\\s+(?:R\\$\\s*)?' + precoBR(p) + '\\s+(?:R\\$\\s*)?[\\d.]+,\\d{2}\\s+(?=\\p{Lu})', 'giu');
+  const prox = new RegExp('\\s\\d{1,4}\\s+\\d{4,9}\\s+[\\d.]+(?:,\\d+)?\\s+' + UNID_COL
+    + '\\.?\\s+(?:R\\$\\s*)?[\\d.]+,\\d{2,4}\\s+(?:R\\$\\s*)?[\\d.]+,\\d{2}\\s+(?=\\p{Lu})', 'iu');
+  let melhor = null;
+  for (const ma of plano.matchAll(abre)) {
+    // sem o timbre da folha, que interrompe a linha seguinte entre o codigo e a
+    // quantidade e esconderia o fim desta (item 7 de Porto Belo/SC)
+    const resto = plano.slice(ma.index + ma[0].length, ma.index + ma[0].length + 6000).replace(CABECALHO_SECRETARIA, ' ');
+    const mp = prox.exec(resto);
+    const linha = mp ? resto.slice(0, mp.index) : resto.slice(0, 2500);
+    const t = cortaNaProximaLinha(limpaCelula(tiraTimbre(linha, timbres), timbres)).replace(/\s{2,}/g, ' ').trim();
+    if (t.length < 30 || comecaNoMeio(t) || AINDA_SUJO.test(t) || LIXO_DE_LINHA.test(t)) continue;
+    if (termoDaCategoria(normIgual(t).slice(0, 120)) === -1 && !falaDoMesmoProduto(it[1], t)) continue;
+    if (!melhor || t.length > melhor.length) melhor = t;
+  }
+  return melhor;
+}
+
 // A numeracao da tabela e a do PNCP quando a maioria das linhas fala do produto
 // do rotulo com o mesmo numero — as que tem rotulo para julgar.
 function tabelaBate(tabela, itens) {
@@ -3719,7 +3765,7 @@ for (const e of dados.editais) {
     for (const it of v.itens) {
       if (!doRadar.has(String(it[0]))) continue;
       const t = linhaEntreNumeroEPreco(textoPlano, it, timbres) || linhaEntreNumeroEUnidade(textoPlano, it, timbres)
-        || linhaPelaAbertura(textoPlano, it, timbres);
+        || linhaPelaAbertura(textoPlano, it, timbres) || linhaDepoisDoPreco(textoPlano, it, timbres);
       if (process.env.DEPURA_ITEM === e[C.path] + '#' + it[0]) console.error('DEPURA atual:', it[6], '\nDEPURA linha:', t, '\nDEPURA termo:', termoDaCategoria(normIgual(it[6]).slice(0, 300)), 'fala:', falaDoMesmoProduto(it[1], it[6]), 'palavras:', palavrasDoItem(it[1]));
       if (!t) continue;
       // O rotulo do PNCP que ja traz a linha INTEIRA ganha dela quando a tabela
@@ -3736,6 +3782,13 @@ for (const e of dados.editais) {
       if (termoDaCategoria(normIgual(it[6]).slice(0, 300)) === -1 && termoDaCategoria(normIgual(t).slice(0, 120)) !== -1) { linhasPeloPreco++; it[6] = t; continue; }
       const a = so(it[6]), nv = so(t);
       if (nv.length > a.length * 1.1 && nv.includes(a.slice(0, 60)) && nv.includes(a.slice(-40))) { linhasCompletadas++; it[6] = t; continue; }
+      // e no lugar do atual que E a linha, mas com o fim do item anterior
+      // grudado na frente: "GARANTIA MINIMA DE 12 MESES, DIMENSOES ... 20 115791
+      // GRILL - COM REGULADOR DE TEMPERATURAS..." (Porto Belo/SC, item 20)
+      {
+        const k0 = nv.length >= 60 ? a.indexOf(nv.slice(0, 60)) : -1;
+        if (k0 > 0 && Math.abs((a.length - k0) - nv.length) <= nv.length * 0.15) { linhasCompletadas++; it[6] = t; continue; }
+      }
       // e no lugar do que e a linha SEGUIDA das colunas e do que vem depois da
       // tabela: "...protetor térmico Unidade 27 1) Preço Total da Proposta R$
       // (por extenso) 2) Prazo de" (Conceicao das Alagoas/MG, item 56), que a
@@ -4020,6 +4073,8 @@ for (const e of dados.editais) {
       // 3451-8021 ou 8023 – licitacoes.compras@sapucaiadosul.rs.gov.br quente e
       // frio..." (Sapucaia do Sul/RS, itens 8 e 12, 01/10/2026)
       .replace(/(?:\s+\d{1,3})?(?:\s+\/?[\w-]{8,})?\s*\[Digite aqui\][^@]{0,300}@[\w.-]+\.(?:gov|com|org)(?:\.br)?\b\s*/g, ' ')
+      // e o timbre da secretaria, do estado ao telefone (Porto Belo/SC)
+      .replace(CABECALHO_SECRETARIA, ' ')
       .trim();
     it[6] = tiraCabecalhoCifrado(it[6]);
     // O objeto da secao seguinte emendado no fim: "...Tensão: Bivolt Aquisição de
@@ -4598,6 +4653,12 @@ for (const e of dados.editais) {
       // ou so o numero dele, depois de outro numero: "...Consumo kWh/dia
       // (60Hz):4,7 53" (Rialma/GO, item 52)
       if (n + 1 >= 10) t = t.replace(new RegExp('(?<=[\\d)])\\s+0*' + (n + 1) + '\\s*$'), '');
+      // ou depois do prazo da garantia, que fecha a linha: "...GARANTIA DE 12
+      // MESES 8" (Porto Belo/SC, item 7, 05/10/2026) — ali nao e medida
+      t = t.replace(new RegExp('(?<=\\b(?:MESES|meses|Meses|ANOS?|anos?|Anos?|DIAS|dias)\\.?)\\s+0*' + (n + 1) + '\\s*$'), '');
+      // e o travessao que ligava a linha ao timbre que saiu: "...PROFUNDIDADE
+      // 58CM -" (Porto Belo/SC, item 121)
+      t = t.replace(/(?<=\S)\s+[-–]\s*$/, '');
       // e o numero e a quantidade DESTE item caidos no meio: "...degelo
       // automático natural 52 06 Prateleiras: 4 níveis" (Rialma/GO, item 52)
       if (q) t = t.replace(new RegExp('\\s0*' + n + '\\s+0*' + q + '\\s+(?=\\p{Lu})', 'u'), ' ');
@@ -4643,6 +4704,20 @@ for (const e of dados.editais) {
     // e a unidade, a quantidade e o numero da folha no meio da frase:
     // "características adicionais: UN 2 4 de 12 oscilante" (Leopoldina, item 9)
     if (q) t = t.replace(new RegExp('\\s(?:UN|UND|UNID|Unid|Und)\\.?\\s+0*' + q + '(?:\\s+\\d{1,3}\\s+de\\s+\\d{1,3})?\\s+(?=\\p{Ll})', 'gu'), ' ');
+    // O comeco do timbre da folha seguinte, com o nome do MUNICIPIO do edital, e
+    // o numero e o codigo da linha seguinte antes dele: "...GARANTIA DE 12 MESES
+    // 8 113588 DE PORTO BELO" (Porto Belo/SC, item 7, 05/10/2026) — o resto do
+    // timbre ja tinha saido. So com o nome do proprio municipio, para nao cortar
+    // um "DE ALTA RESISTENCIA" de especificacao.
+    {
+      const mun = normIgual(e[C.municipio]).replace(/[^a-z ]/g, ' ').trim();
+      const tn = normIgual(t);
+      if (mun && tn.length === t.length) {
+        const m = new RegExp('(?:\\s+\\d{1,4}\\s+\\d{4,9})?\\s+(?:estado\\s+d[eo]\\s+\\S+(?:\\s+\\S+)?\\s+)?(?:municipio\\s+|prefeitura\\s+municipal\\s+)?de\\s+'
+          + mun.split(/\s+/).join('\\s+') + '\\s*[-\u2013]?\\s*$').exec(tn);
+        if (m && m.index > 60) t = t.slice(0, m.index);
+      }
+    }
     it[6] = t.replace(/\s{2,}/g, ' ').trim();
   }
 

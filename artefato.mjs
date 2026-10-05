@@ -197,7 +197,9 @@ let partesCapas = [];
 // do teto de 64 MB por versao do artefato, que so aparece na hora de publicar.
 // A capa e o que o usuario olha primeiro; o edital convertido e conveniencia,
 // entao quem cede e ele.
-const ORCAMENTO_EDITAIS_MB = 9.5;
+// 6 em 05/10/2026: com 128 editais e 127 capas (5 arquivos ao lado) a versao
+// deu 65,7 MB. O edital que fica de fora continua com o link do PNCP no card.
+const ORCAMENTO_EDITAIS_MB = 6;
 let editaisPdf = { editais: {} };
 try { editaisPdf = JSON.parse(doc('editais-pdf.json')); } catch { /* sem conversao nesta maquina */ }
 const mapaEdital = {}, indiceEdital = {};
