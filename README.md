@@ -160,6 +160,17 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    `veta-pelo-descritivo.mjs` tira o item; o edital que fica sem item nenhum sai junto
    (decisão do usuário em 23/09/2026). É o que acontece quando o órgão publica só PDF
    escaneado, publica o edital de outra licitação ou troca o arquivo depois da varredura.
+8. **Exigências que impedem** (`exigencias.mjs`) — sai o edital que OBRIGA amostra,
+   comprovação de sustentabilidade, carta de solidariedade ou garantia de execução do
+   contrato (a caução do art. 96). Só o que é obrigatório: "poderá solicitar", "caso o termo
+   de referência exija" e "caso a qualidade não possa ser aferida" ficam (02/09/2026). Desde
+   05/10/2026 a regra lê a CLÁUSULA inteira em que a palavra aparece, e não só uma distância
+   fixa em volta dela: dos 14 editais do RS barrados naquele dia, 13 eram engano — o quadro
+   "garantia de execução ... (x) não", a garantia do produto ("o período de garantia
+   contratual será contado..."), a cláusula padrão da AGU sobre a amostra condicional e o
+   destino das amostras ("as amostras entregues deverão ser recolhidas"), entre eles o
+   pregão de eletrodomésticos de R$ 6,2 milhões de Porto Alegre/RS. `testa-exigencias-casos.mjs`
+   guarda os casos.
 
 ## Ressalvas
 

@@ -109,6 +109,22 @@ const CONDICIONAL = [
   'nao possa ser aferid', 'caso nao seja possivel', 'na hipotese de',
   'se entender necessario', 'julgar necessario', 'entender necessario',
   'solicitacao de amostras observara', 'a criterio do',
+  // Revisao de 05/10/2026, com os 14 editais do RS barrados no dia (13 eram
+  // falso positivo): a clausula que se refere ao que JA foi exigido em outro
+  // lugar ("parcelas para as quais tenha sido exigida ... prova de conceito",
+  // Porto Alegre/RS, 340) e a consequencia da amostra pedida ("no caso de nao
+  // haver entrega da amostra ..., a proposta sera recusada", Porto Alegre, 308
+  // e 333) — as duas dependem de uma exigencia que o edital nao faz.
+  'tenha sido exigid', 'para as quais foi exigid', 'no caso de nao haver entrega',
+  'havendo entrega de amostra',
+  // e o DESTINO da amostra que tiver sido pedida, clausula padrao da AGU: "as
+  // amostras entregues deverao ser recolhidas pelos licitantes no prazo de 4
+  // dias" (Mato Leitao, Tres Passos/RS), "as amostras entregues pelos
+  // licitantes ... deverao ser retiradas" (Porto Alegre/RS), "a devolucao da
+  // amostra devera ser ajustada"
+  'amostras entregues', 'amostra entregue', 'devolucao da amostra', 'amostras aprovadas',
+  'amostras reprovadas', 'deverao ser recolhid', 'deverao ser retirad', 'poderao ser descartad',
+  'manuseados e desmontados', 'retirada das amostras', 'retirada da amostra',
 ];
 
 // Acima disso o verbo quase certamente pertence a outra frase. Sem esse teto,
@@ -118,7 +134,7 @@ const MAX_DIST_EXIGE = 200;
 const JANELA = 320;      // caracteres de contexto de cada lado do termo
 
 // Uma ocorrencia: onde esta, o contexto e o veredito.
-function julga(texto, pos, termo) {
+function julga(texto, pos, termo, chave) {
   const de = Math.max(0, pos - JANELA);
   const ate = Math.min(texto.length, pos + termo.length + JANELA);
   const ctx = texto.slice(de, ate);
@@ -172,14 +188,52 @@ function julga(texto, pos, termo) {
   // Ordem importa. Sancao e condicional vem ANTES de qualquer conclusao de
   // exigencia: os dois usam os mesmos verbos ("apresentar amostra") e sem essa
   // precedencia o edital cai por uma clausula de penalidade que ele nem aplica.
+  // A CLAUSULA em que o termo esta, do numero dela (ou do ponto final) antes
+  // do termo ate o seguinte. A distancia fixa nao bastava: na clausula padrao
+  // da AGU — "8.11 caso ... nao possa ser aferida pelos meios previstos nos
+  // subitens acima, o pregoeiro exigira que o licitante ... apresente amostra"
+  // (Mato Leitao, Tres Passos, Nao-Me-Toque/RS) — a condicao fica a 110
+  // caracteres da amostra, alem dos 100 da regra.
+  let ini = 0, fim = ctx.length;
+  for (const m of ctx.matchAll(/(?:^|\s)\d{1,2}(?:\.\d{1,2}){1,3}\.?\s|\.\s/g)) {
+    const k = m.index + m[0].length;
+    if (k <= rel) ini = k;
+    else if (m.index >= rel + termo.length) { fim = m.index; break; }
+  }
+  const clausula = ctx.slice(ini, fim);
+  const depois = ctx.slice(rel + termo.length, rel + termo.length + 250);
+  // O quadro de marcar: "...em valor correspondente a 5 % do valor total do
+  // contrato? (x) nao ( ) sim" (Redentora e Humaita/RS) — marcado nao, dispensa.
+  const marcouNao = /\(\s*x\s*\)\s*nao\b/.test(depois) && !/\(\s*x\s*\)\s*sim\b/.test(depois);
+  // A negacao escrita no meio da clausula: "nao havera A exigencia da garantia
+  // da contratacao" (Terra de Areia/RS), que a lista NEGA, sem o artigo, perdia.
+  const negaNaClausula = /nao\s+(?:havera|sera|serao|devera|deverao)\s+(?:a\s+|o\s+)?(?:exigid|exigencia|adotad|solicitad|necessari|obrigatori)/.test(clausula);
+  // A garantia DO PRODUTO, e nao a de execucao do contrato: "o periodo de
+  // garantia contratual sera contado a partir da aceitacao definitiva"
+  // (Porto Alegre/RS, 308). A regra e a caucao do art. 96.
+  const garantiaDoProduto = chave === 'garantia'
+    && (/^\s*(?:sera contad|de \d|minima|dos? (?:bens|produtos|materia(?:l|is)|equipamentos|itens)|contra defeit|do fabricante|de fabrica)/.test(depois)
+      || /(?:periodo|prazo) de\s*$/.test(ctx.slice(Math.max(0, rel - 40), rel)));
+  // A amostra que e o PRODUTO: "saco esteril para coleta de amostras de
+  // alimentos" (Vacaria/RS) estava na lista de itens.
+  const amostraDoProduto = chave === 'amostra'
+    && /(?:coleta|armazenamento|transporte|acondicionamento|manipulacao) (?:e \w+ )?(?:de |das |da )?amostras?|apos a coleta|amostras? de (?:alimentos|agua|sangue|solo)|porta[- ]amostras?|amostrador|\besteril/.test(ctx.slice(Math.max(0, rel - 250), rel + termo.length + 250));
+  // e o verbo de obrigacao longe do termo so conta se for da MESMA clausula:
+  // "14.1.1 as amostras nao serao devolvidas e nem ressarcidas" (Dois Irmaos/RS)
+  // nao exige nada — o "devera" a 190 caracteres era de outra
+  const exigeNaClausula = EXIGE.some(e => clausula.includes(e));
+
   let veredito;
   if (sanDist <= 130) veredito = 'sancao';
   else if (naListaDeCustos) veredito = 'custo';
-  else if (conDist <= 100) veredito = 'condicional';
+  else if (garantiaDoProduto || amostraDoProduto) veredito = 'produto';
+  else if (marcouNao) veredito = 'dispensa';
+  else if (conDist <= 100 || CONDICIONAL.some(c => clausula.includes(c))) veredito = 'condicional';
+  else if (negaNaClausula) veredito = 'dispensa';
   else if (negDist <= 90) veredito = 'dispensa';      // negacao colada no termo
   else if (exiDist <= 120) veredito = 'exige';
   else if (negDist < exiDist) veredito = "dispensa";
-  else if (exiDist <= MAX_DIST_EXIGE) veredito = "exige";
+  else if (exiDist <= MAX_DIST_EXIGE && exigeNaClausula) veredito = "exige";
   else veredito = 'indefinido';                       // so citou, sem verbo
 
   return { veredito, ctx: ctx.replace(/\s+/g, ' ').trim(), negDist, exiDist, sanDist, conDist };
@@ -195,7 +249,7 @@ export function analisaExigencias(textoPaginas) {
     for (const termo of regra.termos) {
       let i = texto.indexOf(termo);
       while (i >= 0) {
-        ocorrencias.push({ termo, ...julga(texto, i, termo) });
+        ocorrencias.push({ termo, ...julga(texto, i, termo, regra.chave) });
         i = texto.indexOf(termo, i + termo.length);
       }
     }
