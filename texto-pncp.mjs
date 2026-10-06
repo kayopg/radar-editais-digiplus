@@ -56,7 +56,13 @@ const INTERROGACAO = [
   // 28/09/2026 a de "letra + ? + pontuacao" comia a aspa de FECHAMENTO de
   // "igual a ?zero?, ou proximo de ?zero?," (Votuporanga/SP, item 176), e a de
   // abertura ficava orfa: "igual a ?zero, ou".
-  [/(?<=[\s(])\?(\S[^?\n]{0,58}\S)\?(?=[\s).,;:]|$)/g, '“$1”'],
+  // (e uma letra so: "EFICIENCIA ENERGETICA CLASSE ?A? (PROCEL)", Miranda/MS,
+  // 06/10/2026)
+  [/(?<=[\s(])\?(\S(?:[^?\n]{0,58}\S)?)\?(?=[\s).,;:]|$)/g, '“$1”'],
+  // O MARCADOR de lista perdido depois de dois-pontos ou ponto e virgula, antes
+  // do numero: "Kit com no minimo 5 discos: ? 01 Disco Ralador Fino (2mm) - ...;
+  // ? 01 Disco Fatiador" (Inhumas/GO, item 19, 06/10/2026)
+  [/(?<=[:;]\s?)\?\s+(?=\d{1,2}\s)/g, '• '],
   // O gas refrigerante R600a e R134a com o "a" perdido: "Gas do produto:
   // R600? Tipo de degelo: Manual" (Pontao/RS, item 8, frigobar, 28/09/2026). O
   // edital escreve o "a" com a letra CIRILICA, que nao sobreviveu ao caminho ate
@@ -66,7 +72,7 @@ const INTERROGACAO = [
   // Full HD de 23.8?, ajuste de altura" (monitor) e "Forma: 3,5?; as unidades"
   // (disco), Chapadao do Sul/MS, 29/09/2026. Sem essa palavra antes, o numero
   // pode ser grau e o "?" fica.
-  [/(?<=\b(?:tela|monitor|display|lcd|led|full hd|polegadas?|forma(?:to)?|tamanho)\b[^?\n]{0,20}?\d+(?:[.,]\d{1,2})?)\?(?=[\s,.;:)]|$)/gi, '"'],
+  [/(?<=\b(?:tela|monitor|display|lcd|led|full hd|polegadas?|forma(?:to)?|tamanho|tv|televisor)\b[^?\n]{0,20}?\d+(?:[.,]\d{1,2})?)\?(?=[\s,.;:)]|$)/gi, '"'],
   // o simbolo que vinha colado na marca registrada: "Jato de tinta Heat-Free
   // MicroPiezo®?.", "Windows Server®? 2003" (Chapadao do Sul/MS)
   [/([®™])\?+/g, '$1'],

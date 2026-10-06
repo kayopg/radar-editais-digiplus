@@ -12,6 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { limpaTextoPncp } from './texto-pncp.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const doc = (...p) => fs.readFileSync(path.join(DIR, 'docs', ...p), 'utf8');
@@ -77,7 +78,7 @@ catch { console.error('aviso: docs/descritivos.json nao encontrado — o resumo 
       // demais itens desde 30/09/2026
       itens: (v.itens || []).map(x => (querNum.has(x[0]) || querDesc.has(uma(x[1])))
         ? x
-        : [x[0], String(x[1] || '').slice(0, 80), null, null, +x[4] || 0])
+        : [x[0], limpaTextoPncp(String(x[1] || '')).slice(0, 80), null, null, +x[4] || 0])
     };
   }
   descritivos = { ...descritivos, editais: enxuto };

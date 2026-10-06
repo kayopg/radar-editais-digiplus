@@ -24,7 +24,10 @@ const CASOS = [
   ['4 TOMADAS 10A ? NBR 14136', '4 TOMADAS 10A – NBR 14136'],                                  // Crissiumal/RS
   ['Tela: IPS Full HD de 23.8?, ajuste de altura', 'Tela: IPS Full HD de 23.8", ajuste de altura'], // Chapadão do Sul/MS
   ['Tamanho do setor: 512/512e; Forma: 3,5?; as unidades', 'Tamanho do setor: 512/512e; Forma: 3,5"; as unidades'],
-  ['TELA LCD 2.5? COM DISPLAY', 'TELA LCD 2.5" COM DISPLAY'],                                  // Crissiumal/RS: "tela" diz que e polegada
+  ['TELA LCD 2.5? COM DISPLAY', 'TELA LCD 2.5" COM DISPLAY'],
+  ['Smart TV 50?, QLED 4 K, ANDROID', 'Smart TV 50", QLED 4 K, ANDROID'],                       // Inhumas/GO, 06/10
+  ['EFICIÊNCIA ENERGÉTICA CLASSE ?A? (PROCEL), INCLUSO', 'EFICIÊNCIA ENERGÉTICA CLASSE “A” (PROCEL), INCLUSO'], // Miranda/MS
+  ['Kit com no mínimo 5 discos: ? 01 Disco Ralador Fino (2mm) - cenoura; ? 01 Disco Fatiador', 'Kit com no mínimo 5 discos: • 01 Disco Ralador Fino (2mm) - cenoura; • 01 Disco Fatiador'], // Inhumas/GO                                  // Crissiumal/RS: "tela" diz que e polegada
   ['Jato de tinta Heat-Free MicroPiezo®?. Resolução', 'Jato de tinta Heat-Free MicroPiezo®. Resolução'],
   ['Windows Server®? 2003 (SP2) ou mais', 'Windows Server® 2003 (SP2) ou mais'],
   ['28 segundos por página em cores (200 dpi)???. Conectividade:', '28 segundos por página em cores (200 dpi). Conectividade:'],
