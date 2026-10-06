@@ -3648,7 +3648,7 @@ function tabelaBate(tabela, itens) {
 
 // o nome do estado como os timbres de prefeitura escrevem
 const UF_POR_EXTENSO = { RS: 'Rio\\s+Grande\\s+do\\s+Sul', SC: 'Santa\\s+Catarina', PR: 'Paran[áa]', SP: 'S[ãa]o\\s+Paulo',
-  MG: 'Minas\\s+Gerais', GO: 'Goi[áa]s', MT: 'Mato\\s+Grosso', MS: 'Mato\\s+Grosso\\s+do\\s+Sul' };
+  MG: 'Minas\\s+Gerais', GO: 'Goi[áa]s', DF: 'Distrito\\s+Federal', MT: 'Mato\\s+Grosso', MS: 'Mato\\s+Grosso\\s+do\\s+Sul' };
 
 let manuais = {};
 try { manuais = JSON.parse(fs.readFileSync(path.join(DIR, 'descritivos-manuais.json'), 'utf8')); } catch { /* sem lista */ }

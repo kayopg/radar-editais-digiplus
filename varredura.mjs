@@ -11,7 +11,7 @@ import { analisaExigencias } from './exigencias.mjs';
 import { devedorDe } from './devedores.mjs';
 import { linkDoPortal, ehComprasGov, montaLinkComprasGov } from './participar.mjs';
 import { portalOk, plataformaDoEdital } from './plataforma.mjs';
-import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, UF_SO_AR_CONDICIONADO, ehArCondicionado } from './veto-item.mjs';
+import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, criaCotaNaUf } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 
 // fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
@@ -37,10 +37,10 @@ const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira",
 // gasolina (Indaiatuba/SP) ou so de umidificador de ar (Dracena/SP) nao casava
 // com nenhum termo, e extrator de suco nao tinha nem categoria.
 "gerador a gasolina","gerador a diesel","grupo gerador","umidificador","extrator de suco"];
-// MT so com ar-condicionado desde 05/10/2026 (UF_SO_AR_CONDICIONADO, no
-// veto-item.mjs). O veta-pelo-descritivo.mjs le esta lista e tira da lista ja
-// publicada o edital de UF que sair dela.
-const UFS = ["PR","RS","SP","MG","GO","MT","MS","SC"];
+// DF entrou em 05/10/2026. Fora de RS, SC e PR cada UF tem as suas linhas de
+// produto (LINHAS_DA_UF, no veto-item.mjs). O veta-pelo-descritivo.mjs le esta
+// lista e tira da lista ja publicada o edital de UF que sair dela.
+const UFS = ["PR","RS","SP","MG","GO","DF","MT","MS","SC"];
 
 const CAT = [
   // O balcao saiu em 24/09/2026, a pedido do usuario: nem o refrigerado nem o
@@ -360,7 +360,7 @@ const vetoDoObjeto = txt => {
 };
 
 // 5.3 — veto por item (lista viva, construída de falsos positivos reais)
-const VETO_ITEM = ["evaporador de agua","mangueira","masseira","manometro","manifold","ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","peca/acessorio","peca / acessorio","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","digestor","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
+const VETO_ITEM = ["evaporador de agua","mangueira","masseira","manometro","manifold","ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","peca/acessorio","peca / acessorio","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","digestor","splitter","ventilador artificial","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
 // acrescentados em 30/08/2026
 "torneira de parede","torneira para pia","tubo de ferro","tubo de cobre","tubo cobre","pecas /","pecas/","para pedreiro","suporte para televis","suporte de televis","suporte de videocassete","embalag","espaco destinado","onibus","caminhao","impressao 3d","sem funcionamento","quarto de hotel","diaria","estadia","hospedagem","locacao de","prestacao de","autoclave","concentrador de","tampao","projetor","resistencia aquecedor","luva termica","frigideira","prato fundo","alicate","removedor de","coador pano","ralador/fatiador","carro balde","chave controle","elemento filtrante","filtro purificacao","liner","projeto executivo","fantasia","formula infantil","nutricao oral","nutricao geral","placa aquecedora","boia para","controle universal","controle remoto universal",
 // acrescentados em 03/09/2026: EPI casando com "purificador de ar". Montes
@@ -856,6 +856,7 @@ process.stderr.write(`  ${errItens} erros\n`);
 // O termo que aparece como USO de outro produto ("apto para micro-ondas",
 // "aplicacao: refrigerador") nao conta: ver criaPosicaoDoTermo no veto-item.mjs.
 const posicaoDoTermo = criaPosicaoDoTermo(CAT);
+const cotaNaUf = criaCotaNaUf(posicaoDoTermo);
 const classifica = d => { const m = posicaoDoTermo(d); return m ? m.c : null; };
 // Termo que so aparece depois do caractere 400 de uma descricao longa nao e o
 // produto, e citacao ou peca: "CONJUNTO REFEITORIO COM TAMPO INJETADO ... 10
@@ -947,7 +948,7 @@ for (const o of cands) {
     if (temVeto(d, cat)) continue;
     if (cat === 'RF' && VETO_RF_CIENT.some(v => d.includes(v))) { vCient++; continue; }
     if (cat === 'OT' && VETO_OT_HALOGENO.some(v => d.includes(v))) continue;
-    if (UF_SO_AR_CONDICIONADO.has(o.uf) && !(cat === 'CL' && ehArCondicionado(d))) continue;
+    if (!cotaNaUf(o.uf, d, '', true)) continue;
     if (cat === 'PR' && amassadeiraRapida(d)) continue;
     if (!itemVivo(it.sit)) { vCancel++; continue; }
     const v = +it.v || 0;

@@ -35,13 +35,77 @@
 export const amassadeiraRapida = d => /amassadeira/.test(d) && /(?<!semi[- ])\brapida\b/.test(d)
   && !/lenta|semi[- ]?r?rapida/.test(d);
 
-// Mato Grosso so com ar-condicionado (usuario, 05/10/2026: primeiro "todos os
-// editais de MT, pode remover", e logo depois "Mato Grosso so cotamos editais de
-// Ar Condicionado"). Nas UFs desta lista fica so o item de ar-condicionado — o
-// split, o condicionador de ar —, e o edital sem ele sai. Climatizador,
-// ventilador e cortina de ar, que sao da mesma categoria, nao.
-export const UF_SO_AR_CONDICIONADO = new Set(['MT']);
-export const ehArCondicionado = d => /ar[- ]?condicionad|arcondicionad|condicionador(?:es)? de ar|\bsplit\b/.test(d);
+// O QUE SE COTA EM CADA UF (usuario, 05/10/2026). A UF que nao esta aqui — RS,
+// SC e PR — cota tudo o que o radar pega. Nas outras fica so o item dessas
+// linhas, e o edital sem nenhum sai:
+//   MT: "so cotamos editais de Ar Condicionado"
+//   DF, GO, MS e MG: "ar condicionado, bebedouro industrial, fogao industrial e
+//     batedeira industrial"
+//   SP: as mesmas, "microondas e ventilador"
+// A linha e a do PRODUTO, o primeiro termo de categoria da descricao: o
+// "Climatizador ... com ventilador" e climatizador, e a "Cortina de ar" nao e
+// ar-condicionado.
+const INDUSTRIAIS = ['ar-condicionado', 'bebedouro industrial', 'fogao industrial', 'batedeira industrial'];
+export const LINHAS_DA_UF = {
+  MT: new Set(['ar-condicionado']),
+  DF: new Set(INDUSTRIAIS), GO: new Set(INDUSTRIAIS), MS: new Set(INDUSTRIAIS), MG: new Set(INDUSTRIAIS),
+  SP: new Set([...INDUSTRIAIS, 'micro-ondas', 'ventilador']),
+};
+
+export function linhaDoProduto(d, posicaoDoTermo) {
+  const p = posicaoDoTermo(d);
+  if (!p || !p.t) return null;
+  // "SPLITTER OTICO 1X8" e de rede (Guariba/SP, 05/10/2026), nao split
+  if (p.t === 'split' && /^split[a-z]/.test(d.slice(p.i))) return null;
+  if (/^(?:ar[- ]?condicionado|arcondicionado|condicionador de ar|split)$/.test(p.t)) return 'ar-condicionado';
+  // "Forno micro-ondas", "forno de microondas", "forno eletrico micro-ondas"
+  if (/^micro[- ]?ondas$|^microondas$/.test(p.t)
+    || (p.t === 'forno' && /^forno\s+(?:de\s+|eletrico\s+)?micro[- ]?ondas|^forno\s+(?:de\s+)?microondas/.test(d.slice(p.i)))) return 'micro-ondas';
+  return { bebedouro: 'bebedouro', fogao: 'fogao', batedeira: 'batedeira', ventilador: 'ventilador' }[p.t] || null;
+}
+
+// INDUSTRIAL: a palavra no rotulo, no comeco do descritivo (onde vem o nome do
+// produto) ou como campo ("tipo: industrial", Manhumirim/MG). O que se diz
+// domestico nao e, mesmo que o descritivo fale em "padrao industrial" adiante.
+// Batedeira "de uso profissional" conta: a planetaria de R$ 3.536 de
+// Guatapara/SP. E o bebedouro, pelo tamanho: reservatorio de 50 litros para
+// cima e o industrial — "BEBEDOURO DE 150 LITROS INOX" (Pedras de Maria da
+// Cruz/MG), "de coluna, com capacidade de 100 litros" (Cesario Lange/SP) —, e
+// o de 25 litros em inox tambem, que e o mesmo aparelho que Carmo do Rio
+// Verde/GO chama de "BEBEDOURO DE COLUNA INDUSTRIAL INOX 25 LITROS" e
+// Palmeiras de Goias/GO de "BEBEDOURO 02 TORNEIRAS ... 25 litros; ... aço Inox
+// 430". O de garrafao, o de pressao e o de mesa nao. Litros por hora ou por
+// dia e refrigeracao, nao reservatorio.
+export function ehIndustrial(linha, rot, desc = '') {
+  const frente = rot + ' ' + desc.slice(0, 160);
+  if (/domestic/.test(rot) && !/industria/.test(rot)) return false;
+  if (/industria/.test(frente) || /(?:tipo|uso|aplicacao|linha|modelo):? industrial/.test(desc)) return true;
+  if (linha === 'batedeira' && /(?:^|[^a-z])profissional/.test(frente)) return true;
+  if (linha === 'bebedouro') {
+    const tudo = rot + ' ' + desc;
+    if (/de pressao|garrafao|galao|de mesa/.test(frente)) return false;
+    const minimo = /\binox/.test(tudo) ? 25 : 50;
+    const re = /(\d{2,3})(?:[.,]\d+)?\s*(?:litros|lts?|l)(?![a-z])(?![^.;]{0,25}(?:\bdia\b|\bhora\b|\/\s*h\b))/g;
+    for (const m of tudo.matchAll(re)) if (+m[1] >= minimo) return true;
+  }
+  return false;
+}
+
+// cotaNaUf(uf, rotulo, descritivo) -> o item e de uma linha que se cota nessa
+// UF? Sem o descritivo (a varredura, que ainda nao o tem), o bebedouro, o fogao
+// e a batedeira passam se o rotulo nao se diz domestico: quem decide se e
+// industrial e o veta-pelo-descritivo.mjs, depois, com o descritivo na mao.
+export function criaCotaNaUf(posicaoDoTermo) {
+  return (uf, rot, desc, semDescritivo = false) => {
+    const linhas = LINHAS_DA_UF[uf];
+    if (!linhas) return true;
+    const linha = linhaDoProduto(rot, posicaoDoTermo) || (desc ? linhaDoProduto(desc, posicaoDoTermo) : null);
+    if (!linha) return false;
+    if (!['bebedouro', 'fogao', 'batedeira'].includes(linha)) return linhas.has(linha);
+    if (!linhas.has(linha + ' industrial')) return false;
+    return semDescritivo ? !/domestic/.test(rot) || /industria/.test(rot) : ehIndustrial(linha, rot, desc || '');
+  };
+}
 
 export const OBJ_CONDICIONAL = /caso seja aplicavel|quando aplicavel|se aplicavel|quando couber|(?:quando|se|caso) necessari/;
 // O climatizador evaporativo industrial DE PAREDE pede a abertura na alvenaria
@@ -73,7 +137,7 @@ export function criaPosicaoDoTermo(CAT) {
         if (melhor && i >= melhor.i) break;
         const antes = d.slice(Math.max(0, i - 40), i);
         if (USO.test(antes) || PARA.test(antes)) continue;
-        melhor = { c, i };
+        melhor = { c, i, t };
         break;
       }
     }

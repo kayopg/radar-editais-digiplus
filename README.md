@@ -7,7 +7,20 @@ sem manutenção.
 
 **Página:** https://kayopg.github.io/radar-editais-digiplus/
 
-Estados atendidos: PR, RS, SP, MG, GO, MS, SC e MT — em Mato Grosso, só ar-condicionado (05/10/2026).
+Estados atendidos: PR, RS, SP, MG, GO, DF, MS, SC e MT. Desde 05/10/2026 cada
+estado tem as suas linhas de produto (`LINHAS_DA_UF`, em `veto-item.mjs`):
+
+| UF | O que se cota |
+|---|---|
+| RS, SC, PR | tudo o que o radar pega |
+| SP | ar-condicionado, bebedouro industrial, fogão industrial, batedeira industrial, micro-ondas e ventilador |
+| DF, GO, MS, MG | ar-condicionado, bebedouro industrial, fogão industrial e batedeira industrial |
+| MT | só ar-condicionado |
+
+"Industrial" é a palavra no rótulo ou no começo do descritivo; a batedeira "de
+uso profissional" conta, e o bebedouro conta também pelo reservatório (50 L para
+cima, ou 25 L em inox — o de pressão, de garrafão e de mesa não). O edital que
+fica sem item dessas linhas sai. Teste: `node testa-linhas-uf.mjs`.
 
 ## Como funciona
 

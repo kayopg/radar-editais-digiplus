@@ -25,7 +25,7 @@ const CAT = { RF: 'Para gelar', CL: 'Para climatizar', CC: 'Para cozinhar', PR: 
   EP: 'Eletrodomésticos', LV: 'Para lavar', BB: 'Para beber', CX: 'Para exaustão',
   BL: 'Balanças', LD: 'Lousa digital', GE: 'Geradores', AQ: 'Para aquecer água', OT: 'Outros' };
 const UF_NOME = { PR: 'Paraná', RS: 'Rio Grande do Sul', SP: 'São Paulo', MG: 'Minas Gerais',
-  GO: 'Goiás', MT: 'Mato Grosso', MS: 'Mato Grosso do Sul', SC: 'Santa Catarina' };
+  GO: 'Goiás', DF: 'Distrito Federal', MT: 'Mato Grosso', MS: 'Mato Grosso do Sul', SC: 'Santa Catarina' };
 
 // A rota que o anexo tomou. Os lotes gerados antes do campo "rota" existir so
 // tem a frase do log — dai o numero de paginas responde: escolher todas as

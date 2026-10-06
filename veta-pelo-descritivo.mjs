@@ -20,7 +20,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, UF_SO_AR_CONDICIONADO, ehArCondicionado } from './veto-item.mjs';
+import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, criaCotaNaUf } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 import { marcaCotas } from './cota.mjs';
 
@@ -88,6 +88,7 @@ const CAT = eval(blocoCat.replace('const CAT = ', ''));
 const TERMO_LONGE = Number((fonte.match(/const TERMO_LONGE = (\d+)/) || [])[1]) || 400;
 // o termo citado como uso de outro produto nao conta (ver veto-item.mjs)
 const termoMaisCedo = criaPosicaoDoTermo(CAT);
+const cotaNaUf = criaCotaNaUf(termoMaisCedo);
 // o veto por item com a mesma regra do varredura.mjs: termo de peca so conta
 // quando vem antes do produto (ver veto-item.mjs)
 const vetoItem = criaVetoItem({ VETO_ITEM, VETO_SO_NA_FRENTE: lista('VETO_SO_NA_FRENTE'), VETO_FORA_DE, RE_VAN, posicaoDoTermo: termoMaisCedo });
@@ -308,7 +309,7 @@ for (const e of dados.editais) {
       || (!UF_INSTALA.has(e[C.uf]) && exigeInstalacao(d))
       || (instalaNoObjeto && instalavel(norm(it[3]), it[0]) && 'instalacao quando necessaria, e o aparelho se instala')
       || (it[0] === 'PR' && amassadeiraRapida(d + ' ' + norm(it[3])) && 'amassadeira rapida')
-      || (UF_SO_AR_CONDICIONADO.has(e[C.uf]) && !(it[0] === 'CL' && ehArCondicionado(norm(it[3]))) && e[C.uf] + ' so ar-condicionado')
+      || (!cotaNaUf(e[C.uf], norm(it[3]), d) && 'linha que nao se cota em ' + e[C.uf])
       || (ABRE_FORA_DO_RADAR.exec(d) || [])[1]));
     if (!termo) return true;
     tirados++;
