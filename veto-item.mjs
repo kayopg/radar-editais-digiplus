@@ -38,7 +38,8 @@ export const amassadeiraRapida = d => /amassadeira/.test(d) && /(?<!semi[- ])\br
 // O QUE SE COTA EM CADA UF (usuario, 05/10/2026). A UF que nao esta aqui — RS,
 // SC e PR — cota tudo o que o radar pega. Nas outras fica so o item dessas
 // linhas, e o edital sem nenhum sai:
-//   MT: "so cotamos editais de Ar Condicionado"
+//   MT: nada — saiu do radar em 06/10/2026 ("MT nao cotamos mais nada"). Fica
+//     aqui vazio para o edital de MT que ainda estiver na lista sair inteiro.
 //   DF, GO, MS e MG: "ar condicionado, bebedouro industrial, fogao industrial e
 //     batedeira industrial"
 //   SP: as mesmas, "microondas e ventilador"
@@ -47,7 +48,7 @@ export const amassadeiraRapida = d => /amassadeira/.test(d) && /(?<!semi[- ])\br
 // ar-condicionado.
 const INDUSTRIAIS = ['ar-condicionado', 'bebedouro industrial', 'fogao industrial', 'batedeira industrial'];
 export const LINHAS_DA_UF = {
-  MT: new Set(['ar-condicionado']),
+  MT: new Set(),
   DF: new Set(INDUSTRIAIS), GO: new Set(INDUSTRIAIS), MS: new Set(INDUSTRIAIS), MG: new Set(INDUSTRIAIS),
   SP: new Set([...INDUSTRIAIS, 'micro-ondas', 'ventilador']),
 };

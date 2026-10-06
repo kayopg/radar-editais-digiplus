@@ -1098,10 +1098,11 @@ function bytesDeBase64(b64){
 }
 
 // A porcentagem de cada UF no canto superior da capa do resumo, a pedido do
-// usuário em 05/10/2026: RS, SC e PR 30%; SP, MG, MS e GO 35%; MT 40%.
+// usuário em 05/10/2026: RS, SC e PR 30%; SP, MG, MS e GO 35% (MT, que era 40%,
+// saiu do radar em 06/10/2026).
 // DF, que entrou no mesmo dia com as linhas de produto de GO, MS e MG, fica
 // com os 35% deles.
-var PORCENTAGEM_UF = { RS:"30%", SC:"30%", PR:"30%", SP:"35%", MG:"35%", MS:"35%", GO:"35%", DF:"35%", MT:"40%" };
+var PORCENTAGEM_UF = { RS:"30%", SC:"30%", PR:"30%", SP:"35%", MG:"35%", MS:"35%", GO:"35%", DF:"35%" };
 
 // Devolve true quando a capa entrou; sem ela, quem chama põe o selo da
 // porcentagem na primeira página do resumo.

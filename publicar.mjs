@@ -17,7 +17,7 @@ const { st, editais } = JSON.parse(fs.readFileSync(entrada, 'utf8'));
 // Ordem fixa dos estados atendidos, para o cabeçalho e os chips de filtro
 // saírem sempre iguais. Mexeu aqui, mexeu no filtro da página junto — é de
 // propósito: era esse o antigo pé na jaca de a lista viver só no HTML.
-const UFS = ['PR', 'RS', 'SP', 'MG', 'GO', 'DF', 'MT', 'MS', 'SC'];
+const UFS = ['PR', 'RS', 'SP', 'MG', 'GO', 'DF', 'MS', 'SC'];
 
 // Colunas 0-8 sao as antigas; 9 em diante vieram com o resumo em PDF (31/08/2026).
 // Acrescente sempre no fim: a pagina le por indice.

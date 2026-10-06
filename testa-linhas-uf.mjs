@@ -51,8 +51,8 @@ const CASOS = [
   ['SP', 'Climatizador evaporativo portátil com ventilador', '', false],
   ['SP', 'Refrigerador frost free 375 L', '', false],
   ['SP', 'SPLITTER OTICO 1X8 BALANCEADO COMPRIMENTO DE ONDA 1260 A 1650 NM', '', false],
-  // MT: so ar-condicionado
-  ['MT', 'AR CONDICIONADO - Split 12.000 Btus Frio 220v', '', true],
+  // MT: nada (saiu em 06/10/2026)
+  ['MT', 'AR CONDICIONADO - Split 12.000 Btus Frio 220v', '', false],
   ['MT', 'BEBEDOURO INDUSTRIAL 100 LITROS', '', false],
   ['MT', 'CLIMATIZADOR EVAPORATIVO INDUSTRIAL', '', false],
   // RS, SC e PR: tudo

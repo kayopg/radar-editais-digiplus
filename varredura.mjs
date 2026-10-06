@@ -37,10 +37,11 @@ const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira",
 // gasolina (Indaiatuba/SP) ou so de umidificador de ar (Dracena/SP) nao casava
 // com nenhum termo, e extrator de suco nao tinha nem categoria.
 "gerador a gasolina","gerador a diesel","grupo gerador","umidificador","extrator de suco"];
-// DF entrou em 05/10/2026. Fora de RS, SC e PR cada UF tem as suas linhas de
-// produto (LINHAS_DA_UF, no veto-item.mjs). O veta-pelo-descritivo.mjs le esta
-// lista e tira da lista ja publicada o edital de UF que sair dela.
-const UFS = ["PR","RS","SP","MG","GO","DF","MT","MS","SC"];
+// DF entrou em 05/10/2026 e MT saiu em 06/10/2026 ("MT nao cotamos mais nada").
+// Fora de RS, SC e PR cada UF tem as suas linhas de produto (LINHAS_DA_UF, no
+// veto-item.mjs). O veta-pelo-descritivo.mjs le esta lista e tira da lista ja
+// publicada o edital de UF que sair dela.
+const UFS = ["PR","RS","SP","MG","GO","DF","MS","SC"];
 
 const CAT = [
   // O balcao saiu em 24/09/2026, a pedido do usuario: nem o refrigerado nem o

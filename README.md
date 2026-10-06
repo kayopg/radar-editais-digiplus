@@ -7,7 +7,8 @@ sem manutenção.
 
 **Página:** https://kayopg.github.io/radar-editais-digiplus/
 
-Estados atendidos: PR, RS, SP, MG, GO, DF, MS, SC e MT. Desde 05/10/2026 cada
+Estados atendidos: PR, RS, SP, MG, GO, DF, MS e SC (MT saiu em 06/10/2026: a
+Digiplus não cota mais nada lá). Desde 05/10/2026 cada
 estado tem as suas linhas de produto (`LINHAS_DA_UF`, em `veto-item.mjs`):
 
 | UF | O que se cota |
@@ -15,7 +16,6 @@ estado tem as suas linhas de produto (`LINHAS_DA_UF`, em `veto-item.mjs`):
 | RS, SC, PR | tudo o que o radar pega |
 | SP | ar-condicionado, bebedouro industrial, fogão industrial, batedeira industrial, micro-ondas e ventilador |
 | DF, GO, MS, MG | ar-condicionado, bebedouro industrial, fogão industrial e batedeira industrial |
-| MT | só ar-condicionado |
 
 "Industrial" é a palavra no rótulo ou no começo do descritivo; a batedeira "de
 uso profissional" conta, e o bebedouro conta também pelo reservatório (50 L para
