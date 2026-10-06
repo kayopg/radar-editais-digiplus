@@ -4684,8 +4684,11 @@ for (const e of dados.editais) {
     t = t.replace(/(?<=[A-ZÀ-Ú]{3})\s(?:Unidade|Und|Unid)\.?\s(?=\d)/g, ' ');
     if (q) {
       // a quantidade e a unidade caidas no meio: "...alta resistência 01 Unidade
-      // 39 Voltagem: 220 V" (Tupancireta/RS)
-      t = t.replace(new RegExp('\\s0*' + q + '\\s+(?:Unidades?|UNIDADES?|Und|UND|Un|UN)\\s+\\d{1,4}\\s+(?=\\p{Lu})', 'gu'), ' ');
+      // 39 Voltagem: 220 V" (Tupancireta/RS), e com a palavra seguinte
+      // minuscula ou numero: "peso 09 Unidade 45 aproximado de 9,6kg" e
+      // "voltagem 20 Unidade 46 220V" (Tupancireta/RS, edital 94, 06/10/2026 —
+      // o 45 e o 46 sao o numero da folha do modelo de proposta)
+      t = t.replace(new RegExp('\\s0*' + q + '\\s+(?:Unidades?|UNIDADES?|Und|UND|Un|UN)\\s+\\d{1,4}\\s+(?=[\\p{L}\\d])', 'gu'), ' ');
       // quantidade, unidade, cota, lote, numero e codigo, que a lista de Tupi
       // Paulista/SP poe depois do nome: "VENTILADOR TETO 3 PÁS 20 UN Ampla
       // Concorrência LOTE04 82 02.01675"
@@ -4709,6 +4712,10 @@ for (const e of dados.editais) {
     // cortando dali em diante:
     {
       const corta = re => { const m = re.exec(t); if (m && m.index > 20) t = t.slice(0, m.index); };
+      // as declaracoes do modelo de proposta depois da ultima linha: "...voltagem
+      // 220V. 20 Unidade DECLARAÇÕES 1. Declaramos que o preço..." (Tupancireta/RS,
+      // edital 94, item 15)
+      corta(/\sDECLARA[ÇC][ÕO]ES\s+1\s?[.)-]?\s*Declaramos/);
       // o cabecalho da coluna de valor, em maiusculas: "...1ª linha. VALOR TOTAL
       // MÁXIMO ESTIMADO (R$)" (Votuporanga/SP, item 213); "...2 PORTAS 01
       // unidade VALOR ESTIMADO GLOBAL: R$ 5.609,33 (cinco mil..." (Avaré/SP, aviso 068)
@@ -4745,6 +4752,11 @@ for (const e of dados.editais) {
       t = t.replace(/\s+\d{5,7}\s+(?:unidade|UNIDADE|und|UND|un|UN)\.?$/, '');
       // e a quantidade da linha que o corte deixou no fim ("...2 PORTAS 01 unidade")
       if (q) t = t.replace(/\s+(\d{1,5})\s+(unidades?|und?|pe[çc]as?)\.?\s*$/i, (todo, k) => (+k === q ? '' : todo));
+      // ou a quantidade sozinha, depois do ponto final ou da tensao: "...voltagem
+      // 220V. 07", "...gancho). 10", "...voltagem 220V 05" (Tupancireta/RS, edital
+      // 94, 06/10/2026). So depois de pontuacao ou de "220V": "capacidade 20"
+      // fica, que ali o numero e a medida.
+      if (q) t = t.replace(new RegExp('(?:(?<=[.)])|(?<=\\d\\s?[Vv]))\\s+0*' + q + '$'), '');
       // No MEIO do texto, tirando so o pedaco: o cabecalho da tabela que a folha
       // nova repete ("LOTE ITEM ESPECIFICAÇÃO CATMAT UNID DE MEDIDA QUANT TOTAL
       // VALOR UNITÁRIO VALOR TOTAL", São Paulo/SP, edital 132, item 7), o timbre
