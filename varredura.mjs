@@ -174,6 +174,11 @@ const VETO_ORGAO = ['comando do exercito','comando da marinha','comando da aeron
   // DF: "MINISTERIO DA JUSTICA E SEGURANCA PUBLICA | MJ-DPRF-DEPART.DE
   // POL.RODOVIARIA FEDERAL/DF" (06/10/2026)
   'policia federal','policia penal','pol.rodoviaria','pol. rodoviaria','dprf','forca nacional',
+  // e os nomes abreviados das unidades da Secretaria da Seguranca Publica de
+  // SP, que entraram com as secretarias de estado (06/10/2026): "ESP-DELEG.SECC.
+  // POLICIA DE DIADEMA", "ESP-COM.POLIC.AREA METROP-4", "ESP-COMANDO DE
+  // POLICIAMENTO DO INTER-9", "ESP-9. GRUPAMENTO DE BOMBEIROS (9.GB)"
+  'policia','polic.','bombeiro','deleg.','delegacia',
   // e as estatais das Forcas Armadas, agora que estatal entra no DF
   'material belico','imbel','emgepron','amazul'];
 

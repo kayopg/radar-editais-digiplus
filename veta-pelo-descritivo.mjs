@@ -112,6 +112,10 @@ const UF_INSTALA = new Set(['RS', 'SC']);
 // As UFs atendidas, do varredura.mjs: o edital de UF que saiu (MT, em 05/10/2026)
 // sai tambem da lista ja publicada, sem esperar a proxima varredura.
 const UFS_ATENDIDAS = new Set(JSON.parse((fonte.match(/const UFS = (\[[^\]]*\])/) || [, '[]'])[1]));
+// E o orgao vetado (militar e policia), tambem do varredura.mjs: as unidades de
+// policia e bombeiros da Secretaria da Seguranca Publica de SP entraram em
+// 06/10/2026 com nomes abreviados que o veto ainda nao pegava
+const VETO_ORGAO = lista('VETO_ORGAO');
 const EXIGE_INSTALACAO = [
   /entregues? (devidamente )?instalad[oa]s?/,
   /devidamente instalad[oa]s?/,
@@ -236,6 +240,15 @@ for (const e of dados.editais) {
     editaisFora++;
     console.log(`  sai o edital ${nome}: ${e[C.uf]} nao e mais atendida`);
     continue;
+  }
+  {
+    const orgao = norm(e[C.orgao] + ' ' + (e[C.unidade] || '')).replace(/\s+/g, ' ');
+    const v = VETO_ORGAO.find(t => orgao.includes(t));
+    if (v) {
+      editaisFora++;
+      console.log(`  sai o edital ${nome}: orgao vetado ("${v}") · ${e[C.unidade] || e[C.orgao]}`);
+      continue;
+    }
   }
   if (fora[e[C.path]] && e[C.path] !== '_leia') {
     editaisFora++;
