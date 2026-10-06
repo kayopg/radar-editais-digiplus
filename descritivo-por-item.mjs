@@ -4649,10 +4649,12 @@ for (const e of dados.editais) {
       t = t.replace(new RegExp('\\s+0*' + (n + 1) + '\\s+\\d{2}\\.\\d{3}\\s*$'), '');
       // e o numero e a quantidade que ABREM a linha do seguinte: "...Voltagem 220V
       // 35 10" (Rialma/GO, itens 34 a 36: "35 10 AR CONDICIONADO INVERTER...")
-      t = t.replace(new RegExp('\\s+0*' + (n + 1) + '\\s+\\d{1,5}\\s*$'), '');
+      // (e a quantidade com tres casas: "...SEM FIO 25 2,000", Caarapó/MS, item 24)
+      t = t.replace(new RegExp('\\s+0*' + (n + 1) + '\\s+\\d{1,5}(?:,\\d{3})?\\s*$'), '');
       // ou so o numero dele, depois de outro numero: "...Consumo kWh/dia
-      // (60Hz):4,7 53" (Rialma/GO, item 52)
-      if (n + 1 >= 10) t = t.replace(new RegExp('(?<=[\\d)])\\s+0*' + (n + 1) + '\\s*$'), '');
+      // (60Hz):4,7 53" (Rialma/GO, item 52), ou do ponto final: "...CAPACIDADE
+      // BRUTA (LITROS): 1980. 30" (Porto Belo/SC, item 29, 06/10/2026)
+      if (n + 1 >= 10) t = t.replace(new RegExp('(?<=[\\d).])\\s+0*' + (n + 1) + '\\s*$'), '');
       // ou depois do prazo da garantia, que fecha a linha: "...GARANTIA DE 12
       // MESES 8" (Porto Belo/SC, item 7, 05/10/2026) — ali nao e medida
       t = t.replace(new RegExp('(?<=\\b(?:MESES|meses|Meses|ANOS?|anos?|Anos?|DIAS|dias)\\.?)\\s+0*' + (n + 1) + '\\s*$'), '');
@@ -4716,6 +4718,53 @@ for (const e of dados.editais) {
       // 220V. 20 Unidade DECLARAÇÕES 1. Declaramos que o preço..." (Tupancireta/RS,
       // edital 94, item 15)
       corta(/\sDECLARA[ÇC][ÕO]ES\s+1\s?[.)-]?\s*Declaramos/);
+      // A conferencia de todos os editais pedida no mesmo dia ("confira em todos
+      // os outros editais"):
+      if (n) {
+        // o codigo do catalogo, o numero e o nome do item SEGUINTE: "...Tensão:
+        // 220 V 263801 03 Aparelho de ar condicionado 36.000 Btus" e
+        // "...Timer. 296785 05 Aparelho de pilates chair" (Itaberaí/GO, itens 2 a 4)
+        corta(new RegExp('\\s\\d{5,7}\\s+0*' + (n + 1) + '\\s+\\p{Lu}', 'u'));
+        // ou o numero e o codigo, nessa ordem: "...GARANTIA DE 12 MESES 14
+        // 130802 LIQUIDIFICADOR" (Porto Belo/SC, item 13)
+        corta(new RegExp('\\s0*' + (n + 1) + '\\s+\\d{5,7}\\s+\\p{Lu}{3,}', 'u'));
+        // ou o preco e o total, e o numero e o nome do seguinte: "...Garantia
+        // mínima de 12 (doze) meses. : 960,39 R$: 7.683,12 18 Geladeira:"
+        // (Bela Vista do Paraíso/PR, edital 20, item 17)
+        corta(new RegExp('\\s*(?:R\\$)?:?\\s*[\\d.]+,\\d{2}\\s+(?:R\\$)?:?\\s*[\\d.]+,\\d{2}\\s+0*' + (n + 1) + '\\s+\\p{Lu}', 'u'));
+      }
+      // o cabecalho da folha no meio da frase: "...MANUAL DE INSTRUÇÕES EM
+      // PORTUGUÊS E EDITAL PREGÃO ELETRÔNICO (SRP) Nº 136/2026 - MUNICÍPIO DE
+      // GUARAPUAVA 1 GARANTIA MÍNIMA" (Guarapuava/PR, PCE 136, item 1)
+      t = t.replace(/\s*EDITAL\s+(?:DE\s+)?PREG[ÃA]O\s+ELETR[ÔO]NICO\s*(?:\(SRP\)\s*)?N[º°o]\.?\s*\d+\/\d{4}\s*[-–]\s*MUNIC[ÍI]PIO\s+DE\s+[A-ZÀ-Ú][A-ZÀ-Ú ]{2,40}?\s+\d{1,3}\s+(?=\p{Lu})/gu, ' ');
+      // e a coluna da unidade sozinha depois do ponto final: "...garantia
+      // mínima de 12 meses. UNI" (Guarapuava/PR, PCE 136, item 2), com a
+      // quantidade atras quando o corte foi pelo preco ("...12 meses. UNI 3", item 4)
+      t = t.replace(/(?<=[.;])\s+(?:UNI|UND|UN|UNID)\.?(?:\s+\d{1,5})?$/, '');
+      // o HTML da tabela que o orgao colou: "...GARANTIA DE 12 MESES - <DIV>
+      // <TABLE STYLE=..." (Porto Belo/SC, item 9, com o frigobar do item 10 atras)
+      corta(/\s*-?\s*<\s*\/?\s*(?:div|table|tbody|tr|td|span|p)\b/i);
+      // a unidade, a quantidade, o preco e o total, e o que vem depois: "...12
+      // meses. UNI 3 1.740,13 5.220,39 5 Conjunto composto por 01 (uma) mesa
+      // plástica" (Guarapuava/PR, PCE 136, item 4; no PCE 137 era a justificativa)
+      if (q) corta(new RegExp('\\sUNI(?:D(?:ADE)?)?\\.?\\s+0*' + q + '\\s+[\\d.]+,\\d{2}\\s+[\\d.]+,\\d{2}(?!\\d)'));
+      // o codigo do catalogo no fim: "...capacidade equivalente. Código Gov:
+      // 613924 PDM: 1045" (Sorocaba/SP, aviso 13), "...do Equipamento; 446165
+      // 5524369 UF.1" (Casa Branca/SP, edital 381)
+      corta(/\sC[óo]digo\s+Gov\.?:?\s*\d{4,8}/);
+      corta(/\s\d{5,8}\s+\d{5,8}(?:\s+UF\.?\s?\d*)?\s*$/);
+      // o timbre "P. M. CAARAPÓ-MS FOLHA 0531" lido pela metade: "...220V 6-MS
+      // FOLHA 0531" (Caarapó/MS, item 25)
+      corta(/\s\S{0,20}-[A-Z]{2}\d?\s+FOLHA\s+\d{2,5}/);
+      // o preco de quatro casas e o que sobra da linha: "...CONSUMO CLASSE A
+      // 4.299,0000 2 1,000" (Toropi/RS, edital 11), "...220V 0,0000 UNI"
+      // (Caarapó/MS, item 26)
+      // (com o preco unitario na frente, se houver: "...12 MESES. 2.407,2600
+      // 7.221,7800 2 UN 4,00", Veríssimo/MG)
+      corta(/\s(?:\d{1,3}(?:\.\d{3})*,\d{2,4}\s+)?\d{1,3}(?:\.\d{3})*,\d{4}(?=(?:\s+\S+){0,3}\s*$)/);
+      // e o preco que fecha a linha depois do ponto final: "...DEVENDO SER
+      // ENTREGUE INSTALADO. 2.050,000 3 1,000" (Toropi/RS, item 2)
+      corta(/(?<=[.)])\s\d{1,3}(?:\.\d{3})*,\d{2,4}(?=(?:\s+\S+){0,3}\s*$)/);
       // o cabecalho da coluna de valor, em maiusculas: "...1ª linha. VALOR TOTAL
       // MÁXIMO ESTIMADO (R$)" (Votuporanga/SP, item 213); "...2 PORTAS 01
       // unidade VALOR ESTIMADO GLOBAL: R$ 5.609,33 (cinco mil..." (Avaré/SP, aviso 068)
@@ -4806,6 +4855,17 @@ for (const e of dados.editais) {
         const valor = ip.replace(/\B(?=(\d{3})+$)/g, '.').replace(/\./g, '\\.?') + ',' + dp;
         t = t.replace(new RegExp('\\s*R\\$\\s?' + valor + '(?![\\d,])', 'g'), '');
       }
+      // e o preco unitario e o total, o primeiro com quatro casas, no meio da
+      // frase: "...baixo nível de ruído, 1.890,0000 9.450,0000 tensão 220 V"
+      // (Juiz de Fora/MG, edital 093), "...SEM FIO - AR 5.456,3300 5.456,33
+      // CONDICIONADO SPLIT" (Caarapó/MS, item 24)
+      t = t.replace(/\s\d{1,3}(?:\.\d{3})*,\d{4}\s+\d{1,3}(?:\.\d{3})*,\d{2,4}(?=\s)/g, '');
+      // e o codigo do catalogo (CATMAT) que a coluna ao lado enfiou no meio da
+      // frase: "Gás refrigerante 619108 R410a", "Unidade interna 453530
+      // evaporadora", "INMETRO/PROCEL: A; 63899 Classificação" (Maria Helena/PR,
+      // edital 47). Nao o numero de norma ("NBR 14177", "ABNT/NBR/ 603351") nem o
+      // que tem unidade depois ("12000 BTUs", "60000 kcal").
+      t = t.replace(/(?<!(?:NBR|NM|IEC|ISO|n[º°o]|Lei|Decreto|Portaria|Resolu[çc][ãa]o)\/?\s?)(?<=[\p{L};:,.)])\s\d{5,6}(?=\s+\p{L})(?!\s+(?:btu|kcal|rpm|watt|w|l|litro|lt|mm|cm|m|kg|g|v|volt|hz|h|hora|ciclo|pa|psi|bar|m3|m³|m2|m²|ml|un|unid|unidade|pe[çc]a)s?(?!\p{L}))/giu, '');
       // O nome duas vezes, que e o que o corte deixou: "VENTILADOR DE PAREDE- 60
       // CM- 127V - VENTILADOR DE PAREDE- 60 CM- 127V" (Caarapó/MS, item 82)
       t = t.replace(/^(.{20,}?)\s*[-–—.]?\s*\1\.?$/i, '$1')
