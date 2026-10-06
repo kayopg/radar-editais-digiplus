@@ -90,6 +90,24 @@ export function marcaCotas(itens, corpo = '') {
     }
   }
 
+  // 1b. O PNCP com TODOS os itens em "cota reservada" (Codevasf, edital 53/2026,
+  // 06/10/2026: 18 grupos, os impares com 10 unidades e os pares com 1, e o
+  // edital dizendo que "os grupos 2, 4, 6, ... e 18 sao cotas de ate 25%").
+  // Cota reservada e a parte MENOR: o item que o PNCP poe em cota reservada e
+  // tem um gemeo tambem em cota reservada, de 4 a 30% da soma, e o principal.
+  // Com varios gemeos (o mesmo fogao em nove grupos) nao da para dizer qual
+  // reservada e de qual principal, entao a marca vai sem o numero. So com
+  // "cota reservada" no PNCP: o edital todo "exclusivo ME/EPP" e outra coisa.
+  for (const c of cand) {
+    const n = +c.x[0], qa = +c.x[2] || 0;
+    if (marcas.has(n) || c.x[5] !== 'C' || !qa) continue;
+    const temMenor = c.pares.some(d => {
+      const qb = +d.x[2] || 0;
+      return d.x[5] === 'C' && qb && qb < qa && qb / (qa + qb) >= 0.04 && qb / (qa + qb) <= 0.3;
+    });
+    if (temMenor) marcas.set(n, 'P');
+  }
+
   // 2. O item sozinho: a marca no descritivo, a marca na linha da tabela logo
   // depois do numero do item (IFFar), ou o PNCP dizendo "cota reservada".
   for (const x of itens) {

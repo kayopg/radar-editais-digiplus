@@ -31,6 +31,11 @@ const CASOS = [
     { 25: 'R' }],
   ['Tuneiras/PR: o PNCP diz cota reservada',
     [[2, 'Split', 10, 'UN', 2000, 'C', split]], '', { 2: 'R' }],
+  ['Codevasf/DF: o PNCP poe tudo em cota reservada; o menor de cada par e que e',
+    [[2, 'Fogao', 10, 'UN', 2035.23, 'C', fogao('alta')], [8, 'Fogao', 1, 'UN', 2035.23, 'C', fogao('alta')],
+     [14, 'Fogao', 10, 'UN', 2035.23, 'C', fogao('alta')], [20, 'Fogao', 1, 'UN', 2035.23, 'C', fogao('alta')]],
+    'os grupos 2, 4, 6, 8, 10, 12, 14, 16 e 18 sao cotas de ate 25% destinados para as microempresas',
+    { 2: 'P', 8: 'R', 14: 'P', 20: 'R' }],
   // tem de ficar sem marca
   ['Minacu/GO: dois liquidificadores iguais de 3 e 10, sem cota no edital',
     [[48, 'Liq', 3, 'UN', 332.82, 'S', liq], [49, 'Liq', 10, 'UN', 332.82, 'S', liq]],
