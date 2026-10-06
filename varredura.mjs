@@ -169,7 +169,19 @@ const SAUDE = ['hospital','saude','santa casa','hemocentro','hemonucleo','matern
 // em 31/08/2026: hospital militar tambem fica de fora).
 const VETO_ORGAO = ['comando do exercito','comando da marinha','comando da aeronautica',
   'exercito brasileiro','ministerio da defesa','policia militar','policia civil',
-  'policia rodoviaria','corpo de bombeiros','batalhao','quartel','hospital militar'];
+  'policia rodoviaria','corpo de bombeiros','batalhao','quartel','hospital militar',
+  // e as policias que vem debaixo de um ministerio, agora que ministerio entra no
+  // DF: "MINISTERIO DA JUSTICA E SEGURANCA PUBLICA | MJ-DPRF-DEPART.DE
+  // POL.RODOVIARIA FEDERAL/DF" (06/10/2026)
+  'policia federal','policia penal','pol.rodoviaria','pol. rodoviaria','dprf','forca nacional'];
+
+// No DF entram tambem os CONSELHOS, o SENADO e os MINISTERIOS (usuario,
+// 06/10/2026: "Conselhos, Senado e Ministerios pode incluir"), que la sao a maior
+// parte das compras: "CONSELHO REGIONAL DE ADMINISTRACAO DO DF" (mobiliario e
+// ar-condicionado), "SENADO FEDERAL", "MINISTERIO DO MEIO AMBIENTE". O militar
+// continua fora pelo VETO_ORGAO acima ("MINISTERIO DA DEFESA", "COMANDO DO
+// EXERCITO"), e o Banco Central, as agencias e as estatais nao entraram.
+const FEDERAIS_DO_DF = ['conselho', 'senado federal', 'ministerio'];
 
 // Tribunais de qualquer esfera e secretarias de estado entraram em 05/10/2026, a
 // pedido do usuario ("pode adicionar secretarias de estado e tribunais"). No PNCP
@@ -187,6 +199,7 @@ function orgaoOk(o) {
   if (norm(o.esfera_nome) === 'municipal') return true;            // prefeitura, camara, autarquia
   if (TRIBUNAL.some(v => txt.includes(v))) return true;
   if (ESFERA_ESTADUAL.test(norm(o.esfera_nome)) && txt.includes('secretaria')) return true;
+  if (o.uf === 'DF' && FEDERAIS_DO_DF.some(v => txt.includes(v))) return true;
   return ENSINO.some(v => txt.includes(v)) || SAUDE.some(v => txt.includes(v));
 }
 
