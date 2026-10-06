@@ -179,6 +179,10 @@ const VETO_ORGAO = ['comando do exercito','comando da marinha','comando da aeron
   // POLICIA DE DIADEMA", "ESP-COM.POLIC.AREA METROP-4", "ESP-COMANDO DE
   // POLICIAMENTO DO INTER-9", "ESP-9. GRUPAMENTO DE BOMBEIROS (9.GB)"
   'policia','polic.','bombeiro','deleg.','delegacia',
+  // e o sistema prisional (usuario, 06/10/2026: "penitenciarias de SP saem"):
+  // "SAO PAULO SECRETARIA DA ADMINISTRACAO PENITENCIARIA", com as unidades
+  // "ESP-PENIT. FEMININA DE GUARIBA" e "ESP-PENITENCIARIA DE ITATINGA"
+  'penitenci','penit.','prisional','presidio',
   // e as estatais das Forcas Armadas, agora que estatal entra no DF
   'material belico','imbel','emgepron','amazul'];
 

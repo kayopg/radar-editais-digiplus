@@ -5185,6 +5185,17 @@ for (const e of dados.editais) {
       // UNIDADE" (Carmo do Rio Verde/GO, itens 53 a 59)
         .replace(/(?<=\S)\s+[-–]\s*$/, '');
     }
+    // O timbre da folha no MEIO do texto, com o nome do municipio do edital: "...
+    // Profundidade máxima: 400 mm. Estado do Paraná MUNICÍPIO DE GUAÍRA
+    // CARACTERÍSTICAS • ..." (Guaíra/PR, PCE 175, itens 1 e 2, 06/10/2026). So
+    // com "Estado de/do" e "Municipio de" + o nome do proprio municipio.
+    {
+      const nomeMun = String(e[C.municipio] || '').trim();
+      if (nomeMun) {
+        const mun = nomeMun.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+        t = t.replace(new RegExp('\\s(?:\\S+\\.gov\\.br\\s+)?(?:\\d{1,3}\\s+)?Estado\\s+d[oe]\\s+\\S+(?:\\s+d[oe]\\s+\\S+)?\\s+(?:MUNIC[ÍI]PIO|Munic[íi]pio|PREFEITURA\\s+MUNICIPAL|Prefeitura\\s+Municipal)\\s+[Dd][Ee]\\s+' + mun + '(?=\\s)', 'giu'), '');
+      }
+    }
     // O comeco do timbre da folha seguinte, com o nome do MUNICIPIO do edital, e
     // o numero e o codigo da linha seguinte antes dele: "...GARANTIA DE 12 MESES
     // 8 113588 DE PORTO BELO" (Porto Belo/SC, item 7, 05/10/2026) — o resto do
