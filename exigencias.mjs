@@ -205,6 +205,19 @@ function julga(texto, pos, termo, chave) {
   // O quadro de marcar: "...em valor correspondente a 5 % do valor total do
   // contrato? (x) nao ( ) sim" (Redentora e Humaita/RS) — marcado nao, dispensa.
   const marcouNao = /\(\s*x\s*\)\s*nao\b/.test(depois) && !/\(\s*x\s*\)\s*sim\b/.test(depois);
+  // O CAMPO do quadro-resumo com a resposta: "GARANTIA DE EXECUCAO (CAUCAO):
+  // NAO." e "EXIGENCIA DE AMOSTRA? | FORMA DE ADJUDICACAO" com "NAO | POR
+  // GRUPO" na linha de baixo (Codevasf, edital 53/2026, 18 fogoes industriais,
+  // 06/10/2026). Nos dois-pontos a resposta vem colada; na pergunta, e o
+  // primeiro sim/nao que vem depois, que a tabela poe o rotulo da coluna ao
+  // lado no meio.
+  let respostaDoCampo = null;
+  const campo = /^(?:\s*\([^)]{0,30}\))?\s*([?:])/.exec(depois);
+  if (campo) {
+    const resto = depois.slice(campo[0].length);
+    const m = campo[1] === '?' ? /^[^.;]{0,60}?\b(sim|nao)\b/.exec(resto) : /^\s*(sim|nao)\b/.exec(resto);
+    if (m) respostaDoCampo = m[1];
+  }
   // A negacao escrita no meio da clausula: "nao havera A exigencia da garantia
   // da contratacao" (Terra de Areia/RS), que a lista NEGA, sem o artigo, perdia.
   const negaNaClausula = /nao\s+(?:havera|sera|serao|devera|deverao)\s+(?:a\s+|o\s+)?(?:exigid|exigencia|adotad|solicitad|necessari|obrigatori)/.test(clausula);
@@ -228,6 +241,7 @@ function julga(texto, pos, termo, chave) {
   else if (naListaDeCustos) veredito = 'custo';
   else if (garantiaDoProduto || amostraDoProduto) veredito = 'produto';
   else if (marcouNao) veredito = 'dispensa';
+  else if (respostaDoCampo) veredito = respostaDoCampo === 'nao' ? 'dispensa' : 'exige';
   else if (conDist <= 100 || CONDICIONAL.some(c => clausula.includes(c))) veredito = 'condicional';
   else if (negaNaClausula) veredito = 'dispensa';
   else if (negDist <= 90) veredito = 'dispensa';      // negacao colada no termo

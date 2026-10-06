@@ -14,6 +14,9 @@ const BARRA = [
   ['A contratada devera prestar garantia contratual no percentual de 5% do valor do contrato.', ['Garantia contratual']],
   ['7.2 garantia de execucao do contrato sera exigida garantia de execucao do contrato, nos moldes do arts. 96 a 102 da lei, em valor correspondente a 5 % do valor total do contrato? ( ) nao (x) sim', ['Garantia contratual']],
   ['E obrigatoria a apresentacao de carta de solidariedade do fabricante junto a proposta.', ['Carta de solidariedade']],
+  // o campo do quadro-resumo respondido "sim"
+  ['valor estimado r$ 100.000,00. exigencia de amostra? forma de adjudicacao sim por item itens exclusivos para me/epp? nao', ['Amostra']],
+  ['garantia de execucao (caucao): sim. no percentual de 5% do valor do contrato.', ['Garantia contratual']],
 ];
 const PASSA = [
   // quadro marcado "nao" (Redentora e Humaita/RS)
@@ -32,6 +35,9 @@ const PASSA = [
   '9.1. e permitida a subcontratacao, inclusive em relacao as parcelas para as quais tenha sido exigida a apresentacao de capacidade tecnica ou prova de conceito, sem prejuizo das responsabilidades.',
   // a lista de custos (Sao Joao d'Alianca/GO)
   '9.8 responsabilizarem-se pelas despesas dos tributos, encargos trabalhistas, fretes, seguros, deslocamento de pessoal, prestacao de garantia e quaisquer outras que incidam 9.9 todos os itens deverao ser transportados',
+  // o quadro-resumo respondido "nao" (Codevasf, edital 53/2026)
+  'valor estimado r$ 3.768.339,30 (tres milhoes, setecentos e sessenta e oito mil, trezentos e trinta e nove reais e trinta centavos). exigencia de amostra? forma de adjudicacao nao por grupo itens exclusivos para me/epp? itens com cota reservada para me/epp? dec. nº 7.174/2010? nao sim nao modo de disputa',
+  'para o indice setorial foi escolhido o que representa o indicador mais proximo da efetiva variacao dos precos dos bens a serem fornecidos. garantia de execucao (caucao): nao. justifica-se por ser tratar de fornecimentos com pagamento a pronta entrega. a nao exigencia de garantia para contratos administrativos se justifica por facilitar o processo de contratacao',
 ];
 let erros = 0;
 for (const [t, esp] of BARRA) {
