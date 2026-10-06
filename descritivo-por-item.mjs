@@ -4548,6 +4548,68 @@ for (const e of dados.editais) {
       }
       if (melhor) { it[6] = t + ' ' + melhor; restosPelaCopia++; }
     }
+    // E o item que ficou SO COM O TITULO, quando o termo de referencia traz a
+    // descricao em blocos "Item N TITULO DESCRIÇÃO • ... GARANTIA • ... Item
+    // N+1": "APARELHO DE AR CONDICIONADO SPLIT 9.000 BTUS - AR3-NOVO DEFINIÇÃO •"
+    // e "BEBEDOURO INDUSTRIAL 25L - BB2- NOVO" (Guaíra/PR, PCE 175, itens 2 e 6,
+    // 06/10/2026) — o recorte parou no titulo ou pegou a linha da tabela de precos.
+    for (const it of v.itens) {
+      if (!it[6] || it[9] || !doRadar.has(String(it[0])) || it[6].length > 250) continue;
+      const n = +it[0];
+      if (!n) continue;
+      const titulo = normIgual(it[1]).replace(/[^a-z0-9]+/g, ' ').trim().slice(0, 20);
+      if (titulo.length < 12) continue;
+      let melhor = null;
+      for (const m of plano.matchAll(new RegExp('\\bItem\\s+0*' + n + '\\s+(?=\\p{Lu})', 'gu'))) {
+        const ini = m.index + m[0].length;
+        const prox = new RegExp('\\sItem\\s+0*' + (n + 1) + '\\s+\\p{Lu}', 'u').exec(plano.slice(ini, ini + 6000));
+        let bloco = plano.slice(ini, ini + (prox ? prox.index : 4000));
+        if (!/•/.test(bloco.slice(0, 200))) continue;
+        if (!normIgual(bloco.slice(0, 120)).replace(/[^a-z0-9]+/g, ' ').includes(titulo)) continue;
+        if (!/\.\s*$/.test(bloco)) { const p = bloco.lastIndexOf('. '); if (p > 0) bloco = bloco.slice(0, p + 1); }
+        bloco = bloco.trim();
+        if (bloco.length > it[6].length + 80 && (!melhor || bloco.length > melhor.length)) melhor = bloco;
+      }
+      // sem o "Item N", pelo proprio titulo seguido de "DESCRIÇÃO •": "...
+      // MUNICIPIO DE GUAÍRA BEBEDOURO INDUSTRIAL 25L - BB2-NOVO DESCRIÇÃO •
+      // Bebedouro elétrico industrial..." (item 6), ate o "DESCRIÇÃO •" do
+      // seguinte, voltando ao ultimo ponto final antes dele
+      if (!melhor) {
+        const chave = normIgual(it[1]).slice(0, 22);
+        const MARCA = /\s(?:DESCRI[ÇC][ÃA]O|DEFINI[ÇC][ÃA]O)\s+•/;
+        for (let k = planoN.indexOf(chave); k >= 0; k = planoN.indexOf(chave, k + 1)) {
+          const seg = plano.slice(k, k + 5000);
+          const marca = MARCA.exec(seg.slice(0, 140));
+          if (!marca) continue;
+          const depois = marca.index + marca[0].length;
+          const prox = MARCA.exec(seg.slice(depois));
+          let bloco = seg.slice(0, prox ? depois + prox.index : 4000);
+          const p = bloco.lastIndexOf('. ');
+          if ((prox || !/\.\s*$/.test(bloco)) && p > 0) bloco = bloco.slice(0, p + 1);
+          bloco = bloco.trim();
+          if (bloco.length > it[6].length + 80 && (!melhor || bloco.length > melhor.length)) melhor = bloco;
+        }
+      }
+      if (melhor) { it[6] = melhor; linhasCompletadas++; }
+    }
+    // E o comeco que ficou para tras, com o descritivo abrindo pela UNIDADE da
+    // medida: "Litros Especificações Técnicas: Com tecnóloga I Wave..." — na
+    // tabela, "... 5.822,40 8 Microondas capacidade de 30 Litros
+    // Especificações..." (Palmas/PR, edital 32, item 8). Volta o que esta entre
+    // o numero do item e esse comeco.
+    for (const it of v.itens) {
+      if (!it[6] || it[9] || !doRadar.has(String(it[0]))) continue;
+      if (!/^(?:Litros?|litros?|L|Kg|kg|BTUs?|Btus?|btus?|W|cm|mm)\b/.test(it[6])) continue;
+      const n = +it[0], ini = plano.indexOf(it[6].slice(0, 40));
+      if (!n || ini < 0) continue;
+      const antes = plano.slice(Math.max(0, ini - 120), ini);
+      const m = [...antes.matchAll(new RegExp('\\s0*' + n + '\\s+(?=\\p{Lu})', 'gu'))].pop();
+      if (!m) continue;
+      const cabeca = antes.slice(m.index + m[0].length).trim();
+      if (cabeca.length < 5 || cabeca.length > 80 || termoDaCategoria(normIgual(cabeca)) === -1) continue;
+      it[6] = cabeca + ' ' + it[6];
+      cabecasRecuperadas++;
+    }
   }
 
   rastro('antes da ortografia');
@@ -4732,7 +4794,10 @@ for (const e of dados.editais) {
     t = t.replace(/\s+Total\s+(?:do\s+)?Lote\s+\d+\s+R\$\s*[\d.,]+\s*$/i, '');
     // e a coluna "Unidade" no meio do titulo: "BEBEDOURO COLUNA Unidade 25L"
     // (Ressaquinha/MG, item 7; o edital escreve "BEBEDOURO COLUNA 25L")
-    t = t.replace(/(?<=[A-ZÀ-Ú]{3})\s(?:Unidade|Und|Unid)\.?\s(?=\d)/g, ' ');
+    t = t.replace(/(?<=[A-ZÀ-Ú]{3})\s(?:Unidade|Und|Unid)\.?\s(?=\d)/g, ' ')
+    // e "- UN" entre o titulo da tabela e a descricao: "REFRIGERADOR 240 LITROS
+    // - UN Refrigerador 240 litros..." (Sapiranga/RS, item 24, 06/10/2026)
+      .replace(/(?<=[A-ZÀ-Ú0-9]{2})\s[-–]\s+UN\s+(?=\p{Lu}\p{Ll})/u, ' - ');
     if (q) {
       // a quantidade e a unidade caidas no meio: "...alta resistência 01 Unidade
       // 39 Voltagem: 220 V" (Tupancireta/RS), e com a palavra seguinte
@@ -4809,6 +4874,86 @@ for (const e of dados.editais) {
       // e o numero e o codigo do catalogo na frente: "0001 240.21.61933
       // Refrigerador 310L Tipo I - 2022" (Toledo/PR, edital 87, item 29)
       t = t.replace(/^\d{3,5}\s+\d{3}\.\d{2}\.\d{3,6}\s+(?=\p{Lu})/u, '');
+      // e na FRENTE: o codigo BEC ("ITEM BEC: 5784050 Bebedouro Elétrico",
+      // Itaí/SP), o cabecalho da tabela com o numero e o codigo ("Item Código
+      // Nome do produto/serviço Quantidade Unidade Preço máximo Preço máximo
+      // total 1 77932 VENTILADOR de coluna", Rio Azul/PR) e o fim da linha de
+      // cima ("Voltagem 110V 4 68682-1 40,00 UN Ventilador de coluna 50 cm",
+      // Palmas/PR, edital 32, item 9)
+      t = t.replace(/^ITEM\s+BEC:?\s*\d+\s+/i, '')
+        .replace(/^(?:Lote:\s*Lote\s+\d+\s+)?Item\s+(?:C[óo]digo\s+)?Nome\s+do\s+produto\/servi[çc]o.*?Pre[çc]o\s+m[áa]ximo\s+total\s+\d{1,3}\s+(?:\d{4,7}\s+)?/i, '')
+        // (com o preco e o total, quando ainda estao ali: "Voltagem 110V
+        // 637,6800 6.376,80 4 68682-1 40,00 UN Ventilador...")
+        .replace(/^[^.]{0,60}?\s(?:\d{1,3}(?:\.\d{3})*,\d{2,4}\s+){0,2}\d{1,3}\s+\d{4,6}-\d\s+\d{1,5}(?:,\d{2})?\s+(?:UN|UND|UNID)\s+(?=\p{Lu})/u, '')
+        // e no MEIO: o cabecalho da tabela com o numero da folha ("...baixo
+        // nível 3 ITEM ELEM CÓDIGO UND QUANT ESPECIFICAÇÃO MÍNIMA de ruído",
+        // Votuporanga/SP, item 10), o rodape do SEI ("...PROVIDOS DE GRELHAS UN
+        // DESEMPATE Edital de Pregão Eletrônico 333/2026 (41688046) SEI
+        // 26.0.000056802-2 / pg. 7 DE AÇO REDONDO", Porto Alegre/RS) e o numero
+        // da folha antes do marcador ("...para as velocidades. 47 • Vazão", Guaíra/PR)
+        // (com o preco e o total na frente e as colunas de valor atras, quando
+        // o item continua na folha seguinte: "...em aço inox; 634,32 634,32 26
+        // ITEM ELEM CÓDIGO UND QUANT DESCRIÇÃO/ESPECIFICAÇÃO MÍNIMA VALOR
+        // ESTIMADO UNIT R$ TOTAL R$ As dobradiças e vedações da porta...",
+        // Votuporanga/SP, item 24)
+        .replace(/\s(?:\d{1,3}(?:\.\d{3})*,\d{2}\s+){0,2}\d{1,3}\s+ITEM\s+ELEM\s+C[ÓO]DIGO\s+UND\s+QUANT\s+(?:ESPECIFICA[ÇC][ÃA]O\s+M[ÍI]NIMA|DESCRI[ÇC][ÃA]O\/ESPECIFICA[ÇC][ÃA]O(?:\s+M[ÍI]NIMA)?)(?:\s+VALOR\s+ESTIMADO\s+UNIT\s+R\$\s+TOTAL\s+R\$)?\s*/g, ' ')
+        // o codigo BEC e COMPRAS e o elemento de despesa no meio da frase:
+        // "...destinado ao uso profissional em 1 BEC/SP 6021794 COMPRAS 630698
+        // 44905234 cozinha institucional" (Campinas/SP, edital 64)
+        .replace(/\s\d{0,3}\s*BEC\/SP\s+\d{5,8}\s+COMPRAS\s+\d{5,8}\s+(?:(?:3390|4490)\d{4}\s+)?/g, ' ')
+        .replace(/\s*(?:UN\s+)?(?:DESEMPATE\s+)?Edital\s+de\s+Preg[ãa]o\s+Eletr[ôo]nico\s+\d+\/\d{4}\s*\(\d{6,10}\)\s*SEI\s+[\d.\/-]+\s*\/\s*pg\.\s*\d+\s*/g, ' ')
+        .replace(/(?<=[.;])\s\d{1,3}\s+(?=•)/g, ' ');
+      // Na lista de 06/10/2026, os formatos de outros sistemas de compras:
+      // o item SEGUINTE do catalogo do Estado de SP ("...Abnt Nbr-10148/2011 e
+      // Atualizações Posteriores; ESPECIFICAÇÃO DETALHADA DO OBJETO CATALOGADO
+      // ITEM 09 ... Forno; Doméstico..." e, depois dele, um switch de rede no
+      // fogão do item 8 de São Paulo/SP, edital 91) e o cabecalho do lote
+      // seguinte ("...garantia mínima de 12 meses. Lote: Lote 5 Item Nome do
+      // produto/serviço Quantidade Unidade 1", Imbaú/PR)
+      corta(/\s*ESPECIFICA[ÇC][ÃA]O\s+DETALHADA\s+DO\s+OBJETO\s+CATALOGADO/);
+      corta(/\sLote:\s*Lote\s+\d+/);
+      // o elemento de despesa ("...Garantia de 12 Meses; 44905234 de 35", São
+      // Paulo/SP, edital 395) e o codigo BEC/COMPRAS ("...Ciclo Frio 342137
+      // (COMPRAS) 6167314 (BEC)", Piracicaba/SP)
+      corta(/\s(?:3390|4490)\d{4}\b(?=(?:\s+\S+){0,4}\s*$)/);
+      corta(/\s\d{5,8}\s*\((?:COMPRAS|BEC)\)/);
+      // (e o "(COMPRAS)" que fica sem o codigo na frente: "...Garantia: 1 ANO
+      // (COMPRAS) 5194474 (BEC)", Piracicaba/SP, item 2)
+      t = t.replace(/\s*\((?:COMPRAS|BEC)\)\s*$/, '');
+      // o codigo, o numero e o nome do item seguinte: "...Manual de Instruções;
+      // 6198104 6 Equipamento para Melhoria Da Qualidade Da Água; Purificador
+      // de Água;..." no micro-ondas (São Paulo/SP, edital 395, item 4)
+      corta(/\s\d{6,7}\s+\d{1,3}\s+(?=\p{Lu})/u);
+      // dois codigos com a unidade ou com o titulo do anexo atras: "...Atualizações
+      // Posterior 6272860 440943 unidade 3 8. Estimativa..." (São Paulo/SP,
+      // edital 126), "...12 Meses; 5556643 619006 23 2 und" (Guariba/SP),
+      // "...12 Meses; 291492 6091520 Planilha Orçamentária e Justificativa"
+      // (Itatinga/SP)
+      corta(/\s\d{5,8}\s+\d{5,8}\s+(?:\d{1,3}\s+)?(?:\d{1,5}\s+)?(?:unidades?|und|unid|un)\b/i);
+      corta(/\s\d{5,8}\s+\d{5,8}\s+(?=\p{Lu})/u);
+      // o rodape do SEI no fim: "...127v, cor branca Unidade 2 Termo de
+      // Referência 40679869 SEI 26.0.000121606-5 / pg." (Porto Alegre/RS,
+      // edital 308, item 18)
+      corta(/\s(?:Unidades?\s+\d{1,5}\s+)?(?:Termo\s+de\s+Refer[êe]ncia|Edital|Estudo|Planilha)[^()]{0,60}?\s\(?\d{6,10}\)?\s+SEI\s+[\d.\/-]+/i);
+      // a clausula seguinte do termo de referencia, numerada e com titulo em
+      // maiusculas: "...Aprox. 20,0 kg. 3.1 – SUBCONTRATAÇÃO Não será permitida
+      // a subcontratação..." (Mirassol/SP, edital 96, item 2)
+      corta(/(?<=[.;])\s\d{1,2}\.\d{1,2}(?:\.\d{1,2})?\s*[–-]\s*\p{Lu}{4,}/u);
+      // a assinatura eletronica: "...com cabo de madeira. municipal, em
+      // 23/09/2026, às 14:59:17 ..." (Não-Me-Toque/RS, item 19)
+      corta(/\s\p{L}+,\s+em\s+\d{2}\/\d{2}\/\d{4},\s+às\s+\d{1,2}:\d{2}/u);
+      // o titulo da secao seguinte do termo de referencia: "...substituindo as
+      // peças com defeito. 6. EXECUÇÃO DO OBJETO CONDIÇÕES DE EXECUÇÃO" (Guaíra/PR)
+      corta(/(?<=[.;])\s\d{1,2}\.\s+(?:EXECU[ÇC][ÃA]O\s+DO\s+OBJETO|MODELO\s+DE\s+(?:EXECU|GEST)|CONDI[ÇC][ÕO]ES\s+DE\s+(?:EXECU|ENTREGA|PAGAMENTO)|OBRIGA[ÇC][ÕO]ES|DA\s+ENTREGA|DO\s+PAGAMENTO)/);
+      // a pesquisa de precos com asteriscos: "...Monofásico 5.498,90 * * * * *
+      // 4.739,05 * *" (Campo Grande/MS, item 12)
+      corta(/\s\d{1,3}(?:\.\d{3})*,\d{2}(?:\s+\*){2,}/);
+      // a quantidade e o lote seguinte: "...Potência de refrigeração / 2,9 kW
+      // 11 (unidades) 29 LOTE II – Participação Ampla" (São Paulo/SP, edital 33)
+      corta(/\s\d{1,5}\s+\(unidades?\)/i);
+      // o preco, o total e o numero da linha seguinte com o cabecalho: "...aço
+      // inox; 634,32 634,32 26 ITEM ELEM CÓDIGO UND" (Votuporanga/SP, edital 160)
+      corta(/\s\d{1,3}(?:\.\d{3})*,\d{2}\s+\d{1,3}(?:\.\d{3})*,\d{2}\s+\d{1,3}\s+\p{Lu}{2,}/u);
       // o estudo tecnico preliminar (ETP) depois da linha: "...01 UNIDADE A
       // quantidade foi definida considerando..." e "ALTERNATIVAS DISPONÍVEIS NO
       // MERCADO" (Santo Cristo/RS, edital 88, item 1), "...12 histórico baixo,
@@ -4856,6 +5001,42 @@ for (const e of dados.editais) {
       // a unidade e a quantidade antes da garantia, das colunas: "...normas
       // vigentes Unidade 02 12 meses" (Penápolis/SP, edital 101, item 4)
       if (q) t = t.replace(new RegExp('\\s(?:Unidades?|UN|UND)\\s+0*' + q + '(?=\\s+\\d{1,2}\\s+(?:meses|anos?)\\s*$)'), '');
+      // a unidade e a quantidade, nessa ordem, no fim: "...220V. un 6,00"
+      // (Bonópolis/GO), "...220V. UN 1,00 1" (Itaguaru/GO); o "UNID." solto
+      // ("...APRESENTAR CATÁLOGO UNID.", Senador Canedo/GO); e o numero que
+      // sobra depois do prazo da garantia ("...garantia mínima de 12 meses 10",
+      // Mato Leitão/RS)
+      if (q) t = t.replace(new RegExp('\\s+(?:un|und|unid)\\.?\\s+0*' + q + '(?:,0+)?(?:\\s+\\d{1,3})?\\s*$', 'i'), '');
+      t = t.replace(/\s+UNID\.$/, '')
+        // (e "01 unidade" depois da tensao: "...Duplex 455 Litros, 220v 01
+        // unidade", Humaitá/RS, RPPE 108, item 3; o "cesto para 10 unidades" nao
+        // vem depois de "220v")
+        .replace(/(?<=\d\s?[vV])\s+\d{1,4}\s+unidades?$/i, '')
+        // o numero da clausula seguinte sem o texto: "...Garantia mínima: 2
+        // (dois) anos; 1.2.1.20." (Ribeirão Preto/SP, edital 42, item 1)
+        .replace(/(?<=[;.])\s+\d{1,2}(?:\.\d{1,2}){2,}\.?$/, '')
+        // e o cabecalho da folha no meio: "...Tipo de Gás: R-32; TERMO DE
+        // REFERÊNCIA - AQUISIÇÃO - LICITAÇÃO 1.2.1.7. Cor da..." (o mesmo edital)
+        .replace(/\s*TERMO\s+DE\s+REFER[ÊE]NCIA\s*[-–]\s*AQUISI[ÇC][ÃA]O\s*[-–]\s*LICITA[ÇC][ÃA]O\s*/g, ' ')
+        // (e o "] Item" da tabela: "...assistência técnica gratuita na sua
+        // rede] Item", Guaíra/PR, item 10)
+        .replace(/\s*\]\s*Item\s*$/, '')
+        // e as colunas "UN DESEMPATE" antes do rodape do SEI ("...E ENVIAR
+        // CATÁLOGO. UN DESEMPATE", Porto Alegre/RS, edital 333, item 7)
+        .replace(/\s+(?:UN\s+)?DESEMPATE\s*$/, '')
+        // a unidade da coluna depois do ponto ("...INDICAR MARCA. Kit", "...
+        // INDICAR MARCA. *", Porto Alegre/RS, edital 308; "...(GWH12AGC-
+        // D3DNA4J/I). Item", Campo Grande/MS), o codigo do catalogo depois do
+        // ponto e virgula ("...Normas Da Abnt; 611340", Jales/SP) e "01
+        // unidade", com o zero na frente, que e coluna ("...220V. 01 unidade",
+        // "...220v 01 unidade 02 unidades R$", Humaitá/RS, RPPE 108)
+        .replace(/(?<=[.;)])\s+(?:Kit|KIT|Item|ITEM|\*)$/, '')
+        .replace(/(?<=[;.])\s+\d{5,7}\s*$/, '')
+        .replace(/\s+0\d\s+unidades?(?:\s+\d{1,4}\s+unidades?)*(?:\s+R\$)?\s*$/i, '')
+        // o rodape da pagina com a marca da cota: "...12 meses total. COTA – ME
+        // /EPP Página DE de JI" (Inhumas/GO, item 6)
+        .replace(/\s+COTA\s*[–-]\s*ME\s*\/?\s*EPP\s+P[áa]gina\b.*$/i, '')
+        .replace(/(?<=\b(?:meses|MESES|anos?|ANOS?)\.?)\s+\d{1,3}\s*$/, '');
       // o cabecalho da folha no meio da frase: "...MANUAL DE INSTRUÇÕES EM
       // PORTUGUÊS E EDITAL PREGÃO ELETRÔNICO (SRP) Nº 136/2026 - MUNICÍPIO DE
       // GUARAPUAVA 1 GARANTIA MÍNIMA" (Guarapuava/PR, PCE 136, item 1)
@@ -4875,7 +5056,11 @@ for (const e of dados.editais) {
       // 613924 PDM: 1045" (Sorocaba/SP, aviso 13), "...do Equipamento; 446165
       // 5524369 UF.1" (Casa Branca/SP, edital 381)
       corta(/\sC[óo]digo\s+Gov\.?:?\s*\d{4,8}/);
-      corta(/\s\d{5,8}\s+\d{5,8}(?:\s+UF\.?\s?\d*)?\s*$/);
+      // (e com um numero atras: "Fogão industrial com forno 255374 4755812 1",
+      // São Paulo/SP, edital 83)
+      // (como substituicao, e nao corte: no descritivo curto o corte pula o
+      // comeco — "Ventilador de Parede 612241 6431160 1", São Paulo/SP, edital 83)
+      t = t.replace(/\s\d{5,8}\s+\d{5,8}(?:\s+UF\.?\s?\d*)?(?:\s+\d{1,4})?\s*$/, '');
       // o timbre "P. M. CAARAPÓ-MS FOLHA 0531" lido pela metade: "...220V 6-MS
       // FOLHA 0531" (Caarapó/MS, item 25)
       corta(/\s\S{0,20}-[A-Z]{2}\d?\s+FOLHA\s+\d{2,5}/);

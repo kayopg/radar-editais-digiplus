@@ -361,7 +361,13 @@ const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motocicle
 "servicos para eventos","estruturas para eventos",
 // 22/09/2026: ventiladores de reposicao para inversor de frequencia WEG
 // (COMUSA, Novo Hamburgo/RS)
-"inversores de frequencia","inversor de frequencia"];
+"inversores de frequencia","inversor de frequencia",
+// 06/10/2026: aluguel de estrutura para evento (Porto Alegre/RS, edital 340, "Locacao
+// de estrutura, incluindo RH, para a realizacao das Assembleias", bebedouro e
+// climatizador por diaria) e compra de laboratorio (DMAE de Porto Alegre,
+// "Aparelhos, materiais e reagentes para laboratorio": freezer cientifico e
+// banho-maria com calibracao)
+"locacao de estrutura","reagentes"];
 // 5.2c — o objeto que TAMBEM compra eletrodomestico nao cai inteiro por uma
 // palavra (18/09/2026). "Aquisicao de Moveis, Eletrodomesticos, Eletronicos e
 // brinquedos", "motocicleta, bicicleta eletrica e refrigerador frost free" e
@@ -371,7 +377,7 @@ const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motocicle
 // dizem que o edital inteiro e outra coisa (sucata, velorio, varricao urbana,
 // pecas de manutencao) seguem derrubando sempre. "trator" como comeco de
 // palavra, pelo mesmo motivo do veto-item.mjs ("extrator").
-const VETO_OBJ_SEMPRE = new Set(["sucata","velorio","coletor de residuos","residuos organicos","rede de gases","manutencao de aparelhos","inversores de frequencia","inversor de frequencia"]);
+const VETO_OBJ_SEMPRE = new Set(["sucata","velorio","locacao de estrutura","coletor de residuos","residuos organicos","rede de gases","manutencao de aparelhos","inversores de frequencia","inversor de frequencia"]);
 const OBJ_ELETRO = /eletrodomestic|eletroportat|linha branca/;
 const vetoDoObjeto = txt => {
   const v = VETO_OBJ.find(t => t === 'trator' ? /(?:^|[^a-z])trator/.test(txt) : txt.includes(t));
@@ -658,7 +664,7 @@ const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 // derrubaria "Aspirador Po/Liquido, potencia 1.200, aplicacao: laboratorio"
 // (Rio Verde/GO), que e produto legitimo. Escopar na categoria resolve sem
 // precisar adivinhar o contexto pelo texto.
-const VETO_RF_CIENT = ['imunobiolog','termolab','hemocompon','laboratori','vacina'];
+const VETO_RF_CIENT = ['imunobiolog','termolab','hemocompon','laboratori','vacina','cientific'];
 // O aquecedor HALOGENO saiu do radar (usuario, 30/09/2026: "pode remover
 // aquecedor alogenio"): Arvorezinha/RS e Borrazopolis/PR, os dois de 1.200 W. O
 // aquecedor de ambiente de outro tipo (ceramico, a oleo, termoventilador)

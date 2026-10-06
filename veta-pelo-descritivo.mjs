@@ -49,7 +49,9 @@ const VETO = {
   RF: ['imunobiolog', 'termolab', 'hemocompon', 'vacina', '-86', '-80 °c', 'ultrabaix', 'ultra baix'],
   // e o banho-maria de controle digital com precisao de decimo de grau, que e de
   // laboratorio (IF Sudeste MG, Juiz de Fora, item 57, 22/09/2026)
-  CC: ['banho maria de laboratorio', 'banho-maria de laboratorio', 'aplicacoes laboratoriais', 'uso laboratorial', 'pid fuzzy', 'precisao de controle'],
+  // (e o de calibracao, "Banho maria digital, 2 a 4 litros com calibracao ... variacao
+  // maxima aceitavel de 0,5°C", DMAE de Porto Alegre/RS, 06/10/2026)
+  CC: ['banho maria de laboratorio', 'banho-maria de laboratorio', 'aplicacoes laboratoriais', 'uso laboratorial', 'pid fuzzy', 'precisao de controle', 'calibracao', 'variacao maxima aceitavel'],
   BB: ['laboratorial'],
   CX: ['soldagem', 'fumaca de bancada'],
   // lavanderia hospitalar (Sonora/MS, 21/09/2026)
@@ -63,7 +65,9 @@ const VETO = {
   // E o absorvedor de umidade de silica ou de saco, que o catalogo chama de
   // "Desumidificador ... ambiente com 300 m²" (Cascavel/PR, itens 48 e 76,
   // 22/09/2026).
-  TODAS: ['longarina de espera', 'absorvedor de umidade', 'gel de silica', 'saco de absorcao', 'caixa de desumidificacao'],
+  // (e o aparelho ALUGADO por diaria: "Bebedouro, tipo geladeira, para galao ...
+  // unidade/diaria", Porto Alegre/RS, edital 340, locacao de estrutura de evento)
+  TODAS: ['longarina de espera', 'absorvedor de umidade', 'gel de silica', 'saco de absorcao', 'caixa de desumidificacao', 'unidade/diaria'],
 };
 // O descritivo que ABRE com produto que a Digiplus nao cota (regra 3c do
 // README; exaustor, coifa e depurador sairam em 23/09/2026): o item 7 de Foz do
