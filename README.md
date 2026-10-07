@@ -139,6 +139,13 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    E a instalação em **item separado do mesmo lote**: quando o julgamento é por lote, quem leva
    o lote leva tudo, e o edital põe "INSTALAÇÃO DE AR 60.000 BTUS" como outro item ao lado do
    aparelho (Iporã/PR, 07/10/2026). Fora do RS e de SC, o aparelho que se instala sai.
+   E no edital por lote o card mostra **o lote inteiro** — também os itens que a Digiplus
+   não cota (instalação, tubulação, bomba de dreno), em cinza, e só dos lotes que têm
+   produto nosso (usuário, 07/10/2026). O PNCP não diz o lote de cada item; o `lotes.mjs`
+   só aceita o lote quando os itens, em blocos seguidos, somam **centavo por centavo** os
+   totais por lote impressos no edital, e a divisão é única (Joinville/SC, 17 lotes). Sem
+   essa confirmação, o card mostra todos os itens do edital. Valor e quantidade do edital
+   continuam sendo os dos nossos itens, e o resumo em PDF também.
 2. **Veto por objeto** — derruba o edital inteiro quando o objeto é de veículo, trator,
    alimento, material de limpeza e afins. Veículos casam com a busca porque têm
    ar-condicionado de fábrica. Se o objeto também compra eletrodoméstico ("Móveis,

@@ -79,6 +79,11 @@ h1 .plus{display:inline-block;background:#fff;color:#1f5fbf;padding:0 .28em .04e
 .kpi.hot .n{color:#ffd0c4}
 .kpi.hot .l::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff8a72;margin-right:6px;vertical-align:1px;box-shadow:0 0 0 0 rgba(255,138,114,.7);animation:pulsa 1.8s infinite}
 .kpi.gold .n{color:#ffe2a8}
+/* os itens do lote que nao cotamos: no card, em cinza (07/10/2026) */
+.tag.lote{background:var(--line2);color:var(--ink2);border-color:var(--line)}
+tr.dolote .irot,tr.dolote td.n{color:var(--ink3)}
+tr.dolote .inum{color:var(--ink3)}
+tr.dolote .idesc{display:none}
 @keyframes pulsa{70%{box-shadow:0 0 0 7px rgba(255,138,114,0)}100%{box-shadow:0 0 0 0 rgba(255,138,114,0)}}
 
 /* ------------------------------------------------------------ entrada
@@ -426,7 +431,7 @@ button.btn{font-family:inherit;cursor:pointer}
 // levam o mesmo nome; a varredura já grava tudo como PR.
 // BL, LD, CX e AQ saíram da varredura; ficam no mapa só para o dado antigo não
 // aparecer sem nome.
-var CAT={RF:"Para gelar",CL:"Para climatizar",CC:"Para cozinhar",PR:"Eletrodomésticos",EP:"Eletrodomésticos",LV:"Para lavar",BB:"Para beber",CX:"Para exaustão",BL:"Balanças",LD:"Lousa digital",GE:"Geradores",AQ:"Para aquecer água",OT:"Outros"};
+var CAT={LT:"Do mesmo lote",ED:"Também no edital",RF:"Para gelar",CL:"Para climatizar",CC:"Para cozinhar",PR:"Eletrodomésticos",EP:"Eletrodomésticos",LV:"Para lavar",BB:"Para beber",CX:"Para exaustão",BL:"Balanças",LD:"Lousa digital",GE:"Geradores",AQ:"Para aquecer água",OT:"Outros"};
 // [mun, uf, orgao, edital, fecha, qtd, valor, path, itens[[cat,qtd,vunit,desc]]]
 // [mun, uf, orgao, edital, fecha, qtd, valor, path, itens[[cat,qtd,vunit,desc]]]
 var D=[];
@@ -517,14 +522,21 @@ function notaParticipar(r, fechado){
   return "";
 }
 function situacaoAlerta(r){ return r[17] && /suspens|revogad|anulad|cancelad|desert|fracassad|impugnad/i.test(r[17]); }
+// Os itens que a Digiplus NAO cota e que entram no card por serem do mesmo
+// lote (LT, lote confirmado pelos totais) ou do edital por lote que nao deu
+// para confirmar (ED) — veta-pelo-descritivo.mjs e lotes.mjs, 07/10/2026. Busca,
+// filtros, contagens, selos de cota e o resumo em PDF contam so os NOSSOS.
+var DO_LOTE = {LT:1, ED:1};
+function nossos(r){ return r[8].filter(function(i){ return !DO_LOTE[i[0]]; }); }
+function doLote(r){ return r[8].filter(function(i){ return DO_LOTE[i[0]]; }); }
 function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
 
 function pass(r){
   if(fUF.length && fUF.indexOf(r[1])<0) return false;
-  if(fCAT.length && !r[8].some(function(i){return fCAT.indexOf(i[0])>=0;})) return false;
+  if(fCAT.length && !nossos(r).some(function(i){return fCAT.indexOf(i[0])>=0;})) return false;
   if(fPZ!==null){ if(encerrado(r[4]) || dias(r[4])>fPZ) return false; }
   if(fQ){
-    var h=(r[0]+" "+r[2]+" "+r[3]+" "+r[8].map(function(i){return i[3];}).join(" ")).toLowerCase();
+    var h=(r[0]+" "+r[2]+" "+r[3]+" "+nossos(r).map(function(i){return i[3];}).join(" ")).toLowerCase();
     if(h.indexOf(fQ)<0) return false;
   }
   return true;
@@ -579,19 +591,22 @@ function render(){
   if(!rows.length){ el.innerHTML='<div class="empty">Nenhum edital com esses filtros.</div>'; return; }
   el.innerHTML=rows.map(function(r,ordem){
     var p=prazo(r[4]);
-    var tg={}; r[8].forEach(function(i){ tg[i[0]]=(tg[i[0]]||0)+i[1]; });
+    var tg={}; nossos(r).forEach(function(i){ tg[i[0]]=(tg[i[0]]||0)+i[1]; });
     var tagh=Object.keys(tg).map(function(c){ return '<span class="tag">'+CAT[c]+" · "+tg[c]+"</span>"; }).join("");
     // Edital suspenso, revogado ou anulado no PNCP: a situacao vem na frente, em
     // vermelho. O pregao 42 de Salto/SP (R$ 5,9 milhoes) estava "Suspensa" em
     // 17/09/2026 e o card parecia um edital normal.
     if(situacaoAlerta(r)) tagh='<span class="tag alerta">'+esc(r[17])+"</span>"+tagh;
-    var nres=r[8].filter(reservada).length;
+    var nres=nossos(r).filter(reservada).length;
+    // o lote: quantos itens que nao cotamos entram no card, e por que
+    var nlt=doLote(r).length;
+    if(nlt) tagh+='<span class="tag lote">'+(r[8].some(function(i){return i[0]==="LT";}) ? "+ "+nlt+(nlt===1?" item":" itens")+" do mesmo lote" : "venda por lote · + "+nlt+(nlt===1?" item":" itens")+" do edital")+"</span>";
     if(nres) tagh+='<span class="tag cota">cota reservada ME/EPP · '+nres+(nres===1?" item":" itens")+"</span>";
     // Cada item com o numero, o nome do PNCP e — quando o card abre — o
     // descritivo do edital, que antes so aparecia no resumo em PDF.
     var itens=r[8].map(function(i){
       var ct=cotaItem(i);
-      return "<tr><td class='d'><div class='inum'>"+(i[5]?"Item "+i[5]+" · ":"")+(CAT[i[0]]||"")
+      return "<tr"+(DO_LOTE[i[0]]?" class='dolote'":"")+"><td class='d'><div class='inum'>"+(i[5]?"Item "+i[5]+" · ":"")+(CAT[i[0]]||"")+(DO_LOTE[i[0]]?" · não cotamos":"")
         +(ct?" · <span class='icota"+(String(i[7]||"").charAt(0)==="P"?" p":"")+"'>"+esc(ct)+"</span>":"")+"</div>"
         +"<div class='irot'>"+esc(i[3])+"</div><div class='idesc' data-n='"+(i[5]||"")+"'></div></td>"
         +"<td class='n'>"+i[1]+"</td><td class='n'>"+(i[2]?"R$ "+i[2].toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2}):"—")+"</td></tr>";
@@ -606,7 +621,7 @@ function render(){
       +'<div class="cside"><div class="val">'+brl(r[6])+'</div>'
       +'<div class="qt">'+r[5].toLocaleString("pt-BR")+' un</div>'
       +'<div class="dl '+p.c+'">'+p.t+'</div></div></div>'
-      +'<div class="body"><div class="blabel">Itens cotados · '+r[8].length+'</div>'
+      +'<div class="body"><div class="blabel">Itens cotados · '+nossos(r).length+(doLote(r).length ? " · os demais itens do "+(r[8].some(function(i){return i[0]==="LT";}) ? "mesmo lote" : "edital")+" aparecem em cinza" : "")+'</div>'
       +'<div class="scroller"><table><thead><tr><th>Descritivo</th><th class="n">Qtd</th><th class="n">Valor unit. ref.</th></tr></thead><tbody>'+itens+'</tbody></table></div>'
       +'<div class="links">'
       // Participar leva ao edital dentro do portal da disputa, em TODO edital,
@@ -859,8 +874,8 @@ function cotaItem(it){
 }
 function reservada(it){ var c = String(it[7] || "").charAt(0); return c === "R" || (!c && it[6] === "C"); }
 function resumoBeneficio(r){
-  var n = {E:0,S:0,N:0}, t = r[8].length, res = 0;
-  r[8].forEach(function(it){
+  var n = {E:0,S:0,N:0}, t = nossos(r).length, res = 0;
+  nossos(r).forEach(function(it){
     if(reservada(it)) res++;
     else if(String(it[7] || "").charAt(0) !== "P" && n[it[6]] !== undefined) n[it[6]]++;
   });
@@ -917,7 +932,7 @@ function indexaDescritivos(r, base){
 function resumeOutros(r, d){
   if(!d || !d.itens) return [];
   var meusNum = {}, meusDesc = {};
-  r[8].forEach(function(it){
+  nossos(r).forEach(function(it){
     if(it[5]) meusNum[it[5]] = 1;
     meusDesc[umaLinha(it[3]).toLowerCase()] = 1;
   });
@@ -1038,7 +1053,7 @@ async function montaResumo(r){
   if(r[9]) doc.campo("Objeto", r[9], { tam:9, larguraRotulo:52 });
 
   // --------------------------------------------------------- itens de interesse
-  secao(doc, "Itens de interesse (" + r[8].length + ")");
+  secao(doc, "Itens de interesse (" + nossos(r).length + ")");
   var ben = resumoBeneficio(r);
   doc.texto(r[5].toLocaleString("pt-BR") + " unidades · "
             + (r[6] ? moeda(r[6]) + " estimados" : "orçamento sigiloso")
@@ -1063,7 +1078,7 @@ async function montaResumo(r){
     // Em edital por lote, a tabela sai agrupada por lote — o lance e por lote, e
     // ler os itens do mesmo lote juntos e o que permite montar a proposta. Quem
     // nao tem lote identificado fica ao fim, na ordem da API.
-    ordenaPorLote(r[8]).map(function(it, k){
+    ordenaPorLote(nossos(r)).map(function(it, k){
       return [ rotuloNaTabela(it) || String(k + 1),
                qtdItem(it),
                it[2] ? moeda(it[2]) : "sigiloso",
@@ -1077,7 +1092,7 @@ async function montaResumo(r){
 
   doc.espaco(6);
   var totalEdital = DESC_ATUAL && DESC_ATUAL.total;
-  doc.texto("Categorias: " + r[8].map(function(it){ return CATPDF[it[0]]; })
+  doc.texto("Categorias: " + nossos(r).map(function(it){ return CATPDF[it[0]]; })
               .filter(function(v,i,a){ return a.indexOf(v) === i; }).join(" · ")
             + (totalEdital ? "   ·   o edital tem " + totalEdital + " itens no total" : ""),
     { tam:8, cor:[0.45,0.45,0.45] });
@@ -1505,7 +1520,7 @@ function usaDados(j){
   // edital nenhum. Montado antes do fetch, D ainda esta vazio e nao sobra
   // categoria nenhuma.
   var catsUsadas = {};
-  D.forEach(function(r){ r[8].forEach(function(it){ catsUsadas[it[0]] = 1; }); });
+  D.forEach(function(r){ nossos(r).forEach(function(it){ catsUsadas[it[0]] = 1; }); });
   multi("cat", Object.keys(CAT).filter(function(k){ return catsUsadas[k]; })
     .map(function(k){ return {l:CAT[k], v:k}; }), fCAT);
 

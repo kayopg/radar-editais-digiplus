@@ -572,6 +572,9 @@ async function anexaPaginas(doc, r, fontes, modo, itens) {
 }
 
 export async function montaResumo(r, opts = {}) {
+  // os itens do lote que nao cotamos (LT e ED, 07/10/2026) ficam no card; o
+  // resumo e dos nossos — eles aparecem nos "Demais itens do edital"
+  r = r.slice(); r[8] = (r[8] || []).filter(it => it[0] !== 'LT' && it[0] !== 'ED');
   const doc = PDF.novo({ rodape: 'Radar de Editais Digiplus · varredura de ' + (opts.varredura || '') });
 
   doc.tituloComValor(r[0] + ' / ' + r[1], r[6] ? moeda(r[6]) : 'orçamento sigiloso', { tam: 15 });

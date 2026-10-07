@@ -23,6 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, criaCotaNaUf } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 import { marcaCotas } from './cota.mjs';
+import { POR_LOTE, totaisPorLote, lotesPelosTotais } from './lotes.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const arqDados = path.join(DIR, 'docs', 'dados.json');
@@ -111,10 +112,6 @@ const vetoDoCatalogo = (d, cat) => ((termoMaisCedo(d) || { i: 0 }).i > TERMO_LON
 // Mariopolis/PR ("devidamente instalado, no local de entrega") e Santa Rita do
 // Passa Quatro/SP (BEC: "treinamento, instalacao e assistencia tecnica").
 const UF_INSTALA = new Set(['RS', 'SC']);
-// O julgamento por lote ou grupo, no texto do edital: "do tipo MENOR PRECO POR
-// LOTE", "o criterio de julgamento sera o de menor preco por lote" (Ipora/PR,
-// Joinville/SC, 07/10/2026)
-const POR_LOTE = /(?:menor preco|julgamento|adjudicac[a-z]*|criterio)[^.;]{0,60}\bpor (?:lote|grupo)\b|menor preco global por (?:lote|grupo)/;
 // o item de SERVICO de instalacao do aparelho, entre os itens do edital:
 // "INSTALACAO DE AR 60.000 BTUS", "46895 - INSTALACAO DE CONDICIONADOR DE AR
 // CASSETE", "Ar condicionado - instalação/montagem/desmontagem/remoção"
@@ -239,6 +236,11 @@ try { fora = JSON.parse(fs.readFileSync(path.join(DIR, 'editais-fora.json'), 'ut
 
 let tirados = 0, porClausula = 0, editaisFora = 0, recategorizados = 0, limpos = 0, semDescritivo = 0, foraDeCategoria = 0;
 const ficam = [];
+// Os itens que a Digiplus nao cota e que entram no card por serem do mesmo lote
+// (LT) ou do edital por lote que nao deu para confirmar (ED): o veta os refaz a
+// cada execucao, entao primeiro saem os da execucao anterior.
+const DO_LOTE = new Set(['LT', 'ED']);
+for (const e of dados.editais) e[C.itens] = e[C.itens].filter(it => !DO_LOTE.has(it[0]));
 for (const e of dados.editais) {
   // O HTML e a acentuacao quebrada do PNCP (ver texto-pncp.mjs), tambem no
   // dados.json ja publicado.
@@ -383,6 +385,49 @@ for (const e of ficam) {
 }
 ficam.length = 0; ficam.push(...porNumero.values());
 
+// OS DEMAIS ITENS DO LOTE (usuario, 07/10/2026: "quando o edital tiver
+// produtos em lote, nao remova os itens que nao cotamos, pode manter todos os
+// itens do lote (APENAS DO LOTE)"). Quem leva o lote leva tudo: a instalacao,
+// a tubulacao e a bomba de dreno de Joinville/SC estao no mesmo lote do
+// ar-condicionado. Com o lote confirmado ao centavo (lotes.mjs), entram os
+// itens dos lotes que tem produto nosso, como LT; sem confirmacao, entram
+// todos os itens do edital, como ED (decisao dele no mesmo dia). O valor e a
+// quantidade do edital continuam sendo so os dos nossos itens.
+let editaisComLote = 0, editaisInteiros = 0, itensDoLote = 0, lotesMarcados = 0;
+for (const e of ficam) {
+  const v = desc.editais[e[C.path]];
+  if (!v || !(v.itens || []).length) continue;
+  const texto = (v.secoes || []).map(s => s.texto).join(' ').replace(/\s+/g, ' ');
+  if (!POR_LOTE.test(norm(texto))) continue;
+  const nossos = new Set(e[C.itens].map(it => +it[5]));
+  const todos = v.itens.map(x => ({ x, n: +x[0], total: Math.round((+x[2] || 0) * (+x[4] || 0) * 100) / 100 }))
+    .sort((a, b) => a.n - b.n);
+  const lote = lotesPelosTotais(todos, totaisPorLote(texto));
+  let entram, cod;
+  if (lote) {
+    const lotesNossos = new Set([...nossos].map(n => lote.get(n)));
+    entram = todos.filter(t => lotesNossos.has(lote.get(t.n)) && !nossos.has(t.n));
+    cod = 'LT'; editaisComLote++;
+    // o lote confirmado vai para o descritivos.json, para o resumo agrupar por lote
+    const noLote = {};
+    for (const t of todos) {
+      const l = lote.get(t.n), k = (noLote[l] = (noLote[l] || 0) + 1);
+      if (t.x[7] !== l || t.x[8] !== k) { t.x[7] = l; t.x[8] = k; lotesMarcados++; }
+    }
+  } else {
+    entram = todos.filter(t => !nossos.has(t.n));
+    cod = 'ED'; editaisInteiros++;
+  }
+  if (!entram.length) continue;
+  for (const t of entram) {
+    const rot = limpaTextoPncp(t.x[1]);
+    e[C.itens].push([cod, +t.x[2] || 0, +t.x[4] || 0, rot.length > 400 ? rot.slice(0, 397) + '...' : rot, t.x[3] || '', t.n, t.x[5] || '']);
+    itensDoLote++;
+  }
+  e[C.itens].sort((a, b) => a[5] - b[5]);
+}
+console.log(`lotes: ${editaisComLote} edital(is) com o lote confirmado pelos totais, ${editaisInteiros} por lote sem confirmacao (todos os itens), ${itensDoLote} item(ns) que nao cotamos no card`);
+
 // A cota reservada de ME/EPP, item a item, em it[7] (ver cota.mjs): 'R',
 // 'R:n' (a principal no item n) ou 'P:n' (a reservada no item n). E o
 // principal que saiu do recorte com a marca "(COTA EXCLUSIVA...)" copiada da
@@ -408,7 +453,7 @@ for (const e of ficam) {
 console.log(`${tirados} item(ns) vetado(s) pelo descritivo, ${semDescritivo} sem descritivo, ${foraDeCategoria} de categoria que saiu, ${editaisFora} edital(is) fora (${porClausula} por clausula de instalacao no corpo), ${recategorizados} item(ns) de categoria corrigida`);
 if (limpos) console.log(`${limpos} texto(s) do PNCP limpos de HTML e acentuacao quebrada`);
 if (cotas) console.log(`${cotas} marca(s) de cota ME/EPP mudaram` + (descLimpos ? `, ${descLimpos} descritivo(s) de cota principal sem a marca da reservada` : ''));
-if (!mostra && (tirados || semDescritivo || foraDeCategoria || editaisFora || recategorizados || limpos || cotas)) {
+if (!mostra && (tirados || semDescritivo || foraDeCategoria || editaisFora || recategorizados || limpos || cotas || itensDoLote || editaisComLote || editaisInteiros)) {
   dados.editais = ficam;
   dados.meta.editais = ficam.length;
   // O porUf vem do publicar.mjs, que rodou ANTES deste veto — sem recalcular
@@ -420,7 +465,7 @@ if (!mostra && (tirados || semDescritivo || foraDeCategoria || editaisFora || re
   fs.writeFileSync(arqDados, JSON.stringify(dados), 'utf8');
   console.log(`docs/dados.json: ${ficam.length} editais`);
 }
-if (!mostra && descLimpos) {
+if (!mostra && (descLimpos || lotesMarcados)) {
   fs.writeFileSync(path.join(DIR, 'docs', 'descritivos.json'), JSON.stringify(desc), 'utf8');
-  console.log('docs/descritivos.json: ' + descLimpos + ' descritivo(s) corrigido(s)');
+  console.log('docs/descritivos.json: ' + descLimpos + ' descritivo(s) corrigido(s), ' + lotesMarcados + ' item(ns) com o lote confirmado');
 }
