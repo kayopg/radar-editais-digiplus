@@ -897,6 +897,19 @@ const CABECALHO_HASH = /\s*Documento assinado digitalmente\s*-\s*Por favor, veri
 // do item 15 saia "...baixa pressao; em ferro fundido UNID 8 1.832,97
 // 14.663,76 30x30; bandeja coletora...". Cortar ali jogaria fora a segunda
 // metade da especificacao; entao sai o grupo de valores e fica o resto.
+const QTD_E_PRECOS_4 = /\s(\d{1,4})\s+([\d.]+,\d{4})\s+([\d.]+,\d{2})(?=\s)/g;
+const numBr = s => +s.replace(/\./g, '').replace(',', '.');
+const qtdOuEspecificacao = (m, q, u, tot) => {
+  const T = numBr(tot), perto = (a, b) => Math.abs(a - b) <= Math.max(1, b * 0.01);
+  if (perto(+q * numBr(u), T)) return ' ';
+  // (ou o milhar do unitario, separado por espaco na leitura do PDF: "AR 4
+  // 572,5000 18.290,00" e R$ 4.572,50 vezes 4 — Caarapó/MS, item 23)
+  if (/^\d{3},/.test(u) && q.length <= 3) {
+    const un = numBr(q + '.' + u), k = Math.round(T / un);
+    if (k >= 1 && perto(k * un, T)) return ' ';
+  }
+  return ' ' + q + ' ';
+};
 const VALORES_DA_LINHA = [
   // Unidade, quantidade e os dois precos da coluna da direita, que caem no meio
   // da especificacao quando ela passa para a folha seguinte: "...Componentes
@@ -912,8 +925,10 @@ const VALORES_DA_LINHA = [
   /\s(?:Un|UN|Und|UND)\s+\d{1,4}(?:\s+\d{1,4}){0,3}\s+[\d.]+,\d{2}\s+[\d.]+,\d{2}(?=\s)/g,
   // Quantidade e precos de quatro casas no meio da celula: "Ar-condicionado
   // tipo Split Piso- 10 11.980,8333 119.808,33 Teto, com capacidade de 60.000
-  // BTU/h" (Maquine/RS, 22/09/2026).
-  /\s\d{1,4}\s+[\d.]+,\d{4}\s+[\d.]+,\d{2}(?=\s)/g,
+  // BTU/h" (Maquine/RS, 22/09/2026). O numero so sai junto quando e mesmo a
+  // quantidade (vezes o unitario da o total): em "CAPACIDADE DE 100 6.140,0000
+  // 122.800,00 LITROS" ele e da especificacao (Caarapó/MS, PE 35, 06/10/2026).
+  QTD_E_PRECOS_4,
   // A unidade, a quantidade e os dois precos entre o titulo em caixa alta e a
   // especificacao: "...SPLIT HI-WALL - 12.000 BTU/H UNIDADE 72 R$ 2.013,00 R$ R$
   // 144.936,00 Aparelho de ar-condicionado..." (Bento Goncalves/RS). Vem antes
@@ -928,7 +943,10 @@ const VALORES_DA_LINHA = [
   // Alegre/SP, "10 UN R$ 677,31 R$ 6.773,10" e "20 UN R$ R$" em Birigui/SP.
   // Como FIM de linha isto cortava a celula ao meio: a descricao continua
   // depois dos valores.
-  /\s\d{1,4}\s+(?:UNIDADES?|UNID|UND|UN|P[ÇC]S?|CX)\.?\s+R\$\s*(?:[\d.]+,\d{2,4})?(?:\s+R\$\s*(?:[\d.]+,\d{2})?)?(?=[\s,.;:]|$)/g,
+  // (e o contador da folha do anexo, que vem logo depois dos valores: "...
+  // VOLTAGEM 03 UN R$ 814,50 R$ 2.443,50 1/5 110 V", Birigui/SP, edital 129 —
+  // nao o "1/4 CV" da potencia)
+  /\s\d{1,4}\s+(?:UNIDADES?|UNID|UND|UN|P[ÇC]S?|CX)\.?\s+R\$\s*(?:[\d.]+,\d{2,4})?(?:\s+R\$\s*(?:[\d.]+,\d{2})?)?(?:\s+\d{1,2}\/\d{1,2}(?![\d\/])(?!\s*(?:CV|HP|cv|hp|pol|")))?(?=[\s,.;:]|$)/g,
   // "1 UNID 450,00 450,00" (Nova Esperanca/PR)
   /\s\d{1,4}\s+(?:UNIDADES?|UNID|UND|UN)\.?\s+[\d.]+,\d{2}\s+[\d.]+,\d{2}(?=[\s,.;]|$)/g,
   // A unidade com inicial maiuscula, o preco com tres casas e o rodape do
@@ -1209,7 +1227,7 @@ const ACABA_NO_MEIO = /(?:[,\-–(]|\s(?:de|da|do|das|dos|com|e|ou|para|em|a|o|a
 
 function limpaCelula(txt, timbres) {
   let t = ' ' + txt;
-  for (const re of VALORES_DA_LINHA) t = t.replace(re, ' ');
+  for (const re of VALORES_DA_LINHA) t = t.replace(re, re === QTD_E_PRECOS_4 ? qtdOuEspecificacao : ' ');
   t = tiraTimbre(t.replace(/\s{2,}/g, ' ').trim(), timbres);
   // O numero do PROXIMO item, que fica para tras quando a marca dele cai logo
   // depois: "...Peso Liquido: 31 kg 02", "...garantia minima 12 meses. 16
@@ -1366,7 +1384,8 @@ const RODAPE = [
   // da celula: "...Tecnologia: Inverter; 17 Impressao: 01/09/2026 COMPRAS Hora:
   // 15:10:49 TERMO DE REFERENCIA Tipo: Split Hi-Wall" (Sao Luiz Gonzaga/RS).
   /\s*(?:\d{1,3}\s+)?(?:[A-Z\u00c0-\u00da][A-Za-z\u00c0-\u00ff]*(?:\s+[A-Za-z\u00c0-\u00ff]+){0,4}\s+-\s+[A-Z]{2}\s+)?Impress[\u00e3a]o:\s*\d{2}\/\d{2}\/\d{4}\s+COMPRAS\s+Hora:\s*\d{2}:\d{2}:\d{2}\s+(?:TERMO DE REFER[\u00caE]NCIA|ESTUDO T[\u00c9E]CNICO PRELIMINAR)/g,
-  /\s*CEP[:\s]*\d{5}-?\d{3}/gi,
+  // (o CEP pode vir com ponto: "CEP: 36.970-000", Manhumirim/MG)
+  /\s*CEP[:\s]*\d{2}\.?\d{3}-?\d{3}/gi,
   /\s*PABX[^A-Za-zÀ-ú]*(?:\(\d{2}\))?[\d\s.\-]{6,}/gi,
   /\s*(?:Rua|Avenida|Av\.|Praça)\s+[^,]{3,45},\s*n?º?\s*\d+[^,]{0,30},?/gi,
   // Carimbo de assinatura digital, que o sistema estampa no rodape de cada
@@ -5195,6 +5214,33 @@ for (const e of dados.editais) {
         const mun = nomeMun.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
         t = t.replace(new RegExp('\\s(?:\\S+\\.gov\\.br\\s+)?(?:\\d{1,3}\\s+)?Estado\\s+d[oe]\\s+\\S+(?:\\s+d[oe]\\s+\\S+)?\\s+(?:MUNIC[ÍI]PIO|Munic[íi]pio|PREFEITURA\\s+MUNICIPAL|Prefeitura\\s+Municipal)\\s+[Dd][Ee]\\s+' + mun + '(?=\\s)', 'giu'), '');
       }
+    }
+    // O numero do CEP que o timbre da folha deixou para tras, sem o "CEP": "...
+    // ESMALTADO A FOGO, : 36.970-000 ACOMPANHA 2 GRELHAS" (Manhumirim/MG, edital
+    // 029, item 17, 06/10/2026).
+    t = t.replace(/\s+:\s*\d{2}\.?\d{3}-\d{3}(?=\s|$)/g, '');
+    // A descricao repetida pela celula, com uma palavra que o OCR leu diferente na
+    // segunda vez: "...COM TRÊS TORNEIRAS DE ÁGUA GELADA - BEBEDOURO INDUSTRIAL ...
+    // COM IRES TORNEIRAS DE ÁGUA GELADA" (Caarapó/MS, PE 35, item 14, 06/10/2026).
+    // Fica a primeira metade quando as duas tem as mesmas palavras menos uma.
+    for (const m of t.matchAll(/\s[-–]\s/g)) {
+      const a = normIgual(t.slice(0, m.index)).split(/\s+/).filter(Boolean);
+      const b = normIgual(t.slice(m.index + m[0].length)).split(/\s+/).filter(Boolean);
+      if (a.length >= 8 && a.length === b.length && a.filter((w, i) => w !== b[i]).length <= 1) { t = t.slice(0, m.index); break; }
+    }
+    // A coluna da garantia, que vem depois da unidade e da quantidade e fica no
+    // fim sem o nome quando as duas saem: "...compatível com as normas vigentes
+    // 12 meses", da linha "... vigentes Unidade 02 12 meses 05 Mesa" sob o
+    // cabecalho "Unidade Quantidade Garantia mínima" (Penápolis/SP, edital 101,
+    // item 4, 06/10/2026). So quando o texto nao fala de garantia.
+    if (!/garantia/i.test(t)) t = t.replace(/(?<=\p{L}{3})(?<!\b(?:de|validade|prazo|m[íi]nim[oa]|durante|por|at[ée]|em|com|uso|vida))\s(\d{1,2}) meses$/iu, '. Garantia: $1 meses');
+    // A unidade e a quantidade da linha, que ficaram no meio do texto quando o
+    // rodape da folha saiu: "...Injetor de gás horizontal. UN 2 Bandeja coletora
+    // de resíduos" (Paraisópolis/MG, edital 202, item 8, 06/10/2026). So com a
+    // quantidade do proprio item, entre fim de frase e palavra.
+    {
+      const q = Math.round(+it[2] || 0);
+      if (q) t = t.replace(new RegExp('(?<=[.;])\\s+(?:UNIDADES?|UNID|UND|UN)\\.?\\s+0*' + q + '(?:,0+)?(?=\\s+\\p{Lu}\\p{Ll})', 'gu'), '');
     }
     // O comeco do timbre da folha seguinte, com o nome do MUNICIPIO do edital, e
     // o numero e o codigo da linha seguinte antes dele: "...GARANTIA DE 12 MESES

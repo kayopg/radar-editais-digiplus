@@ -19,7 +19,9 @@ estado tem as suas linhas de produto (`LINHAS_DA_UF`, em `veto-item.mjs`):
 
 "Industrial" é a palavra no rótulo ou no começo do descritivo; a batedeira "de
 uso profissional" conta, e o bebedouro conta também pelo reservatório (50 L para
-cima, ou 25 L em inox — o de pressão, de garrafão e de mesa não). O edital que
+cima, ou 25 L em inox — o de pressão, de garrafão e de mesa não, nem quando o "tipo:
+industrial" vem só do catálogo do PNCP e o edital descreve um bebedouro de pressão
+de parede, como em Dourados/MS em 06/10/2026). O edital que
 fica sem item dessas linhas sai. Teste: `node testa-linhas-uf.mjs`.
 
 ## Como funciona
@@ -184,8 +186,20 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    "garantia de execução ... (x) não", a garantia do produto ("o período de garantia
    contratual será contado..."), a cláusula padrão da AGU sobre a amostra condicional e o
    destino das amostras ("as amostras entregues deverão ser recolhidas"), entre eles o
-   pregão de eletrodomésticos de R$ 6,2 milhões de Porto Alegre/RS. `testa-exigencias-casos.mjs`
-   guarda os casos.
+   pregão de eletrodomésticos de R$ 6,2 milhões de Porto Alegre/RS. Desde 06/10/2026 a
+   amostra se lê também pela SEÇÃO: quando "8 – DAS AMOSTRAS" abre com "poderá ser
+   solicitada", o "prazo para entrega da amostra é de 3 dias úteis, sob pena de
+   desclassificação" que vem depois é o procedimento da amostra que PODE ser pedida
+   (Manhumirim/MG); e o título seguido de "não haverá a exigência de amostra" dispensa
+   (Caxias do Sul/RS). A condição tem de ser a da própria amostra, na primeira frase da
+   seção que fala dela, e nada na seção pode dizer "será exigida" ou "é obrigatória".
+   Na revisão dos 34 editais barrados em 06/10/2026, 24 eram engano: "não exigência",
+   "não há necessidade", "não ser viável a exigência", "eventual exigência", "quando
+   houver", "caso se trate", a amostra de laboratório e a da pesquisa de preços, a
+   garantia do produto ("prazos de garantia", "garantia técnica"), a multa por "reforço de
+   garantia", o modelo de edital com "x% (xxxx por cento)" em branco e o texto do PDF com
+   as palavras grudadas ou partidas ("naoseraonecessarias", "na o havera"). Os 10 que
+   ficaram barrados exigem de verdade. `testa-exigencias-casos.mjs` guarda os casos.
 
 ## Ressalvas
 

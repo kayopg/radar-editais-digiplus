@@ -62,7 +62,13 @@ const INTERROGACAO = [
   // O MARCADOR de lista perdido depois de dois-pontos ou ponto e virgula, antes
   // do numero: "Kit com no minimo 5 discos: ? 01 Disco Ralador Fino (2mm) - ...;
   // ? 01 Disco Fatiador" (Inhumas/GO, item 19, 06/10/2026)
-  [/(?<=[:;]\s?)\?\s+(?=\d{1,2}\s)/g, '• '],
+  // (e depois de ponto final, que e onde caem os seguintes: "...raladas bem
+  // finas. ? 01 Disco Fatiador")
+  [/(?<=[:;.]\s?)\?\s+(?=\d{1,2}\s)/g, '• '],
+  // ... e no COMECO DA LINHA, com a tabulacao da lista do Word depois: o texto
+  // cru do PNCP e "discos:\r\n?\t01 Disco Ralador" e "bem finas.\r\n?\t01 Disco
+  // Fatiador" (Inhumas/GO, item 19). Pergunta de verdade nao abre linha com tab.
+  [/(?<=\n[ \t]*)\?\t+/g, '• '],
   // O gas refrigerante R600a e R134a com o "a" perdido: "Gas do produto:
   // R600? Tipo de degelo: Manual" (Pontao/RS, item 8, frigobar, 28/09/2026). O
   // edital escreve o "a" com a letra CIRILICA, que nao sobreviveu ao caminho ate

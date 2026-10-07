@@ -28,6 +28,8 @@ const CASOS = [
   ['Smart TV 50?, QLED 4 K, ANDROID', 'Smart TV 50", QLED 4 K, ANDROID'],                       // Inhumas/GO, 06/10
   ['EFICIÊNCIA ENERGÉTICA CLASSE ?A? (PROCEL), INCLUSO', 'EFICIÊNCIA ENERGÉTICA CLASSE “A” (PROCEL), INCLUSO'], // Miranda/MS
   ['Kit com no mínimo 5 discos: ? 01 Disco Ralador Fino (2mm) - cenoura; ? 01 Disco Fatiador', 'Kit com no mínimo 5 discos: • 01 Disco Ralador Fino (2mm) - cenoura; • 01 Disco Fatiador'], // Inhumas/GO                                  // Crissiumal/RS: "tela" diz que e polegada
+  ['raladas bem finas. ? 01 Disco Fatiador (1mm) - para repolho. ? 01 Disco Desfiador', 'raladas bem finas. • 01 Disco Fatiador (1mm) - para repolho. • 01 Disco Desfiador'], // Inhumas/GO, ja colapsado
+  ['raladas bem finas.\r\n?\t01 Disco Fatiador (1mm) - para repolho e saladas delicadas.\r\n?\t01 Disco Desfiador', 'raladas bem finas. • 01 Disco Fatiador (1mm) - para repolho e saladas delicadas. • 01 Disco Desfiador'], // Inhumas/GO, texto cru
   ['Jato de tinta Heat-Free MicroPiezo®?. Resolução', 'Jato de tinta Heat-Free MicroPiezo®. Resolução'],
   ['Windows Server®? 2003 (SP2) ou mais', 'Windows Server® 2003 (SP2) ou mais'],
   ['28 segundos por página em cores (200 dpi)???. Conectividade:', '28 segundos por página em cores (200 dpi). Conectividade:'],

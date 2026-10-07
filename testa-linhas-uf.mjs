@@ -17,6 +17,9 @@ const CASOS = [
   ['MS', 'APARELHO DE AR-CONDICIONADO SPLIT 9000 BTUS', '', true],
   ['MG', 'BEBEDOURO DE 150 LITROS INOX, CARACTERISTICAS: RESERVATORIO EM POLIPROPILENO', '', true],
   ['MG', 'BEBEDOURO 2 TORNEIRAS 50 LITROS AÇO INOX', 'BEBEDOURO 2 TORNEIRAS 50 LITROS AÇO INOX ESPECIFICAÇÃO: Bebedouro Água tipo: industrial, características adicionais: 2 torneiras', true],
+  // o catalogo diz "tipo: industrial", o edital diz bebedouro de pressao (Dourados/MS)
+  ['MS', 'Bebedouro Água tipo: industrial, características adicionais: 01 torneira e 01 torneira jato inclinado, suspenso', 'BEBEDOURO ACESSÍVEL EM INOX COM 2 TORNEIRAS Bebedouro de pressão de parede refrigerado adaptado para acessibilidade com duas torneiras', false],
+  ['MS', 'Bebedouro Água tipo: industrial, características adicionais: 4 torneiras latão cromado', 'Bebedouro Industrial acessível em Inox com sensor infravermelho de acionamento da água.', true],
   ['MS', 'BEBEDOURO INDUSTRIAL 100 LITROS 3 TORNEIRAS', '', true],
   ['MG', 'BEBEDOURO DE PRESSÃO TIPO COLUNA, COM GABINETE EM AÇO INOX ESCOVADO', 'BEBEDOURO DE PRESSÃO TIPO COLUNA ... CAPACIDADE DE REFRIGERAÇÃO DE, NO MÍNIMO, 2,0 LITROS/HORA', false],
   ['GO', 'BEBEDOURO 02 TORNEIRAS: • CAPACIDADE MÍNIMA DE ARMAZENAMENTO DE 25 LITROS; • GABINETE ESTRUTURAL FABRICADO EM AÇO INOX 430', '', true],

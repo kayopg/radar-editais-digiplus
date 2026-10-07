@@ -80,6 +80,11 @@ export function linhaDoProduto(d, posicaoDoTermo) {
 export function ehIndustrial(linha, rot, desc = '') {
   const frente = rot + ' ' + desc.slice(0, 160);
   if (/domestic/.test(rot) && !/industria/.test(rot)) return false;
+  // O bebedouro que o EDITAL descreve como de pressao, de garrafao ou de mesa
+  // nao e industrial, mesmo com o "tipo: industrial" do catalogo do PNCP no
+  // rotulo: "Bebedouro de pressão de parede refrigerado adaptado para
+  // acessibilidade" (Dourados/MS, edital 8, item 101, 06/10/2026).
+  if (linha === 'bebedouro' && desc && /de pressao|garrafao|galao|de mesa/.test(desc.slice(0, 160)) && !/industria/.test(desc.slice(0, 160))) return false;
   if (/industria/.test(frente) || /(?:tipo|uso|aplicacao|linha|modelo):? industrial/.test(desc)) return true;
   if (linha === 'batedeira' && /(?:^|[^a-z])profissional/.test(frente)) return true;
   if (linha === 'bebedouro') {

@@ -45,6 +45,14 @@ const NEGA = [
   'dispensado a', 'dispensada apresentacao', 'nao sera necessari',
   'nao obrigatori', 'nao e obrigatori', 'nao sera solicitad',
   'desnecessari', 'nao aplicavel', 'nao se aplica', 'isento de', 'isenta de',
+  // Revisao dos 34 barrados em 06/10/2026 (24 eram engano): "conclui-se pela NAO
+  // EXIGENCIA de garantia contratual" (General Carneiro/PR, Extrema/MG), "NAO HA
+  // NECESSIDADE de apresentacao de amostras" (Jatai/GO, Uniao da Vitoria/PR),
+  // "nao serao necessarias amostras" (Cascavel/PR), "a administracao julga NAO SER
+  // VIAVEL a exigencia de amostras" (Paranagua/PR), "a AUSENCIA DE EXIGENCIA de
+  // garantia" (Assis Chateaubriand/PR), "nao se faz necessaria" (Londrina/PR)
+  'nao exigencia', 'nao ha necessidade', 'nao havera necessidade', 'nao serao necessari',
+  'nao ser viavel', 'ausencia de exigencia', 'nao se faz necessari',
 ];
 
 // E estes confirmam que esta sendo pedido de verdade.
@@ -77,6 +85,9 @@ const SANCAO = [
   'impedimento de licitar', 'falsificad', 'deteriorad', 'praticar atos ilicitos',
   'em desacordo com as especificacoes', 'fraudar', 'conluio', 'multa de',
   'advertencia', 'rescisao', 'desclassificado quando',
+  // a multa "sobre o valor contratado, EM CASO DE RECUSA do adjudicatario em
+  // efetuar o REFORCO DE GARANTIA contratual" (Curitiba/PR, PCE 32, 06/10/2026)
+  'em caso de recusa', 'reforco de garantia',
 ];
 
 // Linguagem CONDICIONAL: o edital preve a hipotese mas nao obriga.
@@ -95,7 +106,7 @@ const CONDICIONAL = [
   // TECNICAMENTE VIAVEL, adotar criterios de sustentabilidade" — texto padrao
   // da Lei 14.133, que nao obriga a comprovar nada.
   'sempre que tecnicamente viavel', 'quando tecnicamente viavel',
-  'sempre que possivel', 'preferencialmente', 'quando for o caso',
+  'sempre que possivel', 'preferencialmente', 'quando for o caso', 'se for o caso',
   'na medida do possivel', 'sempre que couber',
   // Achados na auditoria dos 30, em 02/09/2026, todos do tipo que o usuario
   // mandou manter — o orgao pode pedir, nao obriga:
@@ -125,7 +136,50 @@ const CONDICIONAL = [
   'amostras entregues', 'amostra entregue', 'devolucao da amostra', 'amostras aprovadas',
   'amostras reprovadas', 'deverao ser recolhid', 'deverao ser retirad', 'poderao ser descartad',
   'manuseados e desmontados', 'retirada das amostras', 'retirada da amostra',
+  // "8.2. CASO SEJA SOLICITADA amostra dos produtos, a mesma devera ser
+  // entregue..." (Manhumirim/MG, 06/10/2026) — a lista so tinha o "caso solicitad"
+  'caso seja solicitad', 'caso sejam solicitad', 'se for solicitad', 'se forem solicitad',
+  'quando for solicitad', 'quando forem solicitad',
+  // "os proponentes assumem todos os custos de preparacao e apresentacao de seus
+  // documentos de habilitacao e EVENTUAIS amostras" (Borrazopolis/PR, 06/10/2026)
+  'eventuais amostras', 'eventual amostra',
+  // e os da revisao de 06/10/2026, todos de editais barrados por engano:
+  //   "EM CASO DE EXIGENCIA de amostra, 9.12 o licitante ... devera apresentar"
+  //   e "os materiais PARA OS QUAIS FORAM SOLICITADAS amostras" (Capanema/PR)
+  //   "sem prejuizo da POSSIBILIDADE DE SOLICITACAO de ... amostra" (Alto Piquiri/PR)
+  //   "a EVENTUAL EXIGENCIA de amostras ... a exigencia de amostra, QUANDO
+  //   ESTABELECIDA" (Divinopolis de Goias/GO)
+  //   "a exigencia de amostra NAO SERA AUTOMATICA ... DEVENDO RESTRINGIR-SE"
+  //   (Faxinal/PR)
+  //   "QUANDO EXCEPCIONALMENTE NECESSARIO, amostra" (Anapolis/GO)
+  //   "[fase de apresentacao de amostra(s) ... QUANDO HOUVER" (Sao Jose dos Campos/SP)
+  //   "CASO SE TRATE de licitacao com apresentacao de amostras" (Rancho Alegre/PR)
+  //   "NO CASO DE APRESENTACAO de amostras" (Joinville/SC)
+  //   "previsao de apresentacao de amostras quando ... NAO PUDER SER AFERIDA"
+  //   (Assis Chateaubriand/PR)
+  //   "possua as mesmas caracteristicas da AMOSTRA ENVIADA" (Alfenas/MG)
+  //   "foi ANALISADO A NECESSIDADE de exigencia de garantia" (General Carneiro/PR)
+  //   "[EM CASO DE HAVER garantia] ... x% (xxxx por cento)" (Vitorino/PR)
+  'em caso de exigencia', 'para os quais foram solicitad', 'para os quais forem solicitad',
+  'possibilidade de solicitacao', 'possibilidade de exigencia', 'eventual exigencia',
+  'quando estabelecid', 'nao sera automatica', 'devendo restringir-se',
+  'quando excepcionalmente', 'quando houver', 'caso se trate de', 'no caso de apresentacao',
+  'nao puder ser aferid', 'nao puder ser suficientemente aferid', 'amostra enviada',
+  'amostras enviadas', 'analisado a necessidade', 'analisada a necessidade',
+  'avaliada a necessidade', 'em caso de haver',
 ];
+// O verbo de faculdade com coisa no meio: "8.10.12.1. PODERA, no que couber, SER
+// EXIGIDO do licitante vencedor ... a apresentacao de amostras" (Borrazopolis/PR,
+// 06/10/2026), que a lista, so com "podera ser exigid" colado, nao via.
+const FACULDADE = /\bpoder(?:a|ao)\b[^.;]{0,40}?\b(?:ser\s+)?(?:solicit|exigi|requisit|requer)/;
+// A negacao escrita no meio da clausula, com o artigo: "nao havera A exigencia".
+const NEGA_RE = /nao\s+(?:havera|sera|serao|devera|deverao)\s+(?:a\s+|o\s+)?(?:exigid|exigencia|adotad|solicitad|necessari|obrigatori)/;
+// O que fica de uma secao quando se tira o que ela NEGA: o "nao sera exigida a
+// indicacao da marca" da secao seguinte nao obriga nada (Uniao da Vitoria/PR,
+// 06/10/2026, com o "na o" partido do PDF).
+const semNegada = s => s.replace(/n\s?a\s?o\s+(?:sera|serao|e|sao|havera)\s+(?:a\s+|o\s+)?(?:exigid|obrigatori)\w*/g, '');
+// O que obriga com todas as letras — e isso que a secao facultativa nao pode ter.
+const OBRIGA = /sera exigid|serao exigid|e obrigatori|sao obrigatori|sera obrigatori|serao obrigatori|exigir-se-a|obrigatoria a apresentacao/;
 
 // Acima disso o verbo quase certamente pertence a outra frase. Sem esse teto,
 // "podera solicitar carta de solidariedade" a 257 caracteres virava exigencia.
@@ -220,30 +274,110 @@ function julga(texto, pos, termo, chave) {
   }
   // A negacao escrita no meio da clausula: "nao havera A exigencia da garantia
   // da contratacao" (Terra de Areia/RS), que a lista NEGA, sem o artigo, perdia.
-  const negaNaClausula = /nao\s+(?:havera|sera|serao|devera|deverao)\s+(?:a\s+|o\s+)?(?:exigid|exigencia|adotad|solicitad|necessari|obrigatori)/.test(clausula);
+  const negaNaClausula = NEGA_RE.test(clausula);
   // A garantia DO PRODUTO, e nao a de execucao do contrato: "o periodo de
   // garantia contratual sera contado a partir da aceitacao definitiva"
   // (Porto Alegre/RS, 308). A regra e a caucao do art. 96.
   const garantiaDoProduto = chave === 'garantia'
     && (/^\s*(?:sera contad|de \d|minima|dos? (?:bens|produtos|materia(?:l|is)|equipamentos|itens)|contra defeit|do fabricante|de fabrica)/.test(depois)
-      || /(?:periodo|prazo) de\s*$/.test(ctx.slice(Math.max(0, rel - 40), rel)));
+      // "garantia contratual: exigencia de garantia TECNICA minima de 12 meses
+      // contra defeitos" (Vicosa/MG, 207), "os PRAZOS de garantia contratual
+      // minimos" (Almenara/MG), "a GARANTIA LEGAL e a garantia contratual
+      // ofertada" (Bela Vista do Paraiso/PR), 06/10/2026
+      || /^[^.;]{0,60}(?:garantia tecnica|contra defeitos|defeitos de fabricacao)/.test(depois)
+      || /(?:periodo|prazo)s? de\s*$/.test(ctx.slice(Math.max(0, rel - 40), rel))
+      || /garantia (?:legal|do fabricante)[^.;]{0,20}$/.test(ctx.slice(Math.max(0, rel - 60), rel)));
   // A amostra que e o PRODUTO: "saco esteril para coleta de amostras de
   // alimentos" (Vacaria/RS) estava na lista de itens.
   const amostraDoProduto = chave === 'amostra'
-    && /(?:coleta|armazenamento|transporte|acondicionamento|manipulacao) (?:e \w+ )?(?:de |das |da )?amostras?|apos a coleta|amostras? de (?:alimentos|agua|sangue|solo)|porta[- ]amostras?|amostrador|\besteril/.test(ctx.slice(Math.max(0, rel - 250), rel + termo.length + 250));
+    && /(?:coleta|armazenamento|transporte|acondicionamento|manipulacao|preservacao|conservacao) (?:e \w+ )?(?:de |das |da )?amostras?|apos a coleta|amostras? de (?:alimentos|agua|sangue|solo)|amostras a serem analisadas|porta[- ]amostras?|amostrador|\besteril/.test(ctx.slice(Math.max(0, rel - 250), rel + termo.length + 250));
+  // e a amostra da PESQUISA DE PRECOS: "a composicao da cesta de precos, ANALISE
+  // CRITICA DAS AMOSTRAS e definicao do valor estimado" (Anapolis/GO, 06/10/2026)
+  const amostraDePreco = chave === 'amostra' && /(?:analise critica|tratamento) d[ao]s? amostras?|cesta de precos/.test(ctx.slice(Math.max(0, rel - 120), rel + termo.length + 40));
+  // O modelo de edital NAO PREENCHIDO, com as duas alternativas e o percentual em
+  // branco: "[em caso de haver garantia] 10.1 a contratacao conta com garantia de
+  // execucao em valor correspondente a x% (xxxx por cento)" (Vitorino/PR)
+  const modeloEmBranco = /\bx\s?%|\(x+ por cento\)|\bxxxx\b/.test(clausula + ' ' + depois.slice(0, 160));
+  // Texto do PDF com as palavras grudadas ou partidas: "12.1.2.4.
+  // deixardeapresentar amostra" (Jardim/MS), "naoseraonecessariasamostras"
+  // (Cascavel/PR), "na o havera necessidade de exige ncia de garantia" (Uniao da
+  // Vitoria/PR). Sem os espacos, so na frase colada ao termo.
+  const colado = (ctx.slice(Math.max(0, rel - 60), rel) + termo).replace(/\s+/g, '');
+  const negaColada = NEGA.some(n => colado.includes(n.replace(/\s+/g, '')));
+  const sancaoColada = SANCAO.some(n => colado.includes(n.replace(/\s+/g, '')));
   // e o verbo de obrigacao longe do termo so conta se for da MESMA clausula:
   // "14.1.1 as amostras nao serao devolvidas e nem ressarcidas" (Dois Irmaos/RS)
   // nao exige nada — o "devera" a 190 caracteres era de outra
   const exigeNaClausula = EXIGE.some(e => clausula.includes(e));
+  // A SECAO da amostra que abre facultativa: "8 – DAS AMOSTRAS 8.1. Apos a fase
+  // de habilitacao, podera ser solicitada ... amostra dos produtos ... 8.3. O
+  // prazo para entrega da amostra e de 3 (tres) dias uteis a contar da
+  // solicitacao do Pregoeiro, sob pena de desclassificacao" (Manhumirim/MG,
+  // 06/10/2026). O 8.3, lido sozinho, exige; dentro da secao, e o procedimento
+  // da amostra que PODE ser pedida. Vale quando o que vem do titulo da secao
+  // ate o termo e facultativo e nada ali, nem na clausula do termo, obriga.
+  // (o proprio TITULO, "8.10.12. Da amostra:", se le pelo que vem logo depois)
+  // Desde 06/10/2026 vale para as quatro exigencias, nao so a amostra: "13.
+  // GARANTIA CONTRATUAL 13.1 ... foi analisado a necessidade de exigencia de
+  // garantia contratual. 13.2 ... conclui-se pela nao exigencia de garantia
+  // contratual" (General Carneiro/PR).
+  let secaoFacultativa = false, secaoDispensa = false;
+  {
+    // (o titulo: "8 – DAS AMOSTRAS", "8.10.12. Da amostra:", "7. AMOSTRA DO(S)
+    // PRODUTO(S)", "5.3. Apresentacao de amostra(s)", "2.5. Marcas e apresentacao
+    // de amostras" (Vacaria/RS), "6.3 Da exigencia de amostras" (Paranagua/PR),
+    // "4.7. Da exigencia de garantia da contratacao" — sempre com o ponto ou o
+    // travessao depois do numero, ou o numero de subitem, que "3 dias. 5
+    // amostras" nao e titulo)
+    // ("6.2 – DAS AMOSTRAS", Rio Novo/MG: o travessao vale depois do subitem)
+    const TITULO = String.raw`(?:^|\s)\d{1,2}(?:\.\d{1,2}){0,3}(?:\.?\s*[-–—)]|\.|(?<=\d\.\d{1,2}))\s*(?:[a-z]{3,15}\s+e\s+)?(?:(?:da|das|de|do|dos)\s+)?(?:(?:exigencia|apresentacao|entrega|prestacao)\s+(?:de|da|das|do)\s+)?`;
+    const palavra = termo.split(' ')[0].replace(/s$/, '') + 's?';
+    let corpo = null, secao = '';
+    const ehTitulo = new RegExp(TITULO + '$').test(texto.slice(Math.max(0, pos - 60), pos));
+    if (ehTitulo) {
+      corpo = texto.slice(pos + termo.length, pos + termo.length + 500);
+      secao = texto.slice(pos, pos + 700);
+    } else {
+      const antes = texto.slice(Math.max(0, pos - 2500), pos);
+      const cab = [...antes.matchAll(new RegExp(TITULO + palavra + '\\b', 'g'))].pop();
+      if (cab) {
+        corpo = antes.slice(cab.index + cab[0].length);
+        secao = texto.slice(Math.max(0, pos - 2500) + cab.index, pos + 700);
+      }
+    }
+    // A condicao tem de ser a da propria exigencia: vale a primeira frase da
+    // secao que fala dela. Em "9. DAS AMOSTRAS 9.1 Caso necessario, podera
+    // solicitar catalogo. 9.2 O vencedor devera apresentar amostra" a condicao e
+    // do catalogo.
+    if (corpo !== null) {
+      const primeira = corpo.split(/(?:^|\s)\d{1,2}(?:\.\d{1,2}){1,3}\.?\s|[.;]\s/).find(f => new RegExp(palavra).test(f)) || '';
+      secaoFacultativa = (CONDICIONAL.some(c => primeira.includes(c)) || FACULDADE.test(primeira))
+        && !OBRIGA.test(semNegada(corpo)) && !OBRIGA.test(clausula);
+      // e a secao que diz que NAO exige, no comeco: "5.3. Apresentacao de
+      // amostra(s) 5.3.1. Nao havera a exigencia de amostra(s) nesta etapa"
+      // (Caxias do Sul/RS). Nada nela pode obrigar, e fora do titulo a clausula
+      // do termo tambem nao: em "X.1 Nao sera exigida amostra para os itens 1 a
+      // 5. X.2 Para os itens 6 a 10, o licitante devera apresentar amostra" o X.2
+      // exige.
+      const inicio = secao.slice(0, 450);
+      // (sem os espacos tambem: "4.7.1. na o havera necessidade de exige ncia de
+      // garantia contratual", Uniao da Vitoria/PR)
+      const inicioColado = inicio.replace(/\s+/g, '');
+      secaoDispensa = (NEGA.some(n => inicio.includes(n) || inicioColado.includes(n.replace(/\s+/g, ''))) || NEGA_RE.test(inicio)) && !OBRIGA.test(semNegada(secao))
+        && (ehTitulo || !/\bdever(?:a|ao)\b|\bdevem?\b|sob pena/.test(clausula));
+    }
+  }
 
   let veredito;
-  if (sanDist <= 130) veredito = 'sancao';
+  if (sanDist <= 130 || sancaoColada) veredito = 'sancao';
   else if (naListaDeCustos) veredito = 'custo';
-  else if (garantiaDoProduto || amostraDoProduto) veredito = 'produto';
+  else if (garantiaDoProduto || amostraDoProduto || amostraDePreco) veredito = 'produto';
   else if (marcouNao) veredito = 'dispensa';
   else if (respostaDoCampo) veredito = respostaDoCampo === 'nao' ? 'dispensa' : 'exige';
-  else if (conDist <= 100 || CONDICIONAL.some(c => clausula.includes(c))) veredito = 'condicional';
-  else if (negaNaClausula) veredito = 'dispensa';
+  else if (conDist <= 100 || CONDICIONAL.some(c => clausula.includes(c)) || FACULDADE.test(clausula) || modeloEmBranco) veredito = 'condicional';
+  else if (secaoFacultativa) veredito = 'condicional';
+  else if (secaoDispensa) veredito = 'dispensa';
+  else if (negaNaClausula || negaColada) veredito = 'dispensa';
   else if (negDist <= 90) veredito = 'dispensa';      // negacao colada no termo
   else if (exiDist <= 120) veredito = 'exige';
   else if (negDist < exiDist) veredito = "dispensa";
