@@ -1,0 +1,105 @@
+name: Site
+
+# O site (GitHub Pages) com tudo o que o artefato tem: a folha de abertura do
+# edital no resumo e o edital convertido para PDF quando o orgao publicou em
+# ZIP, RAR, DOC, DOCX, ODT ou RTF. Pedido do usuario em 07/10/2026.
+#
+# As duas coisas nao vao para o git: as folhas passam de 50 MB por dia e os
+# convertidos de 15 MB, e versionar isso poria gigabytes no historico em
+# poucos meses. Este job gera os dois, monta a pasta _site (site.mjs) e manda
+# direto para o Pages. Para isso o Pages tem de estar com a fonte "GitHub
+# Actions" (Settings > Pages > Build and deployment > Source).
+#
+# Roda quando a varredura do dia termina, quando a lista e corrigida a mao
+# (push na docs/) e pelo botao "Run workflow".
+
+on:
+  workflow_run:
+    workflows: ["Varredura PNCP"]
+    types: [completed]
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'site.mjs'
+      - 'pagina-abertura.mjs'
+      - 'edital-pdf.mjs'
+      - 'pdf-do-documento.mjs'
+      - '.github/workflows/site.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Uma publicacao por vez; a seguinte espera, nao cancela a que esta no ar.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    # a varredura que falhou nao mudou a lista: nada a publicar
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      # bsdtar abre o RAR; o LibreOffice converte DOC, DOCX, ODT e RTF (na
+      # maquina do usuario quem converte e o Word, que aqui nao existe)
+      - name: Ferramentas de conversao
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libarchive-tools libreoffice-writer-nogui > /dev/null
+
+      # As folhas e os convertidos de ontem: so os editais novos sao gerados.
+      # O site.mjs poda os dois aos editais do dia antes de guardar de novo.
+      - name: Folhas e convertidos de ontem
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            docs/aberturas.json
+            docs/editais-pdf.json
+          key: site-${{ github.run_id }}
+          restore-keys: site-
+
+      # Falha de rede num edital nao derruba o site: ele sai sem a folha ou sem
+      # o convertido daquele edital, e a proxima execucao tenta de novo.
+      - name: Folhas de abertura
+        run: node pagina-abertura.mjs --faltantes || echo "::warning::pagina-abertura falhou; publicando o que ha"
+
+      - name: Editais convertidos para PDF
+        run: node edital-pdf.mjs --faltantes --teto 25 || echo "::warning::edital-pdf falhou; publicando o que ha"
+
+      - name: Montar o site
+        run: node site.mjs _site
+
+      - name: Guardar para amanha
+        if: always()
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            docs/aberturas.json
+            docs/editais-pdf.json
+          key: site-${{ github.run_id }}
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - id: deploy
+        uses: actions/deploy-pages@v4

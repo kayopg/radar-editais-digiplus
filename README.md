@@ -5,7 +5,9 @@ de linha branca, climatização, cocção, lavanderia e eletroportáteis — fil
 **fornecimento**: fora do RS e de SC, sem exigência de instalação ou montagem; em todo lugar,
 sem manutenção.
 
-**Página:** https://kayopg.github.io/radar-editais-digiplus/
+**Página:** https://kayopg.github.io/radar-editais-digiplus/ — desde 07/10/2026 com a folha de
+abertura do edital no resumo e o edital convertido para PDF, como o artefato. Quem publica é o
+`site.yml`, depois de cada varredura; o Pages precisa estar com a fonte "GitHub Actions".
 
 Estados atendidos: PR, RS, SP, MG, GO, DF, MS e SC (MT saiu em 06/10/2026: a
 Digiplus não cota mais nada lá). Desde 05/10/2026 cada
@@ -71,8 +73,9 @@ descritivos.mjs → itens-embutidos.mjs → descritivo-por-item.mjs → docs/des
 | `descritivos-manuais.json` | Descritivos transcritos à mão do edital para itens cuja tabela nenhuma regra lê com segurança (OCR com colunas de preço no meio da célula). Cada entrada guarda a quantidade e o preço do PNCP conferidos e deixa de valer se o órgão mudar o item; o `descritivo-por-item.mjs` aplica todo dia. |
 | `ortografia.mjs` | Revisão ortográfica dos descritivos (acentos que o edital não escreveu, letras perdidas na extração do PDF), com os dicionários de `ortografia/` (pt-BR e en-US, LGPL). |
 | `confere-*.mjs`, `audita-descritivos.mjs` | Auditorias do recorte: texto de um item invadindo outro, cortes, numeração, mistura. Contam no Summary do job, não derrubam. |
-| `edital-pdf.mjs` | O edital que o órgão publicou em ZIP, RAR, DOC, DOCX, ODT ou RTF, convertido para PDF: abre o pacote (inclusive zip com rar dentro), escolhe o documento do edital e converte o que não é PDF. Grava `docs/editais-pdf.json`, que só viaja dentro do artefato — no card o botão "Baixar edital (PDF)" entrega esse arquivo e o link ao lado continua levando ao original no PNCP. |
-| `pdf-do-documento.mjs` | Converte DOC, DOCX, ODT, RTF e HTML para PDF pelo LibreOffice, se houver, ou pelo Word (COM do Windows). Roda só na máquina de quem monta o artefato; o robô do GitHub não tem conversor. |
+| `edital-pdf.mjs` | O edital que o órgão publicou em ZIP, RAR, DOC, DOCX, ODT ou RTF, convertido para PDF: abre o pacote (inclusive zip com rar dentro), escolhe o documento do edital e converte o que não é PDF. Grava `docs/editais-pdf.json`, que vai para o artefato e, desde 07/10/2026, para o site — no card o botão "Baixar edital (PDF)" entrega esse arquivo e o link ao lado continua levando ao original no PNCP. |
+| `pdf-do-documento.mjs` | Converte DOC, DOCX, ODT, RTF e HTML para PDF pelo LibreOffice, se houver, ou pelo Word (COM do Windows). Na máquina do usuário é o Word; no robô do site, o LibreOffice. |
+| `site.mjs` | Monta o site na pasta `_site`: a `docs/` mais uma folha de abertura por edital (`capas/<cnpj-ano-seq>.json`) e cada edital convertido (`pdfs/<cnpj-ano-seq>.pdf`, com o `pdfs/indice.json`), para a página buscar só o edital que abriu. Roda no `.github/workflows/site.yml`, que gera as folhas e os convertidos e publica direto no Pages, sem commit (07/10/2026). |
 | `artefato.mjs` | Monta a página num arquivo só, com dados e PDF embutidos, para publicar como artefato. |
 | `docs/index.html` | A página, com a identidade da Loja DigiPlus. Sem build; as fontes vêm do Google Fonts, com fonte do sistema de reserva. |
 | `docs/pdf.js` | Gerador de PDF próprio, sem biblioteca. "Baixar resumo + edital" baixa um arquivo por edital, com a tabela de itens e o edital oficial anexado. |

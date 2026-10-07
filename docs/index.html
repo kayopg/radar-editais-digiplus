@@ -1038,10 +1038,22 @@ async function montaResumo(r){
 // Cada folha viaja como um PDF de carona em base64, com a página original na
 // frente e uma página em branco atrás; só a primeira é extraída.
 var ABERTURAS = null;
+// O nome do arquivo de cada edital no site: "75771295000107/2026/121" vira
+// "75771295000107-2026-121" (o site.mjs grava com o mesmo nome).
+function arquivoDoEdital(caminho){ return String(caminho).replace(/[^0-9A-Za-z]+/g, "-"); }
 function carregaAberturas(caminho){
   // No artefato as folhas que não cabem na página viajam em arquivos ao lado,
   // e o artefato.mjs define RADAR_CAPAS para buscar só a parte deste edital.
   if(typeof RADAR_CAPAS === "function") return RADAR_CAPAS(caminho);
+  // No site, desde 07/10/2026, uma folha por edital em capas/, que o robô do
+  // site (site.yml) gera todo dia — o aberturas.json inteiro passa de 100 MB.
+  // Sem ela (docs/ servido na máquina, sem o robô), o arquivo inteiro.
+  return fetch("capas/" + arquivoDoEdital(caminho) + ".json", {cache:"no-store"})
+    .then(function(resp){ if(!resp.ok) throw new Error("HTTP " + resp.status); return resp.json(); })
+    .then(function(a){ var e = {}; if(a && a.b64) e[caminho] = a; return { editais: e }; })
+    .catch(function(){ return todasAsAberturas(); });
+}
+function todasAsAberturas(){
   if(ABERTURAS) return Promise.resolve(ABERTURAS);
   return fetch("aberturas.json?v=" + Date.now(), {cache:"no-store"})
     .then(function(resp){ return resp.ok ? resp.json() : null; })
@@ -1053,9 +1065,34 @@ function carregaAberturas(caminho){
 // O órgão publica o edital em ZIP, RAR, DOC, DOCX, ODT ou RTF; o
 // edital-pdf.mjs converte fora do navegador e o artefato.mjs embute o índice
 // (RADAR_EDITAIS_PDF) e os bytes (RADAR_EDITAL_PDF, em arquivos ao lado).
-// No site os dois não existem e o card mostra só o link do PNCP, como antes.
+// No site, desde 07/10/2026, o índice vem de pdfs/indice.json e cada PDF de
+// pdfs/<edital>.pdf, que o robô do site (site.yml) gera todo dia. Sem eles
+// (docs/ servido na máquina), o card mostra só o link do PNCP, como antes.
+var EDITAIS_PDF_SITE = null;
 function convertido(r){
-  return (typeof RADAR_EDITAIS_PDF === "object" && RADAR_EDITAIS_PDF && RADAR_EDITAIS_PDF[r[7]]) || null;
+  if(typeof RADAR_EDITAIS_PDF === "object" && RADAR_EDITAIS_PDF) return RADAR_EDITAIS_PDF[r[7]] || null;
+  return (EDITAIS_PDF_SITE && EDITAIS_PDF_SITE[r[7]]) || null;
+}
+function carregaIndicePdf(){
+  if(typeof RADAR_EDITAIS_PDF === "object") return;
+  fetch("pdfs/indice.json?v=" + Date.now(), {cache:"no-store"})
+    .then(function(resp){ return resp.ok ? resp.json() : null; })
+    .then(function(j){
+      if(!j || !j.editais) return;
+      EDITAIS_PDF_SITE = j.editais;
+      // os cards ja desenhados ganham o botao do PDF
+      if(D.length) render();
+    })
+    .catch(function(){});
+}
+// o PDF do edital no site, pelo mesmo nome de arquivo das capas
+async function bytesDoConvertido(caminho){
+  if(typeof RADAR_EDITAL_PDF === "function"){
+    var b64 = await RADAR_EDITAL_PDF(caminho);
+    return b64 ? bytesDeBase64(b64) : null;
+  }
+  var resp = await fetch("pdfs/" + arquivoDoEdital(caminho) + ".pdf", {cache:"no-store"});
+  return resp.ok ? new Uint8Array(await resp.arrayBuffer()) : null;
 }
 // O pacote nem sempre traz o edital: o de Araguari/MG só tem o termo de
 // referência e o de Conceição das Alagoas/MG só o estudo técnico. O botão diz
@@ -1080,9 +1117,9 @@ async function baixaEditalPdf(botao, i){
   botao.disabled = true; botao.textContent = "baixando…";
   var res = null;
   try{
-    var b64 = typeof RADAR_EDITAL_PDF === "function" ? await RADAR_EDITAL_PDF(r[7]) : null;
-    if(!b64) throw new Error("o PDF convertido não veio junto");
-    res = await RadarPDF.baixa(bytesDeBase64(b64),
+    var bytes = await bytesDoConvertido(r[7]);
+    if(!bytes) throw new Error("o PDF convertido não veio junto");
+    res = await RadarPDF.baixa(bytes,
       nomeArquivo(r[0] + " " + r[1] + " - edital " + numeroEdital(r[3]) + ".pdf"));
   }catch(e){ res = { ok:false, motivo:e.message }; }
   botao.disabled = false;
@@ -1415,6 +1452,7 @@ document.addEventListener("click", function(ev){
 window.addEventListener("online", function(){ if(!pronto || usandoCopia) tentaDeNovo(); });
 
 carregaDados(1);
+carregaIndicePdf();
 </script>
 
 

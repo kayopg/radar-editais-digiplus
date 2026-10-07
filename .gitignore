@@ -29,3 +29,6 @@ docs/editais-pdf.json
 
 # Capas que nao cabem na pagina do artefato, publicadas ao lado dela.
 radar-capas/
+
+# O site montado pelo site.mjs (o robo publica direto no Pages, sem commit)
+_site/
