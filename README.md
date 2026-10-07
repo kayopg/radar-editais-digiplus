@@ -136,6 +136,9 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    liquidificador e o climatizador portátil ficam (São João d'Aliança/GO e Assis
    Chateaubriand/PR, 30/09/2026). Vale também no objeto: "com instalação quando necessária".
    "Incluso: instalação do equipamento" é exigência, como "inclui instalação".
+   E a instalação em **item separado do mesmo lote**: quando o julgamento é por lote, quem leva
+   o lote leva tudo, e o edital põe "INSTALAÇÃO DE AR 60.000 BTUS" como outro item ao lado do
+   aparelho (Iporã/PR, 07/10/2026). Fora do RS e de SC, o aparelho que se instala sai.
 2. **Veto por objeto** — derruba o edital inteiro quando o objeto é de veículo, trator,
    alimento, material de limpeza e afins. Veículos casam com a busca porque têm
    ar-condicionado de fábrica. Se o objeto também compra eletrodoméstico ("Móveis,

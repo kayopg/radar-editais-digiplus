@@ -111,6 +111,14 @@ const vetoDoCatalogo = (d, cat) => ((termoMaisCedo(d) || { i: 0 }).i > TERMO_LON
 // Mariopolis/PR ("devidamente instalado, no local de entrega") e Santa Rita do
 // Passa Quatro/SP (BEC: "treinamento, instalacao e assistencia tecnica").
 const UF_INSTALA = new Set(['RS', 'SC']);
+// O julgamento por lote ou grupo, no texto do edital: "do tipo MENOR PRECO POR
+// LOTE", "o criterio de julgamento sera o de menor preco por lote" (Ipora/PR,
+// Joinville/SC, 07/10/2026)
+const POR_LOTE = /(?:menor preco|julgamento|adjudicac[a-z]*|criterio)[^.;]{0,60}\bpor (?:lote|grupo)\b|menor preco global por (?:lote|grupo)/;
+// o item de SERVICO de instalacao do aparelho, entre os itens do edital:
+// "INSTALACAO DE AR 60.000 BTUS", "46895 - INSTALACAO DE CONDICIONADOR DE AR
+// CASSETE", "Ar condicionado - instalação/montagem/desmontagem/remoção"
+const ITEM_DE_INSTALACAO = /^(?:\d{3,7}\s*-\s*)?(?:servicos? de |mao de obra (?:para |de )?)?(?:instalac|montagem)|ar[ -]?condicionado\s*-\s*instalac|instalacao\/montagem/;
 // As UFs atendidas, do varredura.mjs: o edital de UF que saiu (MT, em 05/10/2026)
 // sai tambem da lista ja publicada, sem esperar a proxima varredura.
 const UFS_ATENDIDAS = new Set(JSON.parse((fonte.match(/const UFS = (\[[^\]]*\])/) || [, '[]'])[1]));
@@ -301,6 +309,16 @@ for (const e of dados.editais) {
   // depois de o edital entrar — o climatizador de parede, em 30/09/2026.
   const objN = norm(e[C.objeto]);
   // (o objeto misto, moveis e eletrodomesticos com instalacao, tambem, como la)
+  // A INSTALACAO EM ITEM SEPARADO DO LOTE (usuario, 07/10/2026): quando o
+  // julgamento e por lote, quem leva o lote leva tudo o que esta nele, e o
+  // edital poe a instalacao do ar-condicionado como outro item — "LOTE 03 ...
+  // compreende o fornecimento e a instalacao do sistema de climatizacao", com
+  // "INSTALACAO DE AR 60.000 BTUS K7 PISO TETO" ao lado do aparelho (Ipora/PR,
+  // edital 70). O item do aparelho nao fala em instalacao, e o de servico a
+  // varredura descarta; fora do RS e de SC o aparelho que se instala sai.
+  const textoEdital = norm((v.secoes || []).map(s => s.texto).join(' '));
+  const instalaNoLote = !UF_INSTALA.has(e[C.uf]) && POR_LOTE.test(textoEdital)
+    && (v.itens || []).some(x => ITEM_DE_INSTALACAO.test(norm(x[1])));
   const instalaNoObjeto = !UF_INSTALA.has(e[C.uf]) && /instalacao|montagem/.test(objN)
     && (OBJ_CONDICIONAL.test(objN) || (/mobiliario|moveis/.test(objN) && /eletrodomestic|eletroportat/.test(objN)));
   const itens = e[C.itens].filter(it => {
@@ -327,6 +345,7 @@ for (const e of dados.editais) {
     const termo = noCatalogo || (d && ((VETO[it[0]] || []).find(t => d.includes(t)) || VETO.TODAS.find(t => d.includes(t))
       || (!UF_INSTALA.has(e[C.uf]) && exigeInstalacao(d))
       || (instalaNoObjeto && instalavel(norm(it[3]), it[0]) && 'instalacao quando necessaria, e o aparelho se instala')
+      || (instalaNoLote && instalavel(norm(it[3]), it[0]) && 'instalacao em item do mesmo lote')
       || (it[0] === 'PR' && amassadeiraRapida(d + ' ' + norm(it[3])) && 'amassadeira rapida')
       || (!cotaNaUf(e[C.uf], norm(it[3]), d) && 'linha que nao se cota em ' + e[C.uf])
       || (ABRE_FORA_DO_RADAR.exec(d) || [])[1]));
