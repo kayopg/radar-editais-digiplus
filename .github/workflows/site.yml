@@ -12,6 +12,10 @@ name: Site
 #
 # Roda quando a varredura do dia termina, quando a lista e corrigida a mao
 # (push na docs/) e pelo botao "Run workflow".
+#
+# Se a execucao falhar sem nenhuma etapa, com "Internal server error" na
+# anotacao, o erro e do GitHub (aconteceu em 07/10/2026): o botao "Re-run
+# jobs" da pagina da execucao, ou o "Run workflow", resolve.
 
 on:
   workflow_run:
