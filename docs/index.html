@@ -295,12 +295,14 @@ button.btn{font-family:inherit;cursor:pointer}
   </form>
 </div>
 <script>
-// Quem ja entrou neste aparelho nao ve a tela nem por um instante: isto roda
+// Quem ja entrou NESTA ABA nao ve a tela nem por um instante: isto roda
 // antes de a pagina ser desenhada. A conferencia de verdade (o codigo da senha
 // atual) e feita la embaixo, em acesso().
 (function(){
   try{
-    var a = JSON.parse(localStorage.getItem("radar-acesso") || "null");
+    // (o acesso antigo, que ficava guardado no aparelho, sai)
+    try{ localStorage.removeItem("radar-acesso"); }catch(e){}
+    var a = JSON.parse(sessionStorage.getItem("radar-acesso") || "null");
     if(a && a.nome && a.h) document.getElementById("entrada").hidden = true;
   }catch(e){}
 })();
@@ -1526,7 +1528,11 @@ window.addEventListener("online", function(){ if(!pronto || usandoCopia) tentaDe
 // O nome e a senha da equipe (pedido do usuario em 07/10/2026). Fica so o
 // CODIGO da senha (SHA-256 de "radar-digiplus:" + senha), nunca a senha. Para
 // trocar: node senha-site.mjs "nova senha" — quem ja tinha entrado volta a ver
-// a tela, porque o codigo guardado no aparelho deixa de bater.
+// a tela, porque o codigo guardado deixa de bater.
+//
+// O acesso vale so enquanto a aba esta aberta (sessionStorage): fechou a aba,
+// o navegador ou o computador, pede o nome e a senha de novo — pedido do
+// usuario em 07/10/2026. Recarregar a pagina (F5) nao pede.
 //
 // E reconhecimento, nao cofre: barra quem chega pelo link sem a senha, mas os
 // dados continuam em arquivos publicos.
@@ -1538,7 +1544,7 @@ function codigoDaSenha(s){
   });
 }
 function lembrado(){
-  try{ return JSON.parse(localStorage.getItem("radar-acesso") || "null"); }catch(e){ return null; }
+  try{ return JSON.parse(sessionStorage.getItem("radar-acesso") || "null"); }catch(e){ return null; }
 }
 function mostraQuem(nome){
   var q = document.getElementById("quem");
@@ -1568,7 +1574,7 @@ function acesso(){
     if(n.length < 2){ erro.textContent = "Digite seu nome."; nome.focus(); return; }
     codigoDaSenha(senha.value).then(function(h){
       if(h !== SENHA_CODIGO){ erro.textContent = "Senha incorreta. Confira com quem passou o acesso."; senha.select(); return; }
-      try{ localStorage.setItem("radar-acesso", JSON.stringify({ nome:n, h:h, em:new Date().toISOString() })); }catch(e){}
+      try{ sessionStorage.setItem("radar-acesso", JSON.stringify({ nome:n, h:h, em:new Date().toISOString() })); }catch(e){}
       erro.textContent = ""; senha.value = "";
       tela.hidden = true; if(wrap) wrap.inert = false; mostraQuem(n);
     }, function(){
@@ -1581,7 +1587,7 @@ function acesso(){
   if(sair) sair.addEventListener("click", function(){
     // sai, mas o nome fica preenchido para a proxima vez
     var a = lembrado();
-    try{ if(a){ delete a.h; localStorage.setItem("radar-acesso", JSON.stringify(a)); } }catch(e){}
+    try{ if(a){ delete a.h; sessionStorage.setItem("radar-acesso", JSON.stringify(a)); } }catch(e){}
     acesso();
   });
 })();
