@@ -113,7 +113,51 @@ body.escuro .entrada{background:linear-gradient(118deg,#1d56b3 0%,#143f8a 45%,#0
 .quem b{font-weight:800}
 .quem button{background:none;border:0;padding:0;font:inherit;font-weight:700;color:rgba(255,255,255,.85);text-decoration:underline;cursor:pointer}
 .quem button:hover{color:#fff}
-@media(prefers-reduced-motion:reduce){.entrada::before{animation:none}}
+/* o olho do campo da senha: mostra ou esconde o que se digita */
+.porta .campo{display:grid;gap:5px}
+.campo-senha{position:relative;display:block}
+.campo-senha input{padding-right:46px}
+.porta .olho{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:36px;height:36px;padding:0;border:0;border-radius:8px;
+  background:transparent;color:var(--ink3);display:grid;place-items:center;cursor:pointer;box-shadow:none;transition:color .15s,background .15s}
+.porta .olho:hover{transform:translateY(-50%);box-shadow:none;color:var(--brand);background:var(--brand-soft)}
+.porta .olho:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+.porta .olho svg[hidden]{display:none}
+
+/* A abertura: o cartao sobe e aparece, a logo gira (a mesma do topo) e os
+   campos entram um a um. */
+.porta{animation:porta-entra .7s cubic-bezier(.2,.8,.2,1) both}
+.porta .logo{animation:gira .9s cubic-bezier(.2,.8,.2,1) .12s both}
+.porta > :not(.logo){animation:sobe .55s cubic-bezier(.2,.8,.2,1) both}
+.porta > :nth-child(2){animation-delay:.22s}
+.porta > :nth-child(3){animation-delay:.3s}
+.porta > :nth-child(4){animation-delay:.38s}
+.porta > :nth-child(5){animation-delay:.46s}
+.porta > :nth-child(6){animation-delay:.52s}
+.porta > :nth-child(7){animation-delay:.58s}
+@keyframes porta-entra{from{opacity:0;transform:translateY(28px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes sobe{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+/* Depois de entrar: o cartao some, a cortina azul sobe e revela o site, e o
+   topo, os numeros, os filtros e a lista entram em sequencia. */
+.entrada.saindo{animation:cortina .8s cubic-bezier(.7,0,.25,1) .18s both;pointer-events:none}
+.entrada.saindo .porta{animation:porta-sai .38s cubic-bezier(.4,0,.2,1) both}
+@keyframes porta-sai{to{opacity:0;transform:translateY(-14px) scale(1.04)}}
+@keyframes cortina{from{clip-path:inset(0 0 0 0)}to{clip-path:inset(0 0 100% 0)}}
+body.revelando .hero{animation:surge .8s cubic-bezier(.2,.8,.2,1) .35s both}
+body.revelando .hero .kpi{animation:sobe .55s cubic-bezier(.2,.8,.2,1) both}
+body.revelando .hero .kpi:nth-child(1){animation-delay:.6s}
+body.revelando .hero .kpi:nth-child(2){animation-delay:.68s}
+body.revelando .hero .kpi:nth-child(3){animation-delay:.76s}
+body.revelando .hero .kpi:nth-child(4){animation-delay:.84s}
+body.revelando .hero .kpi:nth-child(5){animation-delay:.92s}
+body.revelando .controls{animation:sobe .6s cubic-bezier(.2,.8,.2,1) .8s both}
+body.revelando .vistas{animation:sobe .6s cubic-bezier(.2,.8,.2,1) .9s both}
+body.revelando #list{animation:sobe .7s cubic-bezier(.2,.8,.2,1) 1s both}
+@keyframes surge{from{opacity:0;transform:translateY(-18px) scale(.985)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){
+  .entrada::before{animation:none}
+  .porta,.porta .logo,.porta > :not(.logo),.entrada.saindo,.entrada.saindo .porta,
+  body.revelando .hero,body.revelando .hero .kpi,body.revelando .controls,body.revelando .vistas,body.revelando #list{animation:none}
+}
 @media(max-width:560px){.hero{padding:20px 18px}.logo{width:72px;height:72px}.marca{gap:12px}.kpi .n{font-size:25px}}
 
 /* ------------------------------------------------------------ filtros */
@@ -287,9 +331,16 @@ button.btn{font-family:inherit;cursor:pointer}
     <label for="entraNome">Seu nome
       <input id="entraNome" name="nome" autocomplete="name" maxlength="60" required>
     </label>
-    <label for="entraSenha">Senha
-      <input id="entraSenha" name="senha" type="password" autocomplete="current-password" required>
-    </label>
+    <div class="campo">
+      <label for="entraSenha">Senha</label>
+      <span class="campo-senha">
+        <input id="entraSenha" name="senha" type="password" autocomplete="current-password" required>
+        <button type="button" class="olho" id="olhoSenha" aria-controls="entraSenha" aria-pressed="false" aria-label="Mostrar senha" title="Mostrar senha">
+          <svg class="aberto" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          <svg class="fechado" hidden viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 5.2A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.7 9.7 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg>
+        </button>
+      </span>
+    </div>
     <p class="erro" id="entraErro" role="alert"></p>
     <button type="submit">Entrar</button>
   </form>
@@ -1575,13 +1626,47 @@ function acesso(){
     codigoDaSenha(senha.value).then(function(h){
       if(h !== SENHA_CODIGO){ erro.textContent = "Senha incorreta. Confira com quem passou o acesso."; senha.select(); return; }
       try{ sessionStorage.setItem("radar-acesso", JSON.stringify({ nome:n, h:h, em:new Date().toISOString() })); }catch(e){}
-      erro.textContent = ""; senha.value = "";
-      tela.hidden = true; if(wrap) wrap.inert = false; mostraQuem(n);
+      erro.textContent = ""; senha.value = ""; escondeSenha();
+      if(wrap) wrap.inert = false; mostraQuem(n);
+      revelaSite(tela);
     }, function(){
       erro.textContent = "Este navegador não conseguiu conferir a senha. Abra o site pelo endereço https.";
     });
   };
 }
+// Depois de entrar: o cartao some e a cortina azul sobe revelando o site, que
+// entra em sequencia (CSS: .entrada.saindo e body.revelando). Quem pediu menos
+// animacao no sistema passa direto.
+function revelaSite(tela){
+  var calmo = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(calmo){ tela.hidden = true; return; }
+  document.body.classList.add("revelando");
+  tela.classList.add("saindo");
+  setTimeout(function(){ tela.hidden = true; tela.classList.remove("saindo"); }, 1050);
+  setTimeout(function(){ document.body.classList.remove("revelando"); }, 2000);
+}
+// O olho do campo da senha: mostra o que se digita, e esconde de novo.
+function escondeSenha(){ mostraSenha(false); }
+function mostraSenha(mostrar){
+  var campo = document.getElementById("entraSenha"), olho = document.getElementById("olhoSenha");
+  if(!campo || !olho) return;
+  campo.type = mostrar ? "text" : "password";
+  olho.setAttribute("aria-pressed", mostrar ? "true" : "false");
+  olho.setAttribute("aria-label", mostrar ? "Ocultar senha" : "Mostrar senha");
+  olho.title = mostrar ? "Ocultar senha" : "Mostrar senha";
+  olho.querySelector(".aberto").hidden = mostrar;
+  olho.querySelector(".fechado").hidden = !mostrar;
+}
+(function(){
+  var olho = document.getElementById("olhoSenha");
+  if(olho) olho.addEventListener("click", function(){
+    var campo = document.getElementById("entraSenha");
+    mostraSenha(campo.type === "password");
+    // o cursor volta para o fim do que ja foi digitado
+    campo.focus();
+    try{ var n = campo.value.length; campo.setSelectionRange(n, n); }catch(e){}
+  });
+})();
 (function(){
   var sair = document.getElementById("sair");
   if(sair) sair.addEventListener("click", function(){
