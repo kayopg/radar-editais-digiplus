@@ -8,6 +8,10 @@ sem manutenção.
 **Página:** https://kayopg.github.io/radar-editais-digiplus/ — desde 07/10/2026 com a folha de
 abertura do edital no resumo e o edital convertido para PDF, como o artefato. Quem publica é o
 `site.yml`, depois de cada varredura; o Pages precisa estar com a fonte "GitHub Actions".
+Na entrada, cada pessoa diz o nome e digita a senha da equipe (07/10/2026); o site lembra o
+acesso naquele aparelho. A página guarda só o código da senha, nunca a senha; para trocar,
+`node senha-site.mjs "nova senha"` e commit do `docs/index.html`. É reconhecimento, não cofre:
+os dados continuam em arquivos públicos. O artefato não tem a tela.
 
 Estados atendidos: PR, RS, SP, MG, GO, DF, MS e SC (MT saiu em 06/10/2026: a
 Digiplus não cota mais nada lá). Desde 05/10/2026 cada

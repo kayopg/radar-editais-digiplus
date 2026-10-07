@@ -80,6 +80,40 @@ h1 .plus{display:inline-block;background:#fff;color:#1f5fbf;padding:0 .28em .04e
 .kpi.hot .l::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:#ff8a72;margin-right:6px;vertical-align:1px;box-shadow:0 0 0 0 rgba(255,138,114,.7);animation:pulsa 1.8s infinite}
 .kpi.gold .n{color:#ffe2a8}
 @keyframes pulsa{70%{box-shadow:0 0 0 7px rgba(255,138,114,0)}100%{box-shadow:0 0 0 0 rgba(255,138,114,0)}}
+
+/* ------------------------------------------------------------ entrada
+   Quem entra no site diz o nome e digita a senha da equipe (pedido do
+   usuario em 07/10/2026: "mais um sistema de reconhecimento"). O fundo e o
+   mesmo azul com as linhas do letreiro do topo. */
+.entrada{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:20px;overflow:auto;
+  background:linear-gradient(118deg,#2a6fd6 0%,#1f5fbf 42%,#123f8c 100%)}
+body.escuro .entrada{background:linear-gradient(118deg,#1d56b3 0%,#143f8a 45%,#0a2554 100%)}
+.entrada::before{content:"";position:fixed;inset:-40%;pointer-events:none;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.07) 0 3px,transparent 3px 26px);animation:linhas 26s linear infinite}
+.entrada[hidden]{display:none}
+.porta{position:relative;z-index:1;width:min(380px,100%);background:var(--panel);color:var(--ink);border-radius:20px;
+  padding:26px 24px 22px;box-shadow:0 24px 60px rgba(6,22,52,.35);display:grid;gap:14px}
+.porta .logo{width:76px;height:76px;justify-self:center}
+.porta h2{font-family:var(--display);font-style:italic;font-weight:900;font-size:27px;line-height:1.05;margin:0;text-align:center;color:var(--ink)}
+.porta h2 .plus{display:inline-block;background:var(--brand);color:#fff;padding:0 .26em .04em;border-radius:.22em;transform:skewX(-8deg);margin-left:.08em}
+.porta .diz{margin:0;text-align:center;color:var(--ink2);font-size:13.5px}
+.porta label{display:grid;gap:5px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3)}
+.porta input{font:inherit;font-size:15px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink);background:var(--bg);
+  border:1.5px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+.porta input:focus-visible{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.porta button{font:inherit;font-weight:800;font-size:14.5px;padding:11px;border-radius:10px;border:0;background:var(--btn);color:#fff;
+  cursor:pointer;transition:transform .15s,box-shadow .15s}
+.porta button:hover{transform:translateY(-1px);box-shadow:var(--shadow-hover)}
+.porta button:focus-visible{outline:3px solid var(--brand-soft);outline-offset:2px}
+.porta .erro{margin:0;min-height:1.3em;text-align:center;color:var(--hot);font-size:13px;font-weight:600}
+/* quem esta usando, no topo, ao lado do botao do tema */
+.topo-acoes{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.quem{display:flex;align-items:center;gap:8px;color:#fff;font-size:12.5px;font-weight:600}
+.quem[hidden]{display:none}
+.quem b{font-weight:800}
+.quem button{background:none;border:0;padding:0;font:inherit;font-weight:700;color:rgba(255,255,255,.85);text-decoration:underline;cursor:pointer}
+.quem button:hover{color:#fff}
+@media(prefers-reduced-motion:reduce){.entrada::before{animation:none}}
 @media(max-width:560px){.hero{padding:20px 18px}.logo{width:72px;height:72px}.marca{gap:12px}.kpi .n{font-size:25px}}
 
 /* ------------------------------------------------------------ filtros */
@@ -239,6 +273,40 @@ button.btn{font-family:inherit;cursor:pointer}
 </head>
 <body>
 
+<!-- entrada: o artefato.mjs tira tudo ate o fim dela -->
+<div class="entrada" id="entrada" role="dialog" aria-modal="true" aria-labelledby="entradaTitulo">
+  <form class="porta" id="porta" autocomplete="on">
+    <svg class="logo" viewBox="0 0 200 200" role="img" aria-label="Loja DigiPlus">
+      <circle cx="100" cy="100" r="93" fill="#fff" stroke="#1f5fbf" stroke-width="7"/>
+      <text x="103" y="60" text-anchor="middle" class="l1">LOJA</text>
+      <text x="98" y="111" text-anchor="middle" class="l2">Digi</text>
+      <text x="100" y="160" text-anchor="middle" class="l2">Plus</text>
+    </svg>
+    <h2 id="entradaTitulo">Radar de Editais <span class="plus">DigiPlus</span></h2>
+    <p class="diz">Para entrar, diga seu nome e digite a senha da equipe.</p>
+    <label for="entraNome">Seu nome
+      <input id="entraNome" name="nome" autocomplete="name" maxlength="60" required>
+    </label>
+    <label for="entraSenha">Senha
+      <input id="entraSenha" name="senha" type="password" autocomplete="current-password" required>
+    </label>
+    <p class="erro" id="entraErro" role="alert"></p>
+    <button type="submit">Entrar</button>
+  </form>
+</div>
+<script>
+// Quem ja entrou neste aparelho nao ve a tela nem por um instante: isto roda
+// antes de a pagina ser desenhada. A conferencia de verdade (o codigo da senha
+// atual) e feita la embaixo, em acesso().
+(function(){
+  try{
+    var a = JSON.parse(localStorage.getItem("radar-acesso") || "null");
+    if(a && a.nome && a.h) document.getElementById("entrada").hidden = true;
+  }catch(e){}
+})();
+</script>
+<!-- /entrada -->
+
 <div class="wrap">
 <header class="hero">
   <div class="hero-in">
@@ -255,7 +323,10 @@ button.btn{font-family:inherit;cursor:pointer}
         <p class="sub">Licitações abertas com itens de linha branca, climatização, cocção, lavanderia e eletroportáteis — apenas <strong>fornecimento</strong>: fora do RS e de SC, sem exigência de instalação ou montagem; em todo lugar, sem manutenção.</p>
       </div>
     </div>
-    <button class="themebtn" id="theme" type="button" aria-label="Alternar tema"><span id="themeIcon">☾</span> <span id="themeTxt">Modo escuro</span></button>
+    <div class="topo-acoes">
+      <div class="quem" id="quem" hidden>Olá, <b id="quemNome"></b> · <button type="button" id="sair">sair</button></div>
+      <button class="themebtn" id="theme" type="button" aria-label="Alternar tema"><span id="themeIcon">☾</span> <span id="themeTxt">Modo escuro</span></button>
+    </div>
   </div>
   <div class="kpis">
     <div class="kpi"><div class="n" id="k1">—</div><div class="l">editais abertos</div></div>
@@ -1450,6 +1521,71 @@ document.addEventListener("click", function(ev){
   if(ev.target.closest("[data-tentar]")) tentaDeNovo();
 });
 window.addEventListener("online", function(){ if(!pronto || usandoCopia) tentaDeNovo(); });
+
+// ------------------------------------------------------------ entrada
+// O nome e a senha da equipe (pedido do usuario em 07/10/2026). Fica so o
+// CODIGO da senha (SHA-256 de "radar-digiplus:" + senha), nunca a senha. Para
+// trocar: node senha-site.mjs "nova senha" — quem ja tinha entrado volta a ver
+// a tela, porque o codigo guardado no aparelho deixa de bater.
+//
+// E reconhecimento, nao cofre: barra quem chega pelo link sem a senha, mas os
+// dados continuam em arquivos publicos.
+var SENHA_CODIGO = "16cc3cfd27ee6e01e5c7debcf85d3a5a61b9d5811e7617825146caa7a2da35a6";
+function codigoDaSenha(s){
+  if(!(window.crypto && crypto.subtle)) return Promise.reject(new Error("sem crypto.subtle"));
+  return crypto.subtle.digest("SHA-256", new TextEncoder().encode("radar-digiplus:" + s)).then(function(h){
+    return Array.from(new Uint8Array(h)).map(function(x){ return x.toString(16).padStart(2, "0"); }).join("");
+  });
+}
+function lembrado(){
+  try{ return JSON.parse(localStorage.getItem("radar-acesso") || "null"); }catch(e){ return null; }
+}
+function mostraQuem(nome){
+  var q = document.getElementById("quem");
+  if(!q) return;
+  document.getElementById("quemNome").textContent = nome || "";
+  q.hidden = !nome;
+}
+function acesso(){
+  var tela = document.getElementById("entrada");
+  // no artefato a tela nao existe (o artefato.mjs a tira): ele ja e so do dono
+  if(!tela){ mostraQuem(""); return; }
+  // sem a senha definida (senha-site.mjs), a tela fica desligada: ninguem fica trancado
+  if(SENHA_CODIGO === "SENHA_AINDA_NAO_DEFINIDA"){ tela.hidden = true; mostraQuem(""); return; }
+  var wrap = document.querySelector(".wrap");
+  var a = lembrado();
+  if(a && a.nome && a.h === SENHA_CODIGO){
+    tela.hidden = true; if(wrap) wrap.inert = false; mostraQuem(a.nome); return;
+  }
+  tela.hidden = false; if(wrap) wrap.inert = true; mostraQuem("");
+  var nome = document.getElementById("entraNome"), senha = document.getElementById("entraSenha"),
+      erro = document.getElementById("entraErro");
+  if(a && a.nome && !nome.value) nome.value = a.nome;
+  setTimeout(function(){ (nome.value ? senha : nome).focus(); }, 60);
+  document.getElementById("porta").onsubmit = function(ev){
+    ev.preventDefault();
+    var n = nome.value.replace(/\s+/g, " ").trim();
+    if(n.length < 2){ erro.textContent = "Digite seu nome."; nome.focus(); return; }
+    codigoDaSenha(senha.value).then(function(h){
+      if(h !== SENHA_CODIGO){ erro.textContent = "Senha incorreta. Confira com quem passou o acesso."; senha.select(); return; }
+      try{ localStorage.setItem("radar-acesso", JSON.stringify({ nome:n, h:h, em:new Date().toISOString() })); }catch(e){}
+      erro.textContent = ""; senha.value = "";
+      tela.hidden = true; if(wrap) wrap.inert = false; mostraQuem(n);
+    }, function(){
+      erro.textContent = "Este navegador não conseguiu conferir a senha. Abra o site pelo endereço https.";
+    });
+  };
+}
+(function(){
+  var sair = document.getElementById("sair");
+  if(sair) sair.addEventListener("click", function(){
+    // sai, mas o nome fica preenchido para a proxima vez
+    var a = lembrado();
+    try{ if(a){ delete a.h; localStorage.setItem("radar-acesso", JSON.stringify(a)); } }catch(e){}
+    acesso();
+  });
+})();
+acesso();
 
 carregaDados(1);
 carregaIndicePdf();

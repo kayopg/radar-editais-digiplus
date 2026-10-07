@@ -20,6 +20,14 @@ const doc = (...p) => fs.readFileSync(path.join(DIR, 'docs', ...p), 'utf8');
 let html = doc('index.html');
 const dados = JSON.parse(doc('dados.json'));
 
+// A tela de entrada do site (nome e senha da equipe, 07/10/2026) nao vai para
+// o artefato: ele ja e so do dono. Sem a tela, o acesso() da pagina nao faz nada.
+{
+  const antes = html.length;
+  html = html.replace(/<!-- entrada:[^>]*-->[\s\S]*?<!-- \/entrada -->/, '');
+  if (html.length === antes) throw new Error('nao achei a tela de entrada no index.html');
+}
+
 // Um script embutido nao pode conter a sequencia que fecha a tag; nem o codigo
 // do pdf.js nem o JSON tem motivo para conter, mas quebrar aqui daria uma
 // pagina em branco sem aviso, entao a troca e feita mesmo assim.
