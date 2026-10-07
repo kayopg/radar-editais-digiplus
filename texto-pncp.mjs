@@ -69,6 +69,14 @@ const INTERROGACAO = [
   // cru do PNCP e "discos:\r\n?\t01 Disco Ralador" e "bem finas.\r\n?\t01 Disco
   // Fatiador" (Inhumas/GO, item 19). Pergunta de verdade nao abre linha com tab.
   [/(?<=\n[ \t]*)\?\t+/g, '• '],
+  // ... e o "?" que ABRE a descricao, antes da primeira palavra: "?Conjunto
+  // Quadrado em POLIPROPILENO. Modelo: 02 a 06 Anos" (Faxinal/PR, 07/10/2026).
+  // Descricao de produto nao comeca com pergunta.
+  [/^\s*\?+\s*(?=\p{Lu})/u, ''],
+  // ... e no meio, colado na palavra seguinte, o travessao dos outros do mesmo
+  // item: "COR AZUL ? TAMPO PLÁSTICO ? 02 a 06 Anos ? INFANTIL ?Conjunto
+  // Quadrado" (Faxinal/PR, item 33). Pergunta nao tem espaco antes do "?".
+  [/(?<=\s)\?(?=\p{Lu}\p{Ll})/gu, '– '],
   // O gas refrigerante R600a e R134a com o "a" perdido: "Gas do produto:
   // R600? Tipo de degelo: Manual" (Pontao/RS, item 8, frigobar, 28/09/2026). O
   // edital escreve o "a" com a letra CIRILICA, que nao sobreviveu ao caminho ate

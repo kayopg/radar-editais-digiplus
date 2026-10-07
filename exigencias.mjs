@@ -286,7 +286,14 @@ function julga(texto, pos, termo, chave) {
       // ofertada" (Bela Vista do Paraiso/PR), 06/10/2026
       || /^[^.;]{0,60}(?:garantia tecnica|contra defeitos|defeitos de fabricacao)/.test(depois)
       || /(?:periodo|prazo)s? de\s*$/.test(ctx.slice(Math.max(0, rel - 40), rel))
-      || /garantia (?:legal|do fabricante)[^.;]{0,20}$/.test(ctx.slice(Math.max(0, rel - 60), rel)));
+      || /garantia (?:legal|do fabricante)[^.;]{0,20}$/.test(ctx.slice(Math.max(0, rel - 60), rel))
+      // o titulo "13. DA GARANTIA DE EXECUCAO. 13.1. a contratada devera fornecer
+      // garantia minima de 12 (doze) meses para todos os itens, exceto os itens
+      // 16 e 19 que e de no minimo 90 dias" (Ivoti/RS, 07/10/2026): prazo em
+      // meses, anos ou dias e garantia do PRODUTO; a do contrato e um percentual
+      // do valor (art. 98)
+      || (/^[^%]{0,80}?garantia[^.;%]{0,40}?\d+\s*(?:\([a-z ]+\)\s*)?(?:meses|anos|dias)\b/.test(depois.slice(0, 200))
+        && !/%|por cento|valor (?:inicial|total|anual|global) do contrato/.test(depois.slice(0, 200))));
   // A amostra que e o PRODUTO: "saco esteril para coleta de amostras de
   // alimentos" (Vacaria/RS) estava na lista de itens.
   const amostraDoProduto = chave === 'amostra'

@@ -4851,6 +4851,18 @@ for (const e of dados.editais) {
       // 220V. 20 Unidade DECLARAÇÕES 1. Declaramos que o preço..." (Tupancireta/RS,
       // edital 94, item 15)
       corta(/\sDECLARA[ÇC][ÕO]ES\s+1\s?[.)-]?\s*Declaramos/);
+      // as linhas da planilha e o modelo de proposta depois da especificacao:
+      // "...ecertificadodegarantia und 02 1 und 05 2 9 W und 04 3 a $ VALORTOTAL
+      // R$ RuaCoronelJuvencio..." (Jardim/MS, edital 25, item 3) e "...36.000
+      // BTUs/h. 2 R$ R$ 1. A validade da proposta será de 90 (noventa) dias"
+      // (Curitiba/PR, PCE 32, item 3), 07/10/2026
+      corta(/\s(?:und|unid|un)\.?\s+\d{1,4}\s+\d{1,3}\s+(?:und|unid|un)\b/i);
+      corta(/\s\d{1,4}\s+R\$\s+R\$(?=\s|$)/);
+      // e o produto seguinte da tabela que nao numera as linhas: "...GARANTIA
+      // MÍNIMA DE 12 (DOZE) MESES. CAIXA DE SOM ATIVA. TIPO: CAIXA ACÚSTICA ..."
+      // (Cascavel/PR, edital 90, item 17, o bebedouro levava a caixa de som e o
+      // jogo de ferramentas)
+      corta(/(?<=GARANTIA[^.]{0,40}MESES\)?\.)\s+(?=[A-ZÀ-Ú][A-ZÀ-Ú0-9 \-\/]{3,50}\.\s+TIPO:\s)/);
       // A conferencia de todos os editais pedida no mesmo dia ("confira em todos
       // os outros editais"):
       if (n) {
@@ -5213,12 +5225,26 @@ for (const e of dados.editais) {
       if (nomeMun) {
         const mun = nomeMun.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
         t = t.replace(new RegExp('\\s(?:\\S+\\.gov\\.br\\s+)?(?:\\d{1,3}\\s+)?Estado\\s+d[oe]\\s+\\S+(?:\\s+d[oe]\\s+\\S+)?\\s+(?:MUNIC[ÍI]PIO|Munic[íi]pio|PREFEITURA\\s+MUNICIPAL|Prefeitura\\s+Municipal)\\s+[Dd][Ee]\\s+' + mun + '(?=\\s)', 'giu'), '');
+        // e a unidade e a quantidade da linha com o cabecalho da folha seguinte,
+        // no meio ou no fim: "...Garantia mínima de 1 ano und 04 MUNICÍPIO DE IVOTI
+        // secretaria Municipal de Educação 14" e "Garantia mínima und 01 MUNICÍPIO
+        // DE IVOTI secretaria Municipal de Educação de 1 ano." (Ivoti/RS, 07/10/2026)
+        t = t.replace(new RegExp('\\s+(?:und|unid|un)\\.?\\s+\\d{1,4}\\s+MUNIC[ÍI]PIO\\s+DE\\s+' + mun + '(?:\\s+secretaria\\s+municipal\\s+de\\s+\\p{L}+)?(?:\\s+\\d{1,3}(?=\\s*$))?', 'giu'), '');
       }
     }
     // O numero do CEP que o timbre da folha deixou para tras, sem o "CEP": "...
     // ESMALTADO A FOGO, : 36.970-000 ACOMPANHA 2 GRELHAS" (Manhumirim/MG, edital
     // 029, item 17, 06/10/2026).
     t = t.replace(/\s+:\s*\d{2}\.?\d{3}-\d{3}(?=\s|$)/g, '');
+    // A quantidade e a unidade "UD" da linha na frente, e o comeco da linha
+    // seguinte no fim: "41 UD GELADEIRA/REFRIGERADOR FROST FREE ..." e "...
+    // GARANTIA DO FORNECEDOR 12 MESES. 49 29538 69 UD" (Assis Chateaubriand/PR,
+    // edital 30, itens 48 e 106); a unidade solta no fim ("Garantia mínima de um
+    // ano. unid", Ivoti/RS) e o "R$" da coluna vazia ("220 V. R$", Belmonte/SC)
+    t = t.replace(/^\d{1,4}\s+UD\s+(?=\p{Lu})/u, '')
+      .replace(/\s\d{1,4}\s+\d{4,7}\s+\d{1,5}\s+UD$/, '')
+      .replace(/\s+(?:unid|und)\.?$/i, '')
+      .replace(/\s+R\$\s*$/, '');
     // A descricao repetida pela celula, com uma palavra que o OCR leu diferente na
     // segunda vez: "...COM TRÊS TORNEIRAS DE ÁGUA GELADA - BEBEDOURO INDUSTRIAL ...
     // COM IRES TORNEIRAS DE ÁGUA GELADA" (Caarapó/MS, PE 35, item 14, 06/10/2026).

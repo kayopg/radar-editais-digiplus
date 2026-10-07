@@ -32,9 +32,22 @@ const beneficio = s => {
   return '';
 };
 
+// Todas as paginas: Alto Piquiri/PR (07/10/2026) tem 661 itens, e a primeira
+// pagina de 500 deixava de fora do 501 em diante. Depois da ultima pagina o
+// PNCP responde 200 com [].
+const TAM_PAG = 500;
 async function itensDe(p, tent = 4) {
+  const todos = [];
+  for (let pag = 1; pag <= 20; pag++) {
+    const lote = await paginaDeItens(p, pag, tent);
+    todos.push(...lote);
+    if (lote.length < TAM_PAG) break;
+  }
+  return todos;
+}
+async function paginaDeItens(p, pag, tent) {
   const [c, a, s] = p.split('/');
-  const url = `https://pncp.gov.br/api/pncp/v1/orgaos/${c}/compras/${a}/${s}/itens?pagina=1&tamanhoPagina=500`;
+  const url = `https://pncp.gov.br/api/pncp/v1/orgaos/${c}/compras/${a}/${s}/itens?pagina=${pag}&tamanhoPagina=${TAM_PAG}`;
   for (let t = 0; t < tent; t++) {
     try {
       const r = await fetch(url);

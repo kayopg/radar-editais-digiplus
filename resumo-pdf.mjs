@@ -84,9 +84,15 @@ export const urlArquivo = r => {
 export async function buscaTodosItens(r) {
   const pp = r[7].split('/');
   try {
-    const resp = await fetch(`https://pncp.gov.br/api/pncp/v1/orgaos/${pp[0]}/compras/${pp[1]}/${pp[2]}/itens?pagina=1&tamanhoPagina=500`);
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const j = await resp.json();
+    // (todas as paginas: Alto Piquiri/PR tem 661 itens, 07/10/2026)
+    const j = [];
+    for (let pag = 1; pag <= 20; pag++) {
+      const resp = await fetch(`https://pncp.gov.br/api/pncp/v1/orgaos/${pp[0]}/compras/${pp[1]}/${pp[2]}/itens?pagina=${pag}&tamanhoPagina=500`);
+      if (!resp.ok) throw new Error('HTTP ' + resp.status);
+      const lote = await resp.json();
+      if (Array.isArray(lote)) j.push(...lote);
+      if (!Array.isArray(lote) || lote.length < 500) break;
+    }
     // A mesma limpeza que o resto do radar aplica ao texto do PNCP. Sem ela a
     // secao "Demais itens do edital" saia com o mojibake cru do banco deles:
     // "1.600 PSI;â?¢ Potencia minima" em vez de "1.600 PSI; • Potencia minima"

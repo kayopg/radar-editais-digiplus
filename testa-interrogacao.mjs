@@ -30,6 +30,8 @@ const CASOS = [
   ['Kit com no mínimo 5 discos: ? 01 Disco Ralador Fino (2mm) - cenoura; ? 01 Disco Fatiador', 'Kit com no mínimo 5 discos: • 01 Disco Ralador Fino (2mm) - cenoura; • 01 Disco Fatiador'], // Inhumas/GO                                  // Crissiumal/RS: "tela" diz que e polegada
   ['raladas bem finas. ? 01 Disco Fatiador (1mm) - para repolho. ? 01 Disco Desfiador', 'raladas bem finas. • 01 Disco Fatiador (1mm) - para repolho. • 01 Disco Desfiador'], // Inhumas/GO, ja colapsado
   ['raladas bem finas.\r\n?\t01 Disco Fatiador (1mm) - para repolho e saladas delicadas.\r\n?\t01 Disco Desfiador', 'raladas bem finas. • 01 Disco Fatiador (1mm) - para repolho e saladas delicadas. • 01 Disco Desfiador'], // Inhumas/GO, texto cru
+  ['?Conjunto Quadrado em POLIPROPILENO. Modelo: 02 a 06 Anos', 'Conjunto Quadrado em POLIPROPILENO. Modelo: 02 a 06 Anos'], // Faxinal/PR, 07/10
+  ['COR AZUL ? TAMPO PLÁSTICO ? 02 a 06 Anos ? INFANTIL ?Conjunto Quadrado em POLIPROPILENO', 'COR AZUL – TAMPO PLÁSTICO – 02 a 06 Anos – INFANTIL – Conjunto Quadrado em POLIPROPILENO'], // Faxinal/PR, item 33
   ['Jato de tinta Heat-Free MicroPiezo®?. Resolução', 'Jato de tinta Heat-Free MicroPiezo®. Resolução'],
   ['Windows Server®? 2003 (SP2) ou mais', 'Windows Server® 2003 (SP2) ou mais'],
   ['28 segundos por página em cores (200 dpi)???. Conectividade:', '28 segundos por página em cores (200 dpi). Conectividade:'],

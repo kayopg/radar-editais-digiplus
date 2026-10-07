@@ -401,7 +401,13 @@ const vetoDoObjeto = txt => {
 };
 
 // 5.3 — veto por item (lista viva, construída de falsos positivos reais)
-const VETO_ITEM = ["evaporador de agua","mangueira","bucha","difusor","motor ventilador","motor do ventilador","motor de ventilacao","masseira","manometro","manifold","ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","peca/acessorio","peca / acessorio","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","digestor","splitter","ventilador artificial","colhedora","ensiladeira","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
+// (a chapa de ferro fundido que vai SOBRE o fogao — "Chapa Fogão Em Ferro
+// Fundido ... CHAPA BIFETEIRA REMOVÍVEL ... uso para sobre fogão industrial",
+// IFMS de Campo Grande/MS, 07/10/2026 — e acessorio; so na frente, que o
+// "fogao industrial com chapa bifeteira" e fogao)
+// (e o movel para o forno: "Balcão Multiuso para Forno Elétrico e Microondas
+// ... Espaço para forno, microondas e nicho", Novo Hamburgo/RS, 07/10/2026)
+const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fogao","chapa bifeteira","chapa bifeira","balcao multiuso","balcao para forno","balcao para micro","bucha","difusor","motor ventilador","motor do ventilador","motor de ventilacao","masseira","manometro","manifold","ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","peca/acessorio","peca / acessorio","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","digestor","splitter","ventilador artificial","colhedora","ensiladeira","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
 // acrescentados em 30/08/2026
 "torneira de parede","torneira para pia","tubo de ferro","tubo de cobre","tubo cobre","pecas /","pecas/","para pedreiro","suporte para televis","suporte de televis","suporte de videocassete","embalag","espaco destinado","onibus","caminhao","impressao 3d","sem funcionamento","quarto de hotel","diaria","estadia","hospedagem","locacao de","prestacao de","autoclave","concentrador de","tampao","projetor","resistencia aquecedor","luva termica","frigideira","prato fundo","alicate","removedor de","coador pano","ralador/fatiador","carro balde","chave controle","elemento filtrante","filtro purificacao","liner","projeto executivo","fantasia","formula infantil","nutricao oral","nutricao geral","placa aquecedora","boia para","controle universal","controle remoto universal",
 // acrescentados em 03/09/2026: EPI casando com "purificador de ar". Montes
@@ -641,7 +647,7 @@ const VETO_ITEM = ["evaporador de agua","mangueira","bucha","difusor","motor ven
 // do aspirador) ela fica
 // e o manometro (manifold) de refrigerista, ferramenta "PARA AR CONDICIONADO SPLIT"
 // (Sinop/MT, item 268, 05/10/2026)
-const VETO_SO_NA_FRENTE = ["evaporador de agua","mangueira","bucha","difusor","motor ventilador","motor do ventilador","motor de ventilacao","masseira","manometro","manifold","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
+const VETO_SO_NA_FRENTE = ["evaporador de agua","mangueira","chapa fogao","chapa para fogao","chapa bifeteira","chapa bifeira","balcao multiuso","balcao para forno","balcao para micro","bucha","difusor","motor ventilador","motor do ventilador","motor de ventilacao","masseira","manometro","manifold","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
 "embalagem","embalag","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po",
 "refil","filtro refil","unidade filtrante","elemento filtrante","filtro purificacao","disco abrasivo","manta abrasiva",
 "cooler","gabinete","nobreak","no-break","conector","gas refrigerante","gas refrigeracao","pecas e acessorios","pecas /","pecas/",
@@ -833,23 +839,31 @@ console.error("  descartes por modalidade: " + JSON.stringify(porModalidade));
 // ---------------------------------------------------------------- 3. itens
 let errItens = 0;
 process.stderr.write(`Itens: ${cands.length} leituras\n`);
-const itensUrl = o => `https://pncp.gov.br/api/pncp/v1/orgaos/${o.orgao_cnpj}/compras/${o.ano}/${o.numero_sequencial}/itens?pagina=1&tamanhoPagina=300`;
+// TODAS as paginas de itens. Ate 07/10/2026 a leitura era so da primeira, de
+// 300: o edital de Alto Piquiri/PR tem 661 itens e os ventiladores 483 a 486
+// nunca apareceram — e o edital cujo eletrodomestico so vem depois do item 300
+// nem entrava no radar. Depois da ultima pagina o PNCP responde 200 com [].
+const TAM_PAG_ITENS = 500;
+const itensUrl = (o, p) => `https://pncp.gov.br/api/pncp/v1/orgaos/${o.orgao_cnpj}/compras/${o.ano}/${o.numero_sequencial}/itens?pagina=${p}&tamanhoPagina=${TAM_PAG_ITENS}`;
+async function leItens(o) {
+  const todos = [];
+  for (let p = 1; p <= 20; p++) {
+    const j = await getJson(itensUrl(o, p));
+    const pag = Array.isArray(j) ? j : [];
+    todos.push(...pag);
+    if (pag.length < TAM_PAG_ITENS) break;
+  }
+  return todos.map(x => ({ d: x.descricao, m: x.materialOuServico, q: x.quantidade, v: x.valorUnitarioEstimado, u: x.unidadeMedida, n: x.numeroItem,
+    b: x.tipoBeneficioNome, sit: x.situacaoCompraItemNome }));
+}
 await pool(cands, 6, async (o) => {
-  try {
-    const j = await getJson(itensUrl(o));
-    o.__it = (Array.isArray(j) ? j : []).map(x => ({ d: x.descricao, m: x.materialOuServico, q: x.quantidade, v: x.valorUnitarioEstimado, u: x.unidadeMedida, n: x.numeroItem,
-      b: x.tipoBeneficioNome, sit: x.situacaoCompraItemNome }));
-  } catch { o.__it = null; }
+  try { o.__it = await leItens(o); } catch { o.__it = null; }
 });
 const semItens = cands.filter(o => o.__it === null || o.__it === undefined);
 if (semItens.length) {
   process.stderr.write(`  repescagem de ${semItens.length} leituras\n`);
   await pool(semItens, 2, async (o) => {
-    try {
-      const j = await getJson(itensUrl(o));
-      o.__it = (Array.isArray(j) ? j : []).map(x => ({ d: x.descricao, m: x.materialOuServico, q: x.quantidade, v: x.valorUnitarioEstimado, u: x.unidadeMedida, n: x.numeroItem,
-      b: x.tipoBeneficioNome, sit: x.situacaoCompraItemNome }));
-    } catch { o.__it = null; }
+    try { o.__it = await leItens(o); } catch { o.__it = null; }
   });
 }
 // O numeroItem do PNCP nem sempre e o numero do item.

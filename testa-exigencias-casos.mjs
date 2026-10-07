@@ -21,6 +21,8 @@ const BARRA = [
   // continua barrando
   ['8 – das amostras 8.1. sera exigida do licitante classificado em primeiro lugar amostra dos produtos para analise. 8.2. o prazo para entrega da amostra e de 3 (tres) dias uteis a contar da solicitacao do pregoeiro, sob pena de desclassificacao.', ['Amostra']],
   ['8 – das amostras 8.1. o licitante classificado em primeiro lugar devera apresentar amostra dos itens 1 a 3. 8.2. o prazo para entrega da amostra e de 3 (tres) dias uteis, sob pena de desclassificacao.', ['Amostra']],
+  // a garantia do contrato com prazo E percentual: continua barrando
+  ['13. da garantia de execucao. 13.1. a contratada devera prestar garantia de execucao de 5% (cinco por cento) do valor inicial do contrato, com validade de 90 dias apos o termino da vigencia.', ['Garantia contratual']],
   // os que exigiam de verdade entre os 34 barrados em 06/10/2026
   ['19.1 sera feita a avaliacao das amostras: 19.1.1 a(s) licitante(s) classificada(s) em 1º lugar para o objeto do presente pregao devera apresentar 1 (uma) amostra de cada item, em ate 03 (tres) dias a contar da sessao e que for apurada a classificacao. 19.1.4 a nao apresentacao da(s) amostra(s) acarretara na desclassificacao da empresa para o(s) respectivo(s) item(ns).', ['Amostra']],   // Santo Antonio do Paraiso/PR
   ['15.1. o objeto desta contratacao nao se enquadra como sendo de bem de luxo, conforme decreto municipal nº 065/2024. 15.2. sera exigida garantia contratual, nos termos dos arts. 96 e seguintes da lei nº 14.133/21, tendo em vista a natureza do objeto.', ['Garantia contratual']],   // Santa Rita do Araguaia/GO
@@ -33,6 +35,8 @@ const BARRA = [
   ['9. das amostras 9.1. caso necessario, o pregoeiro podera solicitar catalogo do produto ofertado, com fotografias, dimensoes, peso e as especificacoes tecnicas completas do fabricante, em lingua portuguesa. 9.2. o licitante vencedor devera apresentar amostra do item em 3 (tres) dias uteis, sob pena de desclassificacao.', ['Amostra']],
 ];
 const PASSA = [
+  // o titulo "da garantia de execucao" com a garantia do PRODUTO dentro (Ivoti/RS, 07/10/2026)
+  '12.1. julgados os recursos, constatada a regularidade dos atos praticados, a autoridade competente adjudica e homologa a licitacao. 13. da garantia de execucao. 13.1. a contratada devera fornecer garantia minima de 12 (doze) meses para todos os itens, exceto os itens 16 e 19 que e de no minimo 90 dias, item 20 de 36 meses.',
   // os barrados por engano em 06/10/2026 (24 dos 34 do dia)
   '12. dotacao orcamentaria 13. garantia contratual 13.1 nos termos do artigo 96 da lei federal nº 14.133/2021 foi analisado a necessidade de exigencia de garantia contratual. 13.2 considerando que o objeto consiste na aquisicao de bens comuns, de baixa complexidade operacional e entrega imediata, conclui-se pela nao exigencia de garantia contratual.',   // General Carneiro/PR
   'para garantir temperaturas e armazenamentos adequados para a preservacao de amostras a serem analisadas, contribuindo para a excelencia nas atividades de pesquisa e ensino da nossa universidade.',   // Florianopolis/SC

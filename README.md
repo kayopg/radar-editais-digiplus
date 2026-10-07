@@ -51,7 +51,7 @@ descritivos.mjs → itens-embutidos.mjs → descritivo-por-item.mjs → docs/des
 
 | Arquivo | O que faz |
 |---|---|
-| `varredura.mjs` | 32 termos × 8 UFs × 2 páginas no PNCP, lê os itens de cada processo e aplica os filtros. ~100 min. |
+| `varredura.mjs` | 32 termos × 8 UFs × 2 páginas no PNCP, lê os itens de cada processo (todas as páginas: até 07/10/2026 só os 300 primeiros, e os ventiladores 483 a 486 de Alto Piquiri/PR nunca apareceram) e aplica os filtros. ~100 min. |
 | `veto-item.mjs` | A regra comum do veto por item e da categoria, usada pela varredura e pelo `veta-pelo-descritivo.mjs`: termo de peça só veta antes do aparelho, e aparelho citado como uso ("apto para micro-ondas") não dá categoria. |
 | `publicar.mjs` | Converte a saída bruta no `docs/dados.json` que a página consome. |
 | `plataforma.mjs` | Em que plataforma é a disputa: o publicador aceito no PNCP (BLL, BNC, Compras.gov.br, Banrisul, Portal de Compras Públicas, Licitanet) ou, quando a prefeitura publica pelo sistema de gestão dela, a plataforma escrita no começo do edital. A varredura usa para aplicar a regra dos seis portais; o `links-portal.mjs`, para o botão Participar. |
@@ -148,7 +148,9 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    entrou na data em que ele pediu. Fora do radar: churrasqueira, balança, moedor/moinho de
    café, enceradeira e lustradeira de piso, coifa, exaustor e depurador (também quando o
    catálogo chama o exaustor de "Ventilador Axial" e só o descritivo do edital diz o que ele
-   é, 29/09/2026), aquecimento de água
+   é, 29/09/2026, e quando o edital abre com "ventilador/ exaustor", 07/10/2026), os
+   acessórios e móveis do fogão e do forno ("chapa bifeteira" para pôr sobre o fogão,
+   "balcão multiuso para forno e micro-ondas", 07/10/2026), aquecimento de água
    (aquecedor de água, boiler, aquecedor solar, aquecedor de passagem), **masseira**
    (05/10/2026: a amassadeira industrial lenta ou semi-rápida entra; a que se diz só
    "rápida" fica fora), gerador de qualquer tipo, **lavadora de alta pressão** (lava-jato,
