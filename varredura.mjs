@@ -1246,13 +1246,26 @@ await pool(fin, 4, async (e) => {
     const pgs = await textoDasPaginas(le);
     // PDF digitalizado: nao da para afirmar nem que exige nem que dispensa.
     if (!textoUtil(pgs)) { e.exige = "sem-texto"; semTexto++; return; }
-    e.exige = analisaExigencias(pgs).bloqueia;
+    const ex = analisaExigencias(pgs);
+    e.exige = ex.bloqueia;
+    if (ex.bloqueia.length) e.exigeTrechos = Object.fromEntries(Object.values(ex).filter(v => v && v.exige).map(v => [v.rotulo, v.trechos]));
   } catch { e.exige = 'erro'; errExige++; }
   if (++feitosEx % 50 === 0) process.stderr.write(`  ${feitosEx}/${fin.length}\n`);
 });
 
 // Sai so quem EXIGE de verdade. Nao avaliado (sem texto, sem arquivo, erro)
 // continua na lista, marcado, para conferencia humana — nunca sumir calado.
+// Os barrados, com os trechos que barraram, para a conferencia a mao: em
+// 06/10/2026 24 dos 34 eram engano, e sem esta lista achar isso custou uma
+// varredura de 90 minutos. O job publica junto com o dados.json.
+try {
+  fs.writeFileSync(path.join(DIR, 'docs', 'barrados.json'), JSON.stringify({
+    varredura: new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Sao_Paulo' }),
+    editais: fin.filter(e => Array.isArray(e.exige) && e.exige.length).map(e => ({
+      path: e.path, municipio: e.mun, uf: e.uf, edital: e.ed, objeto: String(e.obj || '').slice(0, 160),
+      exige: e.exige, trechos: e.exigeTrechos || {} })),
+  }, null, 1) + '\n', 'utf8');
+} catch (err) { process.stderr.write('  barrados.json nao gravado: ' + err.message + '\n'); }
 const finE = fin.filter(e => {
   if (!Array.isArray(e.exige) || !e.exige.length) return true;
   vExige++;

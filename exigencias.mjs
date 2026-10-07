@@ -409,6 +409,10 @@ export function analisaExigencias(textoPaginas) {
       exige,
       total: ocorrencias.length,
       ocorrencias: ocorrencias.slice(0, 6),
+      // os trechos que barram, para a conferencia a mao (docs/barrados.json):
+      // em 06/10/2026 eles ficavam alem das 6 primeiras ocorrencias e so uma
+      // varredura instrumentada de 90 minutos mostrou que 24 dos 34 eram engano
+      trechos: ocorrencias.filter(o => o.veredito === 'exige').slice(0, 2).map(o => o.ctx.slice(120, 520)),
     };
   }
   saida.bloqueia = REGRAS.filter(r => saida[r.chave].exige).map(r => r.rotulo);

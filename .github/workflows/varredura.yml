@@ -269,11 +269,14 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           mkdir -p /tmp/gerado
           cp docs/dados.json docs/descritivos.json publicadores.json /tmp/gerado/
+          # (a lista dos barrados por exigencia, com os trechos — 07/10/2026)
+          cp docs/barrados.json /tmp/gerado/ 2>/dev/null || true
           for tentativa in 1 2 3; do
             git fetch --depth=1 origin +refs/heads/main:refs/remotes/origin/main
             git reset --hard origin/main
             cp /tmp/gerado/dados.json /tmp/gerado/descritivos.json docs/
             cp /tmp/gerado/publicadores.json .
+            if [ -f /tmp/gerado/barrados.json ]; then cp /tmp/gerado/barrados.json docs/; fi
             # Refazer o recorte e melhor que publicar o do codigo velho, mas nao a
             # ponto de perder o dia: em 30/09/2026 o job chegou aqui com 273
             # minutos e o recorte refeito (25 min, com o embutir dos itens)
@@ -303,6 +306,7 @@ jobs:
               exit 0
             fi
             git add docs/dados.json docs/descritivos.json publicadores.json
+            if [ -f docs/barrados.json ]; then git add docs/barrados.json; fi
             git commit -m "Varredura de $(TZ=America/Sao_Paulo date +%d/%m/%Y)"
             if git push origin HEAD:main; then exit 0; fi
             echo "O push foi recusado (tentativa $tentativa); tentando de novo."
