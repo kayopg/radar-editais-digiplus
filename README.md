@@ -149,7 +149,10 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    só aceita o lote quando os itens, em blocos seguidos, somam **centavo por centavo** os
    totais por lote impressos no edital, e a divisão é única (Joinville/SC, 17 lotes). Sem
    essa confirmação, o card mostra todos os itens do edital. Valor e quantidade do edital
-   continuam sendo os dos nossos itens, e o resumo em PDF também.
+   continuam sendo os dos nossos itens. A tabela do resumo em PDF traz os mesmos itens
+   do card, os que não cotamos em cinza e com "Não cotamos" (usuário, 08/10/2026). O nome
+   desses itens é o do PNCP, sem o texto do catálogo que o Compras.gov.br põe na frente
+   do código do órgão ("46950 - TUBULAÇÃO ADICIONAL…").
 2. **Veto por objeto** — derruba o edital inteiro quando o objeto é de veículo, trator,
    alimento, material de limpeza e afins. Veículos casam com a busca porque têm
    ar-condicionado de fábrica. Se o objeto também compra eletrodoméstico ("Móveis,
