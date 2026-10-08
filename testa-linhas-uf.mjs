@@ -13,6 +13,14 @@ const cotaNaUf = criaCotaNaUf(criaPosicaoDoTermo(CAT));
 const CASOS = [
   // DF, GO, MS e MG: ar-condicionado, bebedouro, fogao e batedeira industriais
   ['GO', 'AR CONDICIONADO SPLIT 12000 BTUS INVERTER', '', true],
+  // a lavadora de alta pressao, de qualquer porte, nas cinco UFs (08/10/2026)
+  ['SP', 'LAVADORA ALTA PRESSÃO - COTA RESERVADA', '', true],                       // Salto/SP
+  ['MG', 'Lavadora Alta Pressão tipo: hidrolavadora, tipo motor: trifásico', '', true], // Ressaquinha/MG
+  ['MS', 'LAVADORA DE ALTA PRESSÃO - ALIMENTAÇÃO: ELÉTRICA; PRESSÃO MÍNIMA: 1600 LIBRAS', '', true], // Caarapó/MS
+  ['GO', 'Lavadora Alta Pressão tipo: lava-jato, modelo: monofásico, tensão: 110/220', '', true], // Itaberaí/GO
+  ['SP', 'LAVADORA JATO DE ALTA PRESSÃO, para uso semi-profissional, motor: 1,6 cv', '', true], // Birigui/SP
+  ['DF', 'MÁQUINA LAVADORA DE ALTA PRESSÃO 1800 PSI', '', true],
+  ['SP', 'Máquina de lavar roupas automática 12 kg', '', false],                    // a de roupa continua fora
   ['MG', 'CONDICIONADOR, de ar, tipo SPLIT INVERTER, CICLO FRIO, HI WALL', '', true],
   ['MS', 'APARELHO DE AR-CONDICIONADO SPLIT 9000 BTUS', '', true],
   ['MG', 'BEBEDOURO DE 150 LITROS INOX, CARACTERISTICAS: RESERVATORIO EM POLIPROPILENO', '', true],

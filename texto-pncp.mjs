@@ -82,6 +82,10 @@ const INTERROGACAO = [
   // edital escreve o "a" com a letra CIRILICA, que nao sobreviveu ao caminho ate
   // o PNCP. Sao os dois gases de refrigerador e frigobar; o codigo e fixo.
   [/\b(R-?(?:600|134))\?(?=[\s,.;)]|$)/g, '$1a'],
+  // O "²" da unidade de pressao: "Pressao minima: 750 lbf/pol? - Vazao"
+  // (Ressaquinha/MG, item 42, lavadora de alta pressao, 08/10/2026), e o
+  // "kgf/cm?" do mesmo jeito. O "I" no lugar do "l" e do OCR do edital.
+  [/(?<=\b[lI]?[lI]bf\/pol|\bkgf\/cm)\?/g, '²'],
   // A POLEGADA perdida, com palavra de tela ou de formato logo antes: "Tela: IPS
   // Full HD de 23.8?, ajuste de altura" (monitor) e "Forma: 3,5?; as unidades"
   // (disco), Chapadao do Sul/MS, 29/09/2026. Sem essa palavra antes, o numero

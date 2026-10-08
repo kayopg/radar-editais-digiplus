@@ -60,10 +60,13 @@ export const chaleiraDeFogao = (d, resto = '') => {
 //   DF, GO, MS e MG: "ar condicionado, bebedouro industrial, fogao industrial e
 //     batedeira industrial"
 //   SP: as mesmas, "microondas e ventilador"
+//   e, em todas elas, a lavadora de alta pressao (lava-jato), de qualquer
+//     porte: voltou ao radar em 08/10/2026 e, no mesmo dia, "pode incluir"
+//     tambem fora de RS, SC e PR
 // A linha e a do PRODUTO, o primeiro termo de categoria da descricao: o
 // "Climatizador ... com ventilador" e climatizador, e a "Cortina de ar" nao e
 // ar-condicionado.
-const INDUSTRIAIS = ['ar-condicionado', 'bebedouro industrial', 'fogao industrial', 'batedeira industrial'];
+const INDUSTRIAIS = ['ar-condicionado', 'bebedouro industrial', 'fogao industrial', 'batedeira industrial', 'lavadora de alta pressao'];
 export const LINHAS_DA_UF = {
   MT: new Set(),
   DF: new Set(INDUSTRIAIS), GO: new Set(INDUSTRIAIS), MS: new Set(INDUSTRIAIS), MG: new Set(INDUSTRIAIS),
@@ -79,6 +82,10 @@ export function linhaDoProduto(d, posicaoDoTermo) {
   // "Forno micro-ondas", "forno de microondas", "forno eletrico micro-ondas"
   if (/^micro[- ]?ondas$|^microondas$/.test(p.t)
     || (p.t === 'forno' && /^forno\s+(?:de\s+|eletrico\s+)?micro[- ]?ondas|^forno\s+(?:de\s+)?microondas/.test(d.slice(p.i)))) return 'micro-ondas';
+  // o lava-jato pelos nomes da categoria (varredura.mjs, LV) e a "Maquina
+  // lavadora de alta pressao", que a categoria pega pelo "maquina lavadora"
+  if (/^(?:lavadora (?:de )?alta pres|lavadoura de alta pres|lavadora jato|lavadora de pressao|lava[- ]?jato|lavajato|hidrolavadora)/.test(p.t)
+    || /^maquina (?:lavadora|de lavar)\s+(?:de\s+)?alta\s+pres/.test(d.slice(p.i))) return 'lavadora de alta pressao';
   return { bebedouro: 'bebedouro', fogao: 'fogao', batedeira: 'batedeira', ventilador: 'ventilador' }[p.t] || null;
 }
 

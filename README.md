@@ -196,7 +196,7 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    30/09/2026 (só na categoria dele: a "lâmpada halógena" do forno não derruba o forno).
    A **lavadora de alta pressão** (lava-jato) saiu em 28/09/2026 e voltou em 08/10/2026, na
    categoria "Para lavar"; ali o "veículo" da descrição ("limpeza de pisos, paredes,
-   veículos") não veta. Fora de RS, SC e PR ela segue a linha de produtos da UF.
+   veículos") não veta. Ela entra também em SP, MG, GO, MS e DF, de qualquer porte (08/10/2026).
    O **cortador de legumes** entrou em 08/10/2026, em "Eletrodomésticos" (Preparo).
 4. **Piso de preço unitário** de R$ 150 — equipamento de verdade custa. Chaleira elétrica,
    cafeteira, sanduicheira, grill e máquina de waffle não têm piso. O volume também salva o

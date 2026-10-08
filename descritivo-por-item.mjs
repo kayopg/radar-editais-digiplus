@@ -5441,6 +5441,11 @@ for (const e of dados.editais) {
       antes = s;
       s = s.replace(/(?<=[.;])\s+(?:UN|UND|UNID|UNIDADE|UNIDADES)\.?\s+(?:EXCLUSIV[OA]|AMPLA(?:\s+CONCORR[ÊE]NCIA)?|COTA\s+(?:PRINCIPAL|RESERVADA)|DESEMPATE)\s*$/i, '')
            .replace(/(?<=[.;])\s+\d{1,2}\.\s+D[AEO]S?\s+(?:[A-ZÀ-Ú]+\s+){0,5}[A-ZÀ-Ú]{3,}\s*$/, '')
+           // e a quantidade com a unidade e o beneficio, separados pela virada
+           // de folha: "...certificado pelo INMETRO. 30 UN /2026 EXCLUSIVA"
+           // (Atibaia/SP, item 5, lavadora de alta pressao). So com a
+           // quantidade do proprio item.
+           .replace(new RegExp('(?<=[.;])\\s+0*' + Math.round(+it[2]) + '\\s+(?:UN|UND|UNID|UNIDADES?)\\.?(?:\\s+\\/\\d{4})?(?:\\s+(?:EXCLUSIV[OA]|AMPLA(?:\\s+CONCORR[ÊE]NCIA)?|RESERVADA(?:\\s*\\(\\d{1,2}%\\))?|COTA\\s+(?:PRINCIPAL|RESERVADA)|DESEMPATE))?\\s*$', 'i'), '')
            // e as colunas de unidade e quantidade no MEIO, quando a celula
            // atravessou a folha e o resto do nome veio depois delas: "...MOTOR
            // INDUCAO 01 unidade 04 unidades Wap 4100" (Humaita/RS, item 14). So
