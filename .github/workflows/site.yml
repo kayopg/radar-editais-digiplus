@@ -37,10 +37,13 @@ permissions:
   pages: write
   id-token: write
 
-# Uma publicacao por vez; a seguinte espera, nao cancela a que esta no ar.
+# Uma publicacao por vez, e a nova cancela a que esta em andamento: as duas
+# leem a main, entao a nova ja traz tudo o que a outra traria. Antes a nova
+# esperava, e em 08/10/2026 uma execucao presa 20 minutos no apt-get segurava
+# a correcao do resumo atras dela (o teto do job e 120 minutos).
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   publicar:
@@ -62,7 +65,12 @@ jobs:
 
       # bsdtar abre o RAR; o LibreOffice converte DOC, DOCX, ODT e RTF (na
       # maquina do usuario quem converte e o Word, que aqui nao existe)
+      # Com teto e sem derrubar o job: o apt-get ja ficou preso 20 minutos
+      # (08/10/2026), e sem as ferramentas o site sai assim mesmo, so sem os
+      # convertidos novos (as etapas abaixo avisam e seguem).
       - name: Ferramentas de conversao
+        timeout-minutes: 8
+        continue-on-error: true
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq libarchive-tools libreoffice-writer-nogui > /dev/null

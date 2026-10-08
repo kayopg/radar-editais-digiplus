@@ -911,10 +911,12 @@ function indexaDescritivos(r, base){
     if(x[6]){ porNum[x[0]] = x[6]; porDesc[umaLinha(x[1]).toLowerCase()] = x[6]; }
     if(x[7]) loteNum[x[0]] = { lote:x[7], item:x[8] || null };
   });
-  // total vem gravado quando a lista de itens foi enxugada para o artefato;
-  // no site, onde ela vai inteira, o tamanho da lista serve.
+  // O total de itens e o tamanho da lista: ela vai inteira no site e no
+  // artefato (que so encurta o texto dos itens que nao cotamos). O d.total do
+  // descritivos.json e o numero de PAGINAS do PDF lido — no site, o resumo de
+  // Joinville/SC dizia "o edital tem 74 itens" para um edital de 47 (08/10/2026).
   DESC_ATUAL = { porNum:porNum, porDesc:porDesc, loteNum:loteNum,
-                 total: (d && (d.total || (d.itens ? d.itens.length : 0))) || 0,
+                 total: d && d.itens ? d.itens.length : 0,
                  outros: resumeOutros(r, d) };
 }
 
