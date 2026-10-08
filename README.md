@@ -11,7 +11,8 @@ abertura do edital no resumo e o edital convertido para PDF, como o artefato. Qu
 Na entrada, só os usuários cadastrados entram, cada um com o seu usuário e a sua senha, e o
 site diz "Olá, <nome>" (08/10/2026). O acesso não fica guardado: recarregou a página, fechou a
 aba, o navegador ou o computador, pede de novo. A página guarda só códigos (SHA-256) do usuário
-e do par usuário + senha, nunca a senha nem o usuário. Para incluir, trocar a senha ou tirar
+e do par usuário + senha, nunca a senha nem o usuário. Usuário e senha valem exatamente como
+foram cadastrados, maiúsculas e minúsculas inclusive. Para incluir, trocar a senha ou tirar
 alguém: `node usuarios-site.mjs adicionar USUARIO "senha" "Nome"`, `remover USUARIO` ou
 `listar`, e commit do `docs/index.html`. É reconhecimento, não cofre: os dados continuam em
 arquivos públicos. O artefato não tem a tela.

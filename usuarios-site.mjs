@@ -5,7 +5,8 @@
 // A pagina guarda, de cada usuario, so CODIGOS (SHA-256): o do usuario, para
 // este comando achar quem trocar ou tirar, e o do par usuario + senha, que e o
 // que a tela confere. Nem o usuario nem a senha ficam escritos no site; o nome
-// do "Ola" fica. O usuario nao diferencia maiusculas; a senha diferencia.
+// do "Ola" fica. Usuario e senha valem EXATAMENTE como foram cadastrados,
+// maiusculas e minusculas inclusive (usuario, 08/10/2026).
 //
 // Uso (e depois o commit do docs/index.html):
 //   node usuarios-site.mjs adicionar USUARIO "senha" "Nome"   (inclui ou troca a senha/nome)
@@ -19,8 +20,8 @@ import { fileURLToPath } from 'node:url';
 const ARQ = path.join(path.dirname(fileURLToPath(import.meta.url)), 'docs', 'index.html');
 const sha = s => crypto.createHash('sha256').update(s, 'utf8').digest('hex');
 // os mesmos calculos da pagina (codigoDoUsuario e codigoDoAcesso no docs/index.html)
-export const codigoDoUsuario = u => sha('radar-digiplus:u:' + String(u).trim().toUpperCase());
-export const codigoDoAcesso = (u, senha) => sha('radar-digiplus:' + String(u).trim().toUpperCase() + ':' + senha);
+export const codigoDoUsuario = u => sha('radar-digiplus:u:' + String(u).trim());
+export const codigoDoAcesso = (u, senha) => sha('radar-digiplus:' + String(u).trim() + ':' + senha);
 
 const RE = /var USUARIOS = (\[[\s\S]*?\]);/;
 function le() {

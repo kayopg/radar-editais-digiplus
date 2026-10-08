@@ -334,7 +334,7 @@ button.btn{font-family:inherit;cursor:pointer}
     <h2 id="entradaTitulo">Radar de Editais <span class="plus">DigiPlus</span></h2>
     <p class="diz">Para entrar, use o seu usuário e a sua senha.</p>
     <label for="entraUsuario">Usuário
-      <input id="entraUsuario" name="usuario" autocomplete="username" autocapitalize="characters" spellcheck="false" maxlength="40" required>
+      <input id="entraUsuario" name="usuario" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" maxlength="40" required>
     </label>
     <div class="campo">
       <label for="entraSenha">Senha</label>
@@ -1592,7 +1592,9 @@ window.addEventListener("online", function(){ if(!pronto || usandoCopia) tentaDe
 // livre e uma senha da equipe). De cada um ficam so CODIGOS (SHA-256): "u", do
 // usuario, para o usuarios-site.mjs achar quem trocar ou tirar, e "h", do par
 // usuario + senha, que e o que esta tela confere. Nem o usuario nem a senha
-// ficam escritos aqui. O usuario nao diferencia maiusculas; a senha diferencia.
+// ficam escritos aqui. Usuario e senha valem EXATAMENTE como foram cadastrados,
+// maiusculas e minusculas inclusive (usuario, 08/10/2026: "aceite apenas o
+// usuario e senha exatamente da forma correta").
 // Para incluir, trocar a senha ou tirar alguem: node usuarios-site.mjs.
 //
 // O acesso vale so enquanto a pagina esta carregada (fica na memoria, nao no
@@ -1612,7 +1614,7 @@ var USUARIOS = [
 // o mesmo calculo do usuarios-site.mjs (codigoDoAcesso)
 function codigoDoAcesso(usuario, senha){
   if(!(window.crypto && crypto.subtle)) return Promise.reject(new Error("sem crypto.subtle"));
-  var texto = "radar-digiplus:" + String(usuario).trim().toUpperCase() + ":" + senha;
+  var texto = "radar-digiplus:" + String(usuario).trim() + ":" + senha;
   return crypto.subtle.digest("SHA-256", new TextEncoder().encode(texto)).then(function(h){
     return Array.from(new Uint8Array(h)).map(function(x){ return x.toString(16).padStart(2, "0"); }).join("");
   });
@@ -1650,7 +1652,7 @@ function acesso(){
   setTimeout(function(){ (usuario.value ? senha : usuario).focus(); }, 60);
   document.getElementById("porta").onsubmit = function(ev){
     ev.preventDefault();
-    var u = usuario.value.replace(/\s+/g, "").toUpperCase();
+    var u = usuario.value.trim();
     if(!u){ erro.textContent = "Digite seu usuário."; usuario.focus(); return; }
     codigoDoAcesso(u, senha.value).then(function(h){
       var achado = usuarioDoCodigo(h);
