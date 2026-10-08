@@ -20,7 +20,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, criaCotaNaUf } from './veto-item.mjs';
+import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, chaleiraDeFogao, criaCotaNaUf } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 import { marcaCotas } from './cota.mjs';
 import { POR_LOTE, totaisPorLote, lotesPelosTotais } from './lotes.mjs';
@@ -375,6 +375,7 @@ for (const e of dados.editais) {
       || (instalaNoObjeto && instalavel(norm(it[3]), it[0]) && 'instalacao quando necessaria, e o aparelho se instala')
       || (instalaNoLote && instalavel(norm(it[3]), it[0]) && 'instalacao em item do mesmo lote')
       || (it[0] === 'PR' && amassadeiraRapida(d + ' ' + norm(it[3])) && 'amassadeira rapida')
+      || (it[0] === 'PR' && chaleiraDeFogao(norm(it[3]), d) && 'chaleira de fogao')
       || (!cotaNaUf(e[C.uf], norm(it[3]), d) && 'linha que nao se cota em ' + e[C.uf])
       || (ABRE_FORA_DO_RADAR.exec(d) || [])[1]));
     if (!termo) return true;

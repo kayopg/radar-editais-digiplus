@@ -11,7 +11,7 @@ import { analisaExigencias } from './exigencias.mjs';
 import { devedorDe } from './devedores.mjs';
 import { linkDoPortal, ehComprasGov, montaLinkComprasGov } from './participar.mjs';
 import { portalOk, plataformaDoEdital } from './plataforma.mjs';
-import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, criaCotaNaUf } from './veto-item.mjs';
+import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, chaleiraDeFogao, criaCotaNaUf } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 
 // fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
@@ -76,6 +76,10 @@ const CAT = [
     "extrator de suco","extrator suco","centrifuga de fruta","centrifuga de alimento","centrifuga de suco",
     "mixer de alimento","mixer de mao","mixer 2 em 1","mixer 3 em 1","mixer eletrico","mixer portatil",
     "mixer vertical","mixer profissional","mixer com lamina","mixer com haste",
+    // Cortador de legumes: a Digiplus cota (usuario, 08/10/2026). O de mesa,
+    // com tripe, de Porto Alegre/RS (200 un a R$ 213,80) ia para "Demais itens".
+    // O fatiador pequeno de mao ja entrava por "fatiador" e o piso o tira.
+    "cortador de legumes","cortador de legume","cortador legumes","cortador de vegetais","cortador de frutas e legumes",
     "cafeteira","chaleira","sanduicheira","torradeira","air fryer","airfryer","aspirador de po","aspirador po","aspirador de agua","aspirador agua","grill eletrico","grill",
     // Maquina de waffle: a Digiplus cota (usuario, 28/09/2026). Pelo nome do
     // APARELHO, e nao "waffle" solto, que pegaria o biscoito da merenda.
@@ -140,8 +144,13 @@ const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira','sanduic
 // 18/09/2026): acima de R$ 140 e com mais de 10 unidades, o item fica. A
 // auditoria do dia mostrou o piso derrubando sanduicheira, liquidificador
 // domestico, batedeira e aquecedor de ambiente de R$ 140 a R$ 149.
-const PISO_VOLUME_PRECO = 140, PISO_VOLUME_QTD = 10;
-const salvoPeloVolume = (v, q) => v > PISO_VOLUME_PRECO && q > PISO_VOLUME_QTD;
+// E acima de R$ 100 com mais de 25 unidades (usuario, 08/10/2026: "itens
+// pequenos (acima de 100 reais) acima de 25 itens, pode manter nos editais") —
+// o liquidificador domestico de 280 unidades a R$ 136,78 de Porto Alegre/RS e o
+// de 50 a R$ 116,66 de Novo Hamburgo/RS. A chaleira de aluminio que o piso
+// segurava sai agora pelo chaleiraDeFogao do veto-item.mjs.
+const PISO_VOLUME = [[140, 10], [100, 25]];   // [preco acima de, unidades acima de]
+const salvoPeloVolume = (v, q) => PISO_VOLUME.some(([p, n]) => v > p && q > n);
 
 // 5.6 - piso do edital inteiro. Compra de troco (uma chaleira, um liquidificador)
 // nao vale a viagem. Valor ZERO e orcamento sigiloso e fica: nao se sabe o tamanho,
@@ -1005,6 +1014,7 @@ for (const o of cands) {
     if (cat === 'OT' && VETO_OT_HALOGENO.some(v => d.includes(v))) continue;
     if (!cotaNaUf(o.uf, d, '', true)) continue;
     if (cat === 'PR' && amassadeiraRapida(d)) continue;
+    if (cat === 'PR' && chaleiraDeFogao(d)) continue;
     if (!itemVivo(it.sit)) { vCancel++; continue; }
     const v = +it.v || 0;
     if (v > 0 && v < PISO_ITEM && !SEM_PISO.some(p => d.includes(p)) && !salvoPeloVolume(v, +it.q || 0)) continue;

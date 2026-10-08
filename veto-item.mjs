@@ -35,6 +35,23 @@
 export const amassadeiraRapida = d => /amassadeira/.test(d) && /(?<!semi[- ])\brapida\b/.test(d)
   && !/lenta|semi[- ]?r?rapida/.test(d);
 
+// A chaleira que a Digiplus cota e a ELETRICA ou a industrial (5.4b do
+// varredura.mjs, 01/09/2026); a de aluminio, de por no fogao, e panela. Ate
+// 08/10/2026 quem a tirava era o piso de R$ 150. Com o volume passando a salvar
+// o item de mais de R$ 100 e mais de 25 unidades, a "CHALEIRA TIPO HOTEL ...
+// CONFECCIONADA EM ALUMINIO", 47 x R$ 137,24 (Vacaria/RS), entraria. Vale para a
+// chaleira que abre a descricao: o fogao "com queimador para chaleira" fica.
+// A "industrial" de ALUMINIO tambem e panela: "CHALEIRA INDUSTRIAL EM ALUMINIO
+// REFORCADO ... COM CABO DE MADEIRA" (Nao-Me-Toque/RS) e a de "uso
+// profissional ... em aluminio ... propria para utilizacao diretamente sobre
+// fonte de calor" (Dois Irmaos/RS), as duas no radar em 08/10/2026.
+// (resto: o descritivo, quando so ele diz de que e feita a chaleira)
+export const chaleiraDeFogao = (d, resto = '') => {
+  if (!/(?:^|[^a-z])chaleira/.test(d.slice(0, 40))) return false;
+  const t = d + ' ' + resto;
+  return !/eletric/.test(t) && (/aluminio/.test(t) || !t.includes('chaleira industrial'));
+};
+
 // O QUE SE COTA EM CADA UF (usuario, 05/10/2026). A UF que nao esta aqui — RS,
 // SC e PR — cota tudo o que o radar pega. Nas outras fica so o item dessas
 // linhas, e o edital sem nenhum sai:

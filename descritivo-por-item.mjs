@@ -3592,6 +3592,26 @@ function linhaPeloNumero(plano, it, timbres, n, vizinho) {
           t = t + rotulo + ' ' + cont;
         }
       }
+      // A CELULA PARTIDA PELA VIRADA DE FOLHA, com o numero do item so na
+      // segunda metade, logo depois do rodape: "...56.385,00 EXCLUSIVO FOGAO
+      // INDUSTRIAL ... DOTADOS DE ESPALHADORES DE CHAMAS. OS Edital de Pregao
+      // Eletronico 333/2026 (41688046) SEI 26.0.000056802-2 / pg. 11 24 2009516
+      // QUEIMADORES CONJUGADOS ... UN 60 1.532,2100" (Porto Alegre/RS, edital 333,
+      // item 24, 08/10/2026 — o item saia sem descritivo e o veto o tirava). A
+      // primeira metade vai do preco da linha de cima ate o rodape, e so entra
+      // quando abre com o produto e fala do mesmo produto do rotulo.
+      if (ehForte && termoDaCategoria(normIgual(t).slice(0, 120)) === -1) {
+        const antes = janela.slice(Math.max(0, c.index - 4000), c.index);
+        const rodape = /(?:P[áa]gina|p[áa]g\.?|pg\.)\s*\d{1,3}(?:\s*(?:de|\/)\s*\d{1,3})?\s*$/i.exec(antes);
+        const precoDeCima = [...antes.matchAll(/\d,\d{2}(?:\d{2})?\s+(?:R\s?\$\s*:?\s*)?\d{1,3}(?:\.\d{3})*,\d{2}(?:\d{2})?(?![\d,])/g)].pop();
+        if (rodape && precoDeCima) {
+          const metade = limpaCelula(tiraTimbre(antes.slice(precoDeCima.index + precoDeCima[0].length, rodape.index)
+            .replace(/^\s*(?:EXCLUSIVO|AMPLA(?:\s+CONCORR[ÊE]NCIA)?|COTA\s+(?:PRINCIPAL|RESERVADA)|ME\s?\/\s?EPP)\b/i, ''), timbres), timbres)
+            .replace(/\s{2,}/g, ' ').trim();
+          if (metade.length >= 30 && metade.length < 3000 && termoDaCategoria(normIgual(metade).slice(0, 60)) !== -1
+              && falaDoMesmoProduto(it[1], metade)) t = metade + ' ' + t;
+        }
+      }
       // a mesma frase duas vezes seguidas, como a celula do edital traz: "Garantia
       // mínima de 06 meses. Garantia mínima de 06 meses." (Balneario Camboriu/SC)
       t = t.replace(/(?<=^|[.;]\s)([^.;]{10,120}[.;])(?:\s+\1)+/g, '$1');
@@ -4783,7 +4803,11 @@ for (const e of dados.editais) {
   for (const it of v.itens) {
     if (!it[6]) continue;
     it[6] = it[6].replace(/\s+(\d{1,5})\s+(unidades?|und?|pe[çc]as?|p[çc]|caixas?|cx|pares?|conjuntos?|cj)\.?\s*$/i,
-      (todo, n) => (+n === Math.round(+it[2]) ? '' : todo));
+      (todo, n) => (+n === Math.round(+it[2]) ? '' : todo))
+      // e a unidade com a coluna de beneficio, quando a quantidade e os precos
+      // ja sairam: "...INDICAR MARCA. UN EXCLUSIVO" (Porto Alegre/RS, edital 333,
+      // item 9, cortador de legumes, 08/10/2026). So depois do ponto final.
+      .replace(/(?<=[.;])\s+(?:UN|UND|UNID|UNIDADE|UNIDADES)\.?\s+(?:EXCLUSIV[OA]|AMPLA(?:\s+CONCORR[ÊE]NCIA)?|COTA\s+(?:PRINCIPAL|RESERVADA)|DESEMPATE)\s*$/i, '');
   }
 
   // E as outras colunas que ficam no descritivo, reconhecidas pelo NUMERO e pela
