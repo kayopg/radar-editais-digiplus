@@ -332,9 +332,9 @@ button.btn{font-family:inherit;cursor:pointer}
       <text x="100" y="160" text-anchor="middle" class="l2">Plus</text>
     </svg>
     <h2 id="entradaTitulo">Radar de Editais <span class="plus">DigiPlus</span></h2>
-    <p class="diz">Para entrar, diga seu nome e digite a senha da equipe.</p>
-    <label for="entraNome">Seu nome
-      <input id="entraNome" name="nome" autocomplete="name" maxlength="60" required>
+    <p class="diz">Para entrar, use o seu usuário e a sua senha.</p>
+    <label for="entraUsuario">Usuário
+      <input id="entraUsuario" name="usuario" autocomplete="username" autocapitalize="characters" spellcheck="false" maxlength="40" required>
     </label>
     <div class="campo">
       <label for="entraSenha">Senha</label>
@@ -1587,10 +1587,13 @@ document.addEventListener("click", function(ev){
 window.addEventListener("online", function(){ if(!pronto || usandoCopia) tentaDeNovo(); });
 
 // ------------------------------------------------------------ entrada
-// O nome e a senha da equipe (pedido do usuario em 07/10/2026). Fica so o
-// CODIGO da senha (SHA-256 de "radar-digiplus:" + senha), nunca a senha. Para
-// trocar: node senha-site.mjs "nova senha" — quem ja tinha entrado volta a ver
-// a tela, porque o codigo guardado deixa de bater.
+// So entram os USUARIOS cadastrados, cada um com o seu usuario e a sua senha,
+// e o site diz "Ola, <nome>" (pedido do usuario em 08/10/2026; antes era o nome
+// livre e uma senha da equipe). De cada um ficam so CODIGOS (SHA-256): "u", do
+// usuario, para o usuarios-site.mjs achar quem trocar ou tirar, e "h", do par
+// usuario + senha, que e o que esta tela confere. Nem o usuario nem a senha
+// ficam escritos aqui. O usuario nao diferencia maiusculas; a senha diferencia.
+// Para incluir, trocar a senha ou tirar alguem: node usuarios-site.mjs.
 //
 // O acesso vale so enquanto a pagina esta carregada (fica na memoria, nao no
 // navegador): recarregou, fechou a aba, o navegador ou o computador, abriu de
@@ -1600,12 +1603,23 @@ window.addEventListener("online", function(){ if(!pronto || usandoCopia) tentaDe
 //
 // E reconhecimento, nao cofre: barra quem chega pelo link sem a senha, mas os
 // dados continuam em arquivos publicos.
-var SENHA_CODIGO = "b67d6e5a09f5f0d327e2153c61b7ee8ce838495373fe2b51f16c7f7234343f90";
-function codigoDaSenha(s){
+var USUARIOS = [
+  {"u":"f81e570bf24ba6f5782507e555536abc4f6d8c10f791dce3476da6c90566a93e","h":"1a359742791c639490b8a6be8cea255627bd71ba38e69de21d0fd6c470801dd4","nome":"Volney"},
+  {"u":"e7aed71ea862b05962bd8114d6d57a6ce95e97619ad67a98e5f3609ca7800c31","h":"a6ccab89dd3525e0ec6d10fffbb6ebc72812050487d3b1c07571fc60c70333c8","nome":"Valcir"},
+  {"u":"4a111196ec712f8a8fe3843368e3ab4833be42a0c45782f62bf3e68588543ab8","h":"f46b8340a284ecffc20686c41ea8cd28ad6e968b0a25cce239b228f829c623b8","nome":"Licita 2"},
+  {"u":"b733471018dd89d24d3d7868eedcc9d6f224a590a1159bc4f9a7d93c186e6692","h":"a3f6d1afceb6637b187c9f1da934afc7ef8f5bcd056dd083e90a17ea690cdf07","nome":"Licita 3"}
+];
+// o mesmo calculo do usuarios-site.mjs (codigoDoAcesso)
+function codigoDoAcesso(usuario, senha){
   if(!(window.crypto && crypto.subtle)) return Promise.reject(new Error("sem crypto.subtle"));
-  return crypto.subtle.digest("SHA-256", new TextEncoder().encode("radar-digiplus:" + s)).then(function(h){
+  var texto = "radar-digiplus:" + String(usuario).trim().toUpperCase() + ":" + senha;
+  return crypto.subtle.digest("SHA-256", new TextEncoder().encode(texto)).then(function(h){
     return Array.from(new Uint8Array(h)).map(function(x){ return x.toString(16).padStart(2, "0"); }).join("");
   });
+}
+function usuarioDoCodigo(h){
+  for(var i = 0; i < USUARIOS.length; i++) if(USUARIOS[i].h === h) return USUARIOS[i];
+  return null;
 }
 var ACESSO = null;
 function lembrado(){
@@ -1621,27 +1635,29 @@ function acesso(){
   var tela = document.getElementById("entrada");
   // no artefato a tela nao existe (o artefato.mjs a tira): ele ja e so do dono
   if(!tela){ mostraQuem(""); return; }
-  // sem a senha definida (senha-site.mjs), a tela fica desligada: ninguem fica trancado
-  if(SENHA_CODIGO === "SENHA_AINDA_NAO_DEFINIDA"){ tela.hidden = true; mostraQuem(""); return; }
+  // sem usuario cadastrado (usuarios-site.mjs), a tela fica desligada: ninguem fica trancado
+  if(!USUARIOS.length){ tela.hidden = true; mostraQuem(""); return; }
   var wrap = document.querySelector(".wrap");
   var a = lembrado();
-  if(a && a.nome && a.h === SENHA_CODIGO){
-    tela.hidden = true; if(wrap) wrap.inert = false; mostraQuem(a.nome); return;
+  var quem = a && a.h ? usuarioDoCodigo(a.h) : null;
+  if(quem){
+    tela.hidden = true; if(wrap) wrap.inert = false; mostraQuem(quem.nome); return;
   }
   tela.hidden = false; if(wrap) wrap.inert = true; mostraQuem("");
-  var nome = document.getElementById("entraNome"), senha = document.getElementById("entraSenha"),
+  var usuario = document.getElementById("entraUsuario"), senha = document.getElementById("entraSenha"),
       erro = document.getElementById("entraErro");
-  if(a && a.nome && !nome.value) nome.value = a.nome;
-  setTimeout(function(){ (nome.value ? senha : nome).focus(); }, 60);
+  if(a && a.usuario && !usuario.value) usuario.value = a.usuario;
+  setTimeout(function(){ (usuario.value ? senha : usuario).focus(); }, 60);
   document.getElementById("porta").onsubmit = function(ev){
     ev.preventDefault();
-    var n = nome.value.replace(/\s+/g, " ").trim();
-    if(n.length < 2){ erro.textContent = "Digite seu nome."; nome.focus(); return; }
-    codigoDaSenha(senha.value).then(function(h){
-      if(h !== SENHA_CODIGO){ erro.textContent = "Senha incorreta. Confira com quem passou o acesso."; senha.select(); return; }
-      ACESSO = { nome:n, h:h };
+    var u = usuario.value.replace(/\s+/g, "").toUpperCase();
+    if(!u){ erro.textContent = "Digite seu usuário."; usuario.focus(); return; }
+    codigoDoAcesso(u, senha.value).then(function(h){
+      var achado = usuarioDoCodigo(h);
+      if(!achado){ erro.textContent = "Usuário ou senha incorretos."; senha.select(); return; }
+      ACESSO = { usuario:u, h:h, nome:achado.nome };
       erro.textContent = ""; senha.value = ""; escondeSenha();
-      if(wrap) wrap.inert = false; mostraQuem(n);
+      if(wrap) wrap.inert = false; mostraQuem(achado.nome);
       revelaSite(tela);
     }, function(){
       erro.textContent = "Este navegador não conseguiu conferir a senha. Abra o site pelo endereço https.";
@@ -1686,7 +1702,7 @@ function mostraSenha(mostrar){
   if(sair) sair.addEventListener("click", function(){
     // sai, mas o nome fica preenchido para a proxima vez
     var a = lembrado();
-    if(a) ACESSO = { nome:a.nome };
+    if(a) ACESSO = { usuario:a.usuario };
     acesso();
   });
 })();
