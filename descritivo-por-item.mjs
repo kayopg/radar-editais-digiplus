@@ -527,6 +527,10 @@ const FIM_DE_LINHA = [
   /ESTIMATIVA DO VALOR TOTAL/i,
   /DESCRI[\u00c7C][\u00c3A]O DOS PRODUTOS\s+ITEM/i,
   /Natureza do objeto|FUNDAMENTA[\u00c7C][\u00c3A]O\s+(?:DA|E)\b/i,
+  // (e "3. FUNDAMENTOS DA CONTRATACAO A presente contratacao tem por
+  // finalidade...", depois do ultimo item da tabela de Humaita/RS, a lavadora
+  // de alta pressao do item 14, 08/10/2026 \u2014 o numero da secao sai junto)
+  /\s(?:\d{1,2}\.\s+)?FUNDAMENTOS\s+DA\s+CONTRATA/i,
   // O modelo de proposta que vem depois da tabela: o item 7 de Lucas do Rio
   // Verde/MT seguia por "Local e data. Carimbo da Empresa/Assinatura do
   // responsavel *(Elaborar em Papel Timbrado)".
@@ -5436,7 +5440,12 @@ for (const e of dados.editais) {
     do {
       antes = s;
       s = s.replace(/(?<=[.;])\s+(?:UN|UND|UNID|UNIDADE|UNIDADES)\.?\s+(?:EXCLUSIV[OA]|AMPLA(?:\s+CONCORR[ÊE]NCIA)?|COTA\s+(?:PRINCIPAL|RESERVADA)|DESEMPATE)\s*$/i, '')
-           .replace(/(?<=[.;])\s+\d{1,2}\.\s+D[AEO]S?\s+(?:[A-ZÀ-Ú]+\s+){0,5}[A-ZÀ-Ú]{3,}\s*$/, '');
+           .replace(/(?<=[.;])\s+\d{1,2}\.\s+D[AEO]S?\s+(?:[A-ZÀ-Ú]+\s+){0,5}[A-ZÀ-Ú]{3,}\s*$/, '')
+           // e as colunas de unidade e quantidade no MEIO, quando a celula
+           // atravessou a folha e o resto do nome veio depois delas: "...MOTOR
+           // INDUCAO 01 unidade 04 unidades Wap 4100" (Humaita/RS, item 14). So
+           // com a quantidade do proprio item.
+           .replace(new RegExp('\\s0?1\\s+unidade\\s+0*' + Math.round(+it[2]) + '\\s+unidades?(?=\\s)', 'i'), '');
     } while (s !== antes);
     it[6] = s;
   }

@@ -86,7 +86,7 @@ const ABRE_FORA_DO_RADAR = /^[^a-z]*(?:ventilador\s*\/\s*|ventilador\s+(?=exaust
 const VETO_OBJ_SEMPRE = JSON.parse((fonte.match(/const VETO_OBJ_SEMPRE = new Set\((\[[^\]]*\])\)/) || [, '[]'])[1]);
 const VETO_ITEM = lista('VETO_ITEM'), VETO_RF_CIENT = lista('VETO_RF_CIENT');
 const RE_VAN = /(^|[^a-z])vans?([^a-z]|$)/;       // o mesmo do varredura.mjs
-const VETO_FORA_DE = { projetor: 'LD', 'em mdf': 'CL', 'de mdf': 'CL' };  // idem
+const VETO_FORA_DE = { projetor: 'LD', 'em mdf': 'CL', 'de mdf': 'CL', veicul: 'LV' };  // idem
 // A tabela de categorias e o limite de posicao do termo, tambem do varredura.mjs:
 // a categoria e a do termo que aparece primeiro, e termo muito para o fim da
 // descricao nao e o produto (ver TERMO_LONGE la).

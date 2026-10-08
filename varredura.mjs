@@ -36,7 +36,10 @@ const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira",
 // 18/09/2026, da auditoria com todos os itens do dia: edital so de gerador a
 // gasolina (Indaiatuba/SP) ou so de umidificador de ar (Dracena/SP) nao casava
 // com nenhum termo, e extrator de suco nao tinha nem categoria.
-"gerador a gasolina","gerador a diesel","grupo gerador","umidificador","extrator de suco"];
+"gerador a gasolina","gerador a diesel","grupo gerador","umidificador","extrator de suco",
+// 08/10/2026: a lavadora de alta pressao voltou ao radar, e edital so de
+// lava-jato (material de limpeza, de garagem) nao casava com termo nenhum.
+"lavadora de alta pressao"];
 // DF entrou em 05/10/2026 e MT saiu em 06/10/2026 ("MT nao cotamos mais nada").
 // Fora de RS, SC e PR cada UF tem as suas linhas de produto (LINHAS_DA_UF, no
 // veto-item.mjs). O veta-pelo-descritivo.mjs le esta lista e tira da lista ja
@@ -95,7 +98,13 @@ const CAT = [
   ["LV",["lavadora de roupa","maquina de lavar","secadora","centrifuga de roupa","calandra","tanquinho","lava-loucas","lava loucas","lavadora extratora",
     "maquina lavar","maquina secar","maquina lavadora","lavadora automatica","lavadora semiautomatica","lavadora semi automatica","lavadora semi-automatica",
     // "Lavadora de louça industrial" (Santa Maria/RS, item 22, 29/09/2026)
-    "lavadora de louca","lava louca","lava-louca"]],
+    "lavadora de louca","lava louca","lava-louca",
+    // Lavadora de alta pressao, o lava-jato: a Digiplus cota (usuario,
+    // 08/10/2026; tinha saido em 28/09). O prefixo "pres" cobre o "PRESAO"
+    // escrito assim (Cerro Grande do Sul/RS, Cocalzinho/GO); "lavadoura" e
+    // como Assis Chateaubriand/PR escreve, e "lavadora jato" como Birigui/SP.
+    "lavadora de alta pres","lavadora alta pres","lavadoura de alta pres","lavadora jato","lavadora de pressao",
+    "lava-jato","lava jato","lavajato","hidrolavadora"]],
   // "Cortina Ar material: metal e plastico, comprimento: 120..." e "CORTINA AR,
   // MATERIAL: CAIXA METALICA" sao o nome do catalogo do PNCP, sem o "de" (como
   // a "Maquina Lavar Roupa"), e "CORTINAS DE AR PARA PORTAS" vem no plural: as
@@ -612,11 +621,9 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // cujo descritivo e "REMOCAO DE ESTRUTURAS 4, 6, 8 e 9... estruturas
 // metalicas". Entrou pela palavra "bebedouro" no meio do nome do servico.
 "demolicao","remocao de entulho","entulho",
-// Lavadora de alta pressao (lava-jato) a Digiplus nao cota (usuario,
-// 28/09/2026). Nao era capturada por nenhum termo, mas a "maquina lavadora"
-// que entrou no mesmo dia pegaria "Maquina lavadora de alta pressao". O prefixo
-// "pres" cobre "PRESSAO" e o "PRESAO" que aparece escrito assim (Cocalzinho/GO).
-"lavadora de alta pres","lavadora alta pres","lava-jato","lava jato","lavajato","hidrolavadora",
+// A lavadora de alta pressao (lava-jato) saiu em 28/09/2026 e VOLTOU em
+// 08/10/2026 ("pode incluir lava a jato (lavadora de alta pressao) na lista de
+// produtos que cotamos"): agora e da categoria "Para lavar" (LV), la em cima.
 "balcao termico","balcao refrigerado","balcao conservacao","balcao expositor",
 "balcao self service","balcao de conservacao","balcao frigorifico","pista termica",
 // lavadora extratora hospitalar de 50 kg com barreira sanitaria (Sonora/MS,
@@ -957,7 +964,10 @@ const itemVivo = s => !norm(s).includes('anulado');
 // "Ventilador de teto com 3 pas de MDF, com luminaria" (Votuporanga/SP, item
 // 213, 28/09/2026) saia do radar. Nenhum aparelho de climatizacao e feito de
 // MDF, entao ali o termo nao veta.
-const VETO_FORA_DE = { projetor: 'LD', 'em mdf': 'CL', 'de mdf': 'CL' };
+// "veicul" tira o aparelho de carro (geladeira, ar de veiculo), mas a lavadora
+// de alta pressao, que voltou em 08/10/2026, se descreve "para limpeza de
+// pisos, paredes, areas externas, VEICULOS" (Bonito/MS): em "Para lavar" nao veta.
+const VETO_FORA_DE = { projetor: 'LD', 'em mdf': 'CL', 'de mdf': 'CL', veicul: 'LV' };
 const vetoDoItem = criaVetoItem({ VETO_ITEM, VETO_SO_NA_FRENTE, VETO_FORA_DE, RE_VAN, posicaoDoTermo });
 const temVeto = (d, cat) => !!vetoDoItem(d, cat);
 

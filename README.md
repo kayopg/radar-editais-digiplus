@@ -182,8 +182,7 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    "balcão multiuso para forno e micro-ondas", 07/10/2026), aquecimento de água
    (aquecedor de água, boiler, aquecedor solar, aquecedor de passagem), **masseira**
    (05/10/2026: a amassadeira industrial lenta ou semi-rápida entra; a que se diz só
-   "rápida" fica fora), gerador de qualquer tipo, **lavadora de alta pressão** (lava-jato,
-   28/09/2026), e **balcão** — térmico, refrigerado e
+   "rápida" fica fora), gerador de qualquer tipo, e **balcão** — térmico, refrigerado e
    de conservação (24/09/2026). Nessa mesma conversa o usuário mandou **manter o buffet
    térmico**, que é o mesmo móvel com outro nome, então ali o corte é pelo nome e não pelo
    produto: o `VETO_ITEM` leva as expressões ("balcao termico", "balcao refrigerado"…) e
@@ -195,6 +194,10 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    de outra categoria — um gerador "com ventilador de arrefecimento" cairia em climatização.
    O aquecedor de **ambiente** continua, em "Outros" — menos o **halógeno**, que saiu em
    30/09/2026 (só na categoria dele: a "lâmpada halógena" do forno não derruba o forno).
+   A **lavadora de alta pressão** (lava-jato) saiu em 28/09/2026 e voltou em 08/10/2026, na
+   categoria "Para lavar"; ali o "veículo" da descrição ("limpeza de pisos, paredes,
+   veículos") não veta. Fora de RS, SC e PR ela segue a linha de produtos da UF.
+   O **cortador de legumes** entrou em 08/10/2026, em "Eletrodomésticos" (Preparo).
 4. **Piso de preço unitário** de R$ 150 — equipamento de verdade custa. Chaleira elétrica,
    cafeteira, sanduicheira, grill e máquina de waffle não têm piso. O volume também salva o
    item: acima de R$ 140 com mais de 10 unidades, ou acima de R$ 100 com mais de 25 unidades
