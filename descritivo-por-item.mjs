@@ -3611,8 +3611,26 @@ function linhaPeloNumero(plano, it, timbres, n, vizinho) {
         const bruto = depois.slice(0, prox.index);
         const serve = c => c.length >= 12 && !/^[\d\s.,;:\/%-]*$/.test(c) && (/^[a-zà-ÿ(,;-]/.test(c) || (pendurada && /^[\dA-ZÀ-Ú]/.test(c)))
           && !TIMBRE_NO_MEIO.test(c) && !PRECO_DE_OUTRA.test(c);
-        const cont = [tiraTimbre(limpaCelula(bruto, timbres), timbres), limpaCelula(tiraTimbre(bruto, timbres), timbres)]
+        let cont = [tiraTimbre(limpaCelula(bruto, timbres), timbres), limpaCelula(tiraTimbre(bruto, timbres), timbres)]
           .map(c => c.replace(/\s{2,}/g, ' ').trim()).find(serve);
+        // E a celula que continua na FOLHA SEGUINTE, depois das colunas de preco
+        // e do rodape, em maiuscula: "...RELACAO DE OFICINAS DE ASSISTENCIA
+        // TECNICAS UN 60 1.532,2100 91.932,60 DESEMPATE <rodape> pg. 12
+        // AUTORIZADAS EM CADA ESTADO.O PRODUTO DEVE ATENDER AS NORMAS..." (Porto
+        // Alegre/RS, edital 333, item 24, o fogao que atravessa tres folhas,
+        // 08/10/2026). Vale quando a frase ficou aberta (sem ponto no fim) e o
+        // que vem depois das colunas e o rodape da folha, achado pelo proprio
+        // edital (rodapeDaPagina).
+        const cauda = rodapeDaPagina(plano);
+        if (!cont && cauda && !/[.;:!?)]\s*$/.test(cru)) {
+          const r = bruto.replace(/^\s*(?:EXCLUSIV[OA]|DESEMPATE|AMPLA(?:\s+CONCORR[ÊE]NCIA)?|COTA\s+(?:PRINCIPAL|RESERVADA))\b\s*/i, '');
+          if (r.startsWith(cauda.trim())) {
+            const resto = limpaCelula(r.slice(cauda.trim().length)
+              .replace(/^\s*(?:pg\.|p[áa]g\.?|P[áa]gina)\s*\d{1,3}(?:\s*(?:de|\/)\s*\d{1,3})?/i, ''), timbres)
+              .replace(/\s{2,}/g, ' ').trim();
+            if (resto.length >= 12 && /^\p{Lu}/u.test(resto) && !PRECO_DE_OUTRA.test(resto) && !TIMBRE_NO_MEIO.test(resto)) cont = resto;
+          }
+        }
         if (cont) {
           const rotulo = /:$/.test(cru) && !/:$/.test(t) ? ':' : '';
           t = t + rotulo + ' ' + cont;
