@@ -241,6 +241,27 @@ const ficam = [];
 // cada execucao, entao primeiro saem os da execucao anterior.
 const DO_LOTE = new Set(['LT', 'ED']);
 for (const e of dados.editais) e[C.itens] = e[C.itens].filter(it => !DO_LOTE.has(it[0]));
+
+// A LETRA ACENTUADA QUE O PNCP PERDEU no nome do item: "CAPACIDADE DE
+// REFRIGERA??O DE 12.000 BTU/H, TENS?O 220 V, MONOF?SICO" (Sao Joao da
+// Ponte/MG, edital 20, 08/10/2026). Cada "?" e uma letra que nao chegou, e o
+// descritivo do proprio item, recortado do edital, tem a palavra inteira. A
+// letra volta so quando a palavra aparece la de UM jeito so; sem ela, o "?"
+// fica — chutar o acento seria pior. ("AO INOXIDAVEL" e "FREQUNCIA", em que a
+// letra sumiu sem deixar "?", nao tem como ser achados assim.)
+const esc = s => s.replace(/[.*+^${}()|[\]\\]/g, '\\$&');
+function devolveAcentos(rotulo, fonte) {
+  if (!fonte || !rotulo.includes('?')) return rotulo;
+  return rotulo.replace(/[A-Za-zÀ-ÿ]*\?+[A-Za-zÀ-ÿ?]*/g, palavra => {
+    if (!/[A-Za-zÀ-ÿ]/.test(palavra)) return palavra;
+    const re = new RegExp('(?<![A-Za-zÀ-ÿ])' + [...palavra].map(c => c === '?' ? '[^\\x00-\\x7F]' : esc(c)).join('') + '(?![A-Za-zÀ-ÿ])', 'gi');
+    const achadas = new Set([...String(fonte).matchAll(re)].map(m => m[0].toLowerCase()));
+    if (achadas.size !== 1) return palavra;
+    const [a] = achadas;
+    return palavra === palavra.toUpperCase() ? a.toUpperCase() : a;
+  });
+}
+
 for (const e of dados.editais) {
   // O HTML e a acentuacao quebrada do PNCP (ver texto-pncp.mjs), tambem no
   // dados.json ja publicado.
@@ -248,6 +269,11 @@ for (const e of dados.editais) {
   { const l = limpaTextoPncp(e[C.objeto]); if (l !== e[C.objeto]) { e[C.objeto] = l; limpos++; } }
   const v = desc.editais[e[C.path]] || {};
   const nome = e[C.municipio] + '/' + e[C.uf] + ' ' + e[C.edital];
+  for (const it of e[C.itens]) {
+    const x = (v.itens || []).find(y => +y[0] === +it[5]);
+    const l = devolveAcentos(it[3], x && x[6]);
+    if (l !== it[3]) { it[3] = l; limpos++; }
+  }
   if (UFS_ATENDIDAS.size && !UFS_ATENDIDAS.has(e[C.uf])) {
     editaisFora++;
     console.log(`  sai o edital ${nome}: ${e[C.uf]} nao e mais atendida`);
@@ -429,7 +455,7 @@ for (const e of ficam) {
   }
   if (!entram.length) continue;
   for (const t of entram) {
-    const rot = doCodigoDoOrgao(limpaTextoPncp(t.x[1]));
+    const rot = devolveAcentos(doCodigoDoOrgao(limpaTextoPncp(t.x[1])), t.x[6]);
     e[C.itens].push([cod, +t.x[2] || 0, +t.x[4] || 0, rot.length > 400 ? rot.slice(0, 397) + '...' : rot, t.x[3] || '', t.n, t.x[5] || '']);
     itensDoLote++;
   }

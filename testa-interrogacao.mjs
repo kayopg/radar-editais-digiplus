@@ -12,6 +12,7 @@ import { limpaTextoPncp } from './texto-pncp.mjs';
 const CASOS = [
   // [texto do PNCP, como deve ficar — null quando deve ficar igual]
   ['igual a ?zero?, ou próximo de ?zero?, e', 'igual a “zero”, ou próximo de “zero”, e'],   // Votuporanga/SP
+  ['Formato do Cesto: Quadrado. Cesto de Fritura? Removível, antiaderente.', 'Formato do Cesto: Quadrado. Cesto de Fritura: Removível, antiaderente.'], // Faxinal/PR, 08/10
   ['Gás do produto: R600? Tipo de degelo: Manual', 'Gás do produto: R600a Tipo de degelo: Manual'], // Pontão/RS
   ['gás refrigerante R134? e compressor', 'gás refrigerante R134a e compressor'],
   ['NA FORMA ?FRONTAL ELEVADA? (PADRÃO)', 'NA FORMA “FRONTAL ELEVADA” (PADRÃO)'],             // Boa Vista do Buricá/RS

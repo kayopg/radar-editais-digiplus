@@ -1957,6 +1957,12 @@ function descritivosPorItem(secoes, itens) {
     // recuo acima volta so ate "CONDIONADO"; o "AR" antes dele e parte do nome.
     const ar = /^(?:AR|Ar)/.test(m ? m[1] : '') ? null : secoes.slice(Math.max(0, p - 4), p).match(/(?<![A-Za-zÀ-ÿ])(?:AR|Ar)(?:\s+|-\s*)$/);
     if (ar) p -= ar[0].length;
+    // "FORNECIMENTO E INSTALACAO DE FOGAO INDUSTRIAL 8 BOCAS" (CEFET-MG, Belo
+    // Horizonte/MG, edital 314, item 24, 08/10/2026): o recuo acima para em
+    // "INSTALACAO DE", e o "FORNECIMENTO E" ficava no fim da celula de cima. Sem
+    // ele a entrega instalada, que tira o item fora do RS e de SC, nao era vista.
+    const forn = secoes.slice(Math.max(0, p - 20), p).match(/(?<![A-Za-zÀ-ÿ])(?:FORNECIMENTO|Fornecimento)\s+(?:E|e)\s+$/);
+    if (forn && /^(?:INSTALA|Instala|MONTAGEM|Montagem)/.test(secoes.slice(p, p + 12))) p -= forn[0].length;
     return p;
   }
   // Uma marca por POSICAO, com todos os itens que casam ali. Guardar uma marca
@@ -3521,7 +3527,14 @@ function linhaPeloNumero(plano, it, timbres, n, vizinho) {
     if (Math.abs(+(int + '.' + mp[1]) - preco) > 0.0051) continue;
     // o valor logo depois de outro valor e o TOTAL, que com quantidade 1 e igual
     // ao unitario: "...30 litros UNID. 1 426,71 426,71" (Almenara/MG)
-    if (/\d,\d{2}(?:\d{2})?\s*(?:R\s?\$\s*:?)?\s*$/.test(plano.slice(Math.max(0, mp.index - 30), mp.index))) continue;
+    // — mas o "outro valor" pode ser a QUANTIDADE com casas decimais, depois da
+    // unidade: "...sera instalado. UNID 3,00 R$ 18.318,72 R$ 54.956,16" (CEFET-MG,
+    // Belo Horizonte/MG, edital 314, item 35, 08/10/2026). Sem esta excecao o
+    // unitario passava por total, o ar-condicionado com "FORNECIMENTO E
+    // INSTALACAO" ficava com o texto do catalogo e a instalacao nao era vista.
+    const antesDoPreco = plano.slice(Math.max(0, mp.index - 30), mp.index);
+    if (/\d,\d{2}(?:\d{2})?\s*(?:R\s?\$\s*:?)?\s*$/.test(antesDoPreco)
+        && !new RegExp(UNID_COL + '\\.?\\s+0*' + q + ',0+\\s*(?:R\\s?\\$\\s*:?)?\\s*$', 'i').test(antesDoPreco)) continue;
     const janela = plano.slice(Math.max(0, mp.index - 8000), mp.index);
     // os comecos possiveis, do mais perto para o mais longe; o mais perto pode
     // ser numero de dentro da descricao ("2 PORTAS"), entao os seguintes tambem
@@ -3802,8 +3815,12 @@ for (const e of dados.editais) {
     const so = s => normIgual(s).replace(/[^a-z0-9]+/g, ' ').trim();
     for (const it of v.itens) {
       if (!doRadar.has(String(it[0]))) continue;
-      const t = linhaEntreNumeroEPreco(textoPlano, it, timbres) || linhaEntreNumeroEUnidade(textoPlano, it, timbres)
+      // (com a mesma juncao das palavras partidas no fim da linha que o recorte
+      // principal faz: sem ela o micro-ondas de Palmas/PR ganhava a "Voltagem
+      // 110V" que faltava e trazia "descongelar os alimen- tos", 08/10/2026)
+      const linha = linhaEntreNumeroEPreco(textoPlano, it, timbres) || linhaEntreNumeroEUnidade(textoPlano, it, timbres)
         || linhaPelaAbertura(textoPlano, it, timbres) || linhaDepoisDoPreco(textoPlano, it, timbres);
+      const t = linha && juntaPartidas(linha, textoPlano);
       if (process.env.DEPURA_ITEM === e[C.path] + '#' + it[0]) console.error('DEPURA atual:', it[6], '\nDEPURA linha:', t, '\nDEPURA termo:', termoDaCategoria(normIgual(it[6]).slice(0, 300)), 'fala:', falaDoMesmoProduto(it[1], it[6]), 'palavras:', palavrasDoItem(it[1]));
       if (!t) continue;
       // O rotulo do PNCP que ja traz a linha INTEIRA ganha dela quando a tabela

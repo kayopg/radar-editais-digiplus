@@ -152,13 +152,23 @@ export function criaPosicaoDoTermo(CAT) {
 }
 const esc = s => s.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
 
+// O catalogo do PNCP que poe a CLASSE do aparelho antes da peca: "Ar
+// Condicionado - Defletor tipo: universal, material: plastico / nylon"
+// (Ribeirao Preto/SP, 08/10/2026, defletores de acrilico para ar-condicionado
+// cassete) e o defletor, nao o aparelho. So vale para a peca que vem LOGO
+// depois do " - " e que nunca e o produto: "Bebedouro - gabinete em inox"
+// continua bebedouro, e o "defletor de ar" no meio da descricao do split fica.
+const PECA_APOS_A_CLASSE = /^\s*-\s*(defletor)/;
+
 // posicaoDoTermo(d) -> { c, i } do primeiro termo de categoria, ou null
 export function criaVetoItem({ VETO_ITEM, VETO_SO_NA_FRENTE, VETO_FORA_DE = {}, RE_VAN, posicaoDoTermo }) {
   const naFrente = new Set(VETO_SO_NA_FRENTE);
   const lista = VETO_ITEM.map(v => [v, !FRONTEIRA.has(v) ? null
     : new RegExp('(?:^|[^a-z])' + esc(v) + (FRONTEIRA.get(v) === 'palavra' ? '(?![a-z])' : ''))]);
   return (d, cat) => {
-    const produto = (posicaoDoTermo(d) || { i: 0 }).i;
+    const p = posicaoDoTermo(d);
+    const produto = (p || { i: 0 }).i;
+    if (p && p.t) { const m = PECA_APOS_A_CLASSE.exec(d.slice(p.i + p.t.length)); if (m) return m[1]; }
     for (const [v, re] of lista) {
       if (VETO_FORA_DE[v] === cat) continue;
       let i;

@@ -129,6 +129,14 @@ const INTERROGACAO = [
   // O espaco no meio existe: o PNCP guarda "GAVETAS? :MESA:", e a colagem do
   // espaco antes da pontuacao so acontece no fim desta funcao.
   [/(?<=\p{L})\?(?=\s*[:;,])/gu, ''],
+  // O sinal perdido entre o NOME de um campo e o valor dele: "Formato do Cesto:
+  // Quadrado. Cesto de Fritura? Removivel, antiaderente. Potencia: 1600W"
+  // (Faxinal/PR, item 66, air fryer, 08/10/2026) — os outros campos do mesmo
+  // item tem dois-pontos. A palavra de tras e minuscula e colada no "?", e a
+  // seguinte e Maiuscula seguida de minuscula. A pergunta em caixa alta
+  // ("OPTANTE PELO SIMPLES? SIM") nao casa, e a de verdade nesse formato
+  // ("Possui timer? Sim") tambem se le com dois-pontos.
+  [/(?<=\p{Ll})\?(?=\s\p{Lu}\p{Ll})/gu, ':'],
   // E o travessao que o proprio PNCP ja entrega como "?", sem mojibake nenhum:
   // "VENTILADOR DE PAREDE ? 60 CM" (Guia Lopes da Laguna/MS), "Forno Eletrico
   // 48 litros ? Forno eletrico com capacidade..." (Ervalia/MG). Solto entre
