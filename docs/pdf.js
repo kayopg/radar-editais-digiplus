@@ -468,6 +468,8 @@
       // --------------------------------------------------------- tabela
       // cols: [{titulo, larg (fracao de 1), alinha}]
       // linhas: [[celula, ...], ...]
+      // o.estilo(r): {cor, fundo} da linha r, ou nada — a linha que a Digiplus
+      // nao cota, no edital por lote, sai em cinza sobre fundo claro
       // Cabecalho se repete a cada quebra de pagina.
       tabela: function (cols, linhas, o) {
         o = o || {};
@@ -511,6 +513,11 @@
           var alt2 = maxLinhas * alturaLinha + padY * 2;
           if (!cabe(alt2)) { novaPagina(); cabecalho(); }
           y -= alt2;
+          var est = (o.estilo && o.estilo(r)) || {};
+          if (est.fundo) {
+            cor(est.fundo);
+            pag.push(margem + " " + y.toFixed(2) + " " + larguraUtil + " " + alt2.toFixed(2) + " re f");
+          }
           corLinha([0.6, 0.6, 0.6]);
           pag.push("0.5 w " + margem + " " + y.toFixed(2) + " " + larguraUtil + " " + alt2.toFixed(2) + " re S");
           for (var c3 = 0; c3 < cols.length; c3++) {
@@ -521,7 +528,7 @@
               var tx2 = xs[c3] + padX;
               if (cols[c3].alinha === "direita") tx2 = xs[c3] + larguras[c3] - padX - largura(txt, tam, false);
               else if (cols[c3].alinha === "centro") tx2 = xs[c3] + (larguras[c3] - largura(txt, tam, false)) / 2;
-              pinta(txt, tx2, y + alt2 - padY - alturaLinha * (L + 1) + alturaLinha * 0.28, tam, false, [0, 0, 0]);
+              pinta(txt, tx2, y + alt2 - padY - alturaLinha * (L + 1) + alturaLinha * 0.28, tam, false, est.cor || [0, 0, 0]);
             }
           }
         }

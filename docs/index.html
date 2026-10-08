@@ -932,7 +932,9 @@ function indexaDescritivos(r, base){
 function resumeOutros(r, d){
   if(!d || !d.itens) return [];
   var meusNum = {}, meusDesc = {};
-  nossos(r).forEach(function(it){
+  // r[8] inteiro: os itens do lote que não cotamos já estão na tabela, e
+  // repetidos aqui seriam a mesma informação duas vezes
+  r[8].forEach(function(it){
     if(it[5]) meusNum[it[5]] = 1;
     meusDesc[umaLinha(it[3]).toLowerCase()] = 1;
   });
@@ -1053,22 +1055,46 @@ async function montaResumo(r){
   if(r[9]) doc.campo("Objeto", r[9], { tam:9, larguraRotulo:52 });
 
   // --------------------------------------------------------- itens de interesse
-  secao(doc, "Itens de interesse (" + nossos(r).length + ")");
+  // Edital por lote: a tabela traz o lote inteiro, os itens que não cotamos
+  // inclusive (usuário, 08/10/2026, no edital de climatização de Joinville/SC:
+  // "coloque todos os produtos ..., inclusive os que não cotamos"). Quem leva o
+  // lote leva a instalação, a tubulação e a bomba de dreno junto com o
+  // ar-condicionado, e a proposta só se monta vendo tudo. São os mesmos itens
+  // que o card mostra em cinza: os do mesmo lote (LT) quando os lotes foram
+  // confirmados pelos totais, todos os do edital (ED) quando não.
+  var lote = doLote(r), mesmoLote = lote.some(function(i){ return i[0] === "LT"; });
+  var naTabela = lote.length ? r[8] : nossos(r);
+  secao(doc, lote.length
+    ? "Itens " + (mesmoLote ? "dos lotes" : "do edital") + " (" + naTabela.length + ") · cotamos " + nossos(r).length
+    : "Itens de interesse (" + nossos(r).length + ")");
   var ben = resumoBeneficio(r);
   doc.texto(r[5].toLocaleString("pt-BR") + " unidades · "
             + (r[6] ? moeda(r[6]) + " estimados" : "orçamento sigiloso")
             + (ben ? " · " + ben : ""),
             { tam:8.5, cor:[0.4,0.4,0.4] });
+  if(lote.length){
+    doc.espaco(2);
+    doc.texto((mesmoLote
+        ? "Venda por lote: quem leva o lote leva todos os itens dele. "
+        : "Venda por lote, sem confirmação de quais itens formam cada lote: a tabela traz todos os itens do edital. ")
+      + (lote.length === 1 ? "O item que a Digiplus não cota aparece" : "Os " + lote.length + " itens que a Digiplus não cota aparecem")
+      + " em cinza. Unidades e valor acima são só dos itens cotados.",
+      { tam:8.5, cor:[0.4,0.4,0.4] });
+  }
   doc.espaco(5);
 
   // Tabela, uma linha por item, como o edital apresenta — pedido do usuário em
-  // 08/09/2026, com a página do edital de Salto/SP como exemplo. Só os itens
-  // que a Digiplus cota entram; os demais do edital ficaram de fora a pedido
-  // dele, e antes ocupavam a tabela no lugar destes.
+  // 08/09/2026, com a página do edital de Salto/SP como exemplo. Fora do edital
+  // por lote, só os itens que a Digiplus cota entram; os demais do edital
+  // ficaram de fora a pedido dele, e antes ocupavam a tabela no lugar destes.
   //
   // A descrição é a do EDITAL quando existe. O PNCP devolve "VENTILADOR DE
   // PAREDE", 20 caracteres com que não se cota; o edital diz "VENTILADOR DE
   // PAREDE, preto, 60 cm de diâmetro (mínimo), 03 níveis de velocidade...".
+  // No item que não cotamos vai o nome do PNCP, como no card: o descritivo
+  // dele não é conferido, e o recorte de Joinville trazia o item seguinte
+  // colado no da instalação.
+  var ordenados = ordenaPorLote(naTabela);
   doc.tabela(
     [{ titulo:"Item", larg:0.10, alinha:"centro" },
      { titulo:"Qtd", larg:0.12 },
@@ -1078,7 +1104,7 @@ async function montaResumo(r){
     // Em edital por lote, a tabela sai agrupada por lote — o lance e por lote, e
     // ler os itens do mesmo lote juntos e o que permite montar a proposta. Quem
     // nao tem lote identificado fica ao fim, na ordem da API.
-    ordenaPorLote(nossos(r)).map(function(it, k){
+    ordenados.map(function(it, k){
       return [ rotuloNaTabela(it) || String(k + 1),
                qtdItem(it),
                it[2] ? moeda(it[2]) : "sigiloso",
@@ -1086,9 +1112,12 @@ async function montaResumo(r){
                // é, e são 41% deles: some da tabela seria perder a informação
                // que mais muda a decisão.
                cotaItem(it) || "—",
-               umaLinha(descritivoDoItem(r, it) || it[3]) ];
+               DO_LOTE[it[0]] ? "Não cotamos · " + umaLinha(it[3])
+                              : umaLinha(descritivoDoItem(r, it) || it[3]) ];
     }),
-    { tam:8 });
+    { tam:8, estilo: function(k){
+        return DO_LOTE[ordenados[k][0]] ? { cor:[0.42,0.42,0.42], fundo:[0.955,0.955,0.955] } : null;
+      } });
 
   doc.espaco(6);
   var totalEdital = DESC_ATUAL && DESC_ATUAL.total;

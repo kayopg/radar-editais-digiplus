@@ -394,6 +394,15 @@ ficam.length = 0; ficam.push(...porNumero.values());
 // todos os itens do edital, como ED (decisao dele no mesmo dia). O valor e a
 // quantidade do edital continuam sendo so os dos nossos itens.
 let editaisComLote = 0, editaisInteiros = 0, itensDoLote = 0, lotesMarcados = 0;
+// O nome do item que nao cotamos e o do PNCP, e no Compras.gov.br de
+// Joinville/SC ele vem como "<texto do catalogo> 46950 - TUBULACAO ADICIONAL
+// PARA APARELHOS...": o catalogo na frente e generico, chega a contradizer o
+// edital ("tipo: split hi wall" no ar-condicionado cassete) e empurrava o texto
+// do orgao para depois do corte de 400 caracteres. Fica do codigo em diante.
+// Em 08/10/2026 o padrao aparecia em 48 dos 6.278 itens do descritivos.json,
+// todos desse tipo.
+const CATALOGO_E_CODIGO = /^(.{20,}?)\s(\d{4,6} - [A-ZÀ-Ú]{3}.{12,})$/s;
+const doCodigoDoOrgao = s => { const m = CATALOGO_E_CODIGO.exec(s); return m ? m[2] : s; };
 for (const e of ficam) {
   const v = desc.editais[e[C.path]];
   if (!v || !(v.itens || []).length) continue;
@@ -420,7 +429,7 @@ for (const e of ficam) {
   }
   if (!entram.length) continue;
   for (const t of entram) {
-    const rot = limpaTextoPncp(t.x[1]);
+    const rot = doCodigoDoOrgao(limpaTextoPncp(t.x[1]));
     e[C.itens].push([cod, +t.x[2] || 0, +t.x[4] || 0, rot.length > 400 ? rot.slice(0, 397) + '...' : rot, t.x[3] || '', t.n, t.x[5] || '']);
     itensDoLote++;
   }

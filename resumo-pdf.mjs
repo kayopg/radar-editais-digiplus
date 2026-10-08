@@ -572,9 +572,13 @@ async function anexaPaginas(doc, r, fontes, modo, itens) {
 }
 
 export async function montaResumo(r, opts = {}) {
-  // os itens do lote que nao cotamos (LT e ED, 07/10/2026) ficam no card; o
-  // resumo e dos nossos — eles aparecem nos "Demais itens do edital"
-  r = r.slice(); r[8] = (r[8] || []).filter(it => it[0] !== 'LT' && it[0] !== 'ED');
+  // Edital por lote: o lote inteiro entra, os itens que nao cotamos (LT e ED)
+  // marcados em cinza — usuario, 08/10/2026: "coloque todos os produtos ...,
+  // inclusive os que nao cotamos". A contagem, as unidades e o beneficio
+  // continuam sendo so dos nossos.
+  const comLote = (r[8] || []).slice();
+  r = r.slice(); r[8] = comLote.filter(it => it[0] !== 'LT' && it[0] !== 'ED');
+  const nLote = comLote.length - r[8].length, mesmoLote = comLote.some(it => it[0] === 'LT');
   const doc = PDF.novo({ rodape: 'Radar de Editais Digiplus · varredura de ' + (opts.varredura || '') });
 
   doc.tituloComValor(r[0] + ' / ' + r[1], r[6] ? moeda(r[6]) : 'orçamento sigiloso', { tam: 15 });
@@ -593,21 +597,34 @@ export async function montaResumo(r, opts = {}) {
   doc.espaco(6);
   if (r[9]) doc.campo('Objeto', r[9], { tam: 9, larguraRotulo: 52 });
 
-  secao(doc, 'Itens de interesse (' + r[8].length + ')');
+  secao(doc, nLote
+    ? 'Itens ' + (mesmoLote ? 'dos lotes' : 'do edital') + ' (' + comLote.length + ') · cotamos ' + r[8].length
+    : 'Itens de interesse (' + r[8].length + ')');
   const ben = resumoBeneficio(r);
   doc.texto(r[5].toLocaleString('pt-BR') + ' unidades · '
             + (r[6] ? moeda(r[6]) + ' estimados' : 'orçamento sigiloso')
             + (ben ? ' · ' + ben : ''),
             { tam: 8.5, cor: [0.4, 0.4, 0.4] });
+  if (nLote) {
+    doc.espaco(2);
+    doc.texto((mesmoLote
+        ? 'Venda por lote: quem leva o lote leva todos os itens dele. '
+        : 'Venda por lote, sem confirmação de quais itens formam cada lote: entram todos os itens do edital. ')
+      + (nLote === 1 ? 'O item que a Digiplus não cota aparece' : 'Os ' + nLote + ' itens que a Digiplus não cota aparecem')
+      + ' em cinza. Unidades e valor acima são só dos itens cotados.',
+      { tam: 8.5, cor: [0.4, 0.4, 0.4] });
+  }
   doc.espaco(5);
 
-  r[8].forEach((it, k) => {
+  const CINZA = [0.42, 0.42, 0.42];
+  comLote.forEach((it, k) => {
+    const fora = it[0] === 'LT' || it[0] === 'ED';
     if (k > 0) { doc.espaco(5); doc.regua(0.5, [0.78, 0.78, 0.78]); doc.espaco(3); }
     doc.reserva(64);
-    doc.parOposto(rotuloItem(it, k) + '   ·   ' + CAT[it[0]], qtdItem(it),
-                  { tam: 10, negritoEsq: true, negritoDir: true, corEsq: [0, 0, 0] });
+    doc.parOposto(rotuloItem(it, k) + '   ·   ' + (fora ? 'não cotamos' : CAT[it[0]]), qtdItem(it),
+                  { tam: 10, negritoEsq: true, negritoDir: true, corEsq: fora ? CINZA : [0, 0, 0] });
     doc.espaco(2);
-    doc.texto(it[3], { tam: 9.5, alturaLinha: 13 });
+    doc.texto(it[3], { tam: 9.5, alturaLinha: 13, cor: fora ? CINZA : undefined });
     doc.espaco(3);
     doc.parOposto('Unitário ' + (it[2] ? moeda(it[2]) : 'sigiloso'),
                   it[2] ? 'Total ' + moeda(it[1] * it[2]) : '',
@@ -625,7 +642,7 @@ export async function montaResumo(r, opts = {}) {
     doc.texto('Não consegui buscar a lista completa agora. Use o link da página oficial no fim.',
       { tam: 8.5, cor: [0.35, 0.35, 0.35] });
   } else {
-    const conhecido = jaDetalhados(r);
+    const conhecido = jaDetalhados(Object.assign(r.slice(), { 8: comLote }));   // o lote inteiro ja saiu acima
     const demais = todos.filter(x => !conhecido(x));
     nDemais = demais.length;
     secao(doc, 'Demais itens do edital (' + demais.length + ')');
