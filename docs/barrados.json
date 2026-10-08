@@ -1,5 +1,5 @@
 {
- "varredura": "2026-10-07",
+ "varredura": "2026-10-08",
  "editais": [
   {
    "path": "60509015000101/2026/160",
@@ -159,6 +159,31 @@
    }
   },
   {
+   "path": "48664304000180/2026/244",
+   "municipio": "Guariba",
+   "uf": "SP",
+   "edital": "Edital nº 111 | Processo 256/2026",
+   "objeto": "AQUISICAO DE MOBILIARIOS ADMINISTRATIVOS E ESCOLARES DESTINADOS AO APARELHAMENTO DA CRECHE ESCOLA PADRAO FDE. e AQUISICAO DE MOBILIARIOS ADMINISTRATIVOS E ESCOL",
+   "exige": [
+    "Amostra",
+    "Carta de solidariedade",
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Amostra": [
+     " abnt. cor a escolha no catalogo do fabricante. documentacao tecnica: o fornecedor devera apresentar, no prazo de 05 dias corridos, a seguinte documentacao tecnica em nome do fabricante do produto: - amostra do produto ofertado para verificacao das especificacoes tecnicas. - declaracao do fabricante para revenda autorizada perante o orgao de garantia e assistencia tecnica. - certificado de regular",
+     " abnt. cor a escolha no catalogo do fabricante. documentacao tecnica: o fornecedor devera apresentar, no prazo de 05 dias corridos, a seguinte documentacao tecnica em nome do fabricante do produto: - amostra do produto ofertado para verificacao das especificacoes tecnicas. - declaracao do fabricante para revenda autorizada perante o orgao de garantia e assistencia tecnica. - certificado de regular"
+    ],
+    "Carta de solidariedade": [
+     "niveis no catalogo do fabricante. documentacao tecnica: o fornecedor devera apresentar, no prazo de 05 dias corridos, a seguinte documentacao tecnica em nome do fabricante do produto: - declaracao de solidariedade do fabricante em favor da empresa licitante, em conformidade com a lei nº 14.133/21, considerando a importancia da garantia de cumprimento integral das obrigacoes decorrentes de eventual",
+     "niveis no catalogo do fabricante. documentacao tecnica: o fornecedor devera apresentar, no prazo de 05 dias corridos, a seguinte documentacao tecnica em nome do fabricante do produto: - declaracao de solidariedade do fabricante em favor da empresa licitante, em conformidade com a lei nº 14.133/21, considerando a importancia da garantia de cumprimento integral das obrigacoes decorrentes de eventual"
+    ],
+    "Garantia contratual": [
+     "os novos e de primeiro uso; ✓ definicao de padroes minimos de qualidade; ✓ observancia das normas tecnicas aplicaveis; ✓ exigencia de garantia dos fabricantes. medidas de mitigacao: ✓ acionamento da garantia contratual; ✓ substituicao ou reparo dos bens defeituosos; ✓ aplicacao das medidas administrativas previstas no contrato. risco: pesquisa de precos inadequada descricao do risco: possibilidade"
+    ]
+   }
+  },
+  {
    "path": "11704447000168/2026/7",
    "municipio": "Santa Rita do Araguaia",
    "uf": "GO",
@@ -174,17 +199,17 @@
    }
   },
   {
-   "path": "88254909000117/2026/1416",
-   "municipio": "Ivoti",
-   "uf": "RS",
-   "edital": "Edital nº 76/2026",
-   "objeto": "ELETRODOMÉSTICOS E ELETRÔNICOS",
+   "path": "00348003000110/2026/1184",
+   "municipio": "Brasília",
+   "uf": "DF",
+   "edital": "Edital nº 94/2026",
+   "objeto": "Aquisição de equipamentos de ar condicionado do tipo Split Hi-Wall (Inverter) e Split Cassete (Inverter), por meio do Sistema de Registro de Preços (SRP), para ",
    "exige": [
-    "Garantia contratual"
+    "Carta de solidariedade"
    ],
    "trechos": {
-    "Garantia contratual": [
-     " - ivoti - rs municipio de ivoti estado do rio grande do sul 12.1. julgados os recursos, constatada a regularidade dos atos praticados, a autoridade competente adjudica e homologa a licitacao. 13. da garantia de execucao. 13.1. a contratada devera fornecer garantia minima de 12 (doze) meses para todos os itens, exceto os itens 16 e 19 que e de no minimo 90 dias, item 20 de 36 meses, e o item 21, d"
+    "Carta de solidariedade": [
+     " 3.7. em caso de fornecedor, revendedor ou distribuidor, sera exigida do licitante/interessado provisoriamente classificado em primeiro lugar, nos termos do edital ou do aviso de contratacao direta, carta de solidariedade emitida pelo fabricante, que assegure a execucao do contrato, tendo em vista a necessidade de assegurar a procedencia, a originalidade e o padrao de qualidade dos equipamentos de"
     ]
    }
   }
