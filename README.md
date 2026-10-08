@@ -51,6 +51,9 @@ e-mail — dado velho e inteiro é melhor que dado novo pela metade.
 
 O job leva mais de duas horas. Se alguém empurrar código para o `main` nesse meio tempo, o
 passo de publicar pula para o `main` atual e refaz o recorte com o código novo antes do push.
+O recorte refeito parte do `dados.json` que já passou pelo veto, com os itens do lote que não
+cotamos (LT e ED); o `descritivo-por-item.mjs` os ignora na leitura, para a segunda rodada dar
+o mesmo que a primeira (antes, 36 itens de editais por lote mudavam, 08/10/2026).
 
 ```
 varredura.mjs → publicar.mjs → docs/dados.json

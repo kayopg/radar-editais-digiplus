@@ -701,7 +701,7 @@
     });
   }
 
-  var mod = { novo: novo, baixa: baixa, largura: largura, quebra: quebra, A4: A4 };
+  var mod = { novo: novo, baixa: baixa, largura: largura, quebra: quebra, A4: A4, paraWinAnsi: paraWinAnsi };
   if (typeof module !== "undefined" && module.exports) module.exports = mod;
   raiz.RadarPDF = mod;
 })(typeof globalThis !== "undefined" ? globalThis : this);

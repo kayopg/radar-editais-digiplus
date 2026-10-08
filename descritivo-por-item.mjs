@@ -187,6 +187,15 @@ const arquivo = path.join(DIR, 'docs', 'descritivos.json');
 const base = JSON.parse(fs.readFileSync(arquivo, 'utf8'));
 const dados = JSON.parse(fs.readFileSync(path.join(DIR, 'docs', 'dados.json'), 'utf8'));
 const C = dados.colunas.reduce((o, n, i) => (o[n] = i, o), {});
+// Os itens do lote que a Digiplus nao cota (LT e ED) entram no dados.json pelo
+// veta-pelo-descritivo.mjs, DEPOIS deste recorte. Rodando de novo — o robo
+// refaz o recorte no fim do job quando o main muda no meio dele —, eles ja
+// estavam la e passavam por itens do radar: as vias so do radar (a linha entre
+// o numero e o preco, os completamentos) mexiam neles, e 36 itens mudavam numa
+// segunda rodada (08/10/2026), a tubulacao de Joinville/SC com o texto da
+// instalacao colado na frente. Aqui o radar e so o que cotamos, como na
+// primeira rodada. Este arquivo so le o dados.json; nao grava.
+for (const e of dados.editais) e[C.itens] = (e[C.itens] || []).filter(it => it[0] !== 'LT' && it[0] !== 'ED');
 
 // A ancora e o rotulo curto da API, e ele quase nunca aparece inteiro no
 // edital. O PNCP escreve "Fogao Industrial aplicacao: alimentacao e nutricao,
