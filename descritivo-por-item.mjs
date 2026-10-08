@@ -93,6 +93,28 @@ function achaRodape(texto) {
   return { cauda, denominador: melhor.d };
 }
 
+// O rodape com o numero da pagina SOZINHO, sem o total que o achaRodape pede:
+// "Edital de Pregao Eletronico 333/2026 (41688046) SEI 26.0.000056802-2 / pg.
+// 11" (Porto Alegre/RS). E o trecho identico que vem antes de todas as
+// ocorrencias de "pg. N" / "Pagina N" no texto (ja com os espacos colapsados).
+// Sem pelo menos tres folhas, ou com "pg." solto no meio do texto, nao ha
+// trecho comum de verdade e volta null.
+const _rodapePg = new Map();
+function rodapeDaPagina(plano) {
+  if (_rodapePg.has(plano)) return _rodapePg.get(plano);
+  const ms = [...plano.matchAll(/(?:P[áa]gina|p[áa]g\.?|pg\.)\s*\d{1,3}(?!\d)/gi)];
+  let cauda = null;
+  if (ms.length >= 3) {
+    const antes = ms.map(m => plano.slice(Math.max(0, m.index - 160), m.index));
+    let n = 0;
+    while (n < 160 && antes.every(a => a.length > n && a[a.length - 1 - n] === antes[0][antes[0].length - 1 - n])) n++;
+    const c = antes[0].slice(antes[0].length - n);
+    if (n >= 12 && /\p{L}{4}/u.test(c)) cauda = c;
+  }
+  _rodapePg.set(plano, cauda);
+  return cauda;
+}
+
 // O TIMBRE que se repete sem contador de pagina nenhum, que o achaRodape nao
 // enxerga. O aviso de dispensa de Cascavel/PR traz sete vezes "Universidade
 // Estadual do Oeste do Parana - UNIOESTE ... Minuta - Aviso de Dispensa_mala
@@ -469,7 +491,11 @@ const FIM_DE_LINHA = [
   // tecnica do produto, mediante solicitacao do pregoeiro" fechava o item 15 de
   // Santa Maria/RS antes da potencia, da voltagem e do material. Clausula comeca
   // depois de ponto ou de artigo, nunca depois de "do", "ao", "pelo".
-  /(?<!\b(?:d[eoa]|ao|[\u00e0a]|pel[oa]|junto|perante|contra))\s(?:o |a |ao |pelo |pela )?(?:pregoeir[oa]|licitantes?\b|desclassifica|fase de lances|assinatura do contrato|custo estimado|vedada a inclus)/i,
+  // (menos o pedido de catalogo que o orgao poe em cada linha da tabela: "...
+  // PRAZO DE GARANTIA. O LICITANTE ARREMATANTE DEVERA ENVIAR CATALOGO. UN 70
+  // 3.041,7100" \u2014 o buffet de Porto Alegre/RS, edital 333, item 19, perdia a
+  // frase que os outros itens do mesmo edital mantem, 08/10/2026)
+  /(?<!\b(?:d[eoa]|ao|[\u00e0a]|pel[oa]|junto|perante|contra))\s(?:o |a |ao |pelo |pela )?(?:pregoeir[oa]|licitantes?\b(?!\s+arrematante\s+dever[\u00e1a]\s+enviar\s+cat[\u00e1a]logo)|desclassifica|fase de lances|assinatura do contrato|custo estimado|vedada a inclus)/i,
   // Depois da tabela costuma vir a minuta do contrato, e o ultimo item entrava
   // nela: a mesa de futmesa de Rio Bom/PR seguia por "de um lado, a PREFEITURA
   // DO MUNICIPIO DE RIO BOM - PR, pessoa juridica de direito publico...".
@@ -3605,8 +3631,20 @@ function linhaPeloNumero(plano, it, timbres, n, vizinho) {
         const rodape = /(?:P[áa]gina|p[áa]g\.?|pg\.)\s*\d{1,3}(?:\s*(?:de|\/)\s*\d{1,3})?\s*$/i.exec(antes);
         const precoDeCima = [...antes.matchAll(/\d,\d{2}(?:\d{2})?\s+(?:R\s?\$\s*:?\s*)?\d{1,3}(?:\.\d{3})*,\d{2}(?:\d{2})?(?![\d,])/g)].pop();
         if (rodape && precoDeCima) {
-          const metade = limpaCelula(tiraTimbre(antes.slice(precoDeCima.index + precoDeCima[0].length, rodape.index)
-            .replace(/^\s*(?:EXCLUSIVO|AMPLA(?:\s+CONCORR[ÊE]NCIA)?|COTA\s+(?:PRINCIPAL|RESERVADA)|ME\s?\/\s?EPP)\b/i, ''), timbres), timbres)
+          // O rodape INTEIRO sai, e nao so o "pg. 11": o resto dele ("Edital de
+          // Pregao Eletronico 333/2026 (41688046) SEI 26.0.000056802-2 /")
+          // ficava no meio, e a limpeza do fim, que corta no rodape do SEI,
+          // levava a segunda metade junto (08/10/2026, o usuario viu o fogao
+          // parar em "...ESPALHADORES DE CHAMAS. OS").
+          let trecho = antes.slice(precoDeCima.index + precoDeCima[0].length, rodape.index);
+          const cauda = rodapeDaPagina(plano);
+          if (cauda && trecho.endsWith(cauda)) trecho = trecho.slice(0, -cauda.length);
+          else trecho = trecho.replace(/\s*(?:Termo\s+de\s+Refer[êe]ncia|Edital)[^()]{0,60}?\s\(?\d{6,10}\)?\s+SEI\s+[\d.\/-]+\s*\/?\s*$/i, '');
+          // (so o timbre sai do meio: a limpeza de celula e para o FIM da linha,
+          // e aqui o fim e o meio de uma frase — ela comia o "OS" de "...DE
+          // CHAMAS. OS QUEIMADORES CONJUGADOS DEVEM POSSUIR")
+          const metade = tiraTimbre(trecho
+            .replace(/^\s*(?:EXCLUSIVO|AMPLA(?:\s+CONCORR[ÊE]NCIA)?|COTA\s+(?:PRINCIPAL|RESERVADA)|ME\s?\/\s?EPP)\b/i, ''), timbres)
             .replace(/\s{2,}/g, ' ').trim();
           if (metade.length >= 30 && metade.length < 3000 && termoDaCategoria(normIgual(metade).slice(0, 60)) !== -1
               && falaDoMesmoProduto(it[1], metade)) t = metade + ' ' + t;
@@ -3850,7 +3888,7 @@ for (const e of dados.editais) {
       const linha = linhaEntreNumeroEPreco(textoPlano, it, timbres) || linhaEntreNumeroEUnidade(textoPlano, it, timbres)
         || linhaPelaAbertura(textoPlano, it, timbres) || linhaDepoisDoPreco(textoPlano, it, timbres);
       const t = linha && juntaPartidas(linha, textoPlano);
-      if (process.env.DEPURA_ITEM === e[C.path] + '#' + it[0]) console.error('DEPURA atual:', it[6], '\nDEPURA linha:', t, '\nDEPURA termo:', termoDaCategoria(normIgual(it[6]).slice(0, 300)), 'fala:', falaDoMesmoProduto(it[1], it[6]), 'palavras:', palavrasDoItem(it[1]));
+      if (process.env.DEPURA_ITEM === e[C.path] + '#' + it[0]) console.error('DEPURA atual:', it[6], '\nDEPURA linha:', t, '\nDEPURA termo:', termoDaCategoria(normIgual(it[6] || '').slice(0, 300)), 'fala:', falaDoMesmoProduto(it[1], String(it[6] || '')), 'palavras:', palavrasDoItem(it[1]));
       if (!t) continue;
       // O rotulo do PNCP que ja traz a linha INTEIRA ganha dela quando a tabela
       // a partiu na virada de folha: o freezer de Agudos do Sul/PR sai "...FAIXA
@@ -4803,11 +4841,7 @@ for (const e of dados.editais) {
   for (const it of v.itens) {
     if (!it[6]) continue;
     it[6] = it[6].replace(/\s+(\d{1,5})\s+(unidades?|und?|pe[çc]as?|p[çc]|caixas?|cx|pares?|conjuntos?|cj)\.?\s*$/i,
-      (todo, n) => (+n === Math.round(+it[2]) ? '' : todo))
-      // e a unidade com a coluna de beneficio, quando a quantidade e os precos
-      // ja sairam: "...INDICAR MARCA. UN EXCLUSIVO" (Porto Alegre/RS, edital 333,
-      // item 9, cortador de legumes, 08/10/2026). So depois do ponto final.
-      .replace(/(?<=[.;])\s+(?:UN|UND|UNID|UNIDADE|UNIDADES)\.?\s+(?:EXCLUSIV[OA]|AMPLA(?:\s+CONCORR[ÊE]NCIA)?|COTA\s+(?:PRINCIPAL|RESERVADA)|DESEMPATE)\s*$/i, '');
+      (todo, n) => (+n === Math.round(+it[2]) ? '' : todo));
   }
 
   // E as outras colunas que ficam no descritivo, reconhecidas pelo NUMERO e pela
@@ -5371,6 +5405,22 @@ for (const e of dados.editais) {
       it[6] = '';
       sobrasTiradas++;
     }
+  }
+
+  // O fim da linha que sobra depois de todas as limpezas acima, so depois do
+  // ponto final: a unidade com a coluna de beneficio ("...INDICAR MARCA. UN
+  // EXCLUSIVO") e, no ultimo item da tabela, o titulo da secao seguinte do
+  // edital ("...ENVIAR CATALOGO. 2. DO REGISTRO DE PRECOS") — Porto Alegre/RS,
+  // edital 333, 08/10/2026. Repete ate parar: um pode estar atras do outro.
+  for (const it of v.itens) {
+    if (!it[6] || it[9]) continue;
+    let s = it[6], antes;
+    do {
+      antes = s;
+      s = s.replace(/(?<=[.;])\s+(?:UN|UND|UNID|UNIDADE|UNIDADES)\.?\s+(?:EXCLUSIV[OA]|AMPLA(?:\s+CONCORR[ÊE]NCIA)?|COTA\s+(?:PRINCIPAL|RESERVADA)|DESEMPATE)\s*$/i, '')
+           .replace(/(?<=[.;])\s+\d{1,2}\.\s+D[AEO]S?\s+(?:[A-ZÀ-Ú]+\s+){0,5}[A-ZÀ-Ú]{3,}\s*$/, '');
+    } while (s !== antes);
+    it[6] = s;
   }
 
   // E, por fim, o item que o edital nao especifica em lugar nenhum: se o
