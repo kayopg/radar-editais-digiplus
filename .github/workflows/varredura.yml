@@ -207,13 +207,17 @@ jobs:
       # A copia do texto antes do recorte serve ao passo de publicar, que refaz
       # o recorte se o codigo mudar no main durante o job. A copia depois de
       # embutir os itens poupa os ~25 minutos deste passo quando o que mudou foi
-      # so o recorte ou o veto.
+      # so o recorte ou o veto. E o dados.json de ANTES do veto vai junto: o
+      # recorte refeito partia da lista ja vetada pelo codigo velho, e o item que
+      # ele tirou nao voltava com o codigo novo (os ventiladores 120 e 121 de
+      # Tupi Paulista/SP, 09/10/2026).
       - name: Embutir a lista de itens de cada edital
         if: steps.guarda.outputs.rodar == 'sim'
         run: |
           cp docs/descritivos.json /tmp/textos.json
           node itens-embutidos.mjs
           cp docs/descritivos.json /tmp/embutidos.json
+          cp docs/dados.json /tmp/dados-antes-do-veto.json
 
       - name: Recortar o descritivo de cada item
         if: steps.guarda.outputs.rodar == 'sim'
@@ -291,6 +295,7 @@ jobs:
               elif git diff --quiet "$GITHUB_SHA" origin/main -- itens-embutidos.mjs && [ -f /tmp/embutidos.json ]; then
                 echo "O codigo do recorte mudou no main durante o job: refazendo o recorte ($decorrido min de job)."
                 cp /tmp/embutidos.json docs/descritivos.json
+                if [ -f /tmp/dados-antes-do-veto.json ]; then cp /tmp/dados-antes-do-veto.json docs/dados.json; fi
                 if ! { node descritivo-por-item.mjs && node veta-pelo-descritivo.mjs; }; then
                   echo "O recorte novo falhou: publicando o do codigo antigo."
                   cp /tmp/gerado/dados.json /tmp/gerado/descritivos.json docs/
@@ -298,6 +303,7 @@ jobs:
               else
                 echo "O codigo mudou no main durante o job: refazendo o recorte desde o embutir ($decorrido min de job)."
                 cp /tmp/textos.json docs/descritivos.json
+                if [ -f /tmp/dados-antes-do-veto.json ]; then cp /tmp/dados-antes-do-veto.json docs/dados.json; fi
                 if ! { node itens-embutidos.mjs && node descritivo-por-item.mjs && node veta-pelo-descritivo.mjs; }; then
                   echo "O recorte novo falhou: publicando o do codigo antigo."
                   cp /tmp/gerado/dados.json /tmp/gerado/descritivos.json docs/

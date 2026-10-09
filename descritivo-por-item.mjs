@@ -3391,7 +3391,14 @@ function tiraRepeticao(t) {
 function bocasDe(s) {
   const out = new Set();
   const poe = n => { if (+n >= 1 && +n <= 12) out.add(+n); };
-  for (const m of String(s || '').matchAll(/\b(\d{1,2})\s*bocas?\b/gi)) poe(m[1]);
+  // "3 bocas simples, 3 bocas duplas" e um fogao de 6: o veto lia "3" contra o
+  // "6 Bocas" do termo de referencia e apagava o descritivo certo (Santa
+  // Maria/RS, edital 123, item 23, 09/10/2026)
+  const TIPADA = /\b(\d{1,2})\s*bocas?\s+(?:simples|duplas?|triplas?)\b/gi;
+  let soma = 0;
+  for (const m of String(s || '').matchAll(TIPADA)) soma += +m[1];
+  if (soma) poe(soma);
+  for (const m of String(s || '').replace(TIPADA, ' ').matchAll(/\b(\d{1,2})\s*bocas?\b/gi)) poe(m[1]);
   // "quantidade bocas: 10" e campo de CATALOGO do PNCP, e o catalogo erra: o
   // fogao de 4 bocas do edital de Pinhal de Sao Bento/PR esta cadastrado como
   // de 10, e o cooktop de 5 como de 4. Vale o que o EDITAL escreve.
@@ -3470,6 +3477,63 @@ function tabelaEbserh(plano) {
       if (t.length >= 30 && (!saida[l.n] || t.length > saida[l.n].length)) saida[l.n] = t;
     });
   }
+  return saida;
+}
+
+// Os BLOCOS DO TERMO DE REFERENCIA, um por item, com o numero na frente: "Item 1
+// – Forno de Micro-ondas (CATMAT 357633 - SIMILAR) Especificacoes Tecnicas:
+// Tipo: ... Quantidade de 91 unidades Item 2 – ..." (Santa Maria/RS, pregao
+// 74/2026, edital 123, 09/10/2026). O recorte pegava a linha da tabela de
+// precos do edital ("16318 FORNO DE MICRO-ONDAS, CONFORME TERMO DE
+// REFERENCIA") e, na lavadora do item 5, o fim do item 4 com o titulo do 5.
+//
+// O bloco e reconhecido pelo numero com travessao seguido do nome e, logo
+// depois, de "Especificacoes Tecnicas:" (ou "Gerais", "Minimas"); o "Item" na
+// frente as vezes falta ("6 – Freezer Horizontal"). A sequencia tem de
+// crescer de um em um (pulando no maximo dois), e o bloco fecha na frase da
+// quantidade, que nao entra no descritivo. Sem a frase, e com um numero
+// pulado antes do proximo, nao se sabe onde o bloco acaba, e ele fica de fora.
+// A numeracao que recomeca (lotes) vira outra sequencia, e vale so a maior. O
+// numero da folha ("7 de 34") sai do meio do texto.
+const CABECA_DE_BLOCO = /(?:^|\s)(?:Item\s+)?(\d{1,3})\s*[–—-]\s+(?=[A-ZÀ-Ú])/gi;
+const ESPECIFICACOES = /^[^]{0,250}?Especifica[çc][õo]es(?:\s+(?:T[ée]cnicas|Gerais|M[íi]nimas))?\s*:/i;
+const QUANTIDADE_DO_BLOCO = /\s*Quantidade(?::|\s+de)\s+\d[\d.]*\s+unidades?\b/i;
+function blocosComEspecificacao(plano) {
+  const cabecas = [];
+  for (const m of plano.matchAll(CABECA_DE_BLOCO)) {
+    const de = m.index + m[0].length;
+    if (ESPECIFICACOES.test(plano.slice(de, de + 300))) cabecas.push({ n: +m[1], ini: m.index, de });
+  }
+  const seqs = [];
+  for (const c of cabecas) {
+    const atual = seqs[seqs.length - 1];
+    const ult = atual && atual[atual.length - 1];
+    if (c.n === 1) seqs.push([c]);
+    else if (ult && c.n > ult.n && c.n <= ult.n + 3) atual.push(c);
+  }
+  const seq = seqs.sort((a, b) => b.length - a.length)[0] || [];
+  if (seq.length < 3) return {};
+  // o numero da folha: "N de M" com o mesmo M em tres ou mais lugares
+  const totais = {};
+  for (const m of plano.matchAll(/\s\d{1,3} de (\d{1,3})(?=\s)/g)) totais[m[1]] = (totais[m[1]] || 0) + 1;
+  const M = Object.keys(totais).find(k => totais[k] >= 3);
+  const folha = M ? new RegExp('\\s\\d{1,3} de ' + M + '(?=\\s|$)', 'g') : null;
+  const saida = {};
+  seq.forEach((c, i) => {
+    const prox = seq[i + 1];
+    let t = plano.slice(c.de, prox ? prox.ini : c.de + 4000);
+    const q = t.search(QUANTIDADE_DO_BLOCO);
+    if (q >= 0) t = t.slice(0, q);
+    else if (!prox || prox.n !== c.n + 1) return;
+    if (folha) t = t.replace(folha, '');
+    // O "(CATMAT 481682 - SIMILAR)" do titulo sai: nao e especificacao, e o
+    // recorte corta no "CATMAT" que passa dos 50 primeiros caracteres (e o
+    // codigo da linha seguinte, no texto corrido) — o refrigerador do item 21
+    // ficava so com o titulo, e o fogao do 23 ia para o catalogo do PNCP.
+    t = t.replace(/\s*\(\s*CATMAT\s*:?\s*\d{5,7}(?:\s*[-–]\s*similar)?\s*\)/gi, '');
+    t = t.replace(/\s+/g, ' ').trim();
+    if (t.length >= 40) saida[c.n] = t;
+  });
   return saida;
 }
 
@@ -3933,7 +3997,8 @@ for (const e of dados.editais) {
   // Fora e um sistema de exaustao com coifa e dutos, fornecido e instalado, e o
   // "Ventilador tipo: parede" 16 da EBSERH e uma longarina de espera.
   {
-    const tabela = { ...tabelaEbserh(textoPlano), ...(v.planilha || {}) };
+    // (e os blocos do termo de referencia, Santa Maria/RS, 09/10/2026)
+    const tabela = { ...tabelaEbserh(textoPlano), ...blocosComEspecificacao(textoPlano), ...(v.planilha || {}) };
     if (tabelaBate(tabela, v.itens)) for (const it of v.itens) {
       if (!tabela[it[0]] || !serve(it[1], tabela[it[0]], true)) continue;
       if (!it[6]) itensRicos++;
@@ -4448,16 +4513,30 @@ for (const e of dados.editais) {
     // maior parte do texto; o resto e a clausula de instalacao, nao o produto.
     if (it[6].length > 200 && !/[.;:!?)"”»]$/.test(it[6])) {
       const plano = secoesPlano || (secoesPlano = secoes.replace(/\s+/g, ' '));
-      const fim = it[6].slice(-40), k = plano.indexOf(fim);
+      const fim = it[6].slice(-40);
       const p = it[6].lastIndexOf('. ');
-      // (a unidade minuscula da coluna seguinte nao e continuacao: "...Ideal
-      // para uso domestico e escritorio un 200,00", Sao Valerio do Sul/RS)
-      const depois = plano.slice(k + fim.length, k + fim.length + 24);
-      // (nem o cabecalho cifrado da tabela, que tambem vem em minusculas:
-      // "...* GARANTIA TOTAL MINIMA 1 ANO upubmAftujnbepAA", Firminopolis/GO)
-      const cifrado = achaCifrado(plano.slice(k + fim.length, k + fim.length + 120));
-      if (k >= 0 && /^ [a-zà-ÿ]/.test(depois) && !/^ (?:un|und|unid|pc|p[çc]|cx|kit|cj|cjt|par|jg|pct)\.?\s+[\d.,]/.test(depois)
-          && !(cifrado >= 0 && cifrado <= 3) && p > it[6].length * 0.6)
+      const continua = k => {
+        // (a unidade minuscula da coluna seguinte nao e continuacao: "...Ideal
+        // para uso domestico e escritorio un 200,00", Sao Valerio do Sul/RS)
+        const depois = plano.slice(k + fim.length, k + fim.length + 24);
+        // (nem o cabecalho cifrado da tabela, que tambem vem em minusculas:
+        // "...* GARANTIA TOTAL MINIMA 1 ANO upubmAftujnbepAA", Firminopolis/GO)
+        const cifrado = achaCifrado(plano.slice(k + fim.length, k + fim.length + 120));
+        return /^ [a-zà-ÿ]/.test(depois) && !/^ (?:un|und|unid|pc|p[çc]|cx|kit|cj|cjt|par|jg|pct)\.?\s+[\d.,]/.test(depois)
+          && !(cifrado >= 0 && cifrado <= 3);
+      };
+      // A vez em que o fim aparece no edital DENTRO DESTE ITEM: "...12 (doze)
+      // meses contra defeitos de fabricacao" se repete pelo termo da UFSM (Santa
+      // Maria/RS, edital 140, item 69, 09/10/2026), e a primeira vez, de outro
+      // item, seguia "a contar da data de recebimento" — o moedor de carne
+      // perdia a garantia, que no item dele vem sem ponto e antes de "Unidade
+      // 895,05". Os ultimos 120 caracteres levam junto o texto de antes, que e
+      // do item; achados mais de uma vez (itens iguais), todos tem de continuar.
+      const onde = [];
+      const chave = it[6].slice(-120);
+      for (let k = plano.indexOf(chave); k >= 0 && onde.length < 50; k = plano.indexOf(chave, k + 1)) onde.push(k + chave.length - fim.length);
+      if (!onde.length) for (let k = plano.indexOf(fim); k >= 0 && onde.length < 50; k = plano.indexOf(fim, k + 1)) onde.push(k);
+      if (onde.length && onde.every(continua) && p > it[6].length * 0.6)
         it[6] = it[6].slice(0, p + 1);
     }
     // Celula cortada pela virada de folha que termina pendurada numa
@@ -5005,6 +5084,20 @@ for (const e of dados.editais) {
       // "...classificação A. Unid. 01 1.2" — a unidade, a quantidade e o numero
       // da clausula seguinte (Santos/SP, aviso 098, item 1)
         .replace(new RegExp('([.;])\\s+Unid\\.?\\s+0*' + q + '\\s+\\d{1,2}\\.\\d{1,2}\\.?$', 'i'), '$1');
+      // A unidade e a quantidade do item fechando a linha, e o que vem depois e
+      // outra parte do edital: "...PRAZO DE GARANTIA: MINIMO 12 MESES. Unidade 2
+      // ANEXOS DISPONIVEIS NO PORTAL DE COMPRAS PUBLICAS - em separado ANEXO
+      // VII-A..." (Porto Alegre/RS, edital 200, item 9, lavadora de alta pressao,
+      // 09/10/2026). So depois de ponto, com a quantidade do PNCP e com a lista
+      // de anexos depois: a coluna no MEIO da celula e comum, e a celula segue —
+      // "...Injetor de gas horizontal. UN 2 Bandeja coletora de residuos.
+      // Manipulador de temperatura..." (Paraisopolis/MG, item 8, fogao).
+      // (pelo comeco, e nao pela metade: atras da lista ainda vem a assinatura do
+      // SEI, maior que a propria especificacao)
+      // (a lista pode vir depois do cabecalho da folha, que ainda nao saiu aqui:
+      // "MESES. Unidade 2 Edital de Pregao Eletronico ... ANEXOS DISPONIVEIS")
+      const m = new RegExp('(?<=[.;])\\s+(?:Unidades?|UNIDADES?|Und|UND|Un|UN)\\.?\\s+0*' + q + '\\s+(?=[\\s\\S]{0,300}?\\bANEXOS?\\s+(?:DISPON[ÍI]VEIS|[IVX]{1,5}\\b))', 'u').exec(t);
+      if (m && m.index >= 80) t = t.slice(0, m.index);
     }
     // O codigo do catalogo fecha a linha no termo de referencia de Leopoldina/MG
     // (edital 147): "...ABNT NBR 16671; CATMAT: 270123 DC", e no item 10 depois
@@ -5012,6 +5105,15 @@ for (const e of dados.editais) {
     {
       const m = /[;,.]?\s*CATMAT:?\s*\d{5,7}\b/i.exec(t);
       if (m && m.index > 50) t = t.slice(0, m.index);
+    }
+    // A coluna da unidade seguida da distribuicao por secretaria, so numeros, e
+    // a linha seguinte: "INSTALACAO DE CONDICIONADOR DE AR SPLIT 9.000 BTUS
+    // Servico 2 2 30 2 11 4 30 2 150 1 234 23 46.949 TUBULACAO ADICIONAL..."
+    // (Joinville/SC, edital 87, itens do lote, 09/10/2026). Especificacao nao
+    // tem unidade com quatro numeros soltos atras.
+    {
+      const m = /\s(?:Servi[çc]o|SERVI[ÇC]O|Metro|METRO|Unidade|UNIDADE|UN|Und|UND|Unid|UNID)\s+(?:\d{1,4}\s+){4,}/.exec(t);
+      if (m && m.index >= 20) t = t.slice(0, m.index);
     }
     // e a unidade, a quantidade e o numero da folha no meio da frase:
     // "características adicionais: UN 2 4 de 12 oscilante" (Leopoldina, item 9)

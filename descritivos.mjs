@@ -423,6 +423,8 @@ async function extraiSecoes(e, planilhas) {
     else if (!boas.some(p => p.length > 200)) tropecos.push('texto do PDF saiu embaralhado (fonte com codificacao propria)');
     else {
       paginas = boas;
+      const doWord = wordQueCobreMais(e, textoWord, formato, paginas);
+      if (doWord) return doWord;
       // Quantas paginas de tabela cabem na selecao: 40 e o padrao, e para o
       // edital grande e pouco.
       //
@@ -469,6 +471,19 @@ async function extraiSecoes(e, planilhas) {
         if (!comPreco.length || comPreco.some(i => perto(i))) continue;
         base.push(...comPreco.slice(0, 2));
       }
+      // E as paginas dos BLOCOS do termo de referencia, um por item ("Item 1 –
+      // Forno de Micro-ondas (CATMAT ...) Especificacoes Tecnicas: ..."), quando
+      // ha tres ou mais. Santa Maria/RS (edital 123, 09/10/2026) junta estudo
+      // tecnico, edital e termo em 109 paginas, e das 18 escolhidas so algumas
+      // traziam bloco: 37 itens ficavam com a linha da tabela de precos, que so
+      // diz "CONFORME TERMO DE REFERENCIA". O recorte le os blocos pelo numero
+      // (blocosComEspecificacao, no descritivo-por-item.mjs).
+      const comBloco = paginas.map((p, i) => BLOCO_DO_TR.test(p) ? i : -1).filter(i => i >= 0);
+      if (comBloco.length >= 3) {
+        const novas = comBloco.filter(i => !base.includes(i));
+        if (novas.length && process.env.DEPURA_WORD) console.log(`  blocos do TR: ${e[C.municipio]}/${e[C.uf]} ${e[C.path]} · ${novas.length} pagina(s) a mais`);
+        base.push(...novas);
+      }
 
       // A pagina SEGUINTE de cada escolhida entra junto.
       //
@@ -497,6 +512,30 @@ async function extraiSecoes(e, planilhas) {
   }
   return { fonte: null, secoes: [], motivo: tropecos[0] || 'nao foi possivel ler o arquivo' };
 }
+
+// O WORD QUE DESCREVE OS ITENS MELHOR QUE O PDF. Santa Barbara do Sul/RS
+// (edital 54, 09/10/2026) publica o edital em Word, com o termo de referencia
+// digitado e os 26 itens descritos, e o estudo tecnico em PDF escaneado, com a
+// leitura da imagem ("FRTEZER VERTTCAL", "FoGÃo A GÁs euArRo BocAs"). Com PDF
+// legivel o Word nao era lido: 12 itens da casa (fogoes industriais, geladeira,
+// freezer, lavadoras) sairam sem descritivo, e o fogao de 6 bocas ficou com o
+// titulo do de quatro. O Word vale quando cobre claramente mais itens do radar
+// que o PDF inteiro; empatados, segue o PDF, como sempre foi.
+function wordQueCobreMais(e, textoWord, formato, paginasPdf) {
+  if (!textoWord) return null;
+  const t = conserta(textoWord);
+  if (embaralhado(t)) return null;
+  const pw = emPaginas(t);
+  const cw = coberturaItens(e, pw, pw.map((_, i) => i));
+  const cp = coberturaItens(e, paginasPdf, paginasPdf.map((_, i) => i));
+  if (process.env.DEPURA_WORD) console.log(`  word x pdf: ${e[C.municipio]}/${e[C.uf]} ${e[C.path]} · word ${cw.toFixed(2)} · pdf ${cp.toFixed(2)}`);
+  if (cw < cp + 0.25) return null;
+  return { fonte: formato, paginas: null, total: null, cobertura: +cw.toFixed(2),
+           secoes: limita(secoesDe(t, 'ABERTURA DO EDITAL')) };
+}
+
+// o bloco de um item no termo de referencia (ver a selecao de paginas, acima)
+const BLOCO_DO_TR = /(?:^|\s)(?:Item\s+)?\d{1,3}\s*[–—-]\s+[A-ZÀ-Ú][^]{0,250}?Especifica[çc][õo]es(?:\s+(?:T[ée]cnicas|Gerais|M[íi]nimas))?\s*:/i;
 
 function emPaginas(texto, tamanho = 3500) {
   const paginas = [];

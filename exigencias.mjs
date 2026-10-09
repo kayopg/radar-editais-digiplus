@@ -172,6 +172,10 @@ const CONDICIONAL = [
 // EXIGIDO do licitante vencedor ... a apresentacao de amostras" (Borrazopolis/PR,
 // 06/10/2026), que a lista, so com "podera ser exigid" colado, nao via.
 const FACULDADE = /\bpoder(?:a|ao)\b[^.;]{0,40}?\b(?:ser\s+)?(?:solicit|exigi|requisit|requer)/;
+// A amostra que pode ser trocada por documento (ver amostraOuDocumento, em julga)
+// (nas duas ordens e com o "(s)": "o(s) laudo(s) tecnico(s) e/ou amostra(s)
+// e/ou informacoes tecnicas devera(ao) estar identificado(s)", Goiania/GO)
+const AMOSTRA_OU_DOCUMENTO = /amostras?(?:\(s\))?\s*,?\s*(?:e\/ou|ou)\s+(?:o\s+|os\s+|a\s+|as\s+|o\(s\)\s+|a\(s\)\s+)?(?:laudos?|catalogos?|fichas?|folders?|prospectos?|informac|documenta|declarac)|(?:laudos?|catalogos?|fichas?|informac\w*|documenta\w*)(?:\(s\))?(?:\s+tecnic\w*(?:\(s\))?)?\s*,?\s*e\/ou\s+(?:a\s+|as\s+|a\(s\)\s+)?amostras?/;
 // A negacao escrita no meio da clausula, com o artigo: "nao havera A exigencia".
 const NEGA_RE = /nao\s+(?:havera|sera|serao|devera|deverao)\s+(?:a\s+|o\s+)?(?:exigid|exigencia|adotad|solicitad|necessari|obrigatori)/;
 // O que fica de uma secao quando se tira o que ela NEGA: o "nao sera exigida a
@@ -301,6 +305,33 @@ function julga(texto, pos, termo, chave) {
   // e a amostra da PESQUISA DE PRECOS: "a composicao da cesta de precos, ANALISE
   // CRITICA DAS AMOSTRAS e definicao do valor estimado" (Anapolis/GO, 06/10/2026)
   const amostraDePreco = chave === 'amostra' && /(?:analise critica|tratamento) d[ao]s? amostras?|cesta de precos/.test(ctx.slice(Math.max(0, rel - 120), rel + termo.length + 40));
+  // A "amostra" que e CATALOGO: o titulo fala de amostra e o que se pede e
+  // documento — "3.5. exigencias de amostra: 3.5.1. o licitante classificado
+  // provisoriamente em primeiro lugar devera apresentar catalogo tecnico, ficha
+  // tecnica ou documento equivalente" (Camboriu/SC, edital 32), "da exigencia de
+  // amostra 5.10.6 cabera a administracao ... verificar a conformidade ...,
+  // podendo ser solicitados catalogos, fichas tecnicas" (Sant'Ana do
+  // Livramento/RS, edital 19), 09/10/2026. So quando a primeira frase depois do
+  // titulo nao fala de amostra de novo.
+  const aposTermo = ctx.slice(rel + termo.length, rel + termo.length + 400);
+  // (o "s" do plural vem junto: o termo e "amostra")
+  const primeiraFrase = (/^s?[\s:.\-–]*(?:\d{1,2}(?:\.\d{1,2}){1,3}\.?\s+)?([^]*?)(?:\.\s+\d{1,2}(?:\.\d{1,2}){1,3}\.?\s|\.\s|$)/.exec(aposTermo) || [])[1] || '';
+  const amostraEhCatalogo = chave === 'amostra'
+    && /^s?[\s:.\-–]*(?:\d{1,2}(?:\.\d{1,2}){1,3}\.?\s)/.test(aposTermo)
+    && /\b(?:catalogos?|fichas? tecnicas?|folders?|prospectos?)\b/.test(primeiraFrase)
+    && !/amostra/.test(primeiraFrase);
+  // A amostra que pode ser trocada por documento: "o interessado classificado
+  // provisoriamente em primeiro lugar, apresentar amostra, e/ou laudo(s)
+  // tecnico(s) e/ou informacoes tecnicas em relacao ao item" (Goiania/GO,
+  // edital 115, 09/10/2026)
+  const amostraOuDocumento = chave === 'amostra'
+    && AMOSTRA_OU_DOCUMENTO.test(ctx.slice(Math.max(0, rel - 60), rel + termo.length + 80));
+  // E a REMISSAO ao termo de referencia: "5.10. serao exigidas apresentacao de
+  // amostras nos termos do item 4.15 e seus subitens constantes do anexo i –
+  // termo de referencia" (Sant'Ana do Livramento/RS). Quem decide e a secao do
+  // termo; la, so se pedia catalogo.
+  const soRemissao = chave === 'amostra'
+    && /^s?\s*nos termos d[oa]s? (?:item|subitem|clausula)s?\s+[\d.]+[^.;]{0,60}?(?:anexo|termo de referencia)/.test(aposTermo);
   // O modelo de edital NAO PREENCHIDO, com as duas alternativas e o percentual em
   // branco: "[em caso de haver garantia] 10.1 a contratacao conta com garantia de
   // execucao em valor correspondente a x% (xxxx por cento)" (Vitorino/PR)
@@ -358,7 +389,10 @@ function julga(texto, pos, termo, chave) {
     // do catalogo.
     if (corpo !== null) {
       const primeira = corpo.split(/(?:^|\s)\d{1,2}(?:\.\d{1,2}){1,3}\.?\s|[.;]\s/).find(f => new RegExp(palavra).test(f)) || '';
-      secaoFacultativa = (CONDICIONAL.some(c => primeira.includes(c)) || FACULDADE.test(primeira))
+      // (e a amostra que o documento substitui: "apresentar amostra, e/ou
+      // laudo(s) tecnico(s) e/ou informacoes tecnicas" vale para a secao toda,
+      // procedimento de envio incluido — Goiania/GO, edital 115, 09/10/2026)
+      secaoFacultativa = (CONDICIONAL.some(c => primeira.includes(c)) || FACULDADE.test(primeira) || AMOSTRA_OU_DOCUMENTO.test(primeira))
         && !OBRIGA.test(semNegada(corpo)) && !OBRIGA.test(clausula);
       // e a secao que diz que NAO exige, no comeco: "5.3. Apresentacao de
       // amostra(s) 5.3.1. Nao havera a exigencia de amostra(s) nesta etapa"
@@ -379,6 +413,8 @@ function julga(texto, pos, termo, chave) {
   if (sanDist <= 130 || sancaoColada) veredito = 'sancao';
   else if (naListaDeCustos) veredito = 'custo';
   else if (garantiaDoProduto || amostraDoProduto || amostraDePreco) veredito = 'produto';
+  else if (amostraEhCatalogo || amostraOuDocumento) veredito = 'catalogo';
+  else if (soRemissao) veredito = 'remissao';
   else if (marcouNao) veredito = 'dispensa';
   else if (respostaDoCampo) veredito = respostaDoCampo === 'nao' ? 'dispensa' : 'exige';
   else if (conDist <= 100 || CONDICIONAL.some(c => clausula.includes(c)) || FACULDADE.test(clausula) || modeloEmBranco) veredito = 'condicional';
