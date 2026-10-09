@@ -14,6 +14,10 @@ const CASOS = [
   ['igual a ?zero?, ou próximo de ?zero?, e', 'igual a “zero”, ou próximo de “zero”, e'],   // Votuporanga/SP
   ['Formato do Cesto: Quadrado. Cesto de Fritura? Removível, antiaderente.', 'Formato do Cesto: Quadrado. Cesto de Fritura: Removível, antiaderente.'], // Faxinal/PR, 08/10
   ['Pressão mínima: 750 Ibf/pol? - Vazão: 22 L/min', 'Pressão mínima: 750 Ibf/pol² - Vazão: 22 L/min'], // Ressaquinha/MG, 08/10
+  // a letra acentuada perdida em palavra do dicionario (São João da Ponte/MG, 09/10)
+  ['FOG?O INDUSTRIAL DE 04 BOCAS, COM ESTRUTURA REFOR?ADA', 'FOGÃO INDUSTRIAL DE 04 BOCAS, COM ESTRUTURA REFORÇADA'],
+  ['CAPACIDADE DE REFRIGERA??O DE 12.000 BTU/H, TENS?O 220 V, MONOF?SICO', 'CAPACIDADE DE REFRIGERAÇÃO DE 12.000 BTU/H, TENSÃO 220 V, MONOFÁSICO'],
+  ['M?quina de lavar 15 kg, com sa?da de ?gua', 'Máquina de lavar 15 kg, com saída de água'],
   ['pressão de 8 kgf/cm? no mínimo', 'pressão de 8 kgf/cm² no mínimo'],
   ['Gás do produto: R600? Tipo de degelo: Manual', 'Gás do produto: R600a Tipo de degelo: Manual'], // Pontão/RS
   ['gás refrigerante R134? e compressor', 'gás refrigerante R134a e compressor'],

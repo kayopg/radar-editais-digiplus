@@ -50,7 +50,12 @@ const LIMITE = Number(arg('--limite', 0));
 // sobrava. Era a maior causa de item sem descritivo — maior que a ancora.
 //
 // 250 mil cobre o edital inteiro na quase totalidade dos casos.
-const TETO = 250000;
+//
+// --teto N muda o teto, para diagnostico. Em 09/10/2026 os 8 editais que batiam
+// nele foram lidos inteiros: nenhum item novo entrou (o texto que sobrava era
+// a segunda copia do edital ou anexo), e em Caarapo/MS o recorte passou a ver
+// "lotes" que o edital, julgado por item, nao tem. O teto ficou.
+const TETO = Number(arg('--teto', 0)) || 250000;
 
 const dados = JSON.parse(fs.readFileSync(path.join(DIR, 'docs', 'dados.json'), 'utf8'));
 const C = dados.colunas.reduce((o, n, i) => (o[n] = i, o), {});
@@ -449,6 +454,20 @@ async function extraiSecoes(e, planilhas) {
         const w = norm(it[3]).split(/[^a-z0-9]+/).find(x => x.length >= 5);
         if (!w || normPag.some((p, i) => perto(i) && p.includes(w))) continue;
         for (const i of normPag.map((p, i) => p.includes(w) ? i : -1).filter(i => i >= 0).slice(0, 3)) base.push(i);
+      }
+      // E pelo PRECO unitario, que so aparece na linha da tabela do proprio
+      // item. Em Perola/PR (edital 17, 09/10/2026) o "ar condicionado" dos itens 1
+      // e 2 aparecia na lista do selo do INMETRO e na justificativa, que estavam
+      // escolhidas, e a especificacao deles, nas paginas 24 e 25 com "R$
+      // 2.295,83" e "R$ 2.677,96", ficava de fora: 12 aparelhos sem descritivo,
+      // fora da lista. Duas paginas no maximo por item.
+      for (const it of e[C.itens] || []) {
+        if (!(+it[2] > 0)) continue;
+        const [int, cent] = (+it[2]).toFixed(2).split('.');
+        const rePreco = new RegExp('(?<![\\d.,])' + int.replace(/\B(?=(\d{3})+(?!\d))/g, '\\.?') + ',' + cent + '(?:\\d{2})?(?![\\d,])');
+        const comPreco = paginas.map((p, i) => rePreco.test(p) ? i : -1).filter(i => i >= 0);
+        if (!comPreco.length || comPreco.some(i => perto(i))) continue;
+        base.push(...comPreco.slice(0, 2));
       }
 
       // A pagina SEGUINTE de cada escolhida entra junto.

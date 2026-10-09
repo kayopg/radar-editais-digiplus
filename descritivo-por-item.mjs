@@ -49,9 +49,13 @@ const rotuloServeDeDescritivo = s => {
   // filtragem" (Marcelandia/MT). Precisa ser longo e trazer uma MEDIDA com
   // unidade ou duas caracteristicas de aparelho — "conforme termo de
   // referencia, capacidade conforme anexo" continua nao servindo.
-  if (t.length < 70) return false;
   const medida = /\d+(?:[.,]\d+)?\s*(?:kg|l\b|litros?|w\b|watts?|v\b|volts?|btus?|cm|mm|polegadas?)/i.test(t);
   const caracteristicas = (t.match(/bivolt|refrigerad|inox|autom[áa]tic|frost\s*free|digital|inverter/gi) || []).length;
+  // O rotulo curto, de 40 a 70 caracteres, serve quando traz a MEDIDA e uma
+  // caracteristica do aparelho: "FREEZER VERTICAL FROST FREE CAPACIDADE MINIMA
+  // 270 LITROS" (Ivoti/RS, item 3, 09/10/2026) — o edital nao descreve o item
+  // em lugar nenhum, e o rotulo ja diz tipo, tecnologia e capacidade.
+  if (t.length < 70) return medida && caracteristicas >= 1;
   return medida || caracteristicas >= 2;
 };
 
@@ -1658,6 +1662,14 @@ const palavrasDoItem = rotulo => [...new Set(
 // distintas do rotulo. A segmentacao continua igual depois disso, entao um
 // item nunca invade o outro mesmo que a janela erre.
 const JANELA_TOKENS = 45;
+// Palavras de ESPECIFICACAO generica, que fecham a descricao de qualquer item:
+// contam dentro da janela, mas nao a abrem. O rotulo do frigobar do item 245 de
+// Assis Chateaubriand/PR termina em "GARANTIA MINIMA DE 12 MESES", e a janela que
+// comecava no "GARANTIA" do fim do item 244 reunia mais palavras dele do que a
+// que comeca em "FRIGOBAR" — a marca do 245 caia ali e o freezer do 244 perdia a
+// ultima frase (09/10/2026).
+const NAO_ABRE_JANELA = new Set(['garantia', 'minima', 'minimo', 'meses', 'manual', 'instrucoes', 'portugues',
+  'embalagem', 'original', 'lacrada', 'entrega', 'fabricacao', 'defeitos', 'inmetro', 'procel', 'selo']);
 function marcaPorProximidade(tokens, alvo, numero, numeroDaLinha, vale = () => true) {
   if (alvo.length < 2) return -1;
   const querido = new Set(alvo);
@@ -1665,7 +1677,7 @@ function marcaPorProximidade(tokens, alvo, numero, numeroDaLinha, vale = () => t
   for (let i = 0; i < tokens.length; i++) {
     // A janela so vale se comecar numa palavra do item: comecando no meio, a
     // marca cairia antes do nome do produto e o recorte abriria fora de lugar.
-    if (!querido.has(tokens[i].w) || !vale(tokens[i].p)) continue;
+    if (!querido.has(tokens[i].w) || NAO_ABRE_JANELA.has(tokens[i].w) || !vale(tokens[i].p)) continue;
     const vistas = new Set();
     for (let j = i; j < tokens.length && j < i + JANELA_TOKENS; j++) {
       if (querido.has(tokens[j].w)) vistas.add(tokens[j].w);

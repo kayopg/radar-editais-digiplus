@@ -31,6 +31,34 @@ const NOMEADAS = {
 // quem desempata e a vizinhanca. Entre dois valores e o sinal de vezes; colado
 // num numero e o "aproximadamente"; solto entre espacos e o travessao; e o
 // resto, que aparece grudado na palavra, e aspas.
+// Palavras do ramo que o PNCP entrega com a letra acentuada trocada por "?"
+// (ver a regra que usa devolveDoDicionario, abaixo).
+const DICIONARIO = ['fogão', 'fogões', 'máquina', 'máquinas', 'refrigeração', 'ventilação', 'climatização',
+  'tensão', 'mínima', 'mínimo', 'máxima', 'máximo', 'água', 'potência', 'frequência', 'freqüência',
+  'elétrico', 'elétrica', 'elétricos', 'elétricas', 'eletrônico', 'eletrônica', 'automático', 'automática',
+  'alumínio', 'aço', 'inoxidável', 'reservatório', 'acessório', 'acessórios', 'necessário', 'necessários',
+  'necessárias', 'padrão', 'referência', 'exigência', 'específica', 'específico', 'classificação',
+  'energética', 'hermético', 'removível', 'removíveis', 'lavável', 'laváveis', 'função', 'funções',
+  'operação', 'fabricação', 'térmico', 'térmica', 'cerâmica', 'saída', 'saídas', 'monofásico', 'trifásico',
+  'bifásico', 'câmara', 'líquido', 'líquida', 'plástico', 'plástica', 'rotação', 'vazão', 'pressão',
+  'português', 'instruções', 'condições', 'dimensões', 'especificações', 'distribuição', 'regulável',
+  'reguláveis', 'ajustável', 'ajustáveis', 'útil', 'úteis', 'também', 'reforçada', 'reforçado',
+  'balcão', 'refrigerador', 'condensação', 'evaporação', 'instalação', 'manutenção', 'conservação',
+  // as que apareciam com "?" nos itens de 08/10/2026
+  'fácil', 'conexão', 'compatível', 'óptico', 'empilhável', 'higienização', 'contínuo', 'resolução', 'proteção',
+  'impressão', 'técnica', 'técnicas', 'técnico', 'técnicos', 'geração', 'metálica', 'metálico', 'utilização',
+  'resistência', 'deverá', 'memória', 'vídeo', 'fixação', 'anatômico', 'anatômicos', 'imperfeições',
+  'certificação', 'exigível', 'estável', 'áudio', 'alimentação', 'até', 'botões', 'condução', 'segurança'];
+const devolveDoDicionario = palavra => {
+  if (!/[A-Za-zÀ-ÿ]{2}/.test(palavra)) return palavra;
+  const re = new RegExp('^' + [...palavra.toLowerCase()].map(c => (c === '?' ? '[^\\x00-\\x7f]' : c.replace(/[.*+^${}()|[\]\\]/g, '\\$&'))).join('') + '$');
+  const achadas = DICIONARIO.filter(d => re.test(d));
+  if (achadas.length !== 1) return palavra;
+  const [d] = achadas;
+  const letras = palavra.replace(/[^A-Za-zÀ-ÿ]/g, '');
+  if (letras === letras.toUpperCase()) return d.toUpperCase();
+  return /^[A-ZÀ-Ý]/.test(palavra) ? d[0].toUpperCase() + d.slice(1) : d;
+};
 const INTERROGACAO = [
   // Quando o TERCEIRO byte sobrevive, nao ha o que adivinhar: todo "E2 80 xx"
   // e o caractere U+20(xx-80) da pontuacao geral do Unicode. O PNCP entrega
@@ -46,6 +74,13 @@ const INTERROGACAO = [
   [/â\?\?(?=\d)/g, '≈'],
   [/\sâ\?\??\s/g, ' – '],
   [/â\?\??/g, '"'],
+  // A LETRA ACENTUADA PERDIDA numa palavra conhecida do ramo: "FOG?O INDUSTRIAL
+  // DE 04 BOCAS" (Sao Joao da Ponte/MG, item 12, 09/10/2026) nao casava com
+  // "fogao" e o fogao industrial nem entrava no radar; "M?QUINA DE LAVAR" e
+  // "TENS?O 220 V" do mesmo jeito. Cada "?" e UMA letra acentuada, e a palavra so
+  // e trocada quando casa com exatamente uma do dicionario — o resto segue para
+  // as regras abaixo.
+  [/(?<![A-Za-zÀ-ÿ])[A-Za-zÀ-ÿ]*\?[A-Za-zÀ-ÿ?]*(?![A-Za-zÀ-ÿ])/g, palavra => devolveDoDicionario(palavra)],
   // Aspas que o PDF perdeu nas DUAS pontas: "NA FORMA ?FRONTAL ELEVADA?
   // (PADRAO)" (Boa Vista do Burica/RS). O que separa das outras interrogacoes
   // e estarem GRUDADAS no conteudo — a de abertura colada na primeira letra e
