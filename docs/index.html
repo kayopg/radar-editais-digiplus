@@ -307,15 +307,15 @@ button.btn{font-family:inherit;cursor:pointer}
 .ag-ev.fech{border-left-color:var(--ink3);background:var(--line2);opacity:.7}
 .ag-ev.fech b{color:var(--ink3)}
 /* o quadrado que marca o edital ja impresso para participar (09/10/2026): vazio
-   ou verde, sem texto, a pedido do usuario */
+   ou todo verde, sem texto nem emoji, a pedido do usuario */
 .ag-item{display:flex;gap:4px;align-items:flex-start}
 .ag-item .ag-ev{flex:1;min-width:0}
-.ag-imp{flex:none;width:22px;height:22px;margin-top:2px;padding:0;border:1.5px solid var(--line);border-radius:7px;background:var(--panel);font:inherit;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.ag-imp{flex:none;width:22px;height:22px;margin-top:2px;padding:0;border:1.5px solid var(--line);border-radius:6px;background:var(--panel);cursor:pointer}
 .ag-imp:hover{border-color:var(--ok)}
-.ag-imp[aria-pressed="true"]{border-color:var(--ok);background:var(--ok-soft)}
+.ag-imp[aria-pressed="true"]{border-color:var(--ok);background:var(--ok)}
 .ag-imp:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
-.mun .imp{display:none;margin-left:6px;font-size:14px;vertical-align:2px}
-.card.impresso .mun .imp{display:inline}
+.mun .imp{display:none;width:13px;height:13px;margin-left:8px;border-radius:3px;background:var(--ok);vertical-align:1px}
+.card.impresso .mun .imp{display:inline-block}
 .ag-vazio{padding:28px 16px;text-align:center;color:var(--ink3)}
 .card.destaque{animation:destaque 1.8s ease}
 @keyframes destaque{0%,45%{box-shadow:0 0 0 3px var(--brand),var(--shadow)}100%{box-shadow:var(--shadow)}}
@@ -636,7 +636,7 @@ function render(){
     var fechado=encerrado(r[4]);
     return '<div class="card'+(fechado?" fechado":horas(r[4])<=24?" urg":"")+(impresso(r)?" impresso":"")+'" style="--n:'+Math.min(ordem,14)+'" data-i="'+D.indexOf(r)+'">'
       +'<div class="chead" onclick="abreCard(this.parentNode)">'
-      +'<div class="cmain"><div class="mun">'+esc(r[0])+'<span class="uf">'+r[1]+'</span><span class="imp" aria-hidden="true">🟩</span></div>'
+      +'<div class="cmain"><div class="mun">'+esc(r[0])+'<span class="uf">'+r[1]+'</span><span class="imp" aria-hidden="true"></span></div>'
       +'<div class="org">'+esc(r[2])+" · "+esc(r[3])+'</div>'
       +'<div class="tags">'+tagh+'</div></div>'
       +'<div class="cside"><div class="val">'+brl(r[6])+'</div>'
@@ -1437,7 +1437,7 @@ var SEMANA=["dom","seg","ter","qua","qui","sex","sáb"];
 var pad2=function(n){ return ("0"+n).slice(-2); };
 var chaveDia=function(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); };
 
-// O 🟩 do edital que a equipe ja imprimiu para participar (pedido de
+// O quadrado verde do edital que a equipe ja imprimiu para participar (pedido de
 // 09/10/2026), marcado na agenda e mostrado tambem no card. No artefato a marca
 // fica no banco compartilhado dele (capacidade db): vale para todos que o abrem
 // e sobrevive a republicacao diaria. No site, que nao tem servidor, fica neste
@@ -1541,7 +1541,7 @@ function renderAgenda(rows){
       var fech=encerrado(r[4]), urg=!fech && horas(r[4])<=24;
       var hm=String(r[4]).slice(11,16);
       var imp=impresso(r);
-      h+='<div class="ag-item"><button type="button" class="ag-imp" data-imp="'+D.indexOf(r)+'" aria-pressed="'+(imp?'true':'false')+'" aria-label="'+(imp?'Desmarcar':'Marcar')+' '+esc(r[0])+'">'+(imp?'🟩':'')+'</button>'
+      h+='<div class="ag-item"><button type="button" class="ag-imp" data-imp="'+D.indexOf(r)+'" aria-pressed="'+(imp?'true':'false')+'" aria-label="'+(imp?'Desmarcar':'Marcar')+' '+esc(r[0])+'"></button>'
         +'<button type="button" class="ag-ev'+(fech?' fech':urg?' urg':'')+'" data-i="'+D.indexOf(r)+'" title="'+esc(r[2]+' · '+r[3])+'">'
         +'<b>'+(hm&&hm!=="00:00"?hm:"—")+'</b> '+esc(r[0])+'/'+r[1]+' <i>· '+(r[6]?brl(r[6]):'sigiloso')+(fech?' · encerrado':'')+(dataAlterada(r)?' · data alterada (era '+esc(dataAnteriorTxt(r))+')':'')+(situacaoAlerta(r)?' · '+esc(String(r[17]).toLowerCase()):'')+'</i></button></div>';
     });
