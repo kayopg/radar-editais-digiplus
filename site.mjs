@@ -22,6 +22,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { limpaTextoPncp } from './texto-pncp.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const DOCS = path.join(DIR, 'docs');
@@ -45,11 +46,18 @@ for (const nome of fs.readdirSync(DOCS)) {
 // (artefato.mjs): a pagina so le os itens de cada edital, e o texto e o que o
 // descritivo-por-item.mjs usa para recortar, antes de publicar. Com ele o
 // arquivo tinha 15,8 MB e era baixado de novo a cada visita (09/10/2026).
+//
+// E o nome de cada item vai limpo (texto-pncp.mjs), como no artefato: e dele
+// que sai a lista "Demais itens do edital" do resumo em PDF, e o de Sao Joao
+// da Ponte/MG chegava do PNCP como "MESA PL?STICA", "CAIXA D??GUA" (09/10/2026).
 {
   const de = path.join(DOCS, 'descritivos.json');
   if (fs.existsSync(de)) {
     const base = JSON.parse(fs.readFileSync(de, 'utf8'));
-    for (const v of Object.values(base.editais || {})) delete v.secoes;
+    for (const v of Object.values(base.editais || {})) {
+      delete v.secoes;
+      for (const x of v.itens || []) x[1] = limpaTextoPncp(String(x[1] ?? ''));
+    }
     fs.writeFileSync(path.join(SAIDA, 'descritivos.json'), JSON.stringify(base), 'utf8');
   }
 }

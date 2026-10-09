@@ -261,6 +261,51 @@ function semRepeticao(t) {
   return t;
 }
 
+// A palavra que a LEITURA DA IMAGEM (OCR) estragou na tabela escaneada, trocada
+// pela do rotulo do PNCP: "...(110 BAR); VASA () MÁXIMA: 405/440 L/H" vira
+// "...(110 BAR); VASÃO MÁXIMA: ..." (Caarapo/MS, item 59, 09/10/2026 — o
+// termo de referencia do mesmo edital escreve "VASÃO", e e isso que o rotulo
+// traz). So o lixo que texto de verdade nao tem: parenteses vazios, letra
+// grudada em "()" ou em "°" (o "N°" de numero fica), simbolo no meio da palavra
+// ("F/\IX/\", "PEBOL!M"). E so quando as tres palavras de cada lado aparecem
+// iguais no rotulo, uma vez so, com no maximo tres palavras entre elas — fora
+// disso o descritivo fica como o edital escreveu. Nos itens de 05 a 08/10 isso
+// trocou so este.
+const ehLixoDeOcr = t => /^\(\)[.,;:]?$/.test(t) || /[A-Za-zÀ-ÿ]\(\)/.test(t)
+  || (/[A-Za-zÀ-ÿ]\.?°/.test(t) && !/^[Nn]\.?°/.test(t)) || /[A-Za-zÀ-ÿ][\\|!{}][A-Za-zÀ-ÿ]/.test(t) || /\/\\/.test(t);
+function consertaPeloRotulo(desc, rotulo, ANC = 3) {
+  const D = String(desc).split(/\s+/).filter(Boolean);
+  if (!D.some(ehLixoDeOcr)) return desc;
+  const chave = s => normIgual(s).replace(/[^a-z0-9]/g, '');
+  const R = limpaTextoPncp(rotulo).split(/\s+/).filter(Boolean);
+  const nR = R.map(chave);
+  const acha = (seq, de = 0) => {
+    for (let j = de; j + seq.length <= nR.length; j++) if (seq.every((s, k) => nR[j + k] === s)) return j;
+    return -1;
+  };
+  const out = D.slice();
+  let trocou = false;
+  for (let i = 0; i < D.length; i++) {
+    if (!ehLixoDeOcr(D[i])) continue;
+    // a palavra colada antes do lixo ("VASA" de "VASA ()") vai junto quando o rotulo nao a tem
+    let a = i;
+    if (a > 0 && !/[.,;:]$/.test(D[a - 1]) && chave(D[a - 1]) && acha([chave(D[a - 1])]) < 0) a--;
+    const antes = D.slice(Math.max(0, a - ANC), a).map(chave).filter(Boolean);
+    const depois = D.slice(i + 1, i + 1 + ANC).map(chave).filter(Boolean);
+    if (antes.length < ANC || depois.length < ANC) continue;
+    const ja = acha(antes);
+    if (ja < 0 || acha(antes, ja + 1) >= 0) continue;
+    const jd = acha(depois, ja + antes.length);
+    const meio = jd < 0 ? [] : R.slice(ja + antes.length, jd);
+    if (!meio.length || meio.length > 3 || meio.some(ehLixoDeOcr)) continue;
+    const letras = D.slice(a, i + 1).join('').replace(/[^A-Za-zÀ-ÿ]/g, '');
+    for (let k = a; k <= i; k++) out[k] = null;
+    out[a] = meio.map(t => (letras && letras === letras.toUpperCase() ? t.toUpperCase() : t)).join(' ');
+    trocou = true;
+  }
+  return trocou ? out.filter(x => x !== null).join(' ') : desc;
+}
+
 // Palavras que o PNCP poe na frente do nome e o edital nao usa: "Aparelho Ar
 // Condicionado" no catalogo e "AR CONDICIONADO SPLIT" no termo de referencia.
 // Enquanto a ancora comecava por "aparelho", nada casava.
@@ -449,7 +494,12 @@ const FIM_DE_LINHA = [
   /\s\d{1,4}\s+\d{1,3}(?:\.\d{1,3}){2,}(?=\s|$)/,
   // "MINI SPLIT. 10 04 UND APARELHO AR CONDICIONADO..." — numero do item,
   // quantidade e unidade abrindo a linha seguinte, em Descalvado/SP.
-  /\s\d{1,4}\s+\d{1,4}\s+(?:UND|UNID|UN|PCS|PC|CX|PAR|KG|LT)(?=\s|$)/,
+  // Depois de palavra de MEDIDA o primeiro numero e o valor dela: "VENTILADOR
+  // OSCILANTE PAREDE DIAMETRO 50 50 UN" e o de 50 cm, 50 unidades (Tupi
+  // Paulista/SP, itens 120 e 121, 09/10/2026) — o corte deixava "...PAREDE
+  // DIAMETRO", sem o tamanho, e o item saia por falta de descritivo, enquanto o
+  // de teto da linha de baixo ficava.
+  /(?<!\b(?:DI[AÂ]METRO|di[aâ]metro|Di[aâ]metro|TAMANHO|tamanho|Tamanho|CAPACIDADE|capacidade|Capacidade|POT[EÊ]NCIA|pot[eê]ncia|Pot[eê]ncia|ALTURA|altura|LARGURA|largura|COMPRIMENTO|comprimento|PROFUNDIDADE|profundidade|ESPESSURA|espessura|VOLUME|volume))\s\d{1,4}\s+\d{1,4}\s+(?:UND|UNID|UN|PCS|PC|CX|PAR|KG|LT)(?=\s|$)/,
   // A mesma virada de linha com a unidade na FRENTE: "...PELO FABRICANTE.
   // UNIDADE 04 09 BALCAO COZINHA EM ACO" fecha a batedeira do item 8 de Nova
   // Tebas/PR — unidade, quantidade, numero do proximo item e o nome dele em
@@ -4839,6 +4889,12 @@ for (const e of dados.editais) {
   // Burica/RS). Depois de tudo: a ortografia e a retirada do numero de pagina
   // ja passaram, entao o que sobrou de "?" e mesmo sinal perdido.
   for (const it of v.itens) if (it[6]) it[6] = arrumaInterrogacao(it[6]);
+
+  // E a palavra que a LEITURA DA IMAGEM estragou, quando o rotulo do PNCP e o
+  // mesmo texto: a tabela escaneada de Caarapo/MS (edital 115, item 59) da
+  // "PRESSAO MINIMA: 1600 LIBRAS (110 BAR); VASA() MAXIMA: 405/440 L/H" e o
+  // rotulo, "...(110 BAR); VASÃO MÁXIMA: 405/440 L/H" (09/10/2026).
+  for (const it of v.itens) if (it[6] && it[1]) it[6] = consertaPeloRotulo(it[6], it[1]);
 
   // O COMECO DA LINHA SEGUINTE grudado no fim do descritivo. Sao tres formas,
   // todas vistas em 25/09/2026 e todas do mesmo tipo: a tabela recomeca e o

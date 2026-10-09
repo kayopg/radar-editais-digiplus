@@ -11,6 +11,8 @@
 //     lido como Latin-1, com o "€" perdido no caminho)
 //
 // So troca o que e inequivoco; o resto do texto fica como veio.
+import fs from 'node:fs';
+
 const MARCA = { acute: '́', grave: '̀', tilde: '̃', circ: '̂', cedil: '̧', uml: '̈' };
 const NOMEADAS = {
   nbsp: ' ', amp: '&', quot: '"', apos: "'", lt: '<', gt: '>', ordm: 'º', ordf: 'ª', deg: '°',
@@ -49,15 +51,43 @@ const DICIONARIO = ['fogão', 'fogões', 'máquina', 'máquinas', 'refrigeraçã
   'impressão', 'técnica', 'técnicas', 'técnico', 'técnicos', 'geração', 'metálica', 'metálico', 'utilização',
   'resistência', 'deverá', 'memória', 'vídeo', 'fixação', 'anatômico', 'anatômicos', 'imperfeições',
   'certificação', 'exigível', 'estável', 'áudio', 'alimentação', 'até', 'botões', 'condução', 'segurança'];
-const devolveDoDicionario = palavra => {
-  if (!/[A-Za-zÀ-ÿ]{2}/.test(palavra)) return palavra;
-  const re = new RegExp('^' + [...palavra.toLowerCase()].map(c => (c === '?' ? '[^\\x00-\\x7f]' : c.replace(/[.*+^${}()|[\]\\]/g, '\\$&'))).join('') + '$');
-  const achadas = DICIONARIO.filter(d => re.test(d));
-  if (achadas.length !== 1) return palavra;
-  const [d] = achadas;
+// O resto vem do VOCABULARIO DOS EDITAIS (palavras-acentuadas.json, montado
+// pelo vocabulario.mjs com o texto dos PDFs que a varredura ja leu): Sao Joao
+// da Ponte/MG (edital 20, 09/10/2026) chegou com TODA letra acentuada como "?"
+// — "BOA VEDA??O", "N?O SENDO ACEITO", "DISPON?VEL", "ATENDIMENTO ?S NORMAS" —
+// e o resumo em PDF saia com os "?". A palavra so e trocada quando UMA forma
+// domina (dez vezes mais comum que a segunda): "P?S" fica, porque "pés" e "pás"
+// sao as duas comuns e ventilador tem pas.
+let VOCAB = { acentuadas: {}, antesDeCrase: [] };
+try { VOCAB = JSON.parse(fs.readFileSync(new URL('./palavras-acentuadas.json', import.meta.url), 'utf8')); } catch { /* sem o arquivo, so o dicionario */ }
+const PORTAMANHO = new Map();
+for (const [w, n] of Object.entries(VOCAB.acentuadas)) {
+  if (w.length < 4) continue;
+  if (!PORTAMANHO.has(w.length)) PORTAMANHO.set(w.length, []);
+  PORTAMANHO.get(w.length).push([w, n]);
+}
+// As curtas, so estas: no vocabulario as de duas ou tres letras sao, em boa
+// parte, pedaco de palavra que o PDF partiu ("ão", "aç", "pç").
+const CURTAS = ['às', 'já', 'só', 'há', 'lá', 'fé', 'pó', 'pé', 'pá', 'aço', 'até', 'não', 'mês', 'pés', 'pás', 'pós', 'três', 'após', 'têm', 'vêm', 'põe', 'mão', 'pão', 'são', 'tão']
+  .map(w => [w, VOCAB.acentuadas[w] || 1]);
+const ANTES_DE_CRASE = new Set(VOCAB.antesDeCrase);
+const caixaDe = (palavra, d) => {
   const letras = palavra.replace(/[^A-Za-zÀ-ÿ]/g, '');
   if (letras === letras.toUpperCase()) return d.toUpperCase();
   return /^[A-ZÀ-Ý]/.test(palavra) ? d[0].toUpperCase() + d.slice(1) : d;
+};
+const devolveDoDicionario = palavra => {
+  if (!/[A-Za-zÀ-ÿ]/.test(palavra)) return palavra;
+  const re = new RegExp('^' + [...palavra.toLowerCase()].map(c => (c === '?' ? '[^\\x00-\\x7f]' : c.replace(/[.*+^${}()|[\]\\]/g, '\\$&'))).join('') + '$');
+  if (/[A-Za-zÀ-ÿ]{2}/.test(palavra)) {
+    const achadas = DICIONARIO.filter(d => re.test(d));
+    if (achadas.length === 1) return caixaDe(palavra, achadas[0]);
+  }
+  const lista = palavra.length < 4 ? CURTAS : PORTAMANHO.get(palavra.length) || [];
+  const [a, b] = lista.filter(([w]) => re.test(w)).sort((x, y) => y[1] - x[1]);
+  // (palavra comprida que so casa com uma, como "alfanuméricas", basta aparecer tres vezes)
+  if (!a || a[1] < (palavra.length >= 8 && !b ? 3 : 5) || (b && a[1] < 10 * b[1])) return palavra;
+  return caixaDe(palavra, a[0]);
 };
 const INTERROGACAO = [
   // Quando o TERCEIRO byte sobrevive, nao ha o que adivinhar: todo "E2 80 xx"
@@ -78,9 +108,40 @@ const INTERROGACAO = [
   // DE 04 BOCAS" (Sao Joao da Ponte/MG, item 12, 09/10/2026) nao casava com
   // "fogao" e o fogao industrial nem entrava no radar; "M?QUINA DE LAVAR" e
   // "TENS?O 220 V" do mesmo jeito. Cada "?" e UMA letra acentuada, e a palavra so
-  // e trocada quando casa com exatamente uma do dicionario — o resto segue para
-  // as regras abaixo.
-  [/(?<![A-Za-zÀ-ÿ])[A-Za-zÀ-ÿ]*\?[A-Za-zÀ-ÿ?]*(?![A-Za-zÀ-ÿ])/g, palavra => devolveDoDicionario(palavra)],
+  // e trocada quando casa com exatamente uma do dicionario, ou quando uma forma
+  // domina no vocabulario dos editais — o resto segue para as regras abaixo.
+  // (Antes, o apostrofo da "CAIXA D??GUA", que nao e letra, Sao Joao da Ponte/MG.)
+  [/(?<![A-Za-zÀ-ÿ])([Dd])\?\??(GUA|gua)(?![A-Za-zÀ-ÿ])/g, (m, d, g) => d + "'" + (g === 'GUA' ? 'ÁGUA' : 'água')],
+  // A curta so quando esta SOLTA, entre espacos ou pontuacao: "2,0?S/cm" e o
+  // microsiemens da condutividade, "54h?" e "1s?" sao unidade com o simbolo
+  // perdido e ".../ords/f?" e endereco — e viravam "ÀS", "há", "só" e "fé".
+  // A barra so vale depois de palavra: "20 DIAS/M?S" e o mes.
+  [/(?<![A-Za-zÀ-ÿ])[A-Za-zÀ-ÿ]*\?[A-Za-zÀ-ÿ?]*(?![A-Za-zÀ-ÿ])/g, (palavra, i, t) => {
+    const antes = t.slice(t.lastIndexOf(' ', i - 1) + 1, i);
+    const solta = /^[\s("“'«]?$/.test(t[i - 1] || '') || /^[A-Za-zÀ-ÿ]{2,}\/$/.test(antes);
+    const depois = t.slice(i + palavra.length, i + palavra.length + 2);
+    const fecha = /^[\s,.;:)!”"»]?$/.test(depois[0] || '') || /^\/[A-Za-zÀ-ÿ]$/.test(depois);   // "A?O/FERRO"
+    if (palavra.length < 4 && !(solta && fecha)) return palavra;
+    return devolveDoDicionario(palavra);
+  }],
+  // No texto que perdeu TODAS as letras acentuadas, o "?" solto entre espacos
+  // tambem e letra: a crase de "PERTENCENTE ? LINHA CORPORATIVA", "RESISTENTE ?
+  // EXPOSICAO SOLAR" e "DESTINADO ? CONDUCAO DE AGUA" (Sao Joao da Ponte/MG,
+  // 09/10/2026). A regra do travessao, mais abaixo, fazia deles "–". O que
+  // decide e a palavra de tras: "pertencente", "resistente" e "destinado" vem
+  // antes de "à" nos editais e nunca antes de travessao; "12.000 BTU/H ? FRIO ?
+  // 220 V", do mesmo item, continua travessao. So vale no texto quebrado (o
+  // terceiro campo da regra), que tem "?" no meio de palavra.
+  [/(?<=(?<![A-Za-zÀ-ÿ])([A-Za-zÀ-ÿ]+)) \? (?=[A-Za-zÀ-ÿ])/g,
+    (m, w) => (ANTES_DE_CRASE.has(w.toLowerCase()) ? (w === w.toUpperCase() ? ' À ' : ' à ') : m), 'quebrado'],
+  // e o metro quadrado da area: "?REA APROXIMADA DE 36 M?, SISTEMA DE MONTAGEM"
+  // (Sao Joao da Ponte/MG, tenda) — a palavra ja voltou como "ÁREA" na regra
+  // de cima. Sem "área" antes, "M?" pode ser m³ e fica.
+  [/(?<=(?<![A-Za-zÀ-ÿ])(?:[ÁáAa]rea|ÁREA|AREA)(?![A-Za-zÀ-ÿ])[^?\n]{0,30}?\d\s?)([mM])\?(?=[\s,.;)]|$)/g, '$1²'],
+  // "P?S" fica (ver acima), menos na expressao que so pode ser pe: "FUNCIONAMENTO
+  // A GLP, P?S DE APOIO" (fogao industrial de Sao Joao da Ponte/MG)
+  [/(?<![A-Za-zÀ-ÿ])([Pp])\?([Ss])(?= (?:DE APOIO|de apoio|REGUL|regul|NIVELADORES|niveladores|ANTIDERRAPANTES|antiderrapantes|DE BORRACHA|de borracha))/g,
+    (m, p, s) => p + (s === 'S' ? 'ÉS' : 'és')],
   // Aspas que o PDF perdeu nas DUAS pontas: "NA FORMA ?FRONTAL ELEVADA?
   // (PADRAO)" (Boa Vista do Burica/RS). O que separa das outras interrogacoes
   // e estarem GRUDADAS no conteudo — a de abertura colada na primeira letra e
@@ -193,6 +254,16 @@ const QUEBRADOS = [
   [/Ãš/g, 'Ú'], [/Ã‡/g, 'Ç'], [/Ãƒ/g, 'Ã'], [/Ã•/g, 'Õ'], [/Ã‚/g, 'Â'], [/ÃŠ/g, 'Ê'], [/Ã"/g, 'Ô'],
 ];
 
+// As regras com o terceiro campo "quebrado" so valem no texto que perdeu as
+// letras acentuadas: dois ou mais "?" no meio de palavra, como "M?NIMA" e
+// "TENS?O" do mesmo item, ou o "GERA??O" sozinho. "ALT?ROTACAO", com um so,
+// nao conta.
+function aplicaInterrogacao(t) {
+  const quebrado = (t.match(/(?<=[A-Za-zÀ-ÿ]\?*)\?(?=\?*[A-Za-zÀ-ÿ])/g) || []).length >= 2;
+  for (const [re, x, so] of INTERROGACAO) if (!so || quebrado) t = t.replace(re, x);
+  return t;
+}
+
 // So a parte das interrogacoes, para o texto que veio do PDF do edital em vez
 // da API do PNCP. Ali nao ha HTML nem entidade para desfazer, e rodar a limpeza
 // inteira seria mexer no descritivo sem necessidade — e descritivo estragado
@@ -200,8 +271,7 @@ const QUEBRADOS = [
 export function arrumaInterrogacao(s) {
   let t = String(s ?? '');
   if (!t.includes('?')) return t;
-  for (const [re, x] of INTERROGACAO) t = t.replace(re, x);
-  return t;
+  return aplicaInterrogacao(t);
 }
 
 export function limpaTextoPncp(s) {
@@ -219,6 +289,6 @@ export function limpaTextoPncp(s) {
   for (const [re, x] of QUEBRADOS) t = t.replace(re, x);
   // Depois dos QUEBRADOS: o que sobrou de "?" ali ja foi resolvido, e o que
   // restar e mesmo o simbolo perdido.
-  for (const [re, x] of INTERROGACAO) t = t.replace(re, x);
+  t = aplicaInterrogacao(t);
   return t.replace(/\s+/g, ' ').replace(/\s+([.,;:])/g, '$1').trim();
 }

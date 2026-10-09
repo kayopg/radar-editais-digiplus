@@ -42,7 +42,21 @@ const CASOS = [
   ['Jato de tinta Heat-Free MicroPiezo®?. Resolução', 'Jato de tinta Heat-Free MicroPiezo®. Resolução'],
   ['Windows Server®? 2003 (SP2) ou mais', 'Windows Server® 2003 (SP2) ou mais'],
   ['28 segundos por página em cores (200 dpi)???. Conectividade:', '28 segundos por página em cores (200 dpi). Conectividade:'],
+  // o texto que perdeu TODA letra acentuada: vocabulario dos editais (São João da Ponte/MG, 09/10)
+  ['TAMPA COM BOA VEDA??O, ATENDENDO ?S NORMAS T?CNICAS APLIC?VEIS.', 'TAMPA COM BOA VEDAÇÃO, ATENDENDO ÀS NORMAS TÉCNICAS APLICÁVEIS.'],
+  ['MAIS RECENTE DISPON?VEL COMERCIALMENTE, N?O SENDO ACEITO MODELO', 'MAIS RECENTE DISPONÍVEL COMERCIALMENTE, NÃO SENDO ACEITO MODELO'],
+  ['NOVO, PERTENCENTE ? LINHA CORPORATIVA, DE GERA??O ATUAL', 'NOVO, PERTENCENTE À LINHA CORPORATIVA, DE GERAÇÃO ATUAL'],
+  ['SPLIT HI-WALL 12.000 BTU/H ? FRIO ? 220 V. CAPACIDADE DE REFRIGERA??O, TENS?O 220 V', 'SPLIT HI-WALL 12.000 BTU/H – FRIO – 220 V. CAPACIDADE DE REFRIGERAÇÃO, TENSÃO 220 V'],
+  ['CADEIRA SEM BRA?OS, EMPILH?VEL, ESTRUTURA MET?LICA TUBULAR EM A?O/FERRO', 'CADEIRA SEM BRAÇOS, EMPILHÁVEL, ESTRUTURA METÁLICA TUBULAR EM AÇO/FERRO'],
+  ['COBERTURA IMPERME?VEL, FORMATO PIRAMIDAL, ?REA APROXIMADA DE 36 M?, SISTEMA', 'COBERTURA IMPERMEÁVEL, FORMATO PIRAMIDAL, ÁREA APROXIMADA DE 36 M², SISTEMA'],
+  ['CAIXA D??GUA DE 500 LITROS, PARA ARMAZENAMENTO DE ?GUA.', "CAIXA D'ÁGUA DE 500 LITROS, PARA ARMAZENAMENTO DE ÁGUA."],
+  ['REGISTROS INDIVIDUAIS, FUNCIONAMENTO A GLP, P?S DE APOIO, F?CIL LIMPEZA', 'REGISTROS INDIVIDUAIS, FUNCIONAMENTO A GLP, PÉS DE APOIO, FÁCIL LIMPEZA'],
+  ['USO ESTIMADO DE 04 HORAS/DIA DURANTE 20 DIAS/M?S. ACOMPANHAR', 'USO ESTIMADO DE 04 HORAS/DIA DURANTE 20 DIAS/MÊS. ACOMPANHAR'],
   // o que tem de ficar como esta
+  ['VENTILADOR DE TETO 3 P?S, CONTROLE DE VELOCIDADE', null],    // "pés" ou "pás": nao da para saber
+  ['Condutividade: 2,0?S/cm a 25 °C', null],                    // microsiemens, nao "às" (12/09)
+  ['14367 25 54h? 257 AMANDA', null],                            // tabela, nao "há"
+  ['(https://contas.tcu.gov.br/ords/f?p=1660:3:0)', null],      // endereco, nao "fé"
   ['OPTANTE PELO SIMPLES? SIM ( ) NÃO( )', null],                // pergunta de verdade
   ['jogo educativo "qual é a pergunta ?, material', null],       // nome do brinquedo (Cáceres/MT)
   ['ACIONAMENTO PARA ALT?ROTAÇÃO (AR), COM', null],             // falta letra, nao acento (Poconé/MT)
