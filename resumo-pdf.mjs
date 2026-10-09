@@ -592,6 +592,11 @@ export async function montaResumo(r, opts = {}) {
   // sessao comeca, que e o que define se ainda da tempo de cotar.
   doc.texto((r[15] ? 'Propostas de ' + dataHoraBR(r[15]) + ' a ' : 'Encerra ') + quandoTxt(r[4]),
             { tam: 9, cor: [0.25, 0.25, 0.25] });
+  // a data que o orgao mudou depois que o Radar viu o edital (datas-alteradas.mjs, 09/10/2026)
+  if (Array.isArray(r[23]) && r[23][0]) {
+    doc.texto('Data alterada: era ' + dataHoraBR(r[23][0]) + ' (mudança vista pelo Radar em ' + dataBR(r[23][1]) + ')',
+              { tam: 9, negrito: true, cor: [0.56, 0.37, 0.07] });
+  }
   const ficha = [r[12] ? "publicado em " + dataBR(r[12]) : "", r[17], r[16], r[18] ? "portal: " + r[18] : ""].filter(Boolean);
   if (ficha.length) doc.texto(ficha.join('   ·   '), { tam: 8.5, cor: [0.42, 0.42, 0.42] });
   doc.espaco(6);

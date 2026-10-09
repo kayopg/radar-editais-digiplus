@@ -5,6 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { marcaDatasAlteradas, leVistas, gravaVistas } from './datas-alteradas.mjs';
 
 // fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
 // entao uma pasta de usuario com acento no nome virava Usu%C3%A1rio e o
@@ -34,6 +35,9 @@ const linhas = editais.map(e => [e.mun, e.uf, e.org, e.ed, e.fecha, e.qtd, e.val
   // 21: 1 quando o link acima foi montado pelo Radar e nao veio do PNCP
   e.linkMontado ? 1 : '',
   // 22: como participar, quando nao ha plataforma (participar-manual.json)
+  '',
+  // 23: [data anterior, dia em que mudou] quando a data de encerramento mudou
+  // depois que o Radar viu o edital (datas-alteradas.mjs, 09/10/2026)
   '']);
 
 const saida = {
@@ -61,15 +65,22 @@ const saida = {
   colunas: ['municipio', 'uf', 'orgao', 'edital', 'encerramento', 'quantidade',
             'valorEstimado', 'path', 'itens', 'objeto', 'unidade', 'modalidade',
             'publicacao', 'arquivoSeq', 'arquivoExtensao',
-            'aberturaPropostas', 'esfera', 'situacao', 'portal', 'naoAvaliado', 'linkPortal', 'linkMontado', 'comoParticipar'],
+            'aberturaPropostas', 'esfera', 'situacao', 'portal', 'naoAvaliado', 'linkPortal', 'linkMontado', 'comoParticipar',
+            'dataAlterada'],
   colunasItem: ['categoria', 'quantidade', 'valorUnitario', 'descricao',
                 'unidadeMedida', 'numeroItem', 'beneficio', 'cota'],
   editais: linhas,
 };
+
+// A data que mudou desde a ultima vez que o Radar viu o edital (ver
+// datas-alteradas.mjs). O datas-vistas.json vai no commit do dia, com o resto.
+const vistas = leVistas();
+const alteradas = marcaDatasAlteradas(saida, vistas, saida.meta.varredura);
+gravaVistas(vistas, saida.meta.varredura);
 
 const destino = path.join(DIR, 'docs', 'dados.json');
 fs.mkdirSync(path.dirname(destino), { recursive: true });
 fs.writeFileSync(destino, JSON.stringify(saida), 'utf8');
 
 const kb = (fs.statSync(destino).size / 1024).toFixed(0);
-console.log(`docs/dados.json: ${linhas.length} editais, ${kb} KB`);
+console.log(`docs/dados.json: ${linhas.length} editais, ${kb} KB · ${alteradas} com a data alterada`);
