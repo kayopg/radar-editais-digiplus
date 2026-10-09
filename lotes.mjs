@@ -30,6 +30,59 @@ export function totaisPorLote(texto) {
   return t;
 }
 
+// O GRUPO pela TABELA do termo de referencia, quando ela tem a coluna do grupo
+// na frente: "GRUPO ITEM COD. GRP DESCRICAO ... 1 1 61264 APARELHO DE AR
+// CONDICIONADO ... 24 2 67021 GRADE ... 2 3 61265 APARELHO ... 1 4 67021
+// GRADE" (Caxias do Sul/RS, pregao 145/2026, 09/10/2026: no Compras.gov.br,
+// grupo 1 = itens 1 e 2, grupo 2 = itens 3 e 4, e o edital nao imprime os
+// totais por grupo). A celula do grupo e mesclada e so aparece na primeira
+// linha dele: o numero antes do item abre grupo novo quando e o PROXIMO da
+// sequencia (1, 2, 3...); senao e a quantidade da linha de cima ("24 2") e o
+// item continua no grupo.
+//
+// Para nao repetir a confirmacao falsa de Pato Branco, so vale quando: todos
+// os itens do PNCP aparecem, na ordem, cada um com o codigo do item; ha dois
+// grupos ou mais; as copias da tabela no edital (o termo e a minuta) dao a
+// mesma divisao; e os itens de cada grupo tem o mesmo beneficio no PNCP (o
+// grupo exclusivo de ME/EPP e todo exclusivo).
+// E quando o numero antes do item e o proximo grupo E a quantidade do item de
+// cima ao mesmo tempo ("... UN 2 2 67021 GRADE"), nao ha como saber qual dos
+// dois e: a copia da tabela e recusada inteira.
+// itens: [{ n, benef, qtd }] na ordem do PNCP. Devolve Map(n -> grupo) ou null.
+export function lotesPelaTabelaDeGrupo(itens, texto) {
+  const t = String(texto);
+  if (!itens.length) return null;
+  const divisoes = [];
+  for (const cab of t.matchAll(/\bGRUPO\s+ITEM\b/gi)) {
+    const trecho = t.slice(cab.index, cab.index + 60000);
+    let esperado = itens[0].n, atual = 0, ambiguo = false;
+    const grupo = new Map();
+    for (const m of trecho.matchAll(/(?:^|\s)(?:(\d{1,3})\s+)?(\d{1,3})\s+\d{4,6}\s+(?=[A-ZÀ-Ú]{3})/g)) {
+      if (+m[2] !== esperado) continue;
+      const k = itens.findIndex(x => x.n === esperado);
+      if (m[1] !== undefined && +m[1] === atual + 1) {
+        if (k > 0 && Math.round(+itens[k - 1].qtd || 0) === +m[1]) { ambiguo = true; break; }
+        atual++;
+      } else if (!atual) break;                     // a primeira linha tem de abrir o grupo 1
+      grupo.set(esperado, atual);
+      if (k === itens.length - 1) break;
+      esperado = itens[k + 1].n;
+    }
+    if (!ambiguo && grupo.size === itens.length && atual >= 2) divisoes.push(grupo);
+  }
+  if (!divisoes.length) return null;
+  const chave = g => itens.map(x => g.get(x.n)).join(',');
+  if (divisoes.some(g => chave(g) !== chave(divisoes[0]))) return null;
+  const res = divisoes[0];
+  const benefDe = {};
+  for (const x of itens) {
+    const g = res.get(x.n);
+    if (benefDe[g] === undefined) benefDe[g] = x.benef || '';
+    else if (benefDe[g] !== (x.benef || '')) return null;
+  }
+  return res;
+}
+
 // itens: [{ n, total }] na ordem do PNCP. Devolve Map(n -> lote) ou null.
 // Os lotes sao blocos seguidos de itens, em qualquer ordem (Uniao da Vitoria:
 // o lote 4 e o item 16 e o lote 3 os itens 18 a 25).

@@ -154,7 +154,12 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    produto nosso (usuário, 07/10/2026). O PNCP não diz o lote de cada item; o `lotes.mjs`
    só aceita o lote quando os itens, em blocos seguidos, somam **centavo por centavo** os
    totais por lote impressos no edital, e a divisão é única (Joinville/SC, 17 lotes). Sem
-   essa confirmação, o card mostra todos os itens do edital. Valor e quantidade do edital
+   os totais, vale a tabela do termo com a coluna do grupo na frente ("GRUPO ITEM CÓD.
+   ..."), quando todos os itens aparecem nela, as cópias da tabela concordam, cada grupo
+   tem um benefício só e nenhum número fica ambíguo entre grupo e quantidade (Caxias do
+   Sul/RS, pregão 145/2026, 09/10/2026; `testa-lotes.mjs`). Com o lote confirmado, o card
+   separa os itens com o título "Lote N", como o portal da disputa. Sem essa confirmação,
+   o card mostra todos os itens do edital. Valor e quantidade do edital
    continuam sendo os dos nossos itens. A tabela do resumo em PDF traz os mesmos itens
    do card, os que não cotamos em cinza e com "Não cotamos" (usuário, 08/10/2026). O nome
    desses itens é o do PNCP, sem o texto do catálogo que o Compras.gov.br põe na frente

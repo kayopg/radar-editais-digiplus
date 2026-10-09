@@ -233,6 +233,7 @@ td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;font-
 .irot{color:var(--ink);font-weight:700;font-size:13px;line-height:1.45}
 .idesc{margin-top:7px;padding:9px 11px;border-radius:10px;background:var(--bg);border:1px solid var(--line2)}
 .idesc:empty{display:none}
+tr.lotecab td{padding:12px 8px 5px;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--brand-ink);border-bottom:1.5px solid var(--brand-soft)}
 .irotulo{display:block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);margin-bottom:3px}
 .itexto{display:block;color:var(--ink2);font-size:12.5px;line-height:1.6;max-width:95ch}
 .idesc.longo .itexto{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
@@ -736,6 +737,38 @@ function abreCard(card){
         + (t.length > 320 ? '<button type="button" class="imais" onclick="this.parentNode.classList.toggle(\'inteiro\');this.textContent=this.parentNode.classList.contains(\'inteiro\')?\'ver menos\':\'ver completo\'">ver completo</button>' : '');
       if(t.length > 320) el.classList.add("longo");
     });
+    separaLotes(card, d);
+  });
+}
+
+// O card separado por lote, como o portal da disputa mostra (Caxias do Sul/RS,
+// pregao 145/2026, 09/10/2026: "no portal sao 2 lotes com 2 itens, e no site
+// ficaram todos os itens seguidos"). So com o lote confirmado (x[7], ver
+// lotes.mjs), dois lotes ou mais e todos os itens do card com lote: um titulo
+// "Lote N" antes dos itens de cada um, na ordem dos lotes.
+function separaLotes(card, d){
+  if(!d || !d.itens || card.querySelector("tr.lotecab")) return;
+  var lote = {};
+  d.itens.forEach(function(x){ if(x[7]) lote[x[0]] = x[7]; });
+  var corpo = card.querySelector(".scroller tbody");
+  if(!corpo) return;
+  var linhas = [].slice.call(corpo.children).filter(function(tr){ return tr.querySelector(".idesc"); });
+  var deLinha = function(tr){ return lote[tr.querySelector(".idesc").dataset.n]; };
+  if(!linhas.length || linhas.some(function(tr){ return !deLinha(tr); })) return;
+  var lotes = linhas.map(deLinha).filter(function(v, i, a){ return a.indexOf(v) === i; });
+  if(lotes.length < 2) return;
+  linhas.sort(function(a, b){ return deLinha(a) - deLinha(b) || (+a.querySelector(".idesc").dataset.n) - (+b.querySelector(".idesc").dataset.n); });
+  var ultimo = null;
+  linhas.forEach(function(tr){
+    var l = deLinha(tr);
+    if(l !== ultimo){
+      var cab = document.createElement("tr");
+      cab.className = "lotecab";
+      cab.innerHTML = '<td colspan="3">Lote ' + esc(String(l)) + '</td>';
+      corpo.appendChild(cab);
+      ultimo = l;
+    }
+    corpo.appendChild(tr);
   });
 }
 

@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, chaleiraDeFogao, criaCotaNaUf } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 import { marcaCotas } from './cota.mjs';
-import { POR_LOTE, totaisPorLote, lotesPelosTotais } from './lotes.mjs';
+import { POR_LOTE, totaisPorLote, lotesPelosTotais, lotesPelaTabelaDeGrupo } from './lotes.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const arqDados = path.join(DIR, 'docs', 'dados.json');
@@ -436,9 +436,11 @@ for (const e of ficam) {
   const texto = (v.secoes || []).map(s => s.texto).join(' ').replace(/\s+/g, ' ');
   if (!POR_LOTE.test(norm(texto))) continue;
   const nossos = new Set(e[C.itens].map(it => +it[5]));
-  const todos = v.itens.map(x => ({ x, n: +x[0], total: Math.round((+x[2] || 0) * (+x[4] || 0) * 100) / 100 }))
+  const todos = v.itens.map(x => ({ x, n: +x[0], benef: x[5] || '', qtd: +x[2] || 0, total: Math.round((+x[2] || 0) * (+x[4] || 0) * 100) / 100 }))
     .sort((a, b) => a.n - b.n);
-  const lote = lotesPelosTotais(todos, totaisPorLote(texto));
+  // pelos totais impressos por lote; sem eles, pela tabela com a coluna do
+  // grupo (Caxias do Sul/RS, pregao 145/2026, 09/10/2026)
+  const lote = lotesPelosTotais(todos, totaisPorLote(texto)) || lotesPelaTabelaDeGrupo(todos, texto);
   let entram, cod;
   if (lote) {
     const lotesNossos = new Set([...nossos].map(n => lote.get(n)));
@@ -462,7 +464,7 @@ for (const e of ficam) {
   }
   e[C.itens].sort((a, b) => a[5] - b[5]);
 }
-console.log(`lotes: ${editaisComLote} edital(is) com o lote confirmado pelos totais, ${editaisInteiros} por lote sem confirmacao (todos os itens), ${itensDoLote} item(ns) que nao cotamos no card`);
+console.log(`lotes: ${editaisComLote} edital(is) com o lote confirmado (pelos totais ou pela tabela de grupos), ${editaisInteiros} por lote sem confirmacao (todos os itens), ${itensDoLote} item(ns) que nao cotamos no card`);
 
 // A cota reservada de ME/EPP, item a item, em it[7] (ver cota.mjs): 'R',
 // 'R:n' (a principal no item n) ou 'P:n' (a reservada no item n). E o
