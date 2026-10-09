@@ -41,6 +41,19 @@ for (const nome of fs.readdirSync(DOCS)) {
   fs.copyFileSync(de, path.join(SAIDA, nome));
 }
 
+// O descritivos.json vai SEM o texto das secoes do edital, como no artefato
+// (artefato.mjs): a pagina so le os itens de cada edital, e o texto e o que o
+// descritivo-por-item.mjs usa para recortar, antes de publicar. Com ele o
+// arquivo tinha 15,8 MB e era baixado de novo a cada visita (09/10/2026).
+{
+  const de = path.join(DOCS, 'descritivos.json');
+  if (fs.existsSync(de)) {
+    const base = JSON.parse(fs.readFileSync(de, 'utf8'));
+    for (const v of Object.values(base.editais || {})) delete v.secoes;
+    fs.writeFileSync(path.join(SAIDA, 'descritivos.json'), JSON.stringify(base), 'utf8');
+  }
+}
+
 const dados = le('dados.json');
 const C = Object.fromEntries(dados.colunas.map((c, i) => [c, i]));
 const vivos = new Set(dados.editais.map(e => e[C.path]));
