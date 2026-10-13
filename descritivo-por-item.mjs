@@ -3921,7 +3921,7 @@ try { manuais = JSON.parse(fs.readFileSync(path.join(DIR, 'descritivos-manuais.j
 
 const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v.secoes || []).map(s => s.texto)));
 
-let comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, sobrasTiradas = 0, linhasPeloPreco = 0, linhasCompletadas = 0, restosPelaCopia = 0;
+let seguintesCortados = 0, comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, sobrasTiradas = 0, linhasPeloPreco = 0, linhasCompletadas = 0, restosPelaCopia = 0;
 
 for (const e of dados.editais) {
   const v = base.editais[e[C.path]];
@@ -4928,6 +4928,34 @@ for (const e of dados.editais) {
       }
     }
   }
+  // O ITEM SEGUINTE INTEIRO dentro do descritivo: a tabela sem preco de
+  // Caarapo/MS (edital 35, 09/10/2026) e "8 16,000 UNI GELADEIRA ... 127V 9
+  // 51,000 UNI TV de 55 polegadas ...", e a geladeira levava a TV junto (a
+  // geladeira so apareceu quando MG, GO, DF e MS passaram a cotar refrigeracao).
+  // Corta no numero do item seguinte com a quantidade dele, a unidade e o
+  // comeco do nome dele — as quatro coisas juntas, para nao cortar medida.
+  {
+    const ord = [...v.itens].sort((a, b) => a[0] - b[0]);
+    for (let i = 0; i + 1 < ord.length; i++) {
+      const it = ord[i], prox = ord[i + 1];
+      if (!it[6] || !(+prox[2] > 0)) continue;
+      const nome = normIgual(prox[1]).split(/[^a-z0-9]+/).filter(Boolean).slice(0, 2).join(' ');
+      if (nome.length < 4) continue;
+      const re = new RegExp('\\s0*' + prox[0] + '\\s+0*' + Math.round(+prox[2]) + '(?:[.,]0{1,4})?\\s+(?:unidades?|unid|und|uni|un|pc|pç|cx|kit|jg|par)\\.?\\s+', 'gi');
+      for (const m of String(it[6]).matchAll(re)) {
+        const depois = normIgual(it[6].slice(m.index + m[0].length, m.index + m[0].length + 80)).split(/[^a-z0-9]+/).filter(Boolean).join(' ');
+        if (m.index >= 20 && depois.startsWith(nome)) { it[6] = it[6].slice(0, m.index).trim(); seguintesCortados++; break; }
+      }
+    }
+    // e o proprio comeco repetido no fim, depois de " - ": "FREEZER HORIZONTAL
+    // ... OFERECIDA PELO FABRICANTE. - FREEZER HORIZONTAL NA COR BRANCA COM
+    // CAPACIDADE MINIMA" (o mesmo edital de Caarapo, item 16)
+    for (const it of v.itens) {
+      const m = it[6] && /\s[-–]\s+([^-–]{20,})$/.exec(it[6]);
+      if (m && m.index > m[1].length && normIgual(it[6]).startsWith(normIgual(m[1]).trim())) { it[6] = it[6].slice(0, m.index).trim(); seguintesCortados++; }
+    }
+  }
+
   // E o transcrito a mao, onde nenhuma regra le a tabela (descritivos-manuais.json).
   // So vale enquanto o item do PNCP tem a quantidade e o preco conferidos.
   for (const [n, m] of Object.entries((manuais[e[C.path]] || {}).itens || {})) {
@@ -5658,4 +5686,5 @@ console.log(cabecasRecuperadas + " descritivo(s) tiveram o nome do produto recup
 console.log(linhasTrocadas + " descritivo(s) trocados pelo texto da propria linha, que vinha logo depois");
 console.log(habilitacaoTirada + " descritivo(s) que eram texto de habilitacao sairam · " + sobrasTiradas + " sobra(s) do item anterior trocadas pelo rotulo");
 console.log(`${linhasPeloPreco} item(ns) do radar achados pela linha entre o numero e o preco · ${linhasCompletadas} descritivo(s) cortados completados por ela · ${restosPelaCopia} completados pela outra copia do edital`);
+console.log(`${seguintesCortados} descritivo(s) que levavam o item seguinte inteiro cortados no numero dele`);
 console.log(`docs/descritivos.json: ${(fs.statSync(arquivo).size / 1024).toFixed(0)} KB`);

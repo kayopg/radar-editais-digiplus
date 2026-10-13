@@ -63,15 +63,25 @@ export const chaleiraDeFogao = (d, resto = '') => {
 //   e, em todas elas, a lavadora de alta pressao (lava-jato), de qualquer
 //     porte: voltou ao radar em 08/10/2026 e, no mesmo dia, "pode incluir"
 //     tambem fora de RS, SC e PR
+//   DF, GO, MS e MG ganharam em 09/10/2026 o forno industrial, a refrigeracao
+//     (freezer, geladeira, refrigerador), o liquidificador industrial e o
+//     climatizador: o edital 060/2026 de Joao Pinheiro/MG deixava forno a gas,
+//     dois freezers, geladeira e dois liquidificadores industriais em "Demais
+//     itens", e o usuario: "itens que cotamos estao de fora". SP nao entrou na
+//     pergunta e fica como estava. A camara fria, o expositor, a cervejeira e o
+//     resfriador continuam so em RS, SC e PR.
 // A linha e a do PRODUTO, o primeiro termo de categoria da descricao: o
 // "Climatizador ... com ventilador" e climatizador, e a "Cortina de ar" nao e
 // ar-condicionado.
 const INDUSTRIAIS = ['ar-condicionado', 'bebedouro industrial', 'fogao industrial', 'batedeira industrial', 'lavadora de alta pressao'];
+const DO_CENTRO = [...INDUSTRIAIS, 'forno industrial', 'refrigeracao', 'liquidificador industrial', 'climatizador'];
 export const LINHAS_DA_UF = {
   MT: new Set(),
-  DF: new Set(INDUSTRIAIS), GO: new Set(INDUSTRIAIS), MS: new Set(INDUSTRIAIS), MG: new Set(INDUSTRIAIS),
+  DF: new Set(DO_CENTRO), GO: new Set(DO_CENTRO), MS: new Set(DO_CENTRO), MG: new Set(DO_CENTRO),
   SP: new Set([...INDUSTRIAIS, 'micro-ondas', 'ventilador']),
 };
+// o que conta como refrigeracao nessas UFs
+const REFRIGERACAO = /^(?:refrigerador|geladeira|frigobar|freezer|congelador|conservadora)$/;
 
 export function linhaDoProduto(d, posicaoDoTermo) {
   const p = posicaoDoTermo(d);
@@ -86,7 +96,9 @@ export function linhaDoProduto(d, posicaoDoTermo) {
   // lavadora de alta pressao", que a categoria pega pelo "maquina lavadora"
   if (/^(?:lavadora (?:de )?alta pres|lavadoura de alta pres|lavadora jato|lavadora de pressao|lava[- ]?jato|lavajato|hidrolavadora)/.test(p.t)
     || /^maquina (?:lavadora|de lavar)\s+(?:de\s+)?alta\s+pres/.test(d.slice(p.i))) return 'lavadora de alta pressao';
-  return { bebedouro: 'bebedouro', fogao: 'fogao', batedeira: 'batedeira', ventilador: 'ventilador' }[p.t] || null;
+  if (REFRIGERACAO.test(p.t)) return 'refrigeracao';
+  return { bebedouro: 'bebedouro', fogao: 'fogao', batedeira: 'batedeira', ventilador: 'ventilador',
+    forno: 'forno', liquidificador: 'liquidificador', climatizador: 'climatizador' }[p.t] || null;
 }
 
 // INDUSTRIAL: a palavra no rotulo, no comeco do descritivo (onde vem o nome do
@@ -110,7 +122,23 @@ export function ehIndustrial(linha, rot, desc = '') {
   // acessibilidade" (Dourados/MS, edital 8, item 101, 06/10/2026).
   if (linha === 'bebedouro' && desc && /de pressao|garrafao|galao|de mesa/.test(desc.slice(0, 160)) && !/industria/.test(desc.slice(0, 160))) return false;
   if (/industria/.test(frente) || /(?:tipo|uso|aplicacao|linha|modelo):? industrial/.test(desc)) return true;
-  if (linha === 'batedeira' && /(?:^|[^a-z])profissional/.test(frente)) return true;
+  if (['batedeira', 'liquidificador', 'forno'].includes(linha) && /(?:^|[^a-z])profissional/.test(frente)) return true;
+  // O liquidificador e o forno pelo que o edital descreve (09/10/2026, nos
+  // editais de DF, GO, MS e MG): "Liquidificador comercial 8 litros com copo
+  // inox monobloco" e "LIQUIDIFICADOR ... 4 LITROS BAIXA ROTACAO" (Caarapo/MS),
+  // "LIQUIDIFICADOR 8 LITROS ... CORPO: INOX, COPO: INOX" (Pedras de Maria da
+  // Cruz/MG). O domestico vai ate uns 3 litros; de 4 para cima e o industrial.
+  // O forno: "FORNO ELETRICO ... 65 L/ 4 ESTEIRAS/ ... TURBINA" (Santa Rita do
+  // Araguaia/GO) e o de 90 litros de Caarapo; o "de bancada" de 65 L fica fora.
+  const tudo = rot + ' ' + desc;
+  if (linha === 'liquidificador') {
+    if (/comercial|baixa rotacao/.test(tudo.slice(0, 400))) return true;
+    for (const m of tudo.matchAll(/(?<![\d,.])(\d{1,2})(?:[.,]\d+)?\s*(?:litros|lts?|l)(?![a-z])(?![^.;]{0,25}(?:\bdia\b|\bhora\b|\/\s*h\b))/g)) if (+m[1] >= 4) return true;
+  }
+  if (linha === 'forno') {
+    if (/comercial|convec|turbo|lastro|esteiras|combinado|cavalete/.test(tudo.slice(0, 400))) return true;
+    for (const m of tudo.matchAll(/(?<![\d,.])(\d{2,3})(?:[.,]\d+)?\s*(?:litros|lts?|l)(?![a-z])/g)) if (+m[1] >= 90) return true;
+  }
   if (linha === 'bebedouro') {
     const tudo = rot + ' ' + desc;
     if (/de pressao|garrafao|galao|de mesa/.test(frente)) return false;
@@ -131,7 +159,7 @@ export function criaCotaNaUf(posicaoDoTermo) {
     if (!linhas) return true;
     const linha = linhaDoProduto(rot, posicaoDoTermo) || (desc ? linhaDoProduto(desc, posicaoDoTermo) : null);
     if (!linha) return false;
-    if (!['bebedouro', 'fogao', 'batedeira'].includes(linha)) return linhas.has(linha);
+    if (!['bebedouro', 'fogao', 'batedeira', 'forno', 'liquidificador'].includes(linha)) return linhas.has(linha);
     if (!linhas.has(linha + ' industrial')) return false;
     return semDescritivo ? !/domestic/.test(rot) || /industria/.test(rot) : ehIndustrial(linha, rot, desc || '');
   };

@@ -44,9 +44,37 @@ const CASOS = [
   ['GO', 'FORNO DE MICROONDAS 34 LITROS 1300W', '', false],
   ['MG', 'VENTILADOR DE TETO 3 PÁS', '', false],
   ['GO', 'CORTINA DE AR 120 CM', '', false],
-  ['GO', 'LIQUIDIFICADOR INDUSTRIAL 8 LITROS', '', false],
-  ['MG', 'GELADEIRA FROST FREE 400 LITROS', '', false],
   ['DF', 'FORNO MICRO-ONDAS 30 LITROS', '', false],
+  // 09/10/2026: forno industrial, refrigeracao, liquidificador industrial e
+  // climatizador entram em DF, GO, MS e MG (Joao Pinheiro/MG, edital 060/2026)
+  ['GO', 'LIQUIDIFICADOR INDUSTRIAL 8 LITROS', '', true],
+  ['MG', 'GELADEIRA FROST FREE 450 LITROS OU SUPERIOR', 'Especificações mínimas: - Refrigerador doméstico de duas portas; - Sistema de degelo automático tipo Frost Free', true],
+  ['MG', 'GELADEIRA FROST FREE 400 LITROS', '', true],
+  ['MG', 'FREEZER HORIZONTAL COMERCIAL/INDUSTRIAL CONVERSÍVEL EM REFRIGERADOR - CAPACIDADE MÍNIMA DE 540 LITROS', '', true],
+  ['DF', 'FREEZER VERTICAL CONVERSÍVEL EM REFRIGERADOR - CAPACIDADE MÍNIMA DE 500 LITROS', '', true],
+  ['MS', 'Refrigerador frost free 375 L', '', true],
+  ['GO', 'FRIGOBAR 120 LITROS', '', true],
+  ['MG', 'FORNO INDUSTRIAL A GÁS - CAPACIDADE MÍNIMA DE 98 LITROS', 'Especificações mínimas: - Capacidade mínima de 98 litros; - Funcionamento a gás GLP de baixa pressão', true],
+  ['GO', 'Forno Elétrico aplicação: doméstica, voltagem: 220, capacidade: 44', '', false],
+  ['MG', 'FORNO ELÉTRICO DE BANCADA 44 LITROS', 'Forno elétrico de bancada, 44 litros, 220 V, timer de 120 minutos', false],
+  ['MG', 'LIQUIDIFICADOR INDUSTRIAL DE BAIXA ROTAÇÃO - CAPACIDADE MÍNIMA DE 8 LITROS', 'Liquidificador industrial de baixa rotação, destinado ao processamento de alimentos', true],
+  ['GO', 'LIQUIDIFICADOR DOMÉSTICO 3 LITROS 1200W', '', false],
+  ['MS', 'Liquidificador comercial 8 litros com copo inox monobloco bivolt', 'Liquidificador comercial 8 litros com copo inox monobloco bivolt', true],   // Caarapó/MS
+  ['MS', 'LIQUIDIFICADOR W 4 LITROS BAIXA ROTAÇÃO - SPOLU POTÊNCIA MÁXIMA 700W', 'LIQUIDIFICADOR W 4 LITROS BAIXA ROTAÇÃO - SPOLU POTÊNCIA MÁXIMA 700W TENSÃO BIVOLT', true],
+  ['MG', 'LIQUIDIFICADOR 8 LITROS, TENSAO 127 OU 220 (CHAVE DE REVERSAO), POTENCIA: 800W', 'LIQUIDIFICADOR 8 LITROS, TENSÃO 127 OU 220 (CHAVE DE REVERSÃO), POTÊNCIA: 800W, FREQUÊNCIA 60 HZ, ROTAÇÃO 3.850 RPM, CORPO: INOX, COPO: INOX', true], // Pedras de Maria da Cruz/MG
+  ['MS', 'Liquidificador, 1400w, capacidade de 3,1 litros, 15 velocidades, 127V', 'Liquidificador, 1400w, capacidade de 3,1 litros, 15 velocidades, 127V', false],
+  ['MG', 'LIQUIDIFICADOR Com potência mínima de 1.500 W, equipado com copo com capacidade mínima de 3 litros', 'LIQUIDIFICADOR Com potência mínima de 1.500 W, equipado com copo com capacidade mínima de 3 litros, confeccionado em polipropileno', false], // Campos Altos/MG
+  ['GO', 'LIQUIDIFICADOR DE ALTA POTÊNCIA, COM POTÊNCIA MÍNIMA DE 1.000 W. JARRA COM CAPACIDADE MÍNIMA DE 3 LITROS', 'LIQUIDIFICADOR DE ALTA POTÊNCIA, com potência mínima de 1.000 W. Jarra com capacidade mínima de 3 litros, em vidro ou em plástico resistente', false], // Damolândia/GO
+  ['GO', 'FORNO ELÉTRICO 220 V/ CAPACIDADE 65 L/ 4 ESTEIRAS/ COM CONTROLADOR DE TEMPERATURA', 'FORNO ELÉTRICO 220 V/ CAPACIDADE 65 L/ 4 ESTEIRAS/ COM CONTROLADOR DE TEMPERATURA E TEMPO DE COZIMENTO / TURBINA QUE DISTRIBUI O CALOR', true], // Santa Rita do Araguaia/GO
+  ['MS', 'UNI FORNO ELÉTRICO 90 LITROS', 'UNI FORNO ELÉTRICO 90 LITROS - FORNO ELÉTRICO 90 LITROS: DEVE POSSUIR SISTEMA DE ABERTURA DO VIDRO TIPO GUILHOTINA', true], // Caarapó/MS
+  ['MS', 'FORNO ELÉTRICO DE BANCADA – CAPACIDADE MÍNIMA DE 65 LITROS', 'FORNO ELÉTRICO DE BANCADA – CAPACIDADE MÍNIMA DE 65 LITROS – Forno elétrico de bancada, novo e de primeiro uso', false], // Bonito/MS
+  ['MS', 'LIQUIDIFICADOR 2 LITROS 900W', 'Liquidificador com copo de acrílico de 2 litros, 12 velocidades', false],
+  ['MG', 'CLIMATIZADOR DE AR - CAPACIDADE MÍNIMA DE 100 LITROS', '', true],
+  ['DF', 'CLIMATIZADOR EVAPORATIVO PORTÁTIL 70 LITROS', '', true],
+  ['GO', 'EXPOSITOR REFRIGERADO VERTICAL 2 PORTAS', '', false],
+  ['MG', 'CÂMARA FRIA 6 M³', '', false],
+  ['MG', 'FORNO INDUSTRIAL A GÁS 98 LITROS', '', true, true],
+  ['GO', 'LIQUIDIFICADOR DOMÉSTICO 3 LITROS', '', false, true],
   // SP: as mesmas, mais micro-ondas e ventilador
   ['SP', 'Forno Microondas capacidade: 32, potência: 900, voltagem: 220', '', true],
   ['SP', 'FORNO DE MICRO-ONDAS COM CAPACIDADE INTERNA BRUTA DE 20 LITROS', '', true],

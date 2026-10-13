@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, chaleiraDeFogao, criaCotaNaUf } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 import { marcaCotas } from './cota.mjs';
-import { POR_LOTE, totaisPorLote, lotesPelosTotais, lotesPelaTabelaDeGrupo } from './lotes.mjs';
+import { vendaPorLote, totaisPorLote, lotesPelosTotais, lotesPelaTabelaDeGrupo, lotesPeloRotulo, lotesPelaColunaDoLote, lotesPelaLinhaComLote, lotesPorFaixa, lotesPorSecao } from './lotes.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const arqDados = path.join(DIR, 'docs', 'dados.json');
@@ -345,7 +345,7 @@ for (const e of dados.editais) {
   // edital 70). O item do aparelho nao fala em instalacao, e o de servico a
   // varredura descarta; fora do RS e de SC o aparelho que se instala sai.
   const textoEdital = norm((v.secoes || []).map(s => s.texto).join(' '));
-  const instalaNoLote = !UF_INSTALA.has(e[C.uf]) && POR_LOTE.test(textoEdital)
+  const instalaNoLote = !UF_INSTALA.has(e[C.uf]) && vendaPorLote(textoEdital)
     && (v.itens || []).some(x => ITEM_DE_INSTALACAO.test(norm(x[1])));
   const instalaNoObjeto = !UF_INSTALA.has(e[C.uf]) && /instalacao|montagem/.test(objN)
     && (OBJ_CONDICIONAL.test(objN) || (/mobiliario|moveis/.test(objN) && /eletrodomestic|eletroportat/.test(objN)));
@@ -434,13 +434,21 @@ for (const e of ficam) {
   const v = desc.editais[e[C.path]];
   if (!v || !(v.itens || []).length) continue;
   const texto = (v.secoes || []).map(s => s.texto).join(' ').replace(/\s+/g, ' ');
-  if (!POR_LOTE.test(norm(texto))) continue;
+  if (!vendaPorLote(norm(texto))) continue;
   const nossos = new Set(e[C.itens].map(it => +it[5]));
-  const todos = v.itens.map(x => ({ x, n: +x[0], benef: x[5] || '', qtd: +x[2] || 0, total: Math.round((+x[2] || 0) * (+x[4] || 0) * 100) / 100 }))
+  const todos = v.itens.map(x => ({ x, n: +x[0], rot: x[1] || '', benef: x[5] || '', qtd: +x[2] || 0, total: Math.round((+x[2] || 0) * (+x[4] || 0) * 100) / 100 }))
     .sort((a, b) => a.n - b.n);
-  // pelos totais impressos por lote; sem eles, pela tabela com a coluna do
-  // grupo (Caxias do Sul/RS, pregao 145/2026, 09/10/2026)
-  const lote = lotesPelosTotais(todos, totaisPorLote(texto)) || lotesPelaTabelaDeGrupo(todos, texto);
+  // O lote, de quem o mostra com mais seguranca para o menos: o rotulo do PNCP
+  // que ja traz "LOTE 2 - ..." (Cruzaltense/RS), os totais impressos por lote,
+  // a coluna "Lote" ao lado da unidade (Sapiranga/RS), a linha "LOTE04 81
+  // 02.01333 - NOME QTD UN" (Tupi Paulista/SP), as faixas "01 ao 03" (Sao
+  // Paulo/SP, pregao 33), as secoes "LOTE 01 - TITULO" com os itens renumerados
+  // (Ivai/PR) e a tabela com a coluna do grupo (Caxias do Sul/RS, pregao 145).
+  // Todos de 09/10/2026; cada um so responde quando todos os itens do PNCP
+  // acham o seu lote, e nenhum adivinha.
+  const lote = lotesPeloRotulo(todos) || lotesPelosTotais(todos, totaisPorLote(texto))
+    || lotesPelaColunaDoLote(todos, texto) || lotesPelaLinhaComLote(todos, texto)
+    || lotesPorFaixa(todos, texto) || lotesPorSecao(todos, texto) || lotesPelaTabelaDeGrupo(todos, texto);
   let entram, cod;
   if (lote) {
     const lotesNossos = new Set([...nossos].map(n => lote.get(n)));
@@ -464,7 +472,7 @@ for (const e of ficam) {
   }
   e[C.itens].sort((a, b) => a[5] - b[5]);
 }
-console.log(`lotes: ${editaisComLote} edital(is) com o lote confirmado (pelos totais ou pela tabela de grupos), ${editaisInteiros} por lote sem confirmacao (todos os itens), ${itensDoLote} item(ns) que nao cotamos no card`);
+console.log(`lotes: ${editaisComLote} edital(is) com o lote confirmado (rotulo, totais, coluna, linha, faixas, secoes ou grupos), ${editaisInteiros} por lote sem confirmacao (todos os itens), ${itensDoLote} item(ns) que nao cotamos no card`);
 
 // A cota reservada de ME/EPP, item a item, em it[7] (ver cota.mjs): 'R',
 // 'R:n' (a principal no item n) ou 'P:n' (a reservada no item n). E o

@@ -25,10 +25,13 @@ estado tem as suas linhas de produto (`LINHAS_DA_UF`, em `veto-item.mjs`):
 |---|---|
 | RS, SC, PR | tudo o que o radar pega |
 | SP | ar-condicionado, bebedouro industrial, fogão industrial, batedeira industrial, micro-ondas e ventilador |
-| DF, GO, MS, MG | ar-condicionado, bebedouro industrial, fogão industrial e batedeira industrial |
+| DF, GO, MS, MG | ar-condicionado, bebedouro industrial, fogão industrial, batedeira industrial e, desde 09/10/2026, forno industrial, refrigeração (freezer, geladeira, refrigerador, frigobar), liquidificador industrial e climatizador |
 
-"Industrial" é a palavra no rótulo ou no começo do descritivo; a batedeira "de
-uso profissional" conta, e o bebedouro conta também pelo reservatório (50 L para
+"Industrial" é a palavra no rótulo ou no começo do descritivo; a batedeira, o
+liquidificador e o forno "de uso profissional" contam, o liquidificador também
+quando é "comercial", de "baixa rotação" ou de 4 litros para cima, o forno quando
+é comercial, de convecção, turbo, de lastro, com esteiras, com cavalete ou de 90
+litros para cima (o "de bancada" de 65 L não), e o bebedouro conta também pelo reservatório (50 L para
 cima, ou 25 L em inox — o de pressão, de garrafão e de mesa não, nem quando o "tipo:
 industrial" vem só do catálogo do PNCP e o edital descreve um bebedouro de pressão
 de parede, como em Dourados/MS em 06/10/2026). O edital que
@@ -157,7 +160,15 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    os totais, vale a tabela do termo com a coluna do grupo na frente ("GRUPO ITEM CÓD.
    ..."), quando todos os itens aparecem nela, as cópias da tabela concordam, cada grupo
    tem um benefício só e nenhum número fica ambíguo entre grupo e quantidade (Caxias do
-   Sul/RS, pregão 145/2026, 09/10/2026; `testa-lotes.mjs`). Com o lote confirmado, o card
+   Sul/RS, pregão 145/2026, 09/10/2026; `testa-lotes.mjs`). Desde 09/10/2026 valem também
+   o rótulo do PNCP que já traz "LOTE 2 - …" (Cruzaltense/RS), a coluna "Lote" ao lado da
+   unidade (Sapiranga/RS), a linha "LOTE04 81 02.01333 - NOME QTD UN" achada pelo nome e
+   pela quantidade (Tupi Paulista/SP), as faixas "01 ao 03" (São Paulo/SP, pregão 33) e as
+   seções "LOTE 01 - TÍTULO" com os itens renumerados 1., 2., … (Ivaí/PR) — cada um só
+   responde quando todos os itens do PNCP acham o seu lote. E o edital só é tido como por
+   lote quando não declara "menor preço por item": a lei citada ("o critério … por grupo
+   somente poderá ser adotado…") e a justificativa do contrário ("não se justifica a
+   adjudicação por grupo") não contam (Senador Canedo/GO, Anápolis/GO, Pato Branco/PR). Com o lote confirmado, o card
    separa os itens com o título "Lote N", como o portal da disputa. Sem essa confirmação,
    o card mostra todos os itens do edital. Valor e quantidade do edital
    continuam sendo os dos nossos itens. A tabela do resumo em PDF traz os mesmos itens

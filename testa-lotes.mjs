@@ -1,11 +1,11 @@
-// Casos da leitura de lotes (lotes.mjs): o grupo pela tabela do termo de
-// referencia e o que ele tem de recusar.
+// Casos da leitura de lotes (lotes.mjs): se o edital e por lote, e cada jeito
+// de achar o lote de cada item — e o que cada um tem de recusar.
 // Uso: node testa-lotes.mjs   (sai com codigo 1 se algum caso falhar)
-import { lotesPelaTabelaDeGrupo } from './lotes.mjs';
+import { lotesPelaTabelaDeGrupo, vendaPorLote, lotesPeloRotulo, lotesPelaColunaDoLote, lotesPelaLinhaComLote, lotesPorFaixa, lotesPorSecao } from './lotes.mjs';
 
 // beneficio e quantidade de cada item, na ordem
 const itens = (...b) => b.map(([benef, qtd], k) => ({ n: k + 1, benef, qtd }));
-const divisao = m => m ? [...m.entries()].map(([n, g]) => n + ':' + g).join(' ') : null;
+const divisao = m => typeof m === 'string' ? m : m ? [...m.entries()].map(([n, g]) => n + ':' + g).join(' ') : null;
 
 // a tabela de Caxias do Sul/RS, pregao 145/2026 (09/10/2026), com as duas copias
 // do edital: no termo, as linhas da grade sem o numero da linha de cima
@@ -30,6 +30,32 @@ const CASOS = [
   ['copias que discordam recusam', lotesPelaTabelaDeGrupo(itens(['N', 5], ['N', 3], ['N', 1], ['N', 1]),
     'GRUPO ITEM COD 1 1 61264 APARELHO DE AR UN 5 2 2 67021 GRADE DE FERRO UN 3 7 3 61265 APARELHO DE AR UN 1 4 67021 GRADE UN 1 '
     + 'GRUPO ITEM COD 1 1 61264 APARELHO DE AR UN 5 7 2 67021 GRADE DE FERRO UN 3 2 3 61265 APARELHO DE AR UN 1 4 67021 GRADE UN 1'), null],
+  // --- se o edital e por lote: vale o criterio que ele DECLARA (09/10/2026)
+  ['"menor preco por item" declarado, com a lei citada sobre grupo: nao e por lote', vendaPorLote('o criterio de julgamento de menor preco por grupo de itens somente podera ser adotado quando demonstrada a inviabilidade. o criterio de julgamento sera o menor preco por item.') ? 'sim' : null, null],
+  ['"julgamento: menor preco global por lote": e por lote', vendaPorLote('6.1 julgamento: menor preco global por lote, conforme anexo i') ? '1:1' : null, '1:1'],
+  ['"nao se justifica a adjudicacao por grupo" + "menor preco por item": nao e por lote', vendaPorLote('nao se justifica a adjudicacao por grupo. tipo: menor preco por item') ? 'sim' : null, null],
+  // --- o lote no nome do item (Cruzaltense/RS)
+  ['rotulo "LOTE 9 - ..." em todos os itens', lotesPeloRotulo([{ n: 1, rot: 'LOTE 9 - Telha de fibrocimento' }, { n: 2, rot: 'LOTE 2 - Fogao industrial - 6 bocas' }, { n: 3, rot: 'LOTE 2 - Botijao' }]), '1:9 2:2 3:2'],
+  ['um rotulo sem o lote recusa', lotesPeloRotulo([{ n: 1, rot: 'LOTE 1 - Mesa' }, { n: 2, rot: 'Fogao industrial' }]), null],
+  // --- a coluna do lote (Sapiranga/RS)
+  ['coluna "Lote Un Quant": linha k = item k com a mesma quantidade', lotesPelaColunaDoLote([{ n: 1, qtd: 2 }, { n: 2, qtd: 3 }, { n: 3, qtd: 1 }], 'Lote Un Quant. Descricao dos Itens 1 Un 02 APARELHO DE AR CONDICIONADO 2 Un 03 AUTOCLAVE HORIZONTAL 2 Un 01 SELADORA'), '1:1 2:2 3:2'],
+  ['quantidade diferente recusa', lotesPelaColunaDoLote([{ n: 1, qtd: 2 }, { n: 2, qtd: 4 }], 'Lote Un Quant. Descricao 1 Un 02 APARELHO DE AR 2 Un 03 AUTOCLAVE'), null],
+  // --- a linha com o lote e a numeracao do edital (Tupi Paulista/SP)
+  ['linha "LOTE04 81 02.01333 - NOME QTD UN Ampla", pelo nome e pela quantidade', lotesPelaLinhaComLote([{ n: 1, rot: 'LAMPADA LED 20 W', qtd: 528 }, { n: 2, rot: 'VENTILADOR TETO 3 PAS', qtd: 20 }],
+    'LOTE01 129 02.06330 - LAMPADA LED 20 W 528 PÇ Ampla Concorrencia LOTE04 81 02.01333 - VENTILADOR TETO 3 PAS 20 UN Ampla Concorrencia lote06 3 02.0001 - OUTRO 1 UN Ampla Concorrencia'), '1:1 2:4'],
+  ['quantidade que nao bate recusa', lotesPelaLinhaComLote([{ n: 1, rot: 'LAMPADA LED 20 W', qtd: 500 }, { n: 2, rot: 'VENTILADOR TETO 3 PAS', qtd: 20 }],
+    'LOTE01 129 02.06330 - LAMPADA LED 20 W 528 PÇ Ampla Concorrencia LOTE04 81 02.01333 - VENTILADOR TETO 3 PAS 20 UN Ampla Concorrencia'), null],
+  // --- as faixas de itens (Sao Paulo/SP, pregao 33)
+  ['faixas "1 01 ao 03" e "02 Itens 04 ao 06"', lotesPorFaixa([1, 2, 3, 4, 5, 6].map(n => ({ n, benef: n <= 3 ? 'E' : 'S' })),
+    'LOTE ITEM OBJETO VALOR 1 01 ao 03 Materiais Permanentes 25% EXCLUSIVA LOTE ITEM OBJETO 02 Itens 04 ao 06 Materiais 75% AMPLA'), '1:1 2:1 3:1 4:2 5:2 6:2'],
+  ['beneficio misturado no lote recusa', lotesPorFaixa([1, 2, 3, 4, 5, 6].map(n => ({ n, benef: n === 2 ? 'S' : 'E' })),
+    'LOTE ITEM OBJETO 1 01 ao 03 Materiais LOTE ITEM OBJETO 02 Itens 04 ao 06 Materiais'), null],
+  // --- as secoes com os itens renumerados (Ivai/PR): no lote 2 a ordem do
+  // edital nao e a do PNCP (freezer antes da batedeira)
+  ['secoes "LOTE 01 - TITULO" com "1. NOME", ordem trocada dentro do lote', lotesPorSecao([{ n: 1, rot: 'COMPUTADOR COMPLETO' }, { n: 2, rot: 'NOTEBOOK CORPORATIVO' }, { n: 3, rot: 'BATEDEIRA PLANETARIA' }, { n: 4, rot: 'FREEZER VERTICAL' }],
+    'LOTE 01 - INFORMATICA ITEM PRODUTO 1. COMPUTADOR COMPLETO memoria 2. NOTEBOOK CORPORATIVO tela LOTE 02 - COZINHA ITEM PRODUTO 1. FREEZER VERTICAL tipo 2. BATEDEIRA PLANETARIA tipo'), '1:1 2:1 3:2 4:2'],
+  ['posicao pulada na secao recusa', lotesPorSecao([{ n: 1, rot: 'COMPUTADOR COMPLETO' }, { n: 2, rot: 'FREEZER VERTICAL' }],
+    'LOTE 01 - INFORMATICA 2. COMPUTADOR COMPLETO memoria LOTE 02 - COZINHA 1. FREEZER VERTICAL tipo'), null],
 ];
 
 let erros = 0;
