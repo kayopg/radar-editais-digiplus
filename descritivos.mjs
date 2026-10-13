@@ -368,6 +368,17 @@ function descricoesDaPlanilha(folhas) {
       // ergonomico" e a detalhada comeca em "com Mesa de Inox, Acendimento...".
       const antes = d && /^[a-zà-ÿ]/.test(d) && colDesc.map(k => l[k]).find(t => t && t !== d);
       if (antes) d = antes + ' ' + d;
+      // E a detalhada que nem comeca pelo produto: "220Volts; 500 a 700W de
+      // potencia..." com "ESPREMEDOR/ EXTRATOR DE FRUTAS INDUSTRIAL" so na
+      // coluna "Descritivo simples" (Florianopolis/SC, edital 226, item 133,
+      // 13/10/2026 — o resumo saia sem dizer o que era). Quando a primeira
+      // palavra da simplificada nao aparece no comeco da detalhada, ela vai
+      // na frente.
+      else if (d) {
+        const nome = colDesc.map(k => l[k]).find(t => t && t !== d && t.length <= 120);
+        const w = nome && (norm(nome).match(/[a-z]{4,}/) || [])[0];
+        if (w && !norm(d.slice(0, 80)).includes(w)) d = nome.trim().replace(/[\s,;:.-]+$/, '') + ': ' + d;
+      }
       if (/^\d{1,4}$/.test(n) && d && !porItem[+n]) porItem[+n] = d;
     }
   }

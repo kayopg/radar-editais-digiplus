@@ -969,8 +969,8 @@
       "133": {
         "qtd": 3,
         "valor": 0,
-        "fonte": "Anexo TR I - Descricao_Detalhada_do_Objeto.xlsx, celula do item 133, com o trecho repetido tirado (\"1.750 a 3.500r.p 500 a 700W de potência;\" aparece duas vezes na celula; o comeco da celula ja vem sem o nome do produto)",
-        "texto": "220Volts; 500 a 700W de potência; 1.750 a 3.500r.pm. Corpo em aço inoxidável, botão liga/desliga, para limão/laranja, alta potência."
+        "fonte": "Anexo TR I - Descricao_Detalhada_do_Objeto.xlsx, linha do item 133: o nome vem da coluna \"Descritivo simples\" e o resto do \"Descritivo completo\", com o trecho repetido tirado (\"1.750 a 3.500r.p 500 a 700W de potência;\" aparece duas vezes na celula)",
+        "texto": "ESPREMEDOR/ EXTRATOR DE FRUTAS INDUSTRIAL: 220Volts; 500 a 700W de potência; 1.750 a 3.500r.pm. Corpo em aço inoxidável, botão liga/desliga, para limão/laranja, alta potência."
       }
     }
   },
