@@ -1499,7 +1499,7 @@ function atualizaImpressos(){
 // ela volta a ficar visivel. As regras do Firestore so aceitam a colecao
 // "impressos", com o caminho do PNCP, a data e quem marcou. No artefato, que
 // nao alcanca a internet, vale o banco dele (acima).
-var FIRESTORE={ projectId:"", apiKey:"" };
+var FIRESTORE={ projectId:"radar-digiplus", apiKey:"AIzaSyBeAbTRnREp8p5POhYp541dt6sz2v6ivuo" };
 var nuvem=!window.claude && !!(FIRESTORE.projectId && FIRESTORE.apiKey);
 var CHAVE_MIGRADOS="radar-impressos-na-nuvem";
 // Um documento so, "radar/impressos", com um mapa "marcas" de id -> { path,
