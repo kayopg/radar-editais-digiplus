@@ -865,5 +865,29 @@
         "texto": "LIQUIDIFICADOR INDUSTRIAL DE BAIXA ROTAÇÃO – CAPACIDADE MÍNIMA DE 8 LITROS. Liquidificador industrial de baixa rotação, destinado ao processamento de alimentos e ao uso profissional intensivo em cozinhas escolares ou de grande porte, atendendo, no mínimo, às seguintes especificações: - copo com capacidade nominal mínima de 8 litros; - copo removível, confeccionado em aço inoxidável, com superfície interna lisa, resistente à corrosão e adequada ao contato com alimentos; - copo preferencialmente monobloco ou construído de modo que não apresente frestas, reentrâncias ou irregularidades que dificultem sua higienização; - tampa resistente, removível, com encaixe seguro e material adequado ao contato com alimentos; - gabinete externo do motor confeccionado predominantemente em aço inoxidável, resistente à corrosão e de fácil higienização; - conjunto de lâminas e eixo confeccionado em aço inoxidável; - lâminas reforçadas e apropriadas ao processamento de líquidos, polpas, molhos, cremes e alimentos compatíveis com a finalidade do equipamento; - potência elétrica nominal mínima de 650 W; - rotação nominal máxima de 4.000 rpm, compatível com a classificação de baixa rotação; - comando liga/desliga de fácil acesso; - sistema construtivo que impeça ou reduza a entrada de líquidos no compartimento do motor; - base estável, dotada de pés antiderrapantes ou sistema equivalente que proporcione estabilidade e reduza vibrações durante o funcionamento; - alimentação elétrica em 127 V, admitindo-se equipamento bivolt; - frequência compatível com a rede elétrica nacional; - cabo de alimentação com plugue em conformidade com o padrão brasileiro aplicável; - atendimento à NR-12, no que couber; - certificação e registro ativo no Inmetro, quando enquadrado em programa de avaliação da conformidade compulsória aplicável ao produto; - fornecimento acompanhado de manual de instruções em língua portuguesa; - garantia mínima de 12 meses"
       }
     }
+  },
+  "18477315000190/2026/52": {
+    "edital": "Carlos Chagas/MG, Pregao Eletronico 48/2026 (termo de referencia nas paginas 31 a 40 do PDF, escaneadas)",
+    "conferido": "2026-10-13",
+    "itens": {
+      "1": {
+        "qtd": 33,
+        "valor": 3285.08,
+        "fonte": "TR, pagina 5 (pagina 31 do PDF, imagem)",
+        "texto": "CONDICIONADOR DE AR SPLIT 24.000 BTUS - TECNOLOGIA INVERTER (CORRESPONDENTE AO COD DO CEP 440747) de parede, unidade interna horizontal, capacidade refrigeração mínima de 24.000 BTU/h, tensão de 220 volts, com sistema de filtragem do ar, diversas funções, controle remoto sem fio, baixo nível de ruído, selo PROCEL; garantia mínima do fabricante de 01 ano, prestada no Estado de Minas Gerais."
+      }
+    }
+  },
+  "92324748000168/2026/116": {
+    "edital": "Cerro Grande do Sul/RS, Pregao Eletronico RP 34/2026 (retificacao de 06/10/2026, arquivo 3 do PNCP, escaneada)",
+    "conferido": "2026-10-13",
+    "itens": {
+      "12": {
+        "qtd": 6,
+        "valor": 710,
+        "fonte": "retificacao, pagina 1 (imagem): o item 12 passa de potencia e pressao MAXIMAS para MINIMAS",
+        "texto": "LAVADORA DE ALTA PRESSÃO, POTÊNCIA MÍNIMA DE 1800W, PRESSÃO MÍNIMA DE 2200 PSI, 220V, COM PONTEIRA JATO TURBO."
+      }
+    }
   }
 }

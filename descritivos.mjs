@@ -288,19 +288,53 @@ function secoesDe(texto, rotuloInicial) {
 }
 
 // Corta no teto sem partir palavra, e avisa que cortou.
-function limita(secoes) {
+function limita(secoes, teto = TETO) {
   let usado = 0;
   const saida = [];
   for (const s of secoes) {
-    if (usado >= TETO) break;
-    const sobra = TETO - usado;
+    if (usado >= teto) break;
+    const sobra = teto - usado;
     if (s.texto.length <= sobra) { saida.push(s); usado += s.texto.length; continue; }
     const corte = s.texto.slice(0, sobra);
     const fim = corte.lastIndexOf(' ');
     saida.push({ rotulo: s.rotulo, texto: corte.slice(0, fim > 0 ? fim : corte.length), cortado: true });
-    usado = TETO;
+    usado = teto;
   }
   return saida;
+}
+
+// O preco unitario como o edital o imprime: "3.506,30", "3506,30", "3.506,3000".
+const rePrecoDe = v => {
+  const [int, cent] = (+v).toFixed(2).split('.');
+  return new RegExp('(?<![\\d.,])' + int.replace(/\B(?=(\d{3})+(?!\d))/g, '\\.?') + ',' + cent + '(?:\\d{2})?(?![\\d,])');
+};
+
+// O TETO QUE ESCONDE O ITEM DO RADAR. Assis Chateaubriand/PR (pregao 30/2026,
+// 13/10/2026) publica o edital duas vezes, 809 paginas ao todo, e a
+// especificacao do fogao industrial de 6 bocas (item 237, 20 x R$ 3.506,30) so
+// esta no termo de referencia, perto do fim — atravessando a folha. Com 250 mil
+// caracteres o texto parava nos anexos da ata e do contrato, que so trazem o
+// nome, e o item saia do radar por falta de descritivo. Quando o corte deixa
+// de fora a linha de preco de um item do radar que esta nas paginas
+// escolhidas, o teto DESTE edital sobe ate ela entrar, com a folha seguinte
+// (onde a celula continua), no maximo 600 mil. Os outros editais nao mudam.
+const TETO_DO_ITEM = 600000;
+function limitaSemPerderItem(secoes, e) {
+  const curto = limita(secoes);
+  if (!curto.some(s => s.cortado)) return curto;
+  const noCorte = curto.map(s => s.texto).join(' ');
+  const tudo = secoes.map(s => s.texto).join(' ');
+  let precisa = 0;
+  for (const it of e[C.itens] || []) {
+    if (!(+it[2] > 0)) continue;
+    const re = rePrecoDe(it[2]);
+    if (re.test(noCorte)) continue;
+    const m = re.exec(tudo);
+    if (m) precisa = Math.max(precisa, m.index + 8000);
+  }
+  if (!precisa) return curto;
+  if (process.env.DEPURA_WORD) console.log(`  teto do item: ${e[C.municipio]}/${e[C.uf]} ${e[C.path]} · ${Math.min(TETO_DO_ITEM, precisa)} caracteres`);
+  return limita(secoes, Math.max(TETO, Math.min(TETO_DO_ITEM, precisa)));
 }
 
 // Numero do item -> descricao, das planilhas publicadas (ver linhasXlsx no
@@ -501,7 +535,7 @@ async function extraiSecoes(e, planilhas) {
       const quais = [...vizinhas].sort((a, b) => a - b);
       return { fonte: 'PDF', paginas: quais.length, total: paginas.length,
                cobertura: +cobre.toFixed(2), ilegiveis: perdidas || undefined,
-               secoes: limita(secoesPorPagina(paginas, quais, sel)) };
+               secoes: limitaSemPerderItem(secoesPorPagina(paginas, quais, sel), e) };
     }
   }
 
