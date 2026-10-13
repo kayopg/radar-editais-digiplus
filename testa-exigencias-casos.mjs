@@ -116,5 +116,29 @@ for (const t of PASSA) {
   if (!ok) erros++;
   console.log(`${ok ? 'ok  ' : 'ERRO'} passa ${JSON.stringify(r)} | ${t.slice(0, 70)}`);
 }
-console.log(`\n${BARRA.length + PASSA.length - erros} de ${BARRA.length + PASSA.length} corretos`);
+// A exigencia so de itens que a casa nao cota (usuario, 13/10/2026: "pode
+// ignorar as exigencias de produtos que nao cotamos"): [texto, cotados, nomes,
+// o que barra]
+const POR_ITEM = [
+  // Brasilia/DF, CNMP, edital 44: o selo so para TVs e monitores; a casa cota o climatizador
+  ['4.1.1. eficiencia energetica: a solucao considera projetores. ja as smart tvs de 75" e 65" e os monitores profissionais (itens 10, 11 e 14) deverao comprovar a maxima eficiencia em regime continuo, mediante presenca de certificacao ambiental governamental (selo procel a, selo energy star). por fim, impos-se um teto ecologico restrito aos climatizadores industriais.',
+    [15], ['climatizador'], []],
+  // ... e barra quando um dos itens citados e cotado
+  ['8.1. sera exigida amostra dos itens 1 a 3, no prazo de 3 dias uteis apos a convocacao.', [2], ['freezer'], ['Amostra']],
+  ['8.1. sera exigida amostra dos itens 1 a 3, no prazo de 3 dias uteis apos a convocacao.', [7], ['freezer'], []],
+  // ... e quando a frase nomeia o produto cotado: o edital por lote numera
+  // diferente do PNCP (o item 5 do edital e o 13 do PNCP)
+  ['8.1. sera exigida amostra do item 5 (fogao domestico de piso), no prazo de 3 dias uteis.', [13], ['fogao', 'fogoes'], ['Amostra']],
+  // ... e sem numero de item a exigencia vale para o edital inteiro
+  ['8.1. sera exigida amostra das smart tvs, no prazo de 3 dias uteis apos a convocacao.', [15], ['climatizador'], ['Amostra']],
+  // ... e o numero de clausula nao e item: "conforme o item 4.15"
+  ['5.10. o licitante classificado em primeiro lugar devera apresentar amostra, conforme o item 4.15, no prazo de 3 dias uteis, sob pena de desclassificacao.', [15], ['climatizador'], ['Amostra']],
+];
+for (const [t, cotados, nomes, esp] of POR_ITEM) {
+  const r = analisaExigencias([t], { cotados, nomes }).bloqueia;
+  const ok = JSON.stringify(r) === JSON.stringify(esp);
+  if (!ok) erros++;
+  console.log(`${ok ? 'ok  ' : 'ERRO'} por item ${JSON.stringify(r)} | ${t.slice(0, 70)}`);
+}
+console.log(`\n${BARRA.length + PASSA.length + POR_ITEM.length - erros} de ${BARRA.length + PASSA.length + POR_ITEM.length} corretos`);
 process.exitCode = erros ? 1 : 0;

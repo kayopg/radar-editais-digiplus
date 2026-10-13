@@ -430,20 +430,64 @@ function julga(texto, pos, termo, chave) {
   else if (exiDist <= MAX_DIST_EXIGE && exigeNaClausula) veredito = "exige";
   else veredito = 'indefinido';                       // so citou, sem verbo
 
-  return { veredito, ctx: ctx.replace(/\s+/g, ' ').trim(), negDist, exiDist, sanDist, conDist };
+  // a FRASE do termo (de ponto a ponto), para saber de que itens ela fala
+  const iniF = ctx.lastIndexOf('. ', rel), fimF = ctx.indexOf('. ', rel + termo.length);
+  const frase = ctx.slice(iniF < 0 ? 0 : iniF + 2, fimF < 0 ? ctx.length : fimF);
+  return { veredito, ctx: ctx.replace(/\s+/g, ' ').trim(), negDist, exiDist, sanDist, conDist, frase };
+}
+
+// Os NUMEROS DE ITEM que a frase cita: "(itens 10, 11 e 14)", "dos itens 1 a
+// 5", "item 3". Nao o numero de clausula: "item 1.5 do termo de referencia".
+export function itensCitados(frase) {
+  const nums = new Set();
+  const re = /(?<![a-z])ite(?:ns|m)\s*(?:n[ºo°.]*\s*)?((?:\d{1,4}(?![.,]\d)\s*(?:,|;|\/|e|a|ao|ate|-|–)\s*)*\d{1,4}(?![.,]?\d))/g;
+  for (const m of String(frase).matchAll(re)) {
+    const partes = m[1].split(/\s*(,|;|\/|\be\b|\ba\b|\bao\b|\bate\b|-|–)\s*/).filter(Boolean);
+    let ant = null, faixa = false;
+    for (const p of partes) {
+      if (/^(?:a|ao|ate|-|–)$/.test(p)) { faixa = true; continue; }
+      if (!/^\d+$/.test(p)) { faixa = false; continue; }
+      const n = +p;
+      if (faixa && ant !== null && n > ant && n - ant <= 300) for (let k = ant + 1; k <= n; k++) nums.add(k);
+      else nums.add(n);
+      ant = n; faixa = false;
+    }
+  }
+  return [...nums];
 }
 
 // Analisa o texto inteiro do edital. Devolve, por regra, o veredito final e as
 // ocorrencias que sustentam a decisao.
-export function analisaExigencias(textoPaginas) {
+// cotados: os numeros (do PNCP) dos itens que a Digiplus cota no edital. A
+// exigencia que a FRASE restringe a outros itens nao barra — pedido do usuario
+// em 13/10/2026 ("pode ignorar as exigencias de produtos que nao cotamos"),
+// depois de Brasilia/DF (CNMP, edital 44): "as Smart TVs de 75" e 65" e os
+// Monitores Profissionais (Itens 10, 11 e 14) deverao comprovar ... mediante
+// presenca de certificacao ambiental", e o radar so cota os climatizadores.
+// So pelo NUMERO do item na frase; sem numero, a exigencia vale para o edital.
+// E so quando a frase tambem nao NOMEIA um produto que a casa cota (nomes: a
+// primeira palavra do rotulo de cada item cotado): o edital por lote numera
+// diferente do PNCP — o "LOTE 02 – ITEM 05" de Cruzaltense/RS e o item 13 —, e
+// "amostra do item 5 (fogao)" nao pode passar por exigencia do item 5 do PNCP.
+// O veredito fica "outros itens", e o trecho vai para o barrados.json em
+// "ignorados", para a conferencia.
+export function analisaExigencias(textoPaginas, { cotados = null, nomes = [] } = {}) {
   const texto = norm(Array.isArray(textoPaginas) ? textoPaginas.join(' ') : textoPaginas);
+  const meus = cotados ? new Set([...cotados].map(Number).filter(Boolean)) : null;
+  const meusNomes = [...new Set(nomes.map(n => norm(n).replace(/[^a-z0-9 -]/g, ' ').trim()).filter(n => n.length >= 4))];
   const saida = {};
   for (const regra of REGRAS) {
     const ocorrencias = [];
     for (const termo of regra.termos) {
       let i = texto.indexOf(termo);
       while (i >= 0) {
-        ocorrencias.push({ termo, ...julga(texto, i, termo, regra.chave) });
+        const { frase, ...o } = julga(texto, i, termo, regra.chave);
+        if (o.veredito === 'exige' && meus && meus.size) {
+          const its = itensCitados(frase);
+          const nomeia = meusNomes.some(n => new RegExp('(?<![a-z])' + n.replace(/[-]/g, '\\-')).test(frase));
+          if (its.length && !its.some(n => meus.has(n)) && !nomeia) { o.veredito = 'outros itens'; o.itens = its; }
+        }
+        ocorrencias.push({ termo, ...o });
         i = texto.indexOf(termo, i + termo.length);
       }
     }
@@ -459,8 +503,11 @@ export function analisaExigencias(textoPaginas) {
       // em 06/10/2026 eles ficavam alem das 6 primeiras ocorrencias e so uma
       // varredura instrumentada de 90 minutos mostrou que 24 dos 34 eram engano
       trechos: ocorrencias.filter(o => o.veredito === 'exige').slice(0, 2).map(o => o.ctx.slice(120, 520)),
+      // as que valeriam, mas so para itens que a Digiplus nao cota
+      outrosItens: ocorrencias.filter(o => o.veredito === 'outros itens').slice(0, 2).map(o => ({ itens: o.itens, trecho: o.ctx.slice(120, 520) })),
     };
   }
   saida.bloqueia = REGRAS.filter(r => saida[r.chave].exige).map(r => r.rotulo);
+  saida.ignorados = REGRAS.filter(r => !saida[r.chave].exige && saida[r.chave].outrosItens.length).map(r => r.rotulo);
   return saida;
 }

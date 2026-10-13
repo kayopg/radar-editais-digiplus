@@ -18,25 +18,6 @@
    }
   },
   {
-   "path": "11439520000111/2026/53",
-   "municipio": "Brasília",
-   "uf": "DF",
-   "edital": "Edital nº 44/2026",
-   "objeto": "Aquisição de equipamentos de áudio, vídeo e acessórios de montagem (suportes fixos e móveis), a fim de atender as necessidades corporativas do Conselho Nacional",
-   "exige": [
-    "Sustentabilidade",
-    "Garantia contratual"
-   ],
-   "trechos": {
-    "Sustentabilidade": [
-     "e mercurio. ja as smart tvs de 75” e 65” e os monitores profissionais (itens 10, 11 e 14) deverao comprovar a maxima eficiencia em regime continuo e em modo de espera (stand-by), mediante presenca de certificacao ambiental governamental (selo procel a, selo energy star ou certificacao equivalente validada internacionalmente). por fim, impos-se um teto ecologico restrito aos climatizadores industri"
-    ],
-    "Garantia contratual": [
-     " da notificacao pela licitante ou contratada sancionada o valor sera, sucessivamente: 16.7.1. descontado dos creditos que a contratada fizer jus, no ambito da mesma contratacao; 16.7.2. descontado da garantia contratual, se houver; 16.7.3. cobrado judicialmente. 16.8. a administracao devera, no prazo maximo de 15 (quinze) dias uteis, contado da data da de aplicacao da sancao, informar e manter atu"
-    ]
-   }
-  },
-  {
    "path": "55293427000117/2026/157",
    "municipio": "Presidente Epitácio",
    "uf": "SP",
@@ -188,6 +169,29 @@
    "trechos": {
     "Carta de solidariedade": [
      " 3.7. em caso de fornecedor, revendedor ou distribuidor, sera exigida do licitante/interessado provisoriamente classificado em primeiro lugar, nos termos do edital ou do aviso de contratacao direta, carta de solidariedade emitida pelo fabricante, que assegure a execucao do contrato, tendo em vista a necessidade de assegurar a procedencia, a originalidade e o padrao de qualidade dos equipamentos de"
+    ]
+   }
+  }
+ ],
+ "ignorados": [
+  {
+   "path": "11439520000111/2026/53",
+   "municipio": "Brasília",
+   "uf": "DF",
+   "edital": "Edital nº 44/2026",
+   "cotados": [
+    15
+   ],
+   "outrosItens": {
+    "Sustentabilidade": [
+     {
+      "itens": [
+       10,
+       11,
+       14
+      ],
+      "trecho": "ja as smart tvs de 75” e 65” e os monitores profissionais (itens 10, 11 e 14) deverao comprovar a maxima eficiencia em regime continuo e em modo de espera (stand-by), mediante presenca de certificacao ambiental governamental (selo procel a, selo energy star ou certificacao equivalente validada internacionalmente)."
+     }
     ]
    }
   }

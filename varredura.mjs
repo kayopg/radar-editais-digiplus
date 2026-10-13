@@ -1287,9 +1287,16 @@ await pool(fin, 4, async (e) => {
     const pgs = await textoDasPaginas(le);
     // PDF digitalizado: nao da para afirmar nem que exige nem que dispensa.
     if (!textoUtil(pgs)) { e.exige = "sem-texto"; semTexto++; return; }
-    const ex = analisaExigencias(pgs);
+    // (a exigencia que a frase restringe a itens que a casa nao cota nao barra:
+    // usuario, 13/10/2026 — ver analisaExigencias)
+    const nomes = (e.it || []).flatMap(x => {
+      const w = (norm(x[3]).match(/[a-z]{4,}/g) || []).find(p => !/^(?:aparelho|equipamento|conjunto|maquina|material|produto|unidade|lote|item|tipo)s?$/.test(p));
+      return !w ? [] : /ao$/.test(w) ? [w, w.slice(0, -2) + 'oes'] : [w];
+    });
+    const ex = analisaExigencias(pgs, { cotados: (e.it || []).map(x => x[5]), nomes });
     e.exige = ex.bloqueia;
     if (ex.bloqueia.length) e.exigeTrechos = Object.fromEntries(Object.values(ex).filter(v => v && v.exige).map(v => [v.rotulo, v.trechos]));
+    if (ex.ignorados.length) e.exigeOutros = Object.fromEntries(Object.values(ex).filter(v => v && !v.exige && v.outrosItens && v.outrosItens.length).map(v => [v.rotulo, v.outrosItens]));
   } catch { e.exige = 'erro'; errExige++; }
   if (++feitosEx % 50 === 0) process.stderr.write(`  ${feitosEx}/${fin.length}\n`);
 });
@@ -1305,6 +1312,10 @@ try {
     editais: fin.filter(e => Array.isArray(e.exige) && e.exige.length).map(e => ({
       path: e.path, municipio: e.mun, uf: e.uf, edital: e.ed, objeto: String(e.obj || '').slice(0, 160),
       exige: e.exige, trechos: e.exigeTrechos || {} })),
+    // os que ficaram porque a exigencia e so de itens que a casa nao cota
+    ignorados: fin.filter(e => e.exigeOutros).map(e => ({
+      path: e.path, municipio: e.mun, uf: e.uf, edital: e.ed, cotados: (e.it || []).map(x => x[5]),
+      outrosItens: e.exigeOutros })),
   }, null, 1) + '\n', 'utf8');
 } catch (err) { process.stderr.write('  barrados.json nao gravado: ' + err.message + '\n'); }
 const finE = fin.filter(e => {

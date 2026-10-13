@@ -267,6 +267,13 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    exigidas amostras nos termos do item 4.15 do anexo I" a uma seção que só pede catálogo
    (Sant'Ana do Livramento/RS) e a "amostra, e/ou laudo(s) técnico(s) e/ou informações
    técnicas", que o documento substitui (Goiânia/GO). Esses três passam a ficar.
+   Desde 13/10/2026 a exigência que a FRASE restringe a itens que a Digiplus não cota não
+   barra (pedido do usuário: "pode ignorar as exigências de produtos que não cotamos"): o
+   selo Procel/Energy Star "das Smart TVs e Monitores (Itens 10, 11 e 14)" do CNMP
+   (Brasília/DF, edital 44), que só cota o climatizador do item 15. Vale pelo NÚMERO do item
+   na frase e só quando a frase não nomeia um produto cotado (o edital por lote numera
+   diferente do PNCP); sem número, a exigência vale para o edital inteiro. Esses ficam na
+   lista e aparecem em `docs/barrados.json`, em "ignorados", com o trecho.
 
 ## Ressalvas
 
