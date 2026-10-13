@@ -181,7 +181,10 @@ export async function arquivosPublicados(r) {
     if (/edital|aviso de contratacao/.test(tipo)) peso += 30;
     if (/termo de referencia/.test(tipo)) peso += 25;
     if (/minuta|contrato|ata de registro|decreto|portaria|errata|aviso de licitacao/.test(nome)) peso -= 40;
-    return { url: base + '/' + a.sequencialDocumento, titulo: a.titulo, tipo: a.tipoDocumentoNome, ext, peso };
+    // (o numero e a data de publicacao: a folha de abertura vem da versao MAIS
+    // NOVA do edital — ver versao-do-edital.mjs)
+    return { url: base + '/' + a.sequencialDocumento, titulo: a.titulo, tipo: a.tipoDocumentoNome, ext, peso,
+             seq: +a.sequencialDocumento || 0, publicado: a.dataPublicacaoPncp || '' };
   }).sort((a, b) => b.peso - a.peso);
 }
 

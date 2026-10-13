@@ -5300,7 +5300,9 @@ for (const e of dados.editais) {
     // (edital 147): "...ABNT NBR 16671; CATMAT: 270123 DC", e no item 10 depois
     // dele vinha o armario do item seguinte inteiro. O descritivo acaba ali.
     {
-      const m = /[;,.]?\s*CATMAT:?\s*\d{5,7}\b/i.exec(t);
+      // (e o parentese de "...Comprimento: 1 cm.(CATMAT 443912)" junto, que
+      // ficava aberto no fim — Florianopolis/SC, edital 226, 13/10/2026)
+      const m = /[;,.]?\s*\(?\s*CATMAT:?\s*\d{5,7}\b/i.exec(t);
       if (m && m.index > 50) t = t.slice(0, m.index);
     }
     // A coluna da unidade seguida da distribuicao por secretaria, so numeros, e
@@ -5826,7 +5828,15 @@ for (const e of dados.editais) {
            // e a unidade partida com a quantidade em decimal: "...classificacao
            // energetica a. UNIDAD E 32,00" (Hidrolandia/GO, item 28). So com a
            // quantidade do proprio item.
-           .replace(new RegExp('\\s+(?:UNIDAD\\s?E|UNIDADES?|UND|UNID)\\.?\\s+0*' + Math.round(+it[2]) + '(?:,0{1,4})?\\s*$', 'i'), '');
+           .replace(new RegExp('\\s+(?:UNIDAD\\s?E|UNIDADES?|UND|UNID)\\.?\\s+0*' + Math.round(+it[2]) + '(?:,0{1,4})?\\s*$', 'i'), '')
+           // e o total da tabela, quando o item e a ultima linha dela: "...Forno
+           // micro-ondas, capacidade minima de 30 litros TOTAL ESTIMADO R$
+           // 58.821,29" (Roque Gonzales/RS, item 18, 13/10/2026)
+           .replace(/\s+(?:VALOR\s+)?TOTAL(?:\s+(?:ESTIMADO|GERAL|GLOBAL|M[ÁA]XIMO|DO\s+LOTE))?\s*:?\s*(?:\(R\$\)\s*|R\$\s*)?[\d.]+,\d{2}\s*$/i, '')
+           // e a coluna da unidade sozinha depois da frase: "...documentacao
+           // pertinente a garantia e assistencia tecnica. uni" (Camboriu/SC,
+           // itens 99 e 100, 13/10/2026 — a quantidade e o preco ja tinham saido)
+           .replace(/(?<=[.;])\s+(?:UNI|UN|UND|UNID|UNIDADES?|P[ÇC]A?S?|PE[ÇC]AS?|CX|PAR)\.?\s*$/i, '');
     } while (s !== antes);
     it[6] = s;
   }

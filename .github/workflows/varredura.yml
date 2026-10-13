@@ -151,6 +151,17 @@ jobs:
         if: steps.guarda.outputs.rodar == 'sim'
         run: node links-portal.mjs
 
+      # "Data alterada" tambem quando o orgao adiou ANTES de o Radar ver o
+      # edital: a data da sessao escrita no edital original contra a do PNCP
+      # (data-do-edital.mjs, 13/10/2026). Cada edital e lido uma vez (fica no
+      # datas-vistas.json); com 15 minutos o resto fica para o dia seguinte, e
+      # uma falha aqui nao derruba a varredura.
+      - name: Data alterada pelo edital
+        if: steps.guarda.outputs.rodar == 'sim'
+        timeout-minutes: 20
+        continue-on-error: true
+        run: node data-do-edital.mjs --minutos 15
+
       # O tee manda o delta para o log ALÉM do Summary. O Summary não tem endpoint
       # na API REST, então sem isso o comparativo do dia só existe no navegador.
       - name: Resumo do que mudou

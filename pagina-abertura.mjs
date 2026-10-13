@@ -30,6 +30,7 @@ import { textoDasPaginas, linhasDaPagina, fluxoDe } from './paginas-uteis.mjs';
 import { arquivosPublicados, fontesDe, PDF } from './resumo-pdf.mjs';
 import { abreZip } from './arquivo-oficial.mjs';
 import { pdfDeDocumento } from './pdf-do-documento.mjs';
+import { escolheEdital, notaDoEdital, medidaPeloPncp } from './versao-do-edital.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const LE = createRequire(import.meta.url)(path.join(DIR, 'docs', 'pdf-le.js'));
@@ -86,7 +87,15 @@ if (FALTANTES || SO.length) {
 }
 
 let alvos = dados.editais;
-if (FALTANTES) alvos = alvos.filter(e => !jaTem[e[C.path]]);
+// A folha guarda o arquivo do PNCP que a varredura apontava como o edital
+// ("arq"). Quando ela passa a apontar outro — o orgao republicou o edital
+// retificado, ou a regra achou o edital certo no lugar do parecer —, a folha e
+// refeita mesmo com --faltantes: o robo do site guarda as folhas em cache, e a
+// de Humaita/RS ficaria para sempre a do edital original (13/10/2026). As
+// folhas de antes desta marca sao refeitas quando o arquivo nao e o 1, o caso
+// das que a regra nova mudou.
+const desatualizada = (j, e) => j.arq !== undefined ? j.arq !== (e[C.arquivoSeq] || 1) : (e[C.arquivoSeq] || 1) > 1;
+if (FALTANTES) alvos = alvos.filter(e => !jaTem[e[C.path]] || desatualizada(jaTem[e[C.path]], e));
 if (SO.length) alvos = alvos.filter(e => SO.includes(e[C.path]));
 if (LIMITE) alvos = alvos.slice(0, LIMITE);
 
@@ -473,8 +482,19 @@ await pool(alvos, 2, async (e) => {
   try {
     // O edital primeiro: a ordem do arquivosPublicados serve ao recorte dos
     // itens, que quer o Termo de Referencia na frente.
-    const cands = [...await arquivosPublicados(e)]
-      .sort((a, b) => prioridadeCapa(b.titulo, b.tipo) - prioridadeCapa(a.titulo, a.tipo));
+    // E o edital que o versao-do-edital.mjs escolhe vai na frente de todos: a
+    // versao MAIS NOVA, quando o orgao republicou o edital inteiro. Humaita/RS
+    // (processo 89/2026) tem tres editais completos, e a folha do site era a do
+    // original, com a sessao em 21/08, quando a retificacao 2 diz 27/10 — a data
+    // do PNCP (13/10/2026). Empatados no resto, o que se chama de edital antes
+    // do ETP e do aviso que o orgao cadastrou com o tipo "Edital".
+    const lista = await arquivosPublicados(e);
+    const ed = await escolheEdital(lista, medidaPeloPncp(e[C.path]));
+    const escolhido = ed && ed.escolhido;
+    const cands = [...lista]
+      .sort((a, b) => ((b === escolhido) - (a === escolhido))
+        || (prioridadeCapa(b.titulo, b.tipo) - prioridadeCapa(a.titulo, a.tipo))
+        || (notaDoEdital(b.titulo, b.tipo) - notaDoEdital(a.titulo, a.tipo)));
     let melhor = null, abertos = 0;
     procura: for (const c of cands.slice(0, 4)) {
       if (prioridadeCapa(c.titulo, c.tipo) === 0) continue;
@@ -552,7 +572,7 @@ await pool(alvos, 2, async (e) => {
     }
     carona.anexaExternas(pacote, true);
     const bytes = carona.bytes();
-    saida[e[C.path]] = { pagina: achado.pagina + 1, campos: achado.campos, via: achado.via, arquivo: melhor.arquivo,
+    saida[e[C.path]] = { pagina: achado.pagina + 1, campos: achado.campos, via: achado.via, arquivo: melhor.arquivo, arq: e[C.arquivoSeq] || 1,
                          ...(folhas === 2 ? { paginas: 2, ...(corte ? { tira: [corte.baixo, corte.topo] } : {}) } : {}), b64: Buffer.from(bytes).toString('base64') };
     bytesTotal += bytes.length;
     com++;

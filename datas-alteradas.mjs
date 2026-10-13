@@ -54,7 +54,8 @@ export function anota(vistas, editais, hoje) {
     const v = vistas[p];
     let a = v && v.a;
     if (v && v.f && v.f !== f) a = [v.f, hoje];
-    vistas[p] = a ? { f, v: hoje, a } : { f, v: hoje };
+    // (o "ed" e a data lida no edital pelo data-do-edital.mjs, que fica)
+    vistas[p] = { ...(v && v.ed ? { ed: v.ed } : {}), f, v: hoje, ...(a ? { a } : {}) };
     marcas.set(p, a || '');
   }
   return marcas;

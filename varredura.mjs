@@ -13,6 +13,7 @@ import { linkDoPortal, ehComprasGov, montaLinkComprasGov } from './participar.mj
 import { portalOk, plataformaDoEdital } from './plataforma.mjs';
 import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, chaleiraDeFogao, criaCotaNaUf } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
+import { escolheEdital, daListaDoPncp, medidaPeloPncp } from './versao-do-edital.mjs';
 
 // fileURLToPath e nao o pathname cru: o import.meta.url vem percent-encoded,
 // entao uma pasta de usuario com acento no nome virava Usu%C3%A1rio e o
@@ -1222,8 +1223,14 @@ function nomeDoCd(cd) {
   return j < 0 ? '' : s.slice(i + 10, j);
 }
 
-function melhorArquivo(lista) {
+// Entre os do tipo Edital, o que e o edital de verdade e, se o orgao republicou
+// o edital inteiro, a versao mais nova (versao-do-edital.mjs, 13/10/2026): o
+// primeiro do tipo Edital era o PARECER em Caarapo/MS e o edital ORIGINAL de
+// Humaita/RS, com a sessao de 21/08 que a retificacao 2 adiou para 27/10.
+async function melhorArquivo(lista, path) {
   if (!Array.isArray(lista) || !lista.length) return null;
+  const ed = await escolheEdital(daListaDoPncp(lista), medidaPeloPncp(path));
+  if (ed) return ed.escolhido.bruto;
   return lista.find(a => ehEdital(a) && extDe(a.titulo) === 'pdf')
       || lista.find(a => ehEdital(a))
       || lista.find(a => extDe(a.titulo) === 'pdf')
@@ -1237,7 +1244,7 @@ await pool(fin, 6, async (e) => {
   const base = `https://pncp.gov.br/pncp-api/v1/orgaos/${cnpj}/compras/${ano}/${seq}/arquivos`;
   try {
     const lista = await getJson(`https://pncp.gov.br/api/pncp/v1/orgaos/${cnpj}/compras/${ano}/${seq}/arquivos`);
-    const a = melhorArquivo(lista);
+    const a = await melhorArquivo(lista, e.path);
     if (!a) return;
     e.arq = a.sequencialDocumento;
     e.arqExt = extDe(a.titulo);

@@ -43,7 +43,12 @@ try { jaTem = JSON.parse(fs.readFileSync(arquivoSaida, 'utf8')).editais || {}; }
 
 // So o que NAO e PDF: o resto o botao ja entrega direto do PNCP.
 let alvos = dados.editais.filter(e => String(e[C.arquivoExtensao] || '').toLowerCase() !== 'pdf');
-if (FALTANTES) alvos = alvos.filter(e => !jaTem[e[C.path]]);
+// O convertido guarda de que arquivo do PNCP veio ("arq"): se a varredura passa
+// a apontar outro (edital republicado, versao-do-edital.mjs, 13/10/2026), ele
+// e refeito mesmo com --faltantes — o robo do site guarda os convertidos em cache.
+if (FALTANTES) alvos = alvos.filter(e => !jaTem[e[C.path]] || (jaTem[e[C.path]].arq !== undefined && jaTem[e[C.path]].arq !== (e[C.arquivoSeq] || 1)));
+// e o edital que agora aponta um PDF nao precisa mais do convertido
+for (const e of dados.editais) if (String(e[C.arquivoExtensao] || '').toLowerCase() === 'pdf') delete jaTem[e[C.path]];
 if (SO.length) alvos = alvos.filter(e => SO.includes(e[C.path]));
 
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -55,7 +60,14 @@ const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLow
 export const CODIGO_DO_PREGAO = /^(?:pe|pp|pregao|cc|tp|dl|ce|rp)\s*[-_.]?\s*n?[ºo°]?\s*\d{1,4}\s*[-_./]?\s*\d{2,4}(?!\d)/;
 
 function nota(nome) {
-  const s = norm(nome);
+  // So o nome do arquivo, sem a pasta: no zip de Brasilia/DF (pregao 107/2026)
+  // tudo fica em "Edital e anexos/", e o "ANEXO I – Termo de Referencia" valia
+  // como edital pela pasta (13/10/2026).
+  const s = norm(String(nome).split('/').pop());
+  // O anexo que comeca pelo codigo do pregao nao e o edital: "PE 226-2026 - SRP
+  // - Anexo I - Termo de Referencia.pdf" passava pelo CODIGO_DO_PREGAO e saia no
+  // botao no lugar do "PE 226-2026 - SRP - Edital.pdf" (Florianopolis/SC, 13/10/2026).
+  const ehAnexo = /(?:^|[^a-z])(?:anexo|apendice)(?:[^a-z]|$)|termo de referencia|minuta/.test(s);
   // Decreto, portaria, parecer e matriz de risco nunca sao o edital: o pacote
   // de Corrego Danta/MG so traz o "Decreto no 978-2024 - REGIONALIZACAO", e ele
   // saia como "o edital em PDF" do botao (23/09/2026). Nota 9 e recusa: melhor
@@ -66,7 +78,7 @@ function nota(nome) {
   // Caxias do Sul/RS traz "PE251-26.odt" ao lado de "Anexo I - Termo de
   // Referencia.odt" e "Anexo II - Minuta de Termo de Contrato.odt", e sem esta
   // linha o botao "Baixar edital" entregava o Termo de Referencia (28/09/2026).
-  if (CODIGO_DO_PREGAO.test(s)) return 0;
+  if (CODIGO_DO_PREGAO.test(s) && !ehAnexo) return 0;
   // "TR984767_000186_2026.pdf": TR do Compras.gov com a UASG colada (ver pagina-abertura.mjs)
   if (/termo de referencia|(?:^|[^a-z])tr(?:[\s_.-]|\d{5})|especifica|descritiv|memorial/.test(s)) return 1;
   if (/etp|estudo tecnico|formalizacao|mapa de risco|pesquisa|cotacao|preco|planilha|media/.test(s)) return 3;
@@ -193,7 +205,7 @@ for (const e of dados.editais) {
       console.log(`  ${nome} · ${mb.toFixed(1)} MB passa do teto de ${TETO_MB} MB — fica so o link do PNCP`);
       continue;
     }
-    saida[e[C.path]] = { nome: achado.nome.split('/').pop(), origem: achado.origem, paginas: le.total,
+    saida[e[C.path]] = { nome: achado.nome.split('/').pop(), origem: achado.origem, paginas: le.total, arq: e[C.arquivoSeq] || 1,
                          de: String(e[C.arquivoExtensao] || '').toLowerCase(),
                          b64: Buffer.from(achado.bytes).toString('base64') };
     total += achado.bytes.length; feitos++;

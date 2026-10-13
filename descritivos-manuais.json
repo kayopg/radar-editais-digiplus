@@ -889,5 +889,29 @@
         "texto": "LAVADORA DE ALTA PRESSÃO, POTÊNCIA MÍNIMA DE 1800W, PRESSÃO MÍNIMA DE 2200 PSI, 220V, COM PONTEIRA JATO TURBO."
       }
     }
+  },
+  "15563047000130/2026/11": {
+    "edital": "Santos/SP, Dispensa Eletronica 241/2026 (Fundacao Parque Tecnologico de Santos)",
+    "conferido": "2026-10-13",
+    "itens": {
+      "8100277": {
+        "qtd": 2,
+        "valor": 4340.93,
+        "fonte": "Anexo I - Termo de Referencia, item 01: o PNCP numera o item como 8100277 (codigo do catalogo) e o recorte pegava o cabecalho do modelo de proposta",
+        "texto": "Ar-condicionado tipo Split Hi Wall; ciclo frio; tecnologia Inverter; capacidade de refrigeração mínima de 22.000 BTU/h; tensão 220 V; classificação de eficiência energética A na ENCE vigente e aplicável ao modelo ofertado; registro ativo no Inmetro; serpentina de cobre; fluido refrigerante permitido pela regulamentação vigente; baixo nível de ruído; controle digital de temperatura; regulagem da velocidade de ventilação; função swing; filtro removível e lavável; evaporadora na cor branca; condensadora com dimensões máximas de 765 mm de largura, 765 mm de altura e 555 mm de profundidade; 1 controle remoto; 1 unidade interna; 1 unidade externa; manual de instruções em português. O Selo Procel vigente poderá ser apresentado como comprovação complementar, sem substituir a comprovação do registro ativo no Inmetro."
+      }
+    }
+  },
+  "01067479000146/2026/228": {
+    "edital": "Anapolis/GO, Dispensa (Aviso de Contratacao Direta) 123/2026, climatizadores",
+    "conferido": "2026-10-13",
+    "itens": {
+      "1": {
+        "qtd": 20,
+        "valor": 1367.9,
+        "fonte": "Termo de Referencia, tabela do item 1 (1 454102 Climatizador novo... unid 20 R$ 1.367,90): o cabecalho do SEI no meio da tabela desviava o recorte para a clausula 1.1",
+        "texto": "Climatizador novo, de primeiro uso, destinado à climatização e ventilação de ambientes internos, atendendo, no mínimo, às seguintes especificações: climatizador evaporativo portátil, funções mínimas de climatizar, ventilar e umidificar o ambiente, com reservatório de água de 100 litros e vazão de ar mínima de 5.000 m³/h, controle de velocidade com, no mínimo, 3 níveis de ventilação, oscilação automática das aletas para melhor distribuição do ar; rodízios para deslocamento; indicador de nível de água; sistema de proteção para bomba d'água em caso de reservatório vazio; baixo consumo de energia, equipado com filtro e Tensão elétrica 220V ou bivolt, estrutura resistente em material de alta durabilidade; equipamento acompanhado de manual de instruções em português e acessórios necessários ao funcionamento; garantia mínima de 12 (doze) meses."
+      }
+    }
   }
 }
