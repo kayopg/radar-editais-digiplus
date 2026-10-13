@@ -5834,8 +5834,15 @@ for (const e of dados.editais) {
   // E, por fim, o item que o edital nao especifica em lugar nenhum: se o
   // proprio rotulo ja serve, ele vira o descritivo — marcado no indice 9, para
   // o card nao anunciar como "Descritivo do edital" o que veio do catalogo.
+  // O item DO RADAR fica sempre, com o rotulo que tiver (usuario, 13/10/2026:
+  // "do microondas de Bombinhas pode manter, e o ar condicionado pode manter
+  // tambem", e "Sempre" como regra): o "MICRO-ONDAS LINHA BRANCA 36L - 220L"
+  // de Bombinhas/SC e o "AR CONDICIONADO SPLINT 12000 BTUS" de Santa Rita do
+  // Araguaia/GO saiam do radar porque o edital so traz o nome. A exigencia de
+  // rotulo rico (rotuloServeDeDescritivo) fica para os itens de fora do radar.
+  const noRadar = new Set((e[C.itens] || []).filter(r => r[0] !== 'LT' && r[0] !== 'ED').map(r => String(r[5])));
   for (const it of v.itens) {
-    if (it[6] || !rotuloServeDeDescritivo(it[1])) continue;
+    if (it[6] || (!rotuloServeDeDescritivo(it[1]) && !noRadar.has(String(it[0])))) continue;
     // O PNCP as vezes escreve o nome duas vezes: "VENTILADOR DE PAREDE DE 60
     // CM, TENSAO BIVOLT, COR PRETA. - VENTILADOR DE PAREDE DE 60 CM, TENSAO
     // BIVOLT, COR PRETA." (Iguaracu/PR). Fica so uma.

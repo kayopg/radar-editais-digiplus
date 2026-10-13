@@ -259,6 +259,8 @@ tr.lotecab td{padding:12px 8px 5px;font-size:11px;font-weight:800;letter-spacing
 button.btn{font-family:inherit;cursor:pointer}
 .note{font-size:12px;color:var(--ink3);margin-top:9px;font-style:italic}
 .copia{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 14px;padding:10px 14px;border-radius:12px;background:var(--brand-soft);color:var(--ink2);font-size:13px}
+/* o aviso de marca nao gravada fica preso no pe da tela: quem marca esta rolado na agenda */
+#avisoMarca{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;margin:0;width:max-content;max-width:min(92vw,520px);border:1px solid var(--line);box-shadow:0 6px 24px rgba(0,0,0,.18)}
 .empty .btn{display:inline-block;margin-top:14px}
 .empty{text-align:center;padding:46px 20px;color:var(--ink3);background:var(--panel);border:1px dashed var(--line);border-radius:16px}
 
@@ -418,6 +420,7 @@ button.btn{font-family:inherit;cursor:pointer}
 
 <div id="painelAgenda" role="tabpanel" aria-labelledby="vAgenda" hidden></div>
 <div id="avisoCopia" class="copia" role="status" hidden></div>
+<div id="avisoMarca" class="copia" role="alert" hidden></div>
 <div id="list"><div class="empty carregando">Carregando editais…</div></div>
 
 <div class="method">
@@ -1488,10 +1491,120 @@ function atualizaImpressos(){
     var r=D[+c.dataset.i]; if(r) c.classList.toggle("impresso", impresso(r));
   });
 }
+// AS MARCAS DO SITE, PARA TODOS (pedido de 13/10/2026: "sempre que for marcado
+// algum edital na agenda, salve no site, para que sempre que qualquer conta ou
+// dispositivo acessar esteja marcado para todos visualizarem"). O site nao tem
+// servidor: as marcas ficam no Firestore do projeto Firebase da Digiplus, pela
+// API REST, sem biblioteca. Le de novo a cada 30 s com a aba visivel e quando
+// ela volta a ficar visivel. As regras do Firestore so aceitam a colecao
+// "impressos", com o caminho do PNCP, a data e quem marcou. No artefato, que
+// nao alcanca a internet, vale o banco dele (acima).
+var FIRESTORE={ projectId:"", apiKey:"" };
+var nuvem=!window.claude && !!(FIRESTORE.projectId && FIRESTORE.apiKey);
+var CHAVE_MIGRADOS="radar-impressos-na-nuvem";
+// Um documento so, "radar/impressos", com um mapa "marcas" de id -> { path,
+// em, quem }: cada leitura custa uma leitura do Firestore (o gratuito da
+// 50 mil por dia; listar uma colecao custaria uma por marca, e quatro pessoas
+// lendo a cada 30 s passariam disso). Cada marca e gravada ou apagada sozinha
+// (updateMask com a chave dela), sem atropelar a marca dos outros.
+function urlNuvem(mascara){
+  return "https://firestore.googleapis.com/v1/projects/"+encodeURIComponent(FIRESTORE.projectId)
+    +"/databases/(default)/documents/radar/impressos?key="+encodeURIComponent(FIRESTORE.apiKey)
+    +(mascara?"&updateMask.fieldPaths="+encodeURIComponent(mascara):"");
+}
+function guardaCopiaLocal(){ try{ localStorage.setItem(CHAVE_IMPRESSOS, JSON.stringify(IMPRESSOS)); }catch(e){} }
+function gravaNuvem(p, m){
+  var id=idImpresso(p), marcas={};
+  if(m){
+    var campos={ path:{ stringValue:p }, em:{ stringValue:m.em } };
+    if(m.quem) campos.quem={ stringValue:String(m.quem).slice(0,39) };
+    marcas[id]={ mapValue:{ fields:campos } };
+  }
+  // a chave na mascara e na marca: com a marca, grava; sem ela, apaga
+  return fetch(urlNuvem("marcas.`"+id+"`"), { method:"PATCH", headers:{ "Content-Type":"application/json" },
+    body:JSON.stringify({ fields:{ marcas:{ mapValue:{ fields:marcas } } } }) })
+    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); });
+}
+// a marca que acabou de ser feita e ainda nao voltou da nuvem: uma leitura que
+// saiu antes dela nao pode apaga-la da tela
+var lendoNuvem=false, limpouNuvem=false, pendentes={};
+function leNuvem(){
+  if(!nuvem || lendoNuvem) return;
+  lendoNuvem=true;
+  fetch(urlNuvem(), { cache:"no-store" })
+    .then(function(r){
+      if(r.status===404) return {};          // ninguem marcou nada ainda
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      return r.json();
+    })
+    .then(function(j){
+      var m={}, f=j.fields && j.fields.marcas && j.fields.marcas.mapValue && j.fields.marcas.mapValue.fields || {};
+      Object.keys(f).forEach(function(id){
+        var x=f[id].mapValue && f[id].mapValue.fields || {}, p=x.path && x.path.stringValue;
+        if(p) m[p]={ em:x.em && x.em.stringValue || "", quem:x.quem && x.quem.stringValue || "" };
+      });
+      // a primeira leitura deste aparelho manda para a nuvem as marcas que ele
+      // tinha so no navegador (antes de 13/10/2026 cada um marcava para si)
+      var migrado=false;
+      try{ migrado=localStorage.getItem(CHAVE_MIGRADOS)==="1"; }catch(e){}
+      if(!migrado){
+        var subir=Object.keys(IMPRESSOS).filter(function(p){ return !m[p] && !velhaDemais(p, IMPRESSOS[p]); });
+        subir.forEach(function(p){ m[p]=IMPRESSOS[p]; });
+        subir.reduce(function(fila, p){ return fila.then(function(){ return gravaNuvem(p, IMPRESSOS[p]); }); }, Promise.resolve())
+          .then(function(){ try{ localStorage.setItem(CHAVE_MIGRADOS,"1"); }catch(e){} })
+          .catch(function(){});
+      }
+      // e a marca de edital que ja saiu da lista ha mais de 90 dias sai da nuvem
+      if(pronto && !limpouNuvem){
+        limpouNuvem=true;
+        Object.keys(m).forEach(function(p){ if(velhaDemais(p, m[p])){ delete m[p]; gravaNuvem(p, null).catch(function(){}); } });
+      }
+      Object.keys(pendentes).forEach(function(p){ if(pendentes[p]) m[p]=pendentes[p]; else delete m[p]; });
+      IMPRESSOS=m; guardaCopiaLocal(); atualizaImpressos();
+    })
+    .catch(function(e){ console.warn("marcas da agenda nao lidas:", e && e.message); })
+    .then(function(){ lendoNuvem=false; });
+}
+function avisoMarca(txt){
+  var el=document.getElementById("avisoMarca");
+  if(!el) return;
+  el.textContent=txt||""; el.hidden=!txt;
+  clearTimeout(avisoMarca.t);
+  if(txt) avisoMarca.t=setTimeout(function(){ el.hidden=true; }, 8000);
+}
+function quemMarcou(){ return ACESSO && ACESSO.nome || ""; }
+// "Impresso · marcado por Volney em 13/10"
+function textoDaMarca(r){
+  var m=IMPRESSOS[r[7]];
+  if(!m) return "Marcar como impresso";
+  var d=m.em ? new Date(m.em) : null;
+  return "Impresso"+(m.quem?" · marcado por "+m.quem:"")+(d&&!isNaN(d)?" em "+pad2(d.getDate())+"/"+pad2(d.getMonth()+1):"")+" · clique para desmarcar";
+}
+if(nuvem){
+  leNuvem();
+  // a cada 30 s com a aba visivel; escondida, a cada 3 min
+  var voltas=0;
+  setInterval(function(){ voltas++; if(document.visibilityState==="visible" || voltas%6===0) leNuvem(); }, 30000);
+  document.addEventListener("visibilitychange", function(){ if(document.visibilityState==="visible") leNuvem(); });
+}
 function marcaImpresso(r, sim){
   var p=r[7], antes=IMPRESSOS[p];
-  if(sim) IMPRESSOS[p]={ em:new Date().toISOString() }; else delete IMPRESSOS[p];
+  if(sim) IMPRESSOS[p]={ em:new Date().toISOString(), quem:quemMarcou() }; else delete IMPRESSOS[p];
   atualizaImpressos();
+  if(nuvem){
+    guardaCopiaLocal();
+    var feita=pendentes[p]=IMPRESSOS[p]||null;
+    var solta=function(){ if(pendentes[p]===feita) delete pendentes[p]; };
+    gravaNuvem(p, feita).then(solta, function(e){
+      solta();
+      // nao gravou: volta ao que era e avisa — a marca nao ficou para os outros
+      if(antes) IMPRESSOS[p]=antes; else delete IMPRESSOS[p];
+      guardaCopiaLocal(); atualizaImpressos();
+      avisoMarca("Não foi possível salvar a marca para todos. Confira a internet e marque de novo.");
+      console.warn("marca do edital nao gravada:", e && e.message);
+    });
+    return;
+  }
   if(impressosDb){
     var ref=impressosDb.doc(idImpresso(p));
     (sim ? ref.set({ path:p, em:IMPRESSOS[p].em }) : ref.delete()).catch(function(e){
@@ -1574,7 +1687,7 @@ function renderAgenda(rows){
       var fech=encerrado(r[4]), urg=!fech && horas(r[4])<=24;
       var hm=String(r[4]).slice(11,16);
       var imp=impresso(r);
-      h+='<div class="ag-item"><button type="button" class="ag-imp" data-imp="'+D.indexOf(r)+'" aria-pressed="'+(imp?'true':'false')+'" aria-label="'+(imp?'Desmarcar':'Marcar')+' '+esc(r[0])+'"></button>'
+      h+='<div class="ag-item"><button type="button" class="ag-imp" data-imp="'+D.indexOf(r)+'" aria-pressed="'+(imp?'true':'false')+'" aria-label="'+(imp?'Desmarcar':'Marcar')+' '+esc(r[0])+'" title="'+esc(textoDaMarca(r))+'"></button>'
         +'<button type="button" class="ag-ev'+(fech?' fech':urg?' urg':'')+'" data-i="'+D.indexOf(r)+'" title="'+esc(r[2]+' · '+r[3])+'">'
         +'<b>'+(hm&&hm!=="00:00"?hm:"—")+'</b> '+esc(r[0])+'/'+r[1]+' <i>· '+(r[6]?brl(r[6]):'sigiloso')+(fech?' · encerrado':'')+(dataAlterada(r)?' · data alterada (era '+esc(dataAnteriorTxt(r))+')':'')+(situacaoAlerta(r)?' · '+esc(String(r[17]).toLowerCase()):'')+'</i></button></div>';
     });

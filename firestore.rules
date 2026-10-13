@@ -1,0 +1,16 @@
+rules_version = '2';
+// Regras do Firestore do Radar de Editais (colar em Firestore Database > Regras).
+// As marcas da agenda do site (docs/index.html, 13/10/2026) ficam num documento
+// so, radar/impressos, com o mapa "marcas" (id -> caminho do PNCP, data e quem
+// marcou). Qualquer um le; grava quem manda so o mapa, com ate 3000 marcas.
+// Nada mais no banco aceita leitura ou gravacao.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /radar/impressos {
+      allow read: if true;
+      allow create, update: if request.resource.data.keys().hasOnly(['marcas'])
+        && request.resource.data.marcas is map
+        && request.resource.data.marcas.size() <= 3000;
+    }
+  }
+}

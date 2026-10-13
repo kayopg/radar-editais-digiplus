@@ -28,6 +28,15 @@ const dados = JSON.parse(doc('dados.json'));
   if (html.length === antes) throw new Error('nao achei a tela de entrada no index.html');
 }
 
+// As marcas da agenda do SITE ficam no Firestore (13/10/2026); o artefato nao
+// alcanca a internet e guarda as dele no banco proprio (claude.use("db")). A
+// configuracao do Firebase sai, para ele nem tentar.
+{
+  const antes = html;
+  html = html.replace(/var FIRESTORE=\{[^}]*\};/, 'var FIRESTORE={ projectId:"", apiKey:"" };');
+  if (html === antes && !/var FIRESTORE=\{ projectId:"", apiKey:"" \};/.test(html)) throw new Error('nao achei a configuracao do Firestore no index.html');
+}
+
 // Um script embutido nao pode conter a sequencia que fecha a tag; nem o codigo
 // do pdf.js nem o JSON tem motivo para conter, mas quebrar aqui daria uma
 // pagina em branco sem aviso, entao a troca e feita mesmo assim.
