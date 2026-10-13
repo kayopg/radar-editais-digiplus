@@ -128,6 +128,9 @@ const EXIGE_INSTALACAO = [
   /devidamente instalad[oa]s?/,
   /instalad[oa]s? e em (perfeito )?funcionamento/,
   /fornecimento e instalacao/,
+  // "APARELHO AR CONDICIONADO 9.000 BTUS – Tipo SPLIT HI WALL Aquisição e
+  // Instalação" (Goiania/GO, edital 115, item 2, 13/10/2026)
+  /aquisicao e instalacao/,
   /instalacao (inclusa|incluida|inclusive)/,
   /(incluindo|inclusa|incluida|inclusive) (a )?instalacao/,
   // "Inclui instalacao padrao completa por profissional habilitado" (Goioxim/PR, 29/09/2026)
@@ -142,7 +145,10 @@ const EXIGE_INSTALACAO = [
   // ANTI-CORROSIVO, COM INSTALACAO" no fim da frase (Guiratinga/MT, edital 047,
   // item 2, 05/10/2026). "Com instalacao em parede" e "compativel com
   // instalacao" continuam, que ali a frase segue.
-  /(?<!(?:sem|nao) )\bcom (a )?instalacao\s*(?:[.;]|$)/,
+  // (nao o "compativel com a instalacao;" da rede eletrica: "admitindo-se
+  // equipamento bivolt ou configuracao compativel com a instalacao; frequencia
+  // de operacao de 60 Hz" — Rio Azul/PR, edital 98, item 10, aspirador, 13/10/2026)
+  /(?<!(?:sem|nao|compativel|compatibilidade) )\bcom (a )?instalacao\s*(?:[.;]|$)/,
   // "com mao de obra de instalacao e drenos" (Sertanopolis/PR, 21/09/2026)
   /(mao de obra|servicos?) de (instalacao|montagem)/,
   /instalacao (sera |fica |ficara )?(por conta|a cargo|sob responsabilidade|de responsabilidade) d[ao] (contratad|fornecedor|licitante|empresa)/,

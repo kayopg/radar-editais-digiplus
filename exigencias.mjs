@@ -88,6 +88,9 @@ const SANCAO = [
   // a multa "sobre o valor contratado, EM CASO DE RECUSA do adjudicatario em
   // efetuar o REFORCO DE GARANTIA contratual" (Curitiba/PR, PCE 32, 06/10/2026)
   'em caso de recusa', 'reforco de garantia',
+  // a multa "descontado da garantia contratual, se houver" (Brasilia/DF,
+  // CNMP, edital 44, 13/10/2026): de onde sai o valor da multa, nao exigencia
+  'descontado da garantia', 'descontada da garantia', 'descontados da garantia',
 ];
 
 // Linguagem CONDICIONAL: o edital preve a hipotese mas nao obriga.

@@ -242,6 +242,11 @@ const INTERROGACAO = [
   // 48 litros ? Forno eletrico com capacidade..." (Ervalia/MG). Solto entre
   // espacos nunca e pergunta: a pergunta gruda na palavra de tras.
   [/(?<=\S)\s\?\s(?=\S)/g, ' – '],
+  // e o mesmo sinal perdido fechando o trecho, solto antes da virgula: "CARTA,
+  // OFÍCIO ? LEGAL ?, ENVELOPES E PAPEL FOTOGRÁFICO" (Bonito/MS, edital 44,
+  // item 2, 13/10/2026). So depois de palavra em CAIXA ALTA: o nome do jogo
+  // "qual é a pergunta ?, material" (testa-interrogacao.mjs) e pergunta mesmo.
+  [/(?<=\p{Lu}{2}) \?(?=,)/gu, ''],
 ];
 
 // UTF-8 lido como Latin-1 (e as vezes com o terceiro byte perdido)

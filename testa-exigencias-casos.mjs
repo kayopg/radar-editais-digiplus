@@ -35,6 +35,8 @@ const BARRA = [
   ['9. das amostras 9.1. caso necessario, o pregoeiro podera solicitar catalogo do produto ofertado, com fotografias, dimensoes, peso e as especificacoes tecnicas completas do fabricante, em lingua portuguesa. 9.2. o licitante vencedor devera apresentar amostra do item em 3 (tres) dias uteis, sob pena de desclassificacao.', ['Amostra']],
 ];
 const PASSA = [
+  // a multa descontada "da garantia contratual, se houver" (Brasilia/DF, CNMP, edital 44, 13/10/2026)
+  'guia de recolhimento da uniao (gru) referente a multa aplicada no prazo maximo de 15 (quinze) dias uteis, a contar do recebimento da notificacao pela licitante ou contratada sancionada o valor sera, sucessivamente: 16.7.1. descontado dos creditos que a contratada fizer jus, no ambito da mesma contratacao; 16.7.2. descontado da garantia contratual, se houver; 16.7.3. cobrado judicialmente. 16.8. a administracao devera, no prazo maximo de 15 (quinze) dias uteis, contado da data da de aplicacao da sancao, informar e manter atualizado o cadastro.',
   // o titulo "da garantia de execucao" com a garantia do PRODUTO dentro (Ivoti/RS, 07/10/2026)
   '12.1. julgados os recursos, constatada a regularidade dos atos praticados, a autoridade competente adjudica e homologa a licitacao. 13. da garantia de execucao. 13.1. a contratada devera fornecer garantia minima de 12 (doze) meses para todos os itens, exceto os itens 16 e 19 que e de no minimo 90 dias, item 20 de 36 meses.',
   // os barrados por engano em 06/10/2026 (24 dos 34 do dia)

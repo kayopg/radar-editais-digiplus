@@ -2906,6 +2906,39 @@ function descritivosPorItem(secoes, itens) {
           numeroVencedor = numLinha[longe.idx]; kVencedor = longe.k;
         }
       }
+      // A CONTINUACAO QUE O ROTULO CONFIRMA, logo depois do fim da celula. A
+      // marca de outro item (ou o nome repetido) partia a linha no meio e
+      // nenhuma candidata tinha o resto: "Freezer doméstico vertical: frost
+      // free, capacidade mínima 240l . Freezer domestico; no modelo
+      // descongelamento automático..." (Wenceslau Braz/PR, item 18) e "...com
+      // base (cavalete ou pé). Iluminação interna. Voltagem 220V MONOFÁSICO..."
+      // (Dourados/MS, item 89, forno industrial), 13/10/2026. O texto que vem
+      // depois entra palavra por palavra enquanto as letras dele seguem as do
+      // rotulo do PNCP do proprio item; na primeira que discorda, para.
+      if (kVencedor >= 0) {
+        const pnC = letras(rotulo), raboC = letras(vencedor).slice(-30);
+        const kpC = raboC.length >= 20 ? pnC.lastIndexOf(raboC) : -1;
+        if (kpC >= 0 && pnC.length - (kpC + raboC.length) >= 25) {
+          const janela = secoes.slice(posicoes[kVencedor], Math.min(secoes.length, posicoes[kVencedor] + TETO_ITEM + 4000)).replace(/\s+/g, ' ');
+          // onde o vencedor acaba na janela, pelas letras
+          const mapa = [];
+          let soL = '';
+          for (let q = 0; q < janela.length; q++) { const l = letras(janela[q]); for (const ch of l) { soL += ch; mapa.push(q); } }
+          const achou = soL.indexOf(raboC);
+          if (achou >= 0) {
+            const resto = janela.slice(mapa[achou + raboC.length - 1] + 1);
+            const alvoC = pnC.slice(kpC + raboC.length);
+            let acc = '', ate = 0;
+            for (const m of resto.matchAll(/\S+/g)) {
+              const l = letras(m[0]);
+              if (!alvoC.startsWith(acc + l)) break;
+              acc += l; ate = m.index + m[0].length;
+            }
+            // (a pontuacao do fim do vencedor sai: o resto comeca por ela)
+            if (acc.length >= 25) vencedor = (vencedor.replace(/[^\p{L}\p{N}]+$/u, '') + resto.slice(0, ate)).replace(/(?<=\S)\s+(?=[.,;:](?:\s|$))/g, '').trim();
+          }
+        }
+      }
     }
     // O numero que ABRE a linha seguinte fica antes da marca dela, e portanto no
     // fim desta celula: "...ligado manualmente e com regulador de potencia 35 |
@@ -5364,6 +5397,19 @@ for (const e of dados.editais) {
       // ou na gestão do contrato..." (Pelotas/RS, edital 413, item 7)
       // (com a virgula da impressao: "22/09/2026 13:31" sem ela e o cabecalho do
       // relatorio de cotacao de Passo Fundo/RS, que a regra mais abaixo tira)
+      // Mas antes, a mesma virada de folha da impressao NO MEIO da celula, com a
+      // frase continuando embaixo: "...controle remoto sem fio, display de LED
+      // UNID 4 28/09/2026, 09:48 SEI/PMG - 11453185 - Edital de Licitação
+      // https://sei.goiania... 34/52 termostato digital, voltagem de 220V, ...
+      // Deve contemplar: Serviço de instalação..." (Goiania/GO, edital 115, item
+      // 2, 13/10/2026). O corte levava a exigencia de instalacao junto, e o item
+      // ficava no radar. Aqui a linha de cima termina sem ponto (no maximo com a
+      // unidade e a quantidade do proprio item, que a tabela poe antes do
+      // rodape) e a de baixo comeca em minuscula: sai o rodape, a frase segue.
+      // Em Pelotas a linha de cima fecha com ponto, e o corte continua.
+      t = t.replace(new RegExp('(?<=[\\p{L}\\d)])' + (q ? '(?:\\s+(?:UNID|UND|UN|Unid|Und|Un|Unidades?|UNIDADES?)\\.?\\s+0*' + q + ')?' : '')
+        // (o titulo e o endereco ja sairam com o timbre: chega "09:48 … 34/52")
+        + '\\s+\\d{2}\\/\\d{2}\\/\\d{4},\\s+\\d{1,2}:\\d{2}(?::\\d{2})?\\s+(?:.{0,220}?\\s)?\\d{1,3}\\/\\d{1,3}\\s+(?=\\p{Ll})', 'gu'), ' ');
       corta(/\s\d{2}\/\d{2}\/\d{4},\s+\d{1,2}:\d{2}(?::\d{2})?\s/);
       // o total do lote por extenso: "...A PARTIR DE 500 LITROS Total: 73.704,03
       // (Setenta e três mil...)" (São João do Polêsine/RS, PCE 23, item 3)
