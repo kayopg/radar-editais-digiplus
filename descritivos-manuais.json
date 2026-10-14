@@ -1111,5 +1111,29 @@
         "texto": "ATENÇÃO: no PNCP este item está como FREEZER VERTICAL, mas a quantidade e o preço (3 unidades a 876,84 reais cada) são os do FORNO DE BANCADA ELÉTRICO no edital (lote 8, item 4). Confirme com o órgão qual produto vale nesta linha. Descrição do edital para esse preço: FORNO DE BANCADA ELÉTRICO Capacidade interna: Mínimo de 50 litros Função Grill (Dourador): Equipado com grill superior para gratinar e dourar os alimentos Tensão / Voltagem: 127V"
       }
     }
+  },
+  "10637926000146/2026/277": {
+    "edital": "Bento Goncalves/RS, IFRS, pregao 442/2026, equipamentos de cozinha",
+    "conferido": "2026-10-14",
+    "itens": {
+      "49": {
+        "qtd": 17,
+        "valor": 678.17,
+        "fonte": "Termo de referencia, item 49 (Extrator de suco), alem da pagina 100 do PDF de 228: a leitura normal nao chega la e o card ficava com o catalogo",
+        "texto": "EXTRATOR DE SUCO Extrator elétrico profissional de sucos, destinado à extração de suco de laranja, limão e demais frutas cítricas, adequado para uso contínuo em cozinhas industriais, refeitórios e unidades de alimentação. Características mínimas: ● Tipo: extrator elétrico profissional de frutas cítricas; ● Potência mínima de 850 W; ● Motor elétrico monofásico; ● Alimentação elétrica em 110 V e/ou 220 V, conforme especificação da unidade demandante; ● Frequência de 60 Hz; ● Estrutura/corpo confeccionado em aço inoxidável, resistente à corrosão e de fácil higienização; ● Câmara de extração confeccionada em material resistente e apropriado para contato com alimentos; ● Componentes em contato direto com os alimentos confeccionados em materiais atóxicos e próprios para uso alimentar; ● Acompanhado de acessórios adequados para extração de laranja e limão, ou sistema equivalente que possibilite o processamento de diferentes frutas cítricas; ● Bica para direcionamento e escoamento do suco; ● Componentes removíveis ou de fácil acesso para limpeza e higienização; ● Base estável, adequada ao uso profissional; ● Equipamento resistente e apropriado para utilização frequente em ambiente institucional; ● Produto novo, de primeiro uso; ● Manual de instruções em língua portuguesa; ● Atendimento às normas e certificações de segurança aplicáveis ao equipamento; ● Garantia mínima conforme estabelecida pelo fabricante, respeitada a garantia legal. OBS.: O equipamento deverá ser fornecido completo, acompanhado de todos os acessórios necessários ao seu perfeito funcionamento e à extração de frutas cítricas."
+      }
+    }
+  },
+  "15465016000147/2026/52": {
+    "edital": "Bodoquena/MS, pregao 14/2026",
+    "conferido": "2026-10-14",
+    "itens": {
+      "1": {
+        "qtd": 5,
+        "valor": 3797.91,
+        "fonte": "Edital, linha do item 1 (Ar Condicionado Split HW Inverter 24.000 Btus 220v), fora das paginas escolhidas; o catalogo do PNCP dizia \"fancolete hidronico\"",
+        "texto": "Ar Condicionado Split HW Inverter 24.000 Btus 220v"
+      }
+    }
   }
 }

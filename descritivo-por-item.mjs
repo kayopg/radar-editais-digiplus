@@ -6051,6 +6051,10 @@ for (const e of dados.editais) {
       // DESUMIDIFICADOR DE AR PARA AMBIENTES" (Florianopolis/SC, edital 377,
       // itens 2, 18 e 41, 14/10/2026)
       s = s.replace(/(?<=\S)\s+-\s+-\s+[A-ZÀ-ÚÇ0-9 ,.\/()-]{3,80}$/, '');
+      // e a quantidade com a sigla do destino, coluna de distribuicao: "...
+      // materiais e volumes diversos. 01 - SMED" (Barao do Triunfo/RS, edital 57,
+      // itens 6, 9, 15 e 30, 14/10/2026). So com a quantidade do proprio item.
+      if (q) s = s.replace(new RegExp('(?<=[.;])\\s+0*' + q + '\\s*-\\s*[A-ZÀ-Ú]{2,10}\\s*$'), '');
       if (q) s = s.replace(new RegExp('\\s0*' + q + '\\s+unidades?\\s+(?:AMPLA(?:\\s+CONCORR[ÊE]NCIA)?|EXCLUSIV[OA](?:\\s+(?:PARA\\s+)?ME\\s*\\/?\\s*EPP)?|COTA\\s+(?:PRINCIPAL|RESERVADA)(?:\\s+(?:PARA\\s+)?ME\\s*\\/?\\s*EPP)?)(?:\\s+\\S*PREFEITURA)?(?=\\s)', 'gi'), '');
     } while (s !== antes);
     // A COPIA LIMPA do mesmo item em outro ponto do edital, quando a que o

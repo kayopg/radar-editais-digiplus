@@ -483,7 +483,9 @@ async function extraiSecoes(e, planilhas) {
       const cobre = coberturaItens(e, paginas, sel.escolhidas);
       // Mesma regra do anexo: selecao que nao cobre os itens nao serve, e ai
       // vale mais mandar o documento inteiro do que perder descritivo.
-      const base = (cobre >= 0.6 && (sel.tabela.length || (sel.tr && sel.tr.length)))
+      // (TODAS_AS_PAGINAS=1 le o documento inteiro: para reler, a mao, o edital
+      // cujo item do radar ficou so com o catalogo do PNCP — 14/10/2026)
+      const base = !process.env.TODAS_AS_PAGINAS && (cobre >= 0.6 && (sel.tabela.length || (sel.tr && sel.tr.length)))
         ? [...sel.escolhidas] : paginas.map((_, i) => i);
       // O item do radar que nenhuma pagina escolhida cita traz as paginas que
       // citam o nome dele (a primeira palavra do rotulo do PNCP), ate tres. O
