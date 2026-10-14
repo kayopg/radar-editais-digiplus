@@ -241,6 +241,9 @@ let partesEditais = [];
   for (const [k, v, bytes] of todos) {
     const naPagina = bytes * 4 / 3;
     if (usado + naPagina > ORCAMENTO_EDITAIS_MB * 1024 * 1024) { fora++; continue; }
+    // sozinho acima de um arquivo ao lado (o pacote da Telebras, Brasilia/DF,
+    // 20 MB em base64, 14/10/2026): fica no site e no link do PNCP
+    if (naPagina > PARTE_MB * 1024 * 1024) { fora++; continue; }
     if (!atual || atual.tam + naPagina > PARTE_MB * 1024 * 1024) {
       atual = { n: partesEditais.length + 1, editais: {}, tam: 0 };
       partesEditais.push(atual);
@@ -342,10 +345,11 @@ for (const p of partesCapas) {
   const t = fs.statSync(path.join(pastaCapas, 'capas-' + p.n + '.js')).size / 1024 / 1024;
   if (t > TETO_ARTEFATO) { console.error(`\nERRO: capas-${p.n}.js tem ${t.toFixed(2)} MB. Baixe o PARTE_MB.`); process.exit(1); }
 }
-// E a VERSAO inteira — pagina mais todos os arquivos ao lado — tem teto de 64
-// MB. Em 23/09/2026 a soma chegou a 68,9 MB e a publicacao so reclamaria no
-// fim; o aviso agora sai aqui, com o que baixar.
-const TETO_VERSAO = 64;
+// E a VERSAO inteira — pagina mais todos os arquivos ao lado — tem teto: era
+// de 64 MB (em 23/09/2026 a soma chegou a 68,9 MB e a publicacao so reclamaria
+// no fim) e desde 14/10/2026 e de 256 MB, com 64 MB por publicacao — a lista
+// dos lotes de ate 64 MB sai aqui embaixo, para publicar um por chamada.
+const TETO_VERSAO = 256, TETO_PUBLICACAO = 64;
 {
   let total = fs.statSync(saida).size;
   for (const f of fs.readdirSync(pastaCapas)) total += fs.statSync(path.join(pastaCapas, f)).size;
@@ -357,4 +361,14 @@ const TETO_VERSAO = 64;
     process.exit(1);
   }
   if (tv > TETO_VERSAO - 2) console.error(`\naviso: a ${(TETO_VERSAO - tv).toFixed(1)} MB do teto da versao.`);
+  // os lotes de publicacao: a pagina e as capas no primeiro, os editais depois
+  const arquivos = fs.readdirSync(pastaCapas).sort((a, b) => (a.startsWith('capas') ? 0 : 1) - (b.startsWith('capas') ? 0 : 1) || a.localeCompare(b, 'en', { numeric: true }));
+  const lotes = [{ mb: fs.statSync(saida).size / 1048576, arquivos: ['(pagina)'] }];
+  for (const f of arquivos) {
+    const mbF = fs.statSync(path.join(pastaCapas, f)).size / 1048576;
+    let l = lotes[lotes.length - 1];
+    if (l.mb + mbF > TETO_PUBLICACAO - 2) { l = { mb: 0, arquivos: [] }; lotes.push(l); }
+    l.mb += mbF; l.arquivos.push(f);
+  }
+  if (lotes.length > 1) console.log('publicar em ' + lotes.length + ' chamadas: ' + lotes.map((l, i) => `${i + 1}) ${l.arquivos.join(' ')} (${l.mb.toFixed(1)} MB)`).join(' · '));
 }
