@@ -5998,7 +5998,43 @@ for (const e of dados.editais) {
         // Mı ́nima 30L" (Sant'Ana do Livramento/RS, itens 8 e 9).
         .replace(/ı\s?\u0301/g, 'í');
       if (timbreDoMunicipio) s = s.replace(timbreDoMunicipio, '');
+      // as colunas de unidade, quantidade, preco unitario e total no meio da
+      // frase, quando a celula atravessa a folha: "...TODOS OS ACESSORIOS
+      // INDISPENSAVEIS UNIDADE 3 1596.6000 4.789,80 AO PERFEITO FUNCIONAMENTO"
+      // (Bom Jardim de Minas/MG, edital 6, itens 2 e 11, 14/10/2026). So com a
+      // quantidade do proprio item.
+      if (q) s = s.replace(new RegExp('\\s(?:UNIDADES?|Unidades?|UND|Und|UN|UNID|CJ|P[ÇC])\\.?\\s+0*' + q + '\\s+[\\d.]+[.,]\\d{2,4}\\s+[\\d.]+,\\d{2}(?=\\s)', 'g'), '');
     } while (s !== antes);
+    // A COPIA LIMPA do mesmo item em outro ponto do edital, quando a que o
+    // recorte pegou tem a coluna "Unidade <qtd>" ou o "N de M" da folha no meio
+    // do texto (usuario, 14/10/2026: "descritivos muito errado!"). O processador
+    // do item 11 da UNILA (Foz do Iguacu/PR, edital 67) saiu da tabela de
+    // distribuicao por laboratorio: "...ao remover Unidade 10 3 unidades para
+    // Bloco de Laboratorios ... 9 de 15 a tampa. ... (2) 12 Mixer.", e o termo de
+    // referencia traz o mesmo item inteiro e limpo, ate a coluna "Unidade 10".
+    {
+      const q = Math.round(+it[2] || 0);
+      const UN = '(?:Unidades?|UNIDADES?|UND|Und|UN|UNID|CJ|P[ÇC])\\.?';
+      const sujo = t => (q && new RegExp('\\s' + UN + '\\s+0*' + q + '\\s+(?=\\S.{20,})').test(t)) || /\s\d{1,3} de \d{1,3}\s(?=[a-zà-ú])/.test(t);
+      if (q && sujo(s)) {
+        const plano = secoes.replace(/\s+/g, ' ');
+        const ini = s.replace(/\s+/g, ' ').slice(0, 50);
+        let k = -1, melhor = null;
+        while ((k = plano.indexOf(ini, k + 1)) >= 0) {
+          const resto = plano.slice(k, k + 6000);
+          const fim = new RegExp('\\s' + UN + '\\s+0*' + q + '(?:[,.]0+)?(?=\\s|$)|\\sR\\$\\s*[\\d.]+,\\d{2}').exec(resto);
+          if (!fim) continue;
+          const c = resto.slice(0, fim.index).trim();
+          // e OUTRA copia, nao a mesma cortada onde a sujeira comeca: a
+          // motosserra de Sao Francisco de Paula/RS perdia o "Conteudo da
+          // Embalagem" que vinha depois de um "UN. 5" no meio
+          if (s.replace(/\s+/g, ' ').startsWith(c)) continue;
+          if (sujo(c) || !/[.;)]$/.test(c) || c.length < 0.4 * s.length) continue;
+          if (!melhor || c.length > melhor.length) melhor = c;
+        }
+        if (melhor) s = melhor;
+      }
+    }
     it[6] = s;
   }
 
