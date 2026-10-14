@@ -70,7 +70,7 @@ descritivos.mjs → itens-embutidos.mjs → descritivo-por-item.mjs → docs/des
 | `varredura.mjs` | 32 termos × 8 UFs × 2 páginas no PNCP, lê os itens de cada processo (todas as páginas: até 07/10/2026 só os 300 primeiros, e os ventiladores 483 a 486 de Alto Piquiri/PR nunca apareceram) e aplica os filtros. ~100 min. |
 | `veto-item.mjs` | A regra comum do veto por item e da categoria, usada pela varredura e pelo `veta-pelo-descritivo.mjs`: termo de peça só veta antes do aparelho, e aparelho citado como uso ("apto para micro-ondas") não dá categoria. |
 | `publicar.mjs` | Converte a saída bruta no `docs/dados.json` que a página consome. |
-| `plataforma.mjs` | Em que plataforma é a disputa: o publicador aceito no PNCP (BLL, BNC, Compras.gov.br, Banrisul, Portal de Compras Públicas, Licitanet) ou, quando a prefeitura publica pelo sistema de gestão dela, a plataforma escrita no começo do edital. A varredura usa para aplicar a regra dos seis portais; o `links-portal.mjs`, para o botão Participar. |
+| `plataforma.mjs` | Em que plataforma é a disputa: o publicador aceito no PNCP (BLL, BNC, Compras.gov.br, Banrisul, Portal de Compras Públicas, Licitanet) ou, quando a prefeitura publica pelo sistema de gestão dela, a plataforma escrita no começo do edital. Desde 14/10/2026 vale também o link da disputa que o próprio PNCP dá (linkSistemaOrigem) num portal da casa: a "ECustomize Consultoria em Software" é a empresa do Portal de Compras Públicas. A varredura usa para aplicar a regra dos seis portais; o `links-portal.mjs`, para o botão Participar. |
 | `links-portal.mjs` | Completa o link do edital dentro do portal da disputa (Compras.gov.br, BLL, BNC, Licitanet), usado pelo botão "Participar" de cada card. Quando o PNCP não informa, lê a plataforma escrita no começo do edital (Pregão Banrisul, Licitar Digital, portal próprio do órgão) e deixa a nota do que procurar lá. |
 | `participar.mjs` | Monta o link do Compras.gov.br (UASG + modalidade + número + ano) quando o PNCP não informa; a página avisa que o link foi montado. |
 | `publicadores.json` | Quem publicou cada edital já consultado no PNCP (e o link do portal), gravado pela varredura. Quando a consulta do PNCP cai, a regra dos seis portais decide pelo publicador guardado, e os editais de sistemas de fora não voltam à lista. Entradas não vistas há 90 dias saem. |
@@ -120,7 +120,9 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
 0. **Modalidade** — só Pregão Eletrônico e Dispensa em todas as UFs, mais Pregão
    Presencial em RS e SC. Leilão, credenciamento e concorrência ficam de fora. É o que
    elimina na origem os leilões de veículo sucateado, que casavam com a busca por causa
-   do "ar-condicionado" no descritivo.
+   do "ar-condicionado" no descritivo. Desde 14/10/2026 o card, a agenda e o resumo em PDF
+   marcam **Presencial** quando a disputa é no órgão (pregão presencial, edital que se diz
+   presencial, dispensa entregue no balcão), para separar dos eletrônicos.
 0b. **Tipo de órgão** — município (prefeitura, câmara, fundo, autarquia — via o campo
    `esfera_nome` do PNCP), instituições de ensino e de saúde de qualquer esfera e, desde
    05/10/2026, **tribunais** de qualquer esfera (TJ, TRF, TRT, TRE, tribunal de contas) e
@@ -134,6 +136,9 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    temperatura") e não derruba nada. Um edital só entra se **nenhum** item de interesse for
    serviço. No RS e em SC a Digiplus instala: ali instalação e montagem não
    derrubam o edital, e o item de serviço que só instala sai da lista sem levar o edital junto.
+   "Serviços de limpeza/manutenção" como FINALIDADE do aparelho ("vazão adequada PARA
+   serviços de limpeza", da lavadora de alta pressão) não é serviço: com isso o pregão de
+   Porto Belo/SC, 27 itens da casa, sumia inteiro da lista desde 09/10/2026 (achado em 14/10).
    Fora dessas duas UFs, o `veta-pelo-descritivo.mjs` tira também o aparelho que o edital
    manda entregar instalado ("entregues instalados e em perfeito funcionamento") ou diz que o
    preço inclui a instalação ("Inclui instalação padrão completa", 29/09/2026). **Montado conta
@@ -219,7 +224,12 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    A **lavadora de alta pressão** (lava-jato) saiu em 28/09/2026 e voltou em 08/10/2026, na
    categoria "Para lavar"; ali o "veículo" da descrição ("limpeza de pisos, paredes,
    veículos") não veta. Ela entra também em SP, MG, GO, MS e DF, de qualquer porte (08/10/2026).
-   O **cortador de legumes** entrou em 08/10/2026, em "Eletrodomésticos" (Preparo).
+   O **cortador de legumes** entrou em 08/10/2026, em "Eletrodomésticos" (Preparo). O
+   **picador de batata (cabrita)** e o **buffet elétrico** (o mesmo móvel do buffet térmico)
+   entraram em 14/10/2026; a "carne de cabrita/cabrito" da merenda sai pela VETO_ITEM, e a
+   "esteira para" só veta na frente ("com esteira para apoiar o prato" é do buffet). O
+   **pass-through**, aquecido ou refrigerado, saiu em 14/10/2026 (também quando só o
+   descritivo do edital diz o que é: Bento Gonçalves/RS, catálogo "Forno Industrial").
 4. **Piso de preço unitário** de R$ 150 — equipamento de verdade custa. Chaleira elétrica,
    cafeteira, sanduicheira, grill e máquina de waffle não têm piso. O volume também salva o
    item: acima de R$ 140 com mais de 10 unidades, ou acima de R$ 100 com mais de 25 unidades

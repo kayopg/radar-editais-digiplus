@@ -214,6 +214,8 @@ input[type=search]:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0
 .tag.alerta{background:var(--hot-soft);color:var(--hot)}
 .tag.cota{background:var(--warn-soft);color:var(--warn)}
 .tag.alterada{background:var(--warn-soft);color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn)}
+/* disputa presencial (14/10/2026): cor cheia, para não passar despercebida */
+.tag.presencial{background:var(--ink);color:var(--bg)}
 .chead::after{content:"";width:9px;height:9px;border-right:2.5px solid var(--ink3);border-bottom:2.5px solid var(--ink3);transform:rotate(45deg);margin:6px 2px 0 4px;transition:transform .2s;flex:0 0 auto;align-self:center}
 .card.open .chead::after{transform:rotate(-135deg) translate(-4px,-4px)}
 .body{display:none;border-top:1px dashed var(--line);padding:14px 18px 16px 22px;background:linear-gradient(180deg,var(--line2),var(--panel) 120px)}
@@ -555,6 +557,17 @@ function notaParticipar(r, fechado){
   return "";
 }
 function situacaoAlerta(r){ return r[17] && /suspens|revogad|anulad|cancelad|desert|fracassad|impugnad/i.test(r[17]); }
+// A disputa PRESENCIAL (pedido de 14/10/2026: "quando o edital for presencial,
+// coloque essa informação para saber qual é presencial e qual não é"): o
+// pregão presencial do PNCP (RS e SC), o edital que se diz presencial no título
+// ou no objeto, e a dispensa sem plataforma, que se entrega no balcão do órgão
+// (participar-manual.json, coluna 22).
+function semAcentoMin(s){ return String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase(); }
+function ehPresencial(r){
+  if (/presencial/.test(semAcentoMin(r[11]))) return true;
+  if (/(?:pregao|sessao|disputa|licitacao)\s+(?:publica\s+)?presencial/.test(semAcentoMin(r[3] + " " + r[9]))) return true;
+  return /presencial|balcao|pessoalmente|protocolad|envelope/.test(semAcentoMin(r[22]));
+}
 // Os itens que a Digiplus NAO cota e que entram no card por serem do mesmo
 // lote (LT, lote confirmado pelos totais) ou do edital por lote que nao deu
 // para confirmar (ED) — veta-pelo-descritivo.mjs e lotes.mjs, 07/10/2026. Busca,
@@ -630,6 +643,7 @@ function render(){
     // vermelho. O pregao 42 de Salto/SP (R$ 5,9 milhoes) estava "Suspensa" em
     // 17/09/2026 e o card parecia um edital normal.
     if(dataAlterada(r)) tagh='<span class="tag alterada" title="'+esc(dataAlteradaTitulo(r))+'">Data alterada · era '+esc(dataAnteriorTxt(r))+"</span>"+tagh;
+    if(ehPresencial(r)) tagh='<span class="tag presencial" title="A disputa é presencial, no órgão — não é pela internet">Presencial</span>'+tagh;
     if(situacaoAlerta(r)) tagh='<span class="tag alerta">'+esc(r[17])+"</span>"+tagh;
     var nres=nossos(r).filter(reservada).length;
     // o lote: quantos itens que nao cotamos entram no card, e por que
@@ -1109,6 +1123,7 @@ async function montaResumo(r){
   doc.espaco(6);
 
   doc.texto(r[3] + (r[11] ? "   ·   " + r[11] : ""), { tam:10.5, negrito:true });
+  if(ehPresencial(r)) doc.texto("DISPUTA PRESENCIAL — a sessão é no órgão, não pela internet", { tam:9.5, negrito:true, cor:[0.56,0.37,0.07] });
   doc.espaco(1);
   // o prazo e o dado mais perecivel do resumo: fica logo abaixo do edital,
   // e nao enterrado como quarto campo de uma lista de onze
@@ -1700,7 +1715,7 @@ function renderAgenda(rows){
       var imp=impresso(r);
       h+='<div class="ag-item"><button type="button" class="ag-imp" data-imp="'+D.indexOf(r)+'" aria-pressed="'+(imp?'true':'false')+'" aria-label="'+(imp?'Desmarcar':'Marcar')+' '+esc(r[0])+'" title="'+esc(textoDaMarca(r))+'"></button>'
         +'<button type="button" class="ag-ev'+(fech?' fech':urg?' urg':'')+'" data-i="'+D.indexOf(r)+'" title="'+esc(r[2]+' · '+r[3])+'">'
-        +'<b>'+(hm&&hm!=="00:00"?hm:"—")+'</b> '+esc(r[0])+'/'+r[1]+' <i>· '+(r[6]?brl(r[6]):'sigiloso')+(fech?' · encerrado':'')+(dataAlterada(r)?' · data alterada (era '+esc(dataAnteriorTxt(r))+')':'')+(situacaoAlerta(r)?' · '+esc(String(r[17]).toLowerCase()):'')+'</i></button></div>';
+        +'<b>'+(hm&&hm!=="00:00"?hm:"—")+'</b> '+esc(r[0])+'/'+r[1]+' <i>· '+(r[6]?brl(r[6]):'sigiloso')+(fech?' · encerrado':'')+(dataAlterada(r)?' · data alterada (era '+esc(dataAnteriorTxt(r))+')':'')+(ehPresencial(r)?' · <b>presencial</b>':'')+(situacaoAlerta(r)?' · '+esc(String(r[17]).toLowerCase()):'')+'</i></button></div>';
     });
     h+='</div>';
   }

@@ -78,7 +78,11 @@ const VETO = {
 // exaustor" continua ventilador. E o "VENTILADOR/ EXAUSTOR INDUSTRIAL MODELO
 // 400MM ... ROTACAO 1750RPM", com os dois nomes do mesmo aparelho na abertura
 // (Assis Chateaubriand/PR, item 291, 07/10/2026), e exaustor.
-const ABRE_FORA_DO_RADAR = /^[^a-z]*(?:ventilador\s*\/\s*|ventilador\s+(?=exaustor\s+industrial))?(exaustor|coifa|depurador)\b/;
+// E o pass-through, aquecido ou refrigerado (usuario, 14/10/2026: "pass-through
+// nao cotamos"): o item 68 de Bento Goncalves/RS (edital 442) e "Forno
+// Industrial tipo: resistivo" no catalogo e "PASS-THROUGH AQUECIDO EM ACO INOX -
+// CAPACIDADE PARA 24 GNS 1/1" no edital.
+const ABRE_FORA_DO_RADAR = /^[^a-z]*(?:ventilador\s*\/\s*|ventilador\s+(?=exaustor\s+industrial))?(exaustor|coifa|depurador|pass[\s-]?through)\b/;
 
 // E as listas do catalogo, sobre a descricao do PNCP, do mesmo jeito que o
 // varredura.mjs as aplica: termo novo entra no dados.json ja publicado sem

@@ -10,7 +10,7 @@ import { textoDasPaginas, textoUtil } from './paginas-uteis.mjs';
 import { analisaExigencias } from './exigencias.mjs';
 import { devedorDe } from './devedores.mjs';
 import { linkDoPortal, ehComprasGov, montaLinkComprasGov } from './participar.mjs';
-import { portalOk, plataformaDoEdital } from './plataforma.mjs';
+import { portalOk, plataformaDoEdital, linkDaCasa } from './plataforma.mjs';
 import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, chaleiraDeFogao, criaCotaNaUf } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 import { escolheEdital, daListaDoPncp, medidaPeloPncp } from './versao-do-edital.mjs';
@@ -38,6 +38,9 @@ const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira",
 // gasolina (Indaiatuba/SP) ou so de umidificador de ar (Dracena/SP) nao casava
 // com nenhum termo, e extrator de suco nao tinha nem categoria.
 "gerador a gasolina","gerador a diesel","grupo gerador","umidificador","extrator de suco",
+// 14/10/2026: a Digiplus cota (usuario, "adicione na lista de itens tambem,
+// picador de batata (cabrita) e buffet eletrico (mesmo que buffet termico)")
+"buffet eletrico","picador de batata","cortador de batata","cabrita",
 // 08/10/2026: a lavadora de alta pressao voltou ao radar, e edital so de
 // lava-jato (material de limpeza, de garagem) nao casava com termo nenhum.
 "lavadora de alta pressao"];
@@ -57,7 +60,8 @@ const CAT = [
   // "buffet termico" fica e "balcao termico" sai, por decisao do usuario em
   // 24/09/2026 — sao o mesmo movel, e ele quis manter so o nome buffet. A
   // "pista termica" saiu na mesma resposta ("mantenha apenas buffet termico").
-  ["CC",["fogao","forno","microondas","micro-ondas","micro ondas","cooktop","fritadeira","salamandra","char broiler","charbroiler","caldeirao","panela eletrica","churrasqueira","buffet termico","banho maria","banho-maria","estufa para salgados"]],
+  // (e o "buffet eletrico", que e o mesmo movel: usuario, 14/10/2026)
+  ["CC",["fogao","forno","microondas","micro-ondas","micro ondas","cooktop","fritadeira","salamandra","char broiler","charbroiler","caldeirao","panela eletrica","churrasqueira","buffet termico","buffet eletrico","banho maria","banho-maria","estufa para salgados"]],
   // PR e EP viraram uma so em 23/09/2026, a pedido do usuario: na pagina as
   // duas eram "Para preparar" e "Para o dia a dia", e ele preferiu um rotulo
   // unico, "Eletrodomesticos". Masseira e amassadeira sairam na mesma conversa, e
@@ -84,6 +88,14 @@ const CAT = [
     // com tripe, de Porto Alegre/RS (200 un a R$ 213,80) ia para "Demais itens".
     // O fatiador pequeno de mao ja entrava por "fatiador" e o piso o tira.
     "cortador de legumes","cortador de legume","cortador legumes","cortador de vegetais","cortador de frutas e legumes",
+    // O picador de batata, a "cabrita": a Digiplus cota (usuario, 14/10/2026).
+    // O catalogo escreve sem o "de" ("Picador Batata"), e os editais chamam de
+    // "CORTADOR E PICADOR DE LEGUMES INDUSTRIAL(CABRITA)" (Bombinhas/SC),
+    // "CABRITA (CORTADOR DE LEGUMES MANUAL)" (Camboriu/SC) e "CABRITA/CORTADOR
+    // OU PICADOR DE MESA" (Iguaracu/PR). A "carne de cabrita/cabrito" da
+    // merenda sai pela VETO_ITEM.
+    "picador de batata","picador de batatas","picador batata","cortador de batata","cortador de batatas","cortador batata",
+    "picador de legumes","picador de legume","picador legumes","cortador e picador","cabrita",
     "cafeteira","chaleira","sanduicheira","torradeira","air fryer","airfryer","aspirador de po","aspirador po","aspirador de agua","aspirador agua","grill eletrico","grill",
     // Maquina de waffle: a Digiplus cota (usuario, 28/09/2026). Pelo nome do
     // APARELHO, e nao "waffle" solto, que pegaria o biscoito da merenda.
@@ -320,7 +332,11 @@ const soInstala = (d, uf) => UF_INSTALA.has(uf) && SERV_INSTALA.some(v => d.incl
 //     veta-pelo-descritivo.mjs (decisao do usuario, 17/09/2026 — "aparelhos que
 //     solicitam instalacao pode remover"); no RS e em SC fica.
 // O item de servico (m != 'M') segue como antes.
-const SERVICO_NO_MATERIAL = /servicos? de (?:manutencao|higienizacao|limpeza)|manutencao (?:preventiva|corretiva)|contrato de manutencao|desinstalacao|recarga de gas|limpeza de ar(?:-| )?condicionad|mao de obra(?! de (?:instalacao|montagem))/;
+// (o "servicos de limpeza" como FINALIDADE do aparelho nao e servico: a
+// lavadora de alta pressao de Porto Belo/SC tem "VAZAO ADEQUADA PARA SERVICOS DE
+// LIMPEZA", e o edital inteiro — 27 itens nossos — sumia da lista desde
+// 09/10/2026, quando a lavadora voltou ao radar. Achado em 14/10/2026.)
+const SERVICO_NO_MATERIAL = /(?<!(?:para|em|nos|aos|nas|a)\s)servicos? de (?:manutencao|higienizacao|limpeza)|manutencao (?:preventiva|corretiva)|contrato de manutencao|desinstalacao|recarga de gas|limpeza de ar(?:-| )?condicionad|mao de obra(?! de (?:instalacao|montagem))/;
 // COMO O APARELHO SE MONTA, e nao servico contratado: "cortina de ar para
 // instalacao horizontal sobre portas", "INSTALACAO: PAREDE OU BANCADA",
 // "instalacao no piso". Decisao do usuario em 25/09/2026: quando vem assim, o
@@ -427,6 +443,11 @@ const vetoDoObjeto = txt => {
 // (e o movel para o forno: "Balcão Multiuso para Forno Elétrico e Microondas
 // ... Espaço para forno, microondas e nicho", Novo Hamburgo/RS, 07/10/2026)
 const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fogao","chapa bifeteira","chapa bifeira","balcao multiuso","balcao para forno","balcao para micro","bucha","difusor","motor ventilador","motor do ventilador","motor de ventilacao","masseira","manometro","manifold","ventilador mecanic","ventilador pulmon","ventilacao mecanic","fisioterapia","ultrassom","cpap","bipap","trator","agricol","retroescav","colheitadeira","em mdf","de mdf","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira","embalagem","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po","refil","filtro refil","unidade filtrante","disco abrasivo","manta abrasiva","brinquedo","miniatura","cooler","gabinete","nobreak","no-break","split bolt","conector","gas refrigerante","pecas e acessorios","peca/acessorio","peca / acessorio","placa eletronica","compressor","separador de oleo","resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico","suporte dispenser","escova","carrinho","carro material","caldeirao","panela","copos","jogo 12","playground","tarol","caixa de guerra","camera de","locacao de container","contratacao de empresa","sala para velorio","sucata","mufla","calorimetro","digestor","splitter","ventilador artificial","colhedora","ensiladeira","manta aquecedora","niple","kit registro","kit de limpeza","conjunto para limpeza","descascador giratorio","turbilhao","dispenser","coletor lixo","martelo","adubo","inseminacao","coador de pano","filtro ar condicionado","controle de ventilador","botijao de gas","pano multiuso","veicul","ambulanci","cabine",
+// o pass-through, aquecido ou refrigerado: a Digiplus nao cota (usuario,
+// 14/10/2026, "pass-through nao cotamos"; Bento Goncalves/RS, edital 442)
+"pass-through","pass through","passthrough",
+// a carne da merenda, agora que "cabrita" (o picador de batata) e produto
+"carne de cabrit","carne caprina","cabrito",
 // acrescentados em 30/08/2026
 "torneira de parede","torneira para pia","tubo de ferro","tubo de cobre","tubo cobre","pecas /","pecas/","para pedreiro","suporte para televis","suporte de televis","suporte de videocassete","embalag","espaco destinado","onibus","caminhao","impressao 3d","sem funcionamento","quarto de hotel","diaria","estadia","hospedagem","locacao de","prestacao de","autoclave","concentrador de","tampao","projetor","resistencia aquecedor","luva termica","frigideira","prato fundo","alicate","removedor de","coador pano","ralador/fatiador","carro balde","chave controle","elemento filtrante","filtro purificacao","liner","projeto executivo","fantasia","formula infantil","nutricao oral","nutricao geral","placa aquecedora","boia para","controle universal","controle remoto universal",
 // acrescentados em 03/09/2026: EPI casando com "purificador de ar". Montes
@@ -664,7 +685,9 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // do aspirador) ela fica
 // e o manometro (manifold) de refrigerista, ferramenta "PARA AR CONDICIONADO SPLIT"
 // (Sinop/MT, item 268, 05/10/2026)
-const VETO_SO_NA_FRENTE = ["evaporador de agua","mangueira","chapa fogao","chapa para fogao","chapa bifeteira","chapa bifeira","balcao multiuso","balcao para forno","balcao para micro","bucha","difusor","motor ventilador","motor do ventilador","motor de ventilacao","masseira","manometro","manifold","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
+// (e "esteira para": a "esteira para forno turbo" e acessorio, o "BUFFET ELETRICO
+// ... COM ESTEIRA PARA APOIAR O PRATO" de Bombinhas/SC e o buffet, 14/10/2026)
+const VETO_SO_NA_FRENTE = ["esteira para","evaporador de agua","mangueira","chapa fogao","chapa para fogao","chapa bifeteira","chapa bifeira","balcao multiuso","balcao para forno","balcao para micro","bucha","difusor","motor ventilador","motor do ventilador","motor de ventilacao","masseira","manometro","manifold","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
 "embalagem","embalag","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po",
 "refil","filtro refil","unidade filtrante","elemento filtrante","filtro purificacao","disco abrasivo","manta abrasiva",
 "cooler","gabinete","nobreak","no-break","conector","gas refrigerante","gas refrigeracao","pecas e acessorios","pecas /","pecas/",
@@ -1140,6 +1163,11 @@ await pool(fin.filter(e => !(e.portal !== null && portalOk(e.portal))), 4, async
 if (semTempo) process.stderr.write(`  ${semTempo} sem plataforma lida: passou o teto de 60 min\n`);
 const finP = fin.filter(e => {
   if (e.portal !== null && portalOk(e.portal)) return true;
+  // O link da disputa que o PROPRIO PNCP da (linkSistemaOrigem) num portal da
+  // casa vale por si: o pregao 263 de Porto Belo/SC e publicado pela
+  // "ECustomize Consultoria em Software S.A", a empresa do Portal de Compras
+  // Publicas, com o link portaldecompraspublicas.com.br/processos/SC/... (14/10/2026)
+  if (e.link && linkDaCasa(e.link)) { vPortalTexto++; return true; }
   const plat = decide.get(e);
   if (plat && plat.daCasa) { vPortalTexto++; return true; }
   if (e.portal === null && !plat) return true;
@@ -1163,7 +1191,9 @@ fin.length = 0; fin.push(...finP);
 // "Edital nº (11749) | 27-0/2026", com o botao Participar na pagina inicial da
 // BNC; a da prefeitura tinha o link do processo. Empatado, como antes: a que
 // encerra primeiro, e entao o sequencial menor.
-const doPortal = e => (e.portal && portalOk(e.portal) ? 1 : 0);
+// (e o registro com o link da disputa num portal da casa ganha do registro do
+// sistema da prefeitura, sem link: Porto Belo/SC tem os dois, 263 e PCE 72)
+const doPortal = e => ((e.portal && portalOk(e.portal)) || (e.link && linkDaCasa(e.link)) ? 1 : 0);
 const grupo = new Map();
 for (const e of fin) {
   const k = `${e.mun}|${e.uf}|${e.fecha.slice(0, 10)}|${e.qtd}|${e.val}`;
