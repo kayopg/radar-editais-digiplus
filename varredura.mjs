@@ -731,7 +731,12 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // (GLP) P13 - fornecimento de botijões de 13 kg ... Indicação: Fogão" (Novo
 // Itacolomi/PR, aviso 20, 14/10/2026). So na frente (VETO_SO_NA_FRENTE): o
 // fogao "para botijao P13" fica.
-"gas liquefeito","botijoes","carga de gas","gas de cozinha","gas glp","glp p13","glp p-13","glp (p13)"];
+"gas liquefeito","botijoes","carga de gas","gas de cozinha","gas glp","glp p13","glp p-13","glp (p13)",
+// e o aspirador de SUCCAO hospitalar, que e equipamento medico (bomba de vacuo,
+// frasco coletor, registro na ANVISA): "Aspirador Portatil Hospitalar -Sistema
+// de succao por bomba de vacuo" (Humaita/RS, edital 89, item 4, 14/10/2026). O
+// da casa e o de po e agua.
+"aspirador portatil hospitalar","aspirador hospitalar","aspirador cirurgico","aspirador de secrec","aspirador de fluido","aspirador nasal","aspirador de muco"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros

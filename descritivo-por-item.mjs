@@ -6004,6 +6004,11 @@ for (const e of dados.editais) {
       // (Bom Jardim de Minas/MG, edital 6, itens 2 e 11, 14/10/2026). So com a
       // quantidade do proprio item.
       if (q) s = s.replace(new RegExp('\\s(?:UNIDADES?|Unidades?|UND|Und|UN|UNID|CJ|P[ÇC])\\.?\\s+0*' + q + '\\s+[\\d.]+[.,]\\d{2,4}\\s+[\\d.]+,\\d{2}(?=\\s)', 'g'), '');
+      // e as colunas de quantidade, beneficio e orgao no meio da lista de
+      // caracteristicas: "...ambientes de aproximadamente 45 m²; 08 unidades
+      // AMPLA vPREFEITURA · Voltagem (V): 220V" e "12 unidades EXCLUSIVO ME/EPP
+      // vPREFEITURA" (Mirassol/SP, edital 96, itens 1 e 2, 14/10/2026)
+      if (q) s = s.replace(new RegExp('\\s0*' + q + '\\s+unidades?\\s+(?:AMPLA(?:\\s+CONCORR[ÊE]NCIA)?|EXCLUSIV[OA](?:\\s+(?:PARA\\s+)?ME\\s*\\/?\\s*EPP)?|COTA\\s+(?:PRINCIPAL|RESERVADA)(?:\\s+(?:PARA\\s+)?ME\\s*\\/?\\s*EPP)?)(?:\\s+\\S*PREFEITURA)?(?=\\s)', 'gi'), '');
     } while (s !== antes);
     // A COPIA LIMPA do mesmo item em outro ponto do edital, quando a que o
     // recorte pegou tem a coluna "Unidade <qtd>" ou o "N de M" da folha no meio
