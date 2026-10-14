@@ -715,7 +715,12 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // confeccionado em rotomoldado", Tubarao/SC e Sangao/SC, R$ 3.924,80), e o
 // cardapio do buffet de comida de Florianopolis/SC
 "serra circular","coifa para disco","coifa de protecao","coifa protetora","cozinha infantil","cozinha de brinquedo","cozinha brinquedo",
-"minissanduiche","mini sanduiche","finger food"];
+"minissanduiche","mini sanduiche","finger food",
+// o gas de cozinha, que cita o fogao como uso: "Gás liquefeito de Petróleo
+// (GLP) P13 - fornecimento de botijões de 13 kg ... Indicação: Fogão" (Novo
+// Itacolomi/PR, aviso 20, 14/10/2026). So na frente (VETO_SO_NA_FRENTE): o
+// fogao "para botijao P13" fica.
+"gas liquefeito","botijoes","carga de gas","gas de cozinha","gas glp","glp p13","glp p-13","glp (p13)"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
@@ -732,7 +737,7 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // do buffet: ver o fim da VETO_ITEM)
 // (e "esteira para": a "esteira para forno turbo" e acessorio, o "BUFFET ELETRICO
 // ... COM ESTEIRA PARA APOIAR O PRATO" de Bombinhas/SC e o buffet, 14/10/2026)
-const VETO_SO_NA_FRENTE = ["esteira para","aparador","refeicao","refeicoes","almoco","jantar","lanche","toalha","concha","display","evaporador de agua","mangueira","chapa fogao","chapa para fogao","chapa bifeteira","chapa bifeira","balcao multiuso","balcao para forno","balcao para micro","bucha","difusor","motor ventilador","motor do ventilador","motor de ventilacao","masseira","manometro","manifold","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
+const VETO_SO_NA_FRENTE = ["gas liquefeito","botijoes","carga de gas","gas de cozinha","gas glp","glp p13","glp p-13","glp (p13)","esteira para","aparador","refeicao","refeicoes","almoco","jantar","lanche","toalha","concha","display","evaporador de agua","mangueira","chapa fogao","chapa para fogao","chapa bifeteira","chapa bifeira","balcao multiuso","balcao para forno","balcao para micro","bucha","difusor","motor ventilador","motor do ventilador","motor de ventilacao","masseira","manometro","manifold","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
 "embalagem","embalag","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po",
 "refil","filtro refil","unidade filtrante","elemento filtrante","filtro purificacao","disco abrasivo","manta abrasiva",
 "cooler","gabinete","nobreak","no-break","conector","gas refrigerante","gas refrigeracao","pecas e acessorios","pecas /","pecas/",
@@ -1023,7 +1028,10 @@ const beneficio = s => {
 // 5.7 - item ja cancelado. O PNCP mantem no /itens o que foi anulado, revogado
 // ou cancelado, e sem olhar isso o resumo mandava cotar item morto: eram 96 na
 // varredura de 01/09/2026. So o item sai; o edital continua pelos outros.
-const itemVivo = s => !norm(s).includes('anulado');
+// E o item DESERTO, fracassado, cancelado ou revogado tambem (14/10/2026): o
+// aquecedor do item 1 de Sapiranga/RS (edital 79) estava "Deserto" no PNCP
+// desde 13/10, com os outros 28 itens "Em andamento", e ia para o card.
+const itemVivo = s => !/anulado|cancelado|deserto|fracassado|revogado/.test(norm(s));
 // 5.3c - "projetor" veta projetor de video avulso, que nao e produto da casa,
 // mas lousa digital costuma ser descrita "com projetor integrado" e seria
 // derrubada junto. Escopar o veto para fora da categoria LD resolve sem ter de

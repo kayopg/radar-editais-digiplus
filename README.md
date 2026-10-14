@@ -164,7 +164,9 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    climatizador evaporativo de parede, que pede abertura na alvenaria), e fogão, forno,
    liquidificador e o climatizador portátil ficam (São João d'Aliança/GO e Assis
    Chateaubriand/PR, 30/09/2026). Vale também no objeto: "com instalação quando necessária".
-   "Incluso: instalação do equipamento" é exigência, como "inclui instalação".
+   "Incluso: instalação do equipamento" é exigência, como "inclui instalação", e "deverá ser
+   fornecida com todos os materiais necessários para sua instalação e instalada" também
+   (as coifas de Assis Chateaubriand/PR, 14/10/2026).
    E a instalação em **item separado do mesmo lote**: quando o julgamento é por lote, quem leva
    o lote leva tudo, e o edital põe "INSTALAÇÃO DE AR 60.000 BTUS" como outro item ao lado do
    aparelho (Iporã/PR, 07/10/2026). Fora do RS e de SC, o aparelho que se instala sai.
@@ -254,6 +256,11 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    (08/10/2026), ele fica. A chaleira de alumínio, de fogão, é panela e sai pelo veto, não
    pelo piso — a "industrial" também, quando é de alumínio e não é elétrica. Itens com valor
    **zero** são mantidos: é orçamento sigiloso, e a página mostra "sigiloso", nunca "R$ 0".
+   O item que o PNCP marca como anulado, cancelado, revogado, **deserto** ou fracassado sai
+   (deserto e fracassado desde 14/10/2026: o aquecedor de Sapiranga/RS estava "Deserto" com
+   os outros itens do edital em andamento). O gás de cozinha que cita o fogão como uso ("Gás
+   liquefeito de Petróleo (GLP) P13 ... Indicação: Fogão", Novo Itacolomi/PR) sai pela
+   VETO_ITEM, só na frente do produto: o fogão "para botijões P13" fica.
 5. **Duplicatas** — o mesmo edital sai duas vezes (publicação direta e via portal
    intermediário). Agrupa por município + UF + dia de encerramento + quantidade + valor,
    depois do filtro por portal: das cópias, fica a que passou por ele (30/09/2026).

@@ -130,6 +130,10 @@ const UFS_ATENDIDAS = new Set(JSON.parse((fonte.match(/const UFS = (\[[^\]]*\])/
 const VETO_ORGAO = lista('VETO_ORGAO');
 const EXIGE_INSTALACAO = [
   /entregues? (devidamente )?instalad[oa]s?/,
+  // "DEVERÁ SER FORNECIDA COM TODOS OS MATERIAIS NECESSÁRIOS PARA SUA
+  // INSTALAÇÃO E INSTALADA (DUTOS, FIXADORES...)" (Assis Chateaubriand/PR,
+  // edital 30, itens 233 e 234, coifas, 14/10/2026)
+  /(?:fornecid|entregu|entregad)[oae]s?\b[^.;]{0,120}?\be instalad[oa]s?\b/,
   /devidamente instalad[oa]s?/,
   /instalad[oa]s? e em (perfeito )?funcionamento/,
   /fornecimento e instalacao/,

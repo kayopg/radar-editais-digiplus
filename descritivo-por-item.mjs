@@ -250,6 +250,23 @@ const precoNoFim = v => {
   return new RegExp('\\s+(?:R\\$\\s*)?(?<![\\d.,])' + int.replace(/\B(?=(\d{3})+(?!\d))/g, '\\.?') + ',' + cent + '(?:\\d{2})?(?:\\s+(?:R\\$\\s*)?[\\d.]*\\d,\\d{2,4})?\\s*$');
 };
 
+// O preco do item seguido do comeco da linha seguinte da tabela: "...270cm de
+// comprimento; 179,00 2 Un 09" (Sapiranga/RS, edital 79, item 1 — o lote 2, a
+// unidade e a quantidade do ar-condicionado que vem depois). So com o preco do
+// proprio item (14/10/2026).
+const precoComLinhaSeguinte = v => {
+  if (!(+v > 0)) return /$^/;
+  const [int, cent] = (+v).toFixed(2).split('.');
+  return new RegExp('\\s+(?:R\\$\\s*)?(?<![\\d.,])' + int.replace(/\B(?=(\d{3})+(?!\d))/g, '\\.?') + ',' + cent
+    + '\\s+\\d{1,3}\\s+(?:UN|UND|UNID)\\.?\\s+\\d{1,5}\\s*$', 'i');
+};
+// O nome do municipio como expressao que aceita a letra com ou sem acento, em
+// maiusculas: "Paranavaí" casa "PARANAVAÍ" e "PARANAVAI".
+const municipioEmMaiusculas = nome => String(nome || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  .replace(/A/g, '[AÁÀÂÃ]').replace(/E/g, '[EÉÊ]').replace(/I/g, '[IÍ]').replace(/O/g, '[OÓÔÕ]').replace(/U/g, '[UÚÜ]').replace(/C/g, '[CÇ]')
+  .replace(/\s+/g, '\\s+');
+
 // O texto dito duas vezes, "A - B", em que um lado repete o outro: o rotulo
 // da tabela cortado e a descricao inteira ("AR CONDICIONADO INVERTER 12.000
 // BTUS - TIPO SPLIT ... COM FUNÇÕES, REFR - AR CONDICIONADO INVERTER 12.000
@@ -5865,6 +5882,13 @@ for (const e of dados.editais) {
   // EXCLUSIVO") e, no ultimo item da tabela, o titulo da secao seguinte do
   // edital ("...ENVIAR CATALOGO. 2. DO REGISTRO DE PRECOS") — Porto Alegre/RS,
   // edital 333, 08/10/2026. Repete ate parar: um pode estar atras do outro.
+  // E o timbre da folha com o nome do proprio municipio no meio da frase:
+  // "...QUANTO AO DESEMPENHO, CÂMARA MUNICIPAL DE BOM JARDIM DE MINAS
+  // SEGURANÇA, EFICIÊNCIA..." (Bom Jardim de Minas/MG, edital 6, item 6,
+  // 14/10/2026). Nao depois de preposicao: "ENTREGA NA CÂMARA MUNICIPAL DE..."
+  // e texto do item.
+  const timbreDoMunicipio = e[C.municipio] ? new RegExp('(?<!\\b(?:NA|DA|À|A|PARA|PELA|NO|DO|EM|AO)\\s)\\s(?:C[ÂA]MARA|PREFEITURA)\\s+MUNICIPAL\\s+DE\\s+'
+    + municipioEmMaiusculas(e[C.municipio]) + '(?=\\s+\\p{Lu})', 'gu') : null;
   for (const it of v.itens) {
     if (!it[6] || it[9]) continue;
     let s = it[6], antes;
@@ -5903,7 +5927,11 @@ for (const e of dados.editais) {
            .replace(/^(?:COTA\s+(?:EXCLUSIVA|RESERVADA|PRINCIPAL)\s+)?(?:EXCLUSIV[OA]\s+)?ME\s*\/\s*EPP\s*[–—-]\s*/i, '')
            .replace(/^\d{3}\.\d{2}\.\d{4,7}\s+(?=\p{Lu})/u, '')
            .replace(/^\d{5,6}\s*[–—-]\s*(?=\p{Lu}{3})/u, '')
-           .replace(/^(?:[\d.]+\s+)?\d{1,2}(?:\.\d{1,2}){1,4}\.\s+(?=\d|\p{L})/u, '');
+           .replace(/^(?:[\d.]+\s+)?\d{1,2}(?:\.\d{1,2}){1,4}\.\s+(?=\d|\p{L})/u, '')
+           // e o cabecalho da tabela com o numero e o codigo do item: "Preço
+           // máximo Preço máximo total 1 77933 ASPIRADOR DE PÓ E ÁGUA..." (Rio
+           // Azul/PR, edital 98, item 10, 14/10/2026)
+           .replace(/^(?:Item\s+C[óo]digo\s+Nome\s+do\s+produto\/servi[çc]o\s+Quantidade\s+Unidade\s+)?Pre[çc]o\s+m[áa]ximo\s+Pre[çc]o\s+m[áa]ximo\s+total\s+\d{1,4}\s+\d{3,7}\s+(?=\p{Lu})/iu, '');
       // (so "01 Forno" — zero na frente e maiuscula depois — ou "09 (nove)
       // aparelhos": "4 bocas" num item de 4 unidades e especificacao)
       if (q) s = s.replace(new RegExp('^(?:0+' + q + '\\s+(?=\\p{Lu})|0*' + q + '\\s*\\([a-zà-ú\\s]{2,30}\\)\\s+(?=\\p{L}))', 'u'), '');
@@ -5928,7 +5956,7 @@ for (const e of dados.editais) {
            // e a unidade partida com a quantidade em decimal: "...classificacao
            // energetica a. UNIDAD E 32,00" (Hidrolandia/GO, item 28). So com a
            // quantidade do proprio item.
-           .replace(new RegExp('\\s+(?:UNIDAD\\s?E|UNIDADES?|UND|UNID)\\.?\\s+0*' + Math.round(+it[2]) + '(?:,0{1,4})?\\s*$', 'i'), '')
+           .replace(new RegExp('\\s+(?:UNIDAD\\s?E|UNIDADES?|UND|UNID|METROS?)\\.?\\s+0*' + Math.round(+it[2]) + '(?:,0{1,4})?\\s*$', 'i'), '')
            // e o total da tabela, quando o item e a ultima linha dela: "...Forno
            // micro-ondas, capacidade minima de 30 litros TOTAL ESTIMADO R$
            // 58.821,29" (Roque Gonzales/RS, item 18, 13/10/2026)
@@ -5941,6 +5969,35 @@ for (const e of dados.editais) {
            // pertinente a garantia e assistencia tecnica. uni" (Camboriu/SC,
            // itens 99 e 100, 13/10/2026 — a quantidade e o preco ja tinham saido)
            .replace(/(?<=[.;])\s+(?:UNI|UN|UND|UNID|UNIDADES?|P[ÇC]A?S?|PE[ÇC]AS?|CX|PAR)\.?\s*$/i, '');
+      // Na revisao de 14/10/2026 ("confira tudo ... um por um"):
+      // a pesquisa de precos colada na especificacao, "...QUENTE E FRIO
+      // Fornecedores 0009842 MUNICÍPIO DE ACEGUA 2.066,80 6.200,40 ..." (Roque
+      // Gonzales/RS, edital 32, itens 1, 2, 11, 12, 15 e 16 — no item 2 ela
+      // levava junto os armarios das linhas seguintes);
+      s = s.replace(/\s+Fornecedores\s+\d{5,}\s[\s\S]*$/, '')
+        // a secao seguinte do termo, com o rodape da folha: "...garantia do
+        // fabricante 4. RECEBIMENTO DO OBJETO Telefone ou Whatsapp – - PÁG. 23
+        // DE 24..." (Ijuí/RS, edital 148, item 1);
+        .replace(/\s+\d{1,2}\.\s+(?:RECEBIMENTO\s+DO\s+OBJETO|ENTREGA\s+DO\s+OBJETO|PRAZO\s+DE\s+ENTREGA|CONDI[ÇC][ÕO]ES\s+DE\s+(?:ENTREGA|PAGAMENTO)|DO\s+RECEBIMENTO|DA\s+ENTREGA|DO\s+PAGAMENTO|OBRIGA[ÇC][ÕO]ES\s+DA\s+CONTRATADA)\b[\s\S]*$/, '')
+        // o codigo do catalogo, a quantidade e o numero da folha no meio,
+        // "...Desumidificação; 618525 10 13 | 32 Controle automático..."
+        // (Rancho Alegre/PR, edital 39, dez itens), so com a quantidade do item;
+        .replace(new RegExp('\\s\\d{5,6}\\s+0*' + q + '\\s+\\d{1,3}\\s\\|\\s\\d{1,3}(?=\\s)', 'g'), '')
+        // os codigos do catalogo do Estado de Sao Paulo no meio da palavra,
+        // "ferro 441353 (compras) 5423090 (bec) fundido" (Apiaí/SP, item 2);
+        .replace(/\s\d{5,7}\s\(compras\)\s\d{5,9}\s\(bec\)(?=\s)/gi, '')
+        // o numero da folha duas vezes no meio da frase, "materiais adequados
+        // 33 33 ao uso profissional" (Rio Azul/PR, edital 98, item 10);
+        .replace(/\s(\d{2,3})\s\1(?=\s\p{Ll})/gu, '')
+        // o preco do item e o comeco da linha seguinte (precoComLinhaSeguinte);
+        .replace(precoComLinhaSeguinte(it[4]), '')
+        // o numero solto depois do ponto final, da coluna seguinte, "...Cor:
+        // Branco Voltagem: 220V. 1381" (Sant'Ana do Livramento/RS, item 8);
+        .replace(/(?<=\.)\s+\d{2,6}\s*$/, '')
+        // e o "í" que o PDF desenhou como "ı" com o acento solto, "Capacidade
+        // Mı ́nima 30L" (Sant'Ana do Livramento/RS, itens 8 e 9).
+        .replace(/ı\s?\u0301/g, 'í');
+      if (timbreDoMunicipio) s = s.replace(timbreDoMunicipio, '');
     } while (s !== antes);
     it[6] = s;
   }
