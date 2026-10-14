@@ -685,7 +685,7 @@
   // Devolve promessa de {ok, motivo}. Quem chama decide o que mostrar; antes
   // era sincrona e sem retorno, e por isso a falha nao tinha como aparecer.
   function baixa(bytes, nome) {
-    var arquivo = nome.replace(/[^0-9A-Za-zÀ-ÿ ._-]/g, " ").replace(/ +/g, " ").trim();
+    var arquivo = nome.replace(/[^0-9A-Za-zÀ-ÿ ._()'-]/g, " ").replace(/ +/g, " ").trim();
     var blob = new Blob([bytes], { type: "application/pdf" });
     return CAPACIDADE.then(function (dl) {
       if (!dl) { porLink(blob, arquivo); return { ok: true }; }

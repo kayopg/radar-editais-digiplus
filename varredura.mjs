@@ -61,7 +61,11 @@ const CAT = [
   // 24/09/2026 — sao o mesmo movel, e ele quis manter so o nome buffet. A
   // "pista termica" saiu na mesma resposta ("mantenha apenas buffet termico").
   // (e o "buffet eletrico", que e o mesmo movel: usuario, 14/10/2026)
-  ["CC",["fogao","forno","microondas","micro-ondas","micro ondas","cooktop","fritadeira","salamandra","char broiler","charbroiler","caldeirao","panela eletrica","churrasqueira","buffet termico","buffet eletrico","banho maria","banho-maria","estufa para salgados"]],
+  // (e o BUFFET de qualquer nome — "buffet self service", "buffet aquecido",
+  // "carro termico (buffet)" —, na lista do usuario de 14/10/2026: "Buffet". O
+  // movel de sala/cafe, o de madeira e o servico de buffet de evento saem — ver
+  // VETO_ITEM e o item de servico no laco de itens.)
+  ["CC",["fogao","forno","microondas","micro-ondas","micro ondas","cooktop","fritadeira","salamandra","char broiler","charbroiler","caldeirao","panela eletrica","churrasqueira","buffet","banho maria","banho-maria","estufa para salgados"]],
   // PR e EP viraram uma so em 23/09/2026, a pedido do usuario: na pagina as
   // duas eram "Para preparar" e "Para o dia a dia", e ele preferiu um rotulo
   // unico, "Eletrodomesticos". Masseira e amassadeira sairam na mesma conversa, e
@@ -110,6 +114,9 @@ const CAT = [
   // escrever o mesmo. A de piso continua vetada (VETO_ITEM).
   ["LV",["lavadora de roupa","maquina de lavar","secadora","centrifuga de roupa","calandra","tanquinho","lava-loucas","lava loucas","lavadora extratora",
     "maquina lavar","maquina secar","maquina lavadora","lavadora automatica","lavadora semiautomatica","lavadora semi automatica","lavadora semi-automatica",
+    // "Lavadoura", com o "u", e como o usuario escreve (lista de 14/10/2026) e
+    // como algumas prefeituras escrevem tambem (ver o lava-jato abaixo).
+    "lavadoura de roupa","lavadoura automatica","lavadoura semiautomatica","lavadoura semi automatica",
     // "Lavadora de louça industrial" (Santa Maria/RS, item 22, 29/09/2026)
     "lavadora de louca","lava louca","lava-louca",
     // Lavadora de alta pressao, o lava-jato: a Digiplus cota (usuario,
@@ -127,6 +134,9 @@ const CAT = [
   ["CL",["ar-condicionado","ar condicionado","arcondicionado","condicionador de ar","split","climatizador","cortina de ar","cortinas de ar","cortina ar ","cortina ar,","cortinas ar ","ventilador","desumidificador","umidificador","purificador de ar"]],
   // CX (coifa, exaustor, depurador) saiu em 23/09/2026: o usuario nao cota
   // nenhum deles. Tinha voltado em 01/09 so com coifa industrial e exaustores.
+  // A COIFA voltou em 14/10/2026 (usuario, na lista dos produtos que cotamos:
+  // "Coifas"); exaustor e depurador continuam fora.
+  ["CX",["coifa"]],
   // BL (balancas) saiu em 23/09/2026: o usuario nao cota balanca.
   ["LD",["lousa digital","lousa interativa","lousa eletronica","quadro interativo","painel interativo","tela interativa"]],
   // GE entrou em 01/09/2026: gerador nao e climatizacao nem cozinha, e virava
@@ -672,7 +682,40 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // montado com fusivel ultra rapido soft. Start ... disjuntor de comando e
 // ventilador" (Vicentinopolis/GO), painel eletrico de bomba.
 "bebedouro pet","bebedouro para pet","bebedouro para animais","bebedouro para caes","bebedouro canino","bebedouro dog",
-"painel montado","painel eletrico","quadro de comando","soft start","soft. start"];
+"painel montado","painel eletrico","quadro de comando","soft start","soft. start",
+// 14/10/2026: o BUFFET entrou com qualquer nome (CAT, CC). Saem o movel de sala
+// ("Aparador buffet", o buffet de madeira, MDF ou MDP) e a comida de evento
+// (coffee break, refeicao tipo buffet, buffet para festa). O "aparador" e a
+// "refeicao" so vetam na frente do produto (VETO_SO_NA_FRENTE): o forno "para
+// refeicoes" fica.
+"aparador","buffet de madeira","buffet em madeira","buffet madeira","buffet mdf","buffet de mdp","buffet em mdp","buffet mdp",
+"coffee break","coffe break","coffee-break","refeicao","refeicoes","servico de buffet","servicos de buffet","fornecimento de buffet",
+"buffet para evento","buffet de evento","buffet para festa","buffet de festa",
+// e, na conferencia contra os editais abertos do PNCP no mesmo dia, a comida
+// servida "em buffet": "ALMOCO BUFFET LIVRE CIDADE PATO BRANCO/PR" (Boa
+// Esperanca do Iguacu/PR), "fornecimento de jantar, servido atraves de buffet"
+// (Arvoredo/SC, Paial/SC), "servico de brunch: servico completo de buffet"
+// (Florianopolis/SC), "BUFFET AMERICANO TIPO 3" (Jacarezinho/PR); e os
+// utensilios de mesa ("toalha para mesa de buffet", "concha para servir ...
+// uso em buffet", "display identificador de buffet"). Almoco, jantar, lanche,
+// toalha, concha e display so vetam na frente (VETO_SO_NA_FRENTE).
+"buffet livre","atraves de buffet","forma de buffet","sistema buffet","sistema de buffet","formato buffet","buffet completo","buffet americano",
+"brunch","promocao de eventos","fornecimento de almoco","fornecimento de jantar","fornecimento de cafe","fornecimento de lanche","fornecimento de alimentacao",
+"almoco","jantar","lanche","toalha","concha","display",
+// e a COIFA de carro, a capa de borracha da homocinetica, da direcao e da
+// suspensao: "COIFA DO LADO DA RODA - VEICULO: CRONOS" (Itapaci/GO), "kit
+// composto por batente e coifa, uso: suspensao" (Bento Goncalves/RS). As que
+// citam o veiculo ja saiam pelo "veicul"; estas sao as que nao citam.
+"homocinetic","semi eixo","semieixo","semi-eixo","trizeta","trambulador","cremalheira","lado da roda","lado do cambio","lado cambio",
+"alavanca de cambio","alavanca do cambio","coifa do cambio","coifa de cambio","coifa cambio","caixa de direcao","coluna direcao","coluna de direcao",
+"coifa do amortecedor","coifa de amortecedor","coifa amortecedor","coifa da suspensao","coifa de suspensao","coifa suspensao","batente e coifa","coifa e batente",
+"solucao limpeza","solucao de limpeza","solucao para limpeza",
+// e a coifa que e protecao de maquina ("serra circular de bancada ... com coifa
+// para disco", Vacaria/RS) ou peca da cozinha de brinquedo ("cozinha infantil:
+// confeccionado em rotomoldado", Tubarao/SC e Sangao/SC, R$ 3.924,80), e o
+// cardapio do buffet de comida de Florianopolis/SC
+"serra circular","coifa para disco","coifa de protecao","coifa protetora","cozinha infantil","cozinha de brinquedo","cozinha brinquedo",
+"minissanduiche","mini sanduiche","finger food"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
@@ -685,9 +728,11 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // do aspirador) ela fica
 // e o manometro (manifold) de refrigerista, ferramenta "PARA AR CONDICIONADO SPLIT"
 // (Sinop/MT, item 268, 05/10/2026)
+// (e "aparador", "refeicao", "almoco", "toalha"..., o movel, a comida e a mesa
+// do buffet: ver o fim da VETO_ITEM)
 // (e "esteira para": a "esteira para forno turbo" e acessorio, o "BUFFET ELETRICO
 // ... COM ESTEIRA PARA APOIAR O PRATO" de Bombinhas/SC e o buffet, 14/10/2026)
-const VETO_SO_NA_FRENTE = ["esteira para","evaporador de agua","mangueira","chapa fogao","chapa para fogao","chapa bifeteira","chapa bifeira","balcao multiuso","balcao para forno","balcao para micro","bucha","difusor","motor ventilador","motor do ventilador","motor de ventilacao","masseira","manometro","manifold","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
+const VETO_SO_NA_FRENTE = ["esteira para","aparador","refeicao","refeicoes","almoco","jantar","lanche","toalha","concha","display","evaporador de agua","mangueira","chapa fogao","chapa para fogao","chapa bifeteira","chapa bifeira","balcao multiuso","balcao para forno","balcao para micro","bucha","difusor","motor ventilador","motor do ventilador","motor de ventilacao","masseira","manometro","manifold","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
 "embalagem","embalag","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po",
 "refil","filtro refil","unidade filtrante","elemento filtrante","filtro purificacao","disco abrasivo","manta abrasiva",
 "cooler","gabinete","nobreak","no-break","conector","gas refrigerante","gas refrigeracao","pecas e acessorios","pecas /","pecas/",
@@ -1018,6 +1063,12 @@ for (const o of cands) {
     const d = norm(limpaTextoPncp(it.d));
     const cat = classifica(d);
     if (!cat || posicaoDoTermo(d).i > TERMO_LONGE) continue;
+    // O buffet de COMIDA ("Buffet Buffet", servico de Arapongas/PR a R$ 128,21
+    // x 1.920; "prestacao de servico de buffet completo") nao e servico sobre o
+    // movel que a Digiplus vende: o item sai sozinho, sem marcar o edital
+    // inteiro como de servico (14/10/2026, quando o buffet entrou com qualquer
+    // nome).
+    if (posicaoDoTermo(d).t === 'buffet' && (it.m !== 'M' || temVeto(d, cat))) continue;
     if (it.m !== 'M') { if (soInstala(d, o.uf)) continue; servico = true; break; }
     // o servico cadastrado como material abre a descricao: "Instalacao Split
     // 9.000 12.000 BTUs", "Reposicao de gas para Split", "Higienizacao Split"

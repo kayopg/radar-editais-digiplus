@@ -71,7 +71,8 @@ const VETO = {
   TODAS: ['longarina de espera', 'absorvedor de umidade', 'gel de silica', 'saco de absorcao', 'caixa de desumidificacao', 'unidade/diaria'],
 };
 // O descritivo que ABRE com produto que a Digiplus nao cota (regra 3c do
-// README; exaustor, coifa e depurador sairam em 23/09/2026): o item 7 de Foz do
+// README; exaustor, coifa e depurador sairam em 23/09/2026, e a coifa voltou em
+// 14/10/2026 — exaustor e depurador seguem fora): o item 7 de Foz do
 // Iguacu/PR e "Ventilador Axial tipo: helice, tipo corpo: semiduto" no catalogo
 // e "Exaustor de ar - tipo: exaustor de ar; ... adequado para instalacao em
 // parede" no edital (29/09/2026). So na abertura: "ventilador com funcao
@@ -82,7 +83,7 @@ const VETO = {
 // nao cotamos"): o item 68 de Bento Goncalves/RS (edital 442) e "Forno
 // Industrial tipo: resistivo" no catalogo e "PASS-THROUGH AQUECIDO EM ACO INOX -
 // CAPACIDADE PARA 24 GNS 1/1" no edital.
-const ABRE_FORA_DO_RADAR = /^[^a-z]*(?:ventilador\s*\/\s*|ventilador\s+(?=exaustor\s+industrial))?(exaustor|coifa|depurador|pass[\s-]?through)\b/;
+const ABRE_FORA_DO_RADAR = /^[^a-z]*(?:ventilador\s*\/\s*|ventilador\s+(?=exaustor\s+industrial))?(exaustor|depurador|pass[\s-]?through)\b/;
 
 // E as listas do catalogo, sobre a descricao do PNCP, do mesmo jeito que o
 // varredura.mjs as aplica: termo novo entra no dados.json ja publicado sem

@@ -28,6 +28,7 @@ on:
       - 'site.mjs'
       - 'pagina-abertura.mjs'
       - 'edital-pdf.mjs'
+      - 'originais.mjs'
       - 'pdf-do-documento.mjs'
       - '.github/workflows/site.yml'
   workflow_dispatch:
@@ -94,6 +95,22 @@ jobs:
       - name: Editais convertidos para PDF
         run: node edital-pdf.mjs --faltantes --teto 25 || echo "::warning::edital-pdf falhou; publicando o que ha"
 
+      # Os editais que o orgao publicou em PDF, copiados do PNCP para o site
+      # baixar com o nome no padrao do usuario, "19.10.2026 PE 87.2026 PM Toledo
+      # - PR" (pedido de 14/10/2026; ver originais.mjs). Em cache como as folhas:
+      # so os novos sao baixados. Sem eles o botao leva ao arquivo do PNCP.
+      - name: Editais em PDF de ontem
+        uses: actions/cache/restore@v4
+        with:
+          path: originais
+          key: originais-${{ github.run_id }}
+          restore-keys: originais-
+
+      - name: Editais em PDF
+        timeout-minutes: 25
+        continue-on-error: true
+        run: node originais.mjs || echo "::warning::originais falhou; publicando o que ha"
+
       - name: Montar o site
         run: node site.mjs _site
 
@@ -106,6 +123,14 @@ jobs:
             docs/aberturas.json
             docs/editais-pdf.json
           key: site-${{ github.run_id }}
+
+      - name: Guardar os editais em PDF para amanha
+        if: always()
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: originais
+          key: originais-${{ github.run_id }}
 
       - uses: actions/configure-pages@v5
 

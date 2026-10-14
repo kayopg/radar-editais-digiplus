@@ -11,7 +11,11 @@
 // Cada edital vira um arquivo, para a pagina buscar so o que abriu:
 //   capas/<cnpj-ano-seq>.json  a folha de abertura ({ b64, paginas, tira, ... })
 //   pdfs/<cnpj-ano-seq>.pdf    o edital convertido (os bytes do PDF)
-//   pdfs/indice.json           o que cada convertido e (nome, origem, paginas, de)
+//   pdfs/indice.json           o que cada convertido e (nome, origem, paginas, de),
+//                              e quais editais tem copia em originais/
+//   originais/<cnpj-ano-seq>.pdf  o edital que o orgao publicou em PDF, copiado
+//                              do PNCP pelo originais.mjs (14/10/2026), para a
+//                              pagina baixar com o nome no padrao do usuario
 // O nome do arquivo e o do arquivoDoEdital() do docs/index.html.
 //
 // Tambem poda o aberturas.json e o editais-pdf.json aos editais do dia: o
@@ -90,11 +94,29 @@ for (const [caminho, p] of Object.entries(convertidos.editais || {})) {
   indice[caminho] = resto;
   pdfs++; mbPdfs += bytes.length / 1048576;
 }
+// os editais que o orgao publicou em PDF (originais.mjs), para a pagina baixar
+// com o nome no padrao do usuario: so os do dia, e com o mesmo arquivo do PNCP
+// que a varredura escolheu
+const originais = {};
+let nOriginais = 0, mbOriginais = 0;
+{
+  let ja = {};
+  try { ja = JSON.parse(fs.readFileSync(path.join(DIR, 'originais', 'indice.json'), 'utf8')); } catch { /* sem a pasta */ }
+  const seqDe = new Map(dados.editais.map(e => [e[C.path], +e[C.arquivoSeq] || 1]));
+  for (const [caminho, o] of Object.entries(ja)) {
+    const de = path.join(DIR, 'originais', arquivoDoEdital(caminho) + '.pdf');
+    if (!vivos.has(caminho) || seqDe.get(caminho) !== o.seq || indice[caminho] || !fs.existsSync(de)) continue;
+    if (!nOriginais) fs.mkdirSync(path.join(SAIDA, 'originais'), { recursive: true });
+    fs.copyFileSync(de, path.join(SAIDA, 'originais', arquivoDoEdital(caminho) + '.pdf'));
+    originais[caminho] = 1;
+    nOriginais++; mbOriginais += o.bytes / 1048576;
+  }
+}
 fs.writeFileSync(path.join(SAIDA, 'pdfs', 'indice.json'),
-  JSON.stringify({ varredura: dados.meta && dados.meta.varredura, editais: indice }), 'utf8');
+  JSON.stringify({ varredura: dados.meta && dados.meta.varredura, editais: indice, originais }), 'utf8');
 
 // a poda dos dois arquivos guardados em cache pelo robô
 if (fs.existsSync(path.join(DOCS, 'aberturas.json'))) fs.writeFileSync(path.join(DOCS, 'aberturas.json'), JSON.stringify(aberturas), 'utf8');
 if (fs.existsSync(path.join(DOCS, 'editais-pdf.json'))) fs.writeFileSync(path.join(DOCS, 'editais-pdf.json'), JSON.stringify(convertidos), 'utf8');
 
-console.log(`site em ${SAIDA}: ${dados.editais.length} editais · ${capas} folhas de abertura (${mbCapas.toFixed(1)} MB) · ${pdfs} editais convertidos (${mbPdfs.toFixed(1)} MB)`);
+console.log(`site em ${SAIDA}: ${dados.editais.length} editais · ${capas} folhas de abertura (${mbCapas.toFixed(1)} MB) · ${pdfs} editais convertidos (${mbPdfs.toFixed(1)} MB) · ${nOriginais} editais em PDF (${mbOriginais.toFixed(1)} MB)`);

@@ -446,8 +446,8 @@ button.btn{font-family:inherit;cursor:pointer}
 // lavadora, secadora, etc"). Na mesma conversa ele juntou "Para preparar" e
 // "Para o dia a dia" num rótulo só, "Eletrodomésticos" — por isso PR e EP
 // levam o mesmo nome; a varredura já grava tudo como PR.
-// BL, LD, CX e AQ saíram da varredura; ficam no mapa só para o dado antigo não
-// aparecer sem nome.
+// BL, LD e AQ saíram da varredura; ficam no mapa só para o dado antigo não
+// aparecer sem nome. CX saiu em 23/09/2026 e voltou em 14/10/2026, só com a coifa.
 var CAT={LT:"Do mesmo lote",ED:"Também no edital",RF:"Para gelar",CL:"Para climatizar",CC:"Para cozinhar",PR:"Eletrodomésticos",EP:"Eletrodomésticos",LV:"Para lavar",BB:"Para beber",CX:"Para exaustão",BL:"Balanças",LD:"Lousa digital",GE:"Geradores",AQ:"Para aquecer água",OT:"Outros"};
 // [mun, uf, orgao, edital, fecha, qtd, valor, path, itens[[cat,qtd,vunit,desc]]]
 // [mun, uf, orgao, edital, fecha, qtd, valor, path, itens[[cat,qtd,vunit,desc]]]
@@ -691,7 +691,7 @@ function render(){
       // convertido para PDF (ver edital-pdf.mjs): o botão entrega o PDF e o
       // link ao lado continua levando ao arquivo original no PNCP.
       +(convertido(r) ? '<button class="btn alt" type="button" onclick="baixaEditalPdf(this,'+D.indexOf(r)+')" title="'+esc(descreveConvertido(r))+'">Baixar '+rotuloConvertido(r)+' (PDF)</button>' : '')
-      +'<a class="btn alt" target="_blank" rel="noopener" href="https://pncp.gov.br/api/pncp/v1/orgaos/'+pp[0]+"/compras/"+pp[1]+"/"+pp[2]+'/arquivos/'+(r[13]||1)+'">'+(convertido(r)?"Arquivo original ("+String(r[14]).toUpperCase()+")":r[14]?"Baixar edital ("+String(r[14]).toUpperCase()+")":"Baixar edital (arquivo oficial)")+'</a>'
+      +'<a class="btn alt" target="_blank" rel="noopener"'+(convertido(r) ? '' : ' data-original="'+D.indexOf(r)+'"')+' href="https://pncp.gov.br/api/pncp/v1/orgaos/'+pp[0]+"/compras/"+pp[1]+"/"+pp[2]+'/arquivos/'+(r[13]||1)+'">'+(convertido(r)?"Arquivo original ("+String(r[14]).toUpperCase()+")":r[14]?"Baixar edital ("+String(r[14]).toUpperCase()+")":"Baixar edital (arquivo oficial)")+'</a>'
       +'<button class="btn alt" type="button" onclick="resumo(this,'+D.indexOf(r)+')">Baixar resumo + edital</button>'
       +notaParticipar(r, fechado)
       +'</div></div></div>';
@@ -820,7 +820,7 @@ function quandoTxt(iso){
 }
 function nomeArquivo(s){
   return s.replace(new RegExp("/","g"),"-")
-          .replace(new RegExp("[^0-9A-Za-zÀ-ÿ .-]","g")," ")
+          .replace(new RegExp("[^0-9A-Za-zÀ-ÿ .()'-]","g")," ")
           .replace(new RegExp("  +","g")," ").trim();
 }
 // "Edital nº (9466) | 16-0/2026" -> "16-0/2026". Serve so para o nome do arquivo:
@@ -833,6 +833,95 @@ function numeroEdital(t){
     .replace(/^\(\d+\)\s*\|\s*/, "")
     .trim();
   return n || String(t || "");
+}
+// O nome do arquivo baixado, no padrão das pastas do usuário (pedido de
+// 14/10/2026): "19.10.2026 PE 87.2026 PM Toledo - PR" — a data da disputa, a
+// modalidade (PE pregão eletrônico, DE dispensa eletrônica), o número do edital
+// com o ano, o órgão e a UF. O resumo leva o mesmo nome com "(resumo)" no fim.
+function siglaDaModalidade(r){
+  var m = semAcentoMin(r[11]);
+  var presencial = /presencial/.test(m) || ehPresencial(r);
+  if(/pregao/.test(m)) return presencial ? "PP" : "PE";
+  if(/concorrencia/.test(m)) return presencial ? "CP" : "CE";
+  if(/dispensa/.test(m)) return "DE";
+  if(/inexigib/.test(m)) return "IN";
+  return (String(r[11] || "").match(/[A-ZÀ-Ú]/g) || []).join("").slice(0, 3) || "ED";
+}
+// "Edital nº PCE 26/2026" -> "26.2026"; "Edital nº 30 | Processo 10392/2026" ->
+// "30.2026" (o número do processo não é o do edital); "Edital nº 028.2026/2026"
+// -> "028.2026"; "Edital nº (12194) | 43-0/2026" -> "43-0.2026". Sem ano no
+// título, o ano da compra no PNCP.
+function numeroComAno(r){
+  var s = numeroEdital(r[3]), pncp = String(r[7]).split("/");
+  var ano = (s.match(/((?:19|20)\d{2})\s*$/) || [])[1] || pncp[1] || "";
+  var n = s.split("|")[0].trim()
+    .replace(/\s*\/\s*(?:19|20)\d{2}\s*$/, "")
+    .split(/\s+/).pop().split("/")[0];
+  if(ano) n = n.replace(new RegExp("[./-]" + ano + "$"), "");
+  // "RPPE34/2026" (Cerro Grande do Sul/RS) e "0000038/2026" (Ivaí/PR): o
+  // prefixo colado e os zeros de enchimento saem
+  n = n.replace(/^[A-Za-z]+(?=\d)/, "").replace(/^0+(?=\d)/, "");
+  if(!/\d/.test(n)) n = pncp[2] || n;
+  return n + (ano ? "." + ano : "");
+}
+// O órgão: PM (prefeitura, e os fundos e secretarias municipais, que compram
+// por ela), CM (câmara) e, fora disso, a sigla — a que o PNCP escreve no fim do
+// nome ("... - EBSERH"), a conhecida, ou as iniciais ("UNIVERSIDADE FEDERAL DE
+// SANTA MARIA" -> UFSM). Seguida do município: "IFRS Bento Gonçalves".
+var SIGLAS_ORGAO = [
+  [/^INSTITUTO FEDERAL .*CATARINENSE/, "IFC"], [/^INSTITUTO FEDERAL .*FARROUPILHA/, "IFFar"],
+  [/^INSTITUTO FEDERAL .*SUL[- ]RIO[- ]GRANDENSE/, "IFSul"], [/^INSTITUTO FEDERAL .*GOIANO/, "IF Goiano"],
+  [/^INSTITUTO FEDERAL .*TRIANGULO MINEIRO/, "IFTM"], [/^INSTITUTO FEDERAL .*SUL DE MINAS/, "IFSULDEMINAS"],
+  [/^INSTITUTO FEDERAL .*NORTE DE MINAS/, "IFNMG"], [/^INSTITUTO FEDERAL .*SUDESTE DE MINAS/, "IF Sudeste MG"],
+  [/^INSTITUTO FEDERAL .*GOIAS/, "IFG"], [/^INSTITUTO FEDERAL .*BRASILIA/, "IFB"],
+  [/^INSTITUTO FEDERAL/, function(r){ return "IF" + r[1]; }],
+  [/^CENTRO FEDERAL DE EDUCACAO TECNOLOGICA/, function(r){ return "CEFET-" + r[1]; }],
+  [/UNIVERSIDADE ESTADUAL PAULISTA/, "UNESP"], [/UNIVERSIDADE FEDERAL DE SAO PAULO/, "UNIFESP"],
+  [/UNIVERSIDADE ESTADUAL DE CAMPINAS/, "UNICAMP"], [/INTEGRACAO LATINO/, "UNILA"],
+  [/UNIVERSIDADE TECNOLOGICA FEDERAL/, "UTFPR"], [/UNIVERSIDADE FEDERAL DE PELOTAS/, "UFPel"],
+  [/UNIVERSIDADE FEDERAL DO RIO GRANDE$/, "FURG"], [/UNIVERSIDADE FEDERAL DO PAMPA/, "UNIPAMPA"],
+  [/SERVICOS HOSPITALARES/, "EBSERH"], [/^JUSTICA FEDERAL/, "JF"],
+  [/^SECRETARIA (?:DE ESTADO )?DA EDUCACAO/, "SEDUC"],
+  [/SEGURIDADE SOCIAL DOS SERV.* SOROCABA/, "FUNSERV"],
+  // pela unidade que compra, quando o órgão é o de cima
+  [/\/ .*TELECOMUNICACOES BRASILEIRAS/, "TELEBRAS"],
+  [/\/ .*TRIBUNAL REGIONAL DO TRABALHO\W*(\d+)/, function(r, m){ return "TRT" + m[1]; }]
+];
+var ESTADOS = { SP:"SAO PAULO", PR:"PARANA", SC:"SANTA CATARINA", RS:"RIO GRANDE DO SUL", MG:"MINAS GERAIS",
+  GO:"GOIAS", MS:"MATO GROSSO DO SUL", MT:"MATO GROSSO", DF:"DISTRITO FEDERAL" };
+function siglaDoOrgao(r){
+  var o = semAcentoMin(r[2]).toUpperCase().trim(), u = semAcentoMin(r[10]).toUpperCase();
+  // "PORTO ALEGRE DEPARTAMENTO MUNICIPAL..." e "SAO PAULO SECRETARIA DA
+  // EDUCACAO" (Apiaí/SP): o nome da cidade ou do estado na frente não é sigla
+  [semAcentoMin(r[0]).toUpperCase(), ESTADOS[r[1]]].forEach(function(p){
+    if(p && o.indexOf(p + " ") === 0) o = o.slice(p.length + 1);
+  });
+  if(/CAMARA (?:MUNICIPAL|DE VEREADORES)/.test(o + " " + u)) return "CM";
+  if(/^(?:MUNICIPIO|PREFEITURA)|PREFEITURA|FUNDO MUNICIPAL|SECRETARIA MUNICIPAL/.test(o) || /PREFEITURA/.test(u)) return "PM";
+  for(var k = 0; k < SIGLAS_ORGAO.length; k++){
+    var m = SIGLAS_ORGAO[k][0].exec(o + " / " + u);
+    if(m){ var s = SIGLAS_ORGAO[k][1]; return typeof s === "function" ? s(r, m) : s; }
+  }
+  var fim = o.match(/\s*-\s*([A-Z]{2,10})\s*$/);
+  if(fim && fim[1] !== r[1]) return fim[1];
+  return o.replace(/^FUNDACAO (?=UNIVERSIDADE)/, "").split(/[^A-Z]+/)
+    .filter(function(w){ return w && !/^(?:DE|DA|DO|DAS|DOS|E)$/.test(w); })
+    .map(function(w){ return w[0]; }).join("") || "ORG";
+}
+// O município do nome é o do card; na prefeitura que compra por uma unidade de
+// outra cidade vale a prefeitura: "MUNICIPIO DE NOVO ITACOLOMI" vem com a
+// unidade em Maringá/PR. "PINHAL DO SAO BENTO" e "Pinhal de São Bento" são o
+// mesmo lugar (sem os "de/do/da" e sem o que não é letra, as duas iguais).
+function municipioDoNome(r){
+  var m = semAcentoMin(r[2]).match(/^(?:municipio|prefeitura municipal) de (.+?)(?:\s*-\s*[a-z]{2})?$/);
+  var chave = function(s){ return s.replace(/\b(?:de|do|da|dos|das)\b/g, "").replace(/[^a-z]/g, ""); };
+  if(!m || chave(m[1]) === chave(semAcentoMin(r[0]))) return r[0];
+  return m[1].replace(/\S+/g, function(w){ return /^(?:de|do|da|dos|das|e)$/.test(w) ? w : w[0].toUpperCase() + w.slice(1); });
+}
+function nomeDoEdital(r){
+  var data = r[4] ? r[4].slice(8,10) + "." + r[4].slice(5,7) + "." + r[4].slice(0,4) : "";
+  return [data, siglaDaModalidade(r), numeroComAno(r), siglaDoOrgao(r) + " " + municipioDoNome(r)]
+    .filter(Boolean).join(" ") + " - " + r[1];
 }
 function varreduraTxt(){
   return (document.getElementById("dataVarredura") || {}).textContent || "";
@@ -1265,7 +1354,7 @@ async function montaResumo(r){
   // que o descritivo-por-item.mjs recorta a especificação de cada item. O que
   // saiu foi só a impressão dele no fim do PDF.
 
-  return RadarPDF.baixa(doc.bytes(), nomeArquivo("Edital " + r[0] + " " + r[1] + " " + numeroEdital(r[3])) + ".pdf");
+  return RadarPDF.baixa(doc.bytes(), nomeArquivo(nomeDoEdital(r) + " (resumo)") + ".pdf");
 }
 
 // O Termo de Referência e as demais seções que descrevem os produtos, escritas
@@ -1332,10 +1421,38 @@ function carregaIndicePdf(){
     .then(function(j){
       if(!j || !j.editais) return;
       EDITAIS_PDF_SITE = j.editais;
+      ORIGINAIS_SITE = j.originais || null;
       // os cards ja desenhados ganham o botao do PDF
       if(D.length) render();
     })
     .catch(function(){});
+}
+// O edital que o órgão publicou em PDF: o link vai ao PNCP, que manda o arquivo
+// com o nome dele ("Edital+PE+66+26+-++EQUIPAMENTOS...pdf"). No site, desde
+// 14/10/2026, o robô guarda uma cópia em originais/ (originais.mjs), e o clique
+// baixa a cópia com o nome no padrão do usuário (nomeDoEdital). Sem a cópia —
+// no artefato, ou edital acima de 40 MB — o link segue para o PNCP como antes.
+var ORIGINAIS_SITE = null;
+document.addEventListener("click", function(ev){
+  var a = ev.target.closest ? ev.target.closest("[data-original]") : null;
+  if(!a) return;
+  var r = D[+a.getAttribute("data-original")];
+  if(!r || !ORIGINAIS_SITE || !ORIGINAIS_SITE[r[7]]) return;
+  ev.preventDefault();
+  baixaOriginal(a, r);
+});
+async function baixaOriginal(a, r){
+  if(a.dataset.baixando) return;
+  var rotulo = a.textContent, res = null;
+  a.dataset.baixando = "1"; a.textContent = "baixando…";
+  try{
+    var resp = await fetch("originais/" + arquivoDoEdital(r[7]) + ".pdf");
+    if(!resp.ok) throw new Error("HTTP " + resp.status);
+    res = await RadarPDF.baixa(new Uint8Array(await resp.arrayBuffer()), nomeArquivo(nomeDoEdital(r)) + ".pdf");
+  }catch(e){ console.error("edital em PDF:", e.message); }
+  delete a.dataset.baixando; a.textContent = rotulo;
+  // sem a cópia, o arquivo do PNCP (que vem como anexo: a página não sai do lugar)
+  if(!res || (res.ok === false && res.motivo)) window.location.href = a.href;
 }
 // o PDF do edital no site, pelo mesmo nome de arquivo das capas
 async function bytesDoConvertido(caminho){
@@ -1372,7 +1489,7 @@ async function baixaEditalPdf(botao, i){
     var bytes = await bytesDoConvertido(r[7]);
     if(!bytes) throw new Error("o PDF convertido não veio junto");
     res = await RadarPDF.baixa(bytes,
-      nomeArquivo(r[0] + " " + r[1] + " - edital " + numeroEdital(r[3]) + ".pdf"));
+      nomeArquivo(nomeDoEdital(r) + (rotuloConvertido(r) === "edital" ? "" : " (" + rotuloConvertido(r) + ")")) + ".pdf");
   }catch(e){ res = { ok:false, motivo:e.message }; }
   botao.disabled = false;
   var erro = res && res.ok === false && res.motivo;

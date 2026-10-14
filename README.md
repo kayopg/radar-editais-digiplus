@@ -95,7 +95,8 @@ descritivos.mjs → itens-embutidos.mjs → descritivo-por-item.mjs → docs/des
 | `confere-*.mjs`, `audita-descritivos.mjs` | Auditorias do recorte: texto de um item invadindo outro, cortes, numeração, mistura. Contam no Summary do job, não derrubam. |
 | `edital-pdf.mjs` | O edital que o órgão publicou em ZIP, RAR, DOC, DOCX, ODT ou RTF, convertido para PDF: abre o pacote (inclusive zip com rar dentro), escolhe o documento do edital e converte o que não é PDF. Grava `docs/editais-pdf.json`, que vai para o artefato e, desde 07/10/2026, para o site — no card o botão "Baixar edital (PDF)" entrega esse arquivo e o link ao lado continua levando ao original no PNCP. |
 | `pdf-do-documento.mjs` | Converte DOC, DOCX, ODT, RTF e HTML para PDF pelo LibreOffice, se houver, ou pelo Word (COM do Windows). Na máquina do usuário é o Word; no robô do site, o LibreOffice. |
-| `site.mjs` | Monta o site na pasta `_site`: a `docs/` mais uma folha de abertura por edital (`capas/<cnpj-ano-seq>.json`) e cada edital convertido (`pdfs/<cnpj-ano-seq>.pdf`, com o `pdfs/indice.json`), para a página buscar só o edital que abriu. Roda no `.github/workflows/site.yml`, que gera as folhas e os convertidos e publica direto no Pages, sem commit (07/10/2026). O `descritivos.json` do site vai sem o texto das seções e com o nome de cada item limpo pelo `texto-pncp.mjs`, de onde sai a lista "Demais itens do edital" do resumo. |
+| `originais.mjs` | Copia do PNCP para a pasta `originais/` cada edital do dia que o órgão publicou em PDF (até 40 MB), para o site baixar o arquivo com o nome no padrão do usuário (14/10/2026). O link direto do PNCP não deixa trocar o nome: o arquivo vem de outro domínio e o PNCP manda o cabeçalho CORS duplicado. Roda no `site.yml`, com a pasta em cache: só baixa o edital novo e apaga o que saiu da lista. |
+| `site.mjs` | Monta o site na pasta `_site`: a `docs/` mais uma folha de abertura por edital (`capas/<cnpj-ano-seq>.json`), cada edital convertido (`pdfs/<cnpj-ano-seq>.pdf`, com o `pdfs/indice.json`) e a cópia de cada edital em PDF (`originais/<cnpj-ano-seq>.pdf`), para a página buscar só o edital que abriu. Roda no `.github/workflows/site.yml`, que gera as folhas e os convertidos e publica direto no Pages, sem commit (07/10/2026). O `descritivos.json` do site vai sem o texto das seções e com o nome de cada item limpo pelo `texto-pncp.mjs`, de onde sai a lista "Demais itens do edital" do resumo. |
 | `artefato.mjs` | Monta a página num arquivo só, com dados e PDF embutidos, para publicar como artefato. |
 | `docs/index.html` | A página, com a identidade da Loja DigiPlus. Sem build; as fontes vêm do Google Fonts, com fonte do sistema de reserva. |
 | `docs/pdf.js` | Gerador de PDF próprio, sem biblioteca. "Baixar resumo + edital" baixa um arquivo por edital, com a tabela de itens e o edital oficial anexado. |
@@ -123,6 +124,13 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    do "ar-condicionado" no descritivo. Desde 14/10/2026 o card, a agenda e o resumo em PDF
    marcam **Presencial** quando a disputa é no órgão (pregão presencial, edital que se diz
    presencial, dispensa entregue no balcão), para separar dos eletrônicos.
+   E, desde a mesma data, o arquivo baixado tem o nome no padrão das pastas do usuário:
+   `19.10.2026 PE 87.2026 PM Toledo - PR` — a data da disputa, a modalidade (PE pregão
+   eletrônico, DE dispensa eletrônica, PP pregão presencial), o número do edital com o
+   ano, o órgão (PM prefeitura, CM câmara, ou a sigla: IFRS, UFSM, EBSERH...), o município
+   e a UF. O resumo leva o mesmo nome com "(resumo)" no fim. No site vale para o edital
+   em PDF (cópia do `originais.mjs`), o convertido e o resumo; no artefato, para o
+   convertido e o resumo — o edital em PDF ali continua vindo do PNCP, com o nome de lá.
 0b. **Tipo de órgão** — município (prefeitura, câmara, fundo, autarquia — via o campo
    `esfera_nome` do PNCP), instituições de ensino e de saúde de qualquer esfera e, desde
    05/10/2026, **tribunais** de qualquer esfera (TJ, TRF, TRT, TRE, tribunal de contas) e
@@ -202,7 +210,7 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
 3c. **O que a Digiplus não cota** — diferente do veto por item, que corrige erro de captura:
    aqui o produto foi entendido certo, só não é da casa. A decisão é do usuário e cada uma
    entrou na data em que ele pediu. Fora do radar: churrasqueira, balança, moedor/moinho de
-   café, enceradeira e lustradeira de piso, coifa, exaustor e depurador (também quando o
+   café, enceradeira e lustradeira de piso, exaustor e depurador (também quando o
    catálogo chama o exaustor de "Ventilador Axial" e só o descritivo do edital diz o que ele
    é, 29/09/2026, e quando o edital abre com "ventilador/ exaustor", 07/10/2026), os
    acessórios e móveis do fogão e do forno ("chapa bifeteira" para pôr sobre o fogão,
@@ -230,6 +238,16 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    "esteira para" só veta na frente ("com esteira para apoiar o prato" é do buffet). O
    **pass-through**, aquecido ou refrigerado, saiu em 14/10/2026 (também quando só o
    descritivo do edital diz o que é: Bento Gonçalves/RS, catálogo "Forno Industrial").
+   Na conferência da lista de produtos do usuário (14/10/2026) voltou a **coifa** (categoria
+   "Para exaustão", só RS, SC e PR; tinha saído em 23/09 junto com exaustor e depurador,
+   que seguem fora), o **buffet** passou a entrar com qualquer nome ("self service",
+   "aquecido", "carro térmico (buffet)") e a lavadora de roupas também como
+   "lavadoura". O que o nome novo puxaria e não é da casa sai pela VETO_ITEM: o móvel de
+   sala ("aparador buffet", buffet de madeira/MDF/MDP), a comida servida em buffet
+   ("almoço buffet livre", coffee break, refeição, brunch, serviço de buffet), a mesa
+   (toalha, concha, display), a coifa de carro (homocinética, direção, suspensão), a de
+   serra circular e a cozinha infantil de brinquedo. E o item de buffet que é serviço
+   sai sozinho, sem marcar o edital inteiro como de serviço.
 4. **Piso de preço unitário** de R$ 150 — equipamento de verdade custa. Chaleira elétrica,
    cafeteira, sanduicheira, grill e máquina de waffle não têm piso. O volume também salva o
    item: acima de R$ 140 com mais de 10 unidades, ou acima de R$ 100 com mais de 25 unidades

@@ -32,3 +32,7 @@ radar-capas/
 
 # O site montado pelo site.mjs (o robo publica direto no Pages, sem commit)
 _site/
+
+# Os editais em PDF do dia, copiados do PNCP pelo originais.mjs: o robo do
+# site guarda a pasta em cache e publica direto no Pages (~200 MB por dia).
+originais/
