@@ -3742,6 +3742,30 @@ const TIMBRE_NO_MEIO = /\bCEP\b|CNPJ|\(\d{2}\)\s*\d{4}|www\.|@|E-?mail|\bFones?\
 // fragmentadora), e a lavadora, 53 no PNCP, e a linha "52 13975 Lavadora de
 // roupas automática, com capacidade mínima de 16 kg ... 3,00 UNIDADE 3.182,03" —
 // e o catalogo dizia "capacidade: 17 a 18" (29/09/2026).
+// Os numeros-chave de um texto de aparelho, por tipo: BTU, litros por dia (do
+// desumidificador), litros, bocas, portas, cubas e kg. Dois textos CONFLITAM
+// quando ha um tipo nos dois e nenhum valor de um bate com o do outro (6% de
+// folga) — "50 L/DIA" e "8 LITROS POR DIA" sao aparelhos diferentes.
+function numerosChave(t) {
+  t = normIgual(String(t || '')).slice(0, 900);
+  const n = s => +String(s).replace(/\.(?=\d{3}\b)/g, '').replace(',', '.');
+  const out = {};
+  const add = (k, v) => { if (v > 0) (out[k] = out[k] || new Set()).add(v); };
+  for (const m of t.matchAll(/(\d{1,3}(?:\.\d{3})+|\d{4,6})\s*(?:btu|b\.t\.u)/g)) add('btu', n(m[1]));
+  for (const m of t.matchAll(/(\d{1,3}(?:[.,]\d+)?)\s*(?:litros|lts?|l)\s*(?:\/|por)\s*(?:dia|d\b)/g)) add('ldia', n(m[1]));
+  for (const m of t.matchAll(/(\d{1,4}(?:[.,]\d+)?)\s*(?:litros|lts?\b|l\b)(?!\s*(?:\/|por)\s*(?:h|hora|min|dia|d\b))/g)) add('l', n(m[1]));
+  for (const m of t.matchAll(/(\d{1,2})\s*(?:\(\w+\)\s*)?(?:bocas|queimadores)/g)) add('bocas', +m[1]);
+  for (const m of t.matchAll(/(\d{1,2})\s*(?:\(\w+\)\s*)?portas/g)) add('portas', +m[1]);
+  for (const m of t.matchAll(/(\d{1,2})\s*cubas/g)) add('cubas', +m[1]);
+  for (const m of t.matchAll(/(\d{1,3})\s*kg\b/g)) add('kg', +m[1]);
+  return out;
+}
+function numerosConflitam(a, b) {
+  const x = numerosChave(a), y = numerosChave(b);
+  return ['btu', 'ldia', 'bocas', 'portas', 'cubas'].some(k => x[k] && y[k]
+    && ![...x[k]].some(v => [...y[k]].some(w => Math.abs(v - w) <= Math.max(0.5, v * 0.06))));
+}
+
 function linhaEntreNumeroEPreco(plano, it, timbres) {
   const t = linhaPeloNumero(plano, it, timbres, +it[0], false);
   if (t || !(+it[0] > 1)) return t;
@@ -4103,7 +4127,8 @@ for (const e of dados.editais) {
       // (com a mesma juncao das palavras partidas no fim da linha que o recorte
       // principal faz: sem ela o micro-ondas de Palmas/PR ganhava a "Voltagem
       // 110V" que faltava e trazia "descongelar os alimen- tos", 08/10/2026)
-      const linha = linhaEntreNumeroEPreco(textoPlano, it, timbres) || linhaEntreNumeroEUnidade(textoPlano, it, timbres)
+      const peloPreco = linhaEntreNumeroEPreco(textoPlano, it, timbres);
+      const linha = peloPreco || linhaEntreNumeroEUnidade(textoPlano, it, timbres)
         || linhaPelaAbertura(textoPlano, it, timbres) || linhaDepoisDoPreco(textoPlano, it, timbres);
       const t = linha && juntaPartidas(linha, textoPlano);
       if (process.env.DEPURA_ITEM === e[C.path] + '#' + it[0]) console.error('DEPURA atual:', it[6], '\nDEPURA linha:', t, '\nDEPURA termo:', termoDaCategoria(normIgual(it[6] || '').slice(0, 300)), 'fala:', falaDoMesmoProduto(it[1], String(it[6] || '')), 'palavras:', palavrasDoItem(it[1]));
@@ -4112,22 +4137,31 @@ for (const e of dados.editais) {
       // a partiu na virada de folha: o freezer de Agudos do Sul/PR sai "...FAIXA
       // DE TEMPERATURA ENTRE 0°C A" do edital e completo do PNCP.
       if (so(it[1]).length > so(t).length * 1.1 && so(it[1]).includes(so(t).slice(0, 60))) continue;
-      if (!it[6] || LIXO_DE_LINHA.test(it[6])) { itensRicos++; linhasPeloPreco++; it[6] = t; continue; }
+      if (!it[6] || LIXO_DE_LINHA.test(it[6])) { itensRicos++; linhasPeloPreco++; (it[6] = t, it.doPreco = linha === peloPreco); continue; }
       // O descritivo que nao fala do produto em lugar nenhum do comeco e texto de
       // outra linha — o item 6 de Curitiba/PR tinha nesta etapa o fim da estufa do
       // item 5, "ALIMENTAÇÃO: BIVOLT OU 110V. ACESSÓRIOS INCLUSOS: BANDEJAS..." —, e
       // a linha achada pelo numero e pelo preco fica no lugar.
       // (so o nome do produto: a comparacao de palavras com o rotulo aceitava a
       // estufa pelo "alimentacao" e pelo "110" que ela divide com o rotulo)
-      if (termoDaCategoria(normIgual(it[6]).slice(0, 300)) === -1 && termoDaCategoria(normIgual(t).slice(0, 120)) !== -1) { linhasPeloPreco++; it[6] = t; continue; }
+      if (termoDaCategoria(normIgual(it[6]).slice(0, 300)) === -1 && termoDaCategoria(normIgual(t).slice(0, 120)) !== -1) { linhasPeloPreco++; (it[6] = t, it.doPreco = linha === peloPreco); continue; }
+      // E o descritivo que CONTRADIZ a linha achada pelo numero e pelo PRECO do
+      // proprio item, a prova mais forte que ha: o item 2 de Florianopolis/SC
+      // (edital 377, 12 un a R$ 2.043) e o "DESUMIDIFICADOR PARA AMBIENTES ATE 30
+      // M2 ... NO MINIMO 8 LITROS POR DIA", e o recorte tinha posto nele o
+      // profissional de 50 L/dia do item 45 (8 un a R$ 7.284,50). Os dois falam de
+      // desumidificador, entao a regra de cima nao via; os numeros-chave (BTU,
+      // litros, litros por dia, bocas, portas, cubas, kg) dizem que e outro
+      // aparelho (usuario, 14/10/2026: "verifique novamente, edital por edital").
+      if (linha === peloPreco && so(t).length >= 100 && numerosConflitam(it[6], t)) { linhasPeloPreco++; (it[6] = t, it.doPreco = linha === peloPreco); continue; }
       const a = so(it[6]), nv = so(t);
-      if (nv.length > a.length * 1.1 && nv.includes(a.slice(0, 60)) && nv.includes(a.slice(-40))) { linhasCompletadas++; it[6] = t; continue; }
+      if (nv.length > a.length * 1.1 && nv.includes(a.slice(0, 60)) && nv.includes(a.slice(-40))) { linhasCompletadas++; (it[6] = t, it.doPreco = linha === peloPreco); continue; }
       // e no lugar do atual que E a linha, mas com o fim do item anterior
       // grudado na frente: "GARANTIA MINIMA DE 12 MESES, DIMENSOES ... 20 115791
       // GRILL - COM REGULADOR DE TEMPERATURAS..." (Porto Belo/SC, item 20)
       {
         const k0 = nv.length >= 60 ? a.indexOf(nv.slice(0, 60)) : -1;
-        if (k0 > 0 && Math.abs((a.length - k0) - nv.length) <= nv.length * 0.15) { linhasCompletadas++; it[6] = t; continue; }
+        if (k0 > 0 && Math.abs((a.length - k0) - nv.length) <= nv.length * 0.15) { linhasCompletadas++; (it[6] = t, it.doPreco = linha === peloPreco); continue; }
       }
       // e no lugar do que e a linha SEGUIDA das colunas e do que vem depois da
       // tabela: "...protetor térmico Unidade 27 1) Preço Total da Proposta R$
@@ -4135,7 +4169,7 @@ for (const e of dados.editais) {
       // regra da preposicao pendurada, adiante, cortava na ultima virgula —
       // "Tensão: 127V, 220" —, levando ", bivolt Velocidade regulável..." junto.
       const k = a.indexOf(nv);
-      if (k >= 0 && k < 40 && /^\s*(?:unidades?|unid|und|un|pc|pct|cx|kit)\s+\d/.test(a.slice(k + nv.length))) { linhasCompletadas++; it[6] = t; }
+      if (k >= 0 && k < 40 && /^\s*(?:unidades?|unid|und|un|pc|pct|cx|kit)\s+\d/.test(a.slice(k + nv.length))) { linhasCompletadas++; (it[6] = t, it.doPreco = linha === peloPreco); }
     }
   }
 
@@ -4470,7 +4504,11 @@ for (const e of dados.editais) {
     };
     const alvoL = soLetras(it[6]), proprioL = soLetras(it[1]).out;
     let corte = -1;
-    for (const x of v.itens) {
+    // (nao no texto que veio da linha entre o numero e o PRECO do proprio item:
+    // tudo ali e dele, mesmo o pedaco igual ao catalogo de outro item — a linha
+    // 09 de Itaberai/GO, "Ar condicionado 18 mil Btus inverter Aparelho Ar
+    // Condicionado Tipo: Split, Modelo: Teto...", perdia tudo depois do nome)
+    if (!it.doPreco) for (const x of v.itens) {
       if (x[0] == it[0]) continue;
       const pal = junta(x[1]).split(' ').slice(0, 6);
       if (pal.length < 6) continue;
@@ -6008,6 +6046,11 @@ for (const e of dados.editais) {
       // caracteristicas: "...ambientes de aproximadamente 45 m²; 08 unidades
       // AMPLA vPREFEITURA · Voltagem (V): 220V" e "12 unidades EXCLUSIVO ME/EPP
       // vPREFEITURA" (Mirassol/SP, edital 96, itens 1 e 2, 14/10/2026)
+      // e a coluna do nome curto da tabela no fim: "...MARCAS/MODELOS DE
+      // REFERENCIA: ARSEC MODELO 160BR e THERMOMATIC MODELO D150. - -
+      // DESUMIDIFICADOR DE AR PARA AMBIENTES" (Florianopolis/SC, edital 377,
+      // itens 2, 18 e 41, 14/10/2026)
+      s = s.replace(/(?<=\S)\s+-\s+-\s+[A-ZÀ-ÚÇ0-9 ,.\/()-]{3,80}$/, '');
       if (q) s = s.replace(new RegExp('\\s0*' + q + '\\s+unidades?\\s+(?:AMPLA(?:\\s+CONCORR[ÊE]NCIA)?|EXCLUSIV[OA](?:\\s+(?:PARA\\s+)?ME\\s*\\/?\\s*EPP)?|COTA\\s+(?:PRINCIPAL|RESERVADA)(?:\\s+(?:PARA\\s+)?ME\\s*\\/?\\s*EPP)?)(?:\\s+\\S*PREFEITURA)?(?=\\s)', 'gi'), '');
     } while (s !== antes);
     // A COPIA LIMPA do mesmo item em outro ponto do edital, quando a que o

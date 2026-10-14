@@ -1087,5 +1087,29 @@
         "texto": "AR CONDICIONADO 12.000 BTU TIPO SPLIT- QUENTE E FRIO, 220V, COMPRESSOR INVERTER. (kit de instalação compatível)"
       }
     }
+  },
+  "76175918000133/2026/39": {
+    "edital": "Ivai/PR, edital 0000038/2026, lote 8 (equipamentos e utensilios de cozinha)",
+    "conferido": "2026-10-14",
+    "itens": {
+      "21": {
+        "qtd": 2,
+        "valor": 4975.5,
+        "fonte": "Edital, lote 08, item 2 (Unid. 02 4.975,50): o PNCP descreve o item 21 como batedeira, com a quantidade e o preco do freezer",
+        "texto": "ATENÇÃO: no PNCP este item está como BATEDEIRA, mas a quantidade e o preço (2 unidades a 4.975,50 reais cada) são os do FREEZER VERTICAL no edital (lote 8, item 2). Confirme com o órgão qual produto vale nesta linha. Descrição do edital para esse preço: FREEZER VERTICAL Tipo: Vertical, 01 porta com abertura à direita/esquerda e vedação eficiente. Capacidade Líquida: Entre 270 L e 300 L. Organização Interna: Deve possuir gavetas e/ou prateleiras removíveis para facilitar a organização e limpeza. Sistema de Refrigeração: Frost Free ou Controle dinâmico de ar (evitando a formação de camadas de gelo). Eficiência Energética: Classificação “A” ou “B” no Selo ENCE / INMETRO. Tensão/Voltagem: 127V"
+      },
+      "22": {
+        "qtd": 2,
+        "valor": 306.84,
+        "fonte": "Edital, lote 08, item 3 (Unid. 02 306,84): o PNCP descreve o item 22 como forno de bancada, com a quantidade e o preco da batedeira",
+        "texto": "ATENÇÃO: no PNCP este item está como FORNO DE BANCADA, mas a quantidade e o preço (2 unidades a 306,84 reais cada) são os da BATEDEIRA no edital (lote 8, item 3). Confirme com o órgão qual produto vale nesta linha. Descrição do edital para esse preço: BATEDEIRA Tipo: Batedeira de pedestal (com base) e portátil (corpo removível da base para uso manual). Potência do Motor: Mínima de 550 W Tensão/Voltagem: 127 V Velocidades: Mínimo de 04 (quatro) velocidades. Função Turbo: Equipamento com função turbo para misturas mais rápidas ou densas. Tigela/Bowl: Capacidade mínima de 4,0 litros, fabricada em material resistente (plástico rígido atóxico, acrílico ou aço inox). Batedores: Acompanha, no mínimo, 01 (um) par de batedores em aço para massas leves (bolos, claras em neve, cremes)."
+      },
+      "23": {
+        "qtd": 3,
+        "valor": 876.84,
+        "fonte": "Edital, lote 08, item 4 (Unid. 03 876,84): o PNCP descreve o item 23 como freezer, com a quantidade e o preco do forno de bancada",
+        "texto": "ATENÇÃO: no PNCP este item está como FREEZER VERTICAL, mas a quantidade e o preço (3 unidades a 876,84 reais cada) são os do FORNO DE BANCADA ELÉTRICO no edital (lote 8, item 4). Confirme com o órgão qual produto vale nesta linha. Descrição do edital para esse preço: FORNO DE BANCADA ELÉTRICO Capacidade interna: Mínimo de 50 litros Função Grill (Dourador): Equipado com grill superior para gratinar e dourar os alimentos Tensão / Voltagem: 127V"
+      }
+    }
   }
 }
