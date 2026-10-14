@@ -5933,6 +5933,10 @@ for (const e of dados.editais) {
            // micro-ondas, capacidade minima de 30 litros TOTAL ESTIMADO R$
            // 58.821,29" (Roque Gonzales/RS, item 18, 13/10/2026)
            .replace(/\s+(?:VALOR\s+)?TOTAL(?:\s+(?:ESTIMADO|GERAL|GLOBAL|M[ÁA]XIMO|DO\s+LOTE))?\s*:?\s*(?:\(R\$\)\s*|R\$\s*)?[\d.]+,\d{2}\s*$/i, '')
+           // e a unidade com o titulo da secao seguinte da tabela e o subtotal
+           // dela: "...Quantidade Bocas: 4 U UTENSÍLIOS R$ 47.772,55" (Belo
+           // Horizonte/MG, CEFET, edital 335, item 42, 14/10/2026)
+           .replace(/\s+(?:U|UN|UND|UNID)\.?\s+[A-ZÀ-ÚÇ]{4,}(?:\s+[A-ZÀ-ÚÇ]{2,}){0,4}\s+R\$\s*[\d.]+,\d{2}\s*$/, '')
            // e a coluna da unidade sozinha depois da frase: "...documentacao
            // pertinente a garantia e assistencia tecnica. uni" (Camboriu/SC,
            // itens 99 e 100, 13/10/2026 — a quantidade e o preco ja tinham saido)
