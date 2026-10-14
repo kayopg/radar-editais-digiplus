@@ -1,5 +1,5 @@
 {
- "varredura": "2026-10-13",
+ "varredura": "2026-10-14",
  "editais": [
   {
    "path": "75832170000131/2026/73",
@@ -171,6 +171,22 @@
      " 3.7. em caso de fornecedor, revendedor ou distribuidor, sera exigida do licitante/interessado provisoriamente classificado em primeiro lugar, nos termos do edital ou do aviso de contratacao direta, carta de solidariedade emitida pelo fabricante, que assegure a execucao do contrato, tendo em vista a necessidade de assegurar a procedencia, a originalidade e o padrao de qualidade dos equipamentos de"
     ]
    }
+  },
+  {
+   "path": "76995463000100/2026/80",
+   "municipio": "Vitorino",
+   "uf": "PR",
+   "edital": "Edital nº 50/2026",
+   "objeto": "AQUISIÇÃO DE MOBILIÁRIOS, ELETRODOMÉSTICOS, ELETRÔNICOS, JOGOS PEDAGÓGICOS, PARA UTILIZAÇÃO NA SECRETARIA MUNICIPAL DE EDUCAÇÃO, CULTURA, ESPORTE E LAZER",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "buindo-lhes eficacia para fins de habilitacao e classificacao. 7.12 apos habilitacao e classificacao sera solicitado a proponente vencedora do certame apresentacao de uma unidade do kit completo como amostra para fins de analise e julgamento dos materias e assim emissao de adjudicacao e homologacao; i amostra devera ser fornecida num prazo de cinco dias uteis apos solicitacao e encaminhada para ad",
+     "ra solicitado a proponente vencedora do certame apresentacao de uma unidade do kit completo como amostra para fins de analise e julgamento dos materias e assim emissao de adjudicacao e homologacao; i amostra devera ser fornecida num prazo de cinco dias uteis apos solicitacao e encaminhada para administracao publica; ii amostra sera analisada e avaliada pela equipe tecnica da secretria municipal de"
+    ]
+   }
   }
  ],
  "ignorados": [
@@ -190,7 +206,7 @@
        11,
        14
       ],
-      "trecho": "ja as smart tvs de 75” e 65” e os monitores profissionais (itens 10, 11 e 14) deverao comprovar a maxima eficiencia em regime continuo e em modo de espera (stand-by), mediante presenca de certificacao ambiental governamental (selo procel a, selo energy star ou certificacao equivalente validada internacionalmente)."
+      "trecho": "e mercurio. ja as smart tvs de 75” e 65” e os monitores profissionais (itens 10, 11 e 14) deverao comprovar a maxima eficiencia em regime continuo e em modo de espera (stand-by), mediante presenca de certificacao ambiental governamental (selo procel a, selo energy star ou certificacao equivalente validada internacionalmente). por fim, impos-se um teto ecologico restrito aos climatizadores industri"
      }
     ]
    }
