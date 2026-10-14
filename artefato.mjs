@@ -217,7 +217,10 @@ let partesCapas = [];
 // entao quem cede e ele.
 // 6 em 05/10/2026: com 128 editais e 127 capas (5 arquivos ao lado) a versao
 // deu 65,7 MB. O edital que fica de fora continua com o link do PNCP no card.
-const ORCAMENTO_EDITAIS_MB = 6;
+// 120 em 14/10/2026: o zip e o rar viraram o pacote inteiro num PDF so (pedido
+// do usuario), e o teto agora e de 256 MB por versao, com 64 MB por publicacao —
+// a publicacao vai em mais de uma chamada ao mesmo artefato (ver README).
+const ORCAMENTO_EDITAIS_MB = 120;
 let editaisPdf = { editais: {} };
 try { editaisPdf = JSON.parse(doc('editais-pdf.json')); } catch { /* sem conversao nesta maquina */ }
 const mapaEdital = {}, indiceEdital = {};
@@ -245,7 +248,7 @@ let partesEditais = [];
     atual.editais[k] = v.b64;
     atual.tam += naPagina; usado += naPagina;
     mapaEdital[k] = atual.n;
-    indiceEdital[k] = { de: v.de, paginas: v.paginas, nome: v.nome, origem: v.origem };
+    indiceEdital[k] = { de: v.de, paginas: v.paginas, nome: v.nome, origem: v.origem, ...(v.partes ? { partes: v.partes } : {}) };
   }
   if (partesEditais.length) fs.mkdirSync(pastaCapas, { recursive: true });
   for (const p of partesEditais) {

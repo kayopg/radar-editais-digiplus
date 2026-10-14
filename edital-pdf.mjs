@@ -6,11 +6,10 @@
 // consegue buscar o arquivo no PNCP (o endpoint de arquivos manda o CORS
 // errado), entao o PDF viaja embutido, como ja fazem as folhas de abertura.
 //
-// O que entra: UM documento por edital — o edital propriamente dito. Zip de
-// prefeitura costuma trazer o edital, o termo de referencia, o ETP e a pesquisa
-// de precos (o de Patrocinio/MG tem 30 MB); quem quer o pacote inteiro continua
-// tendo o botao do PNCP. O termo de referencia ja chega ao usuario pelo
-// descritivo de cada item.
+// O que entra: ate 14/10/2026, UM documento por edital — o edital propriamente
+// dito. Desde entao o ZIP e o RAR viram o pacote inteiro num PDF so, na ordem
+// que o usuario pediu (ver juntaPacote, mais abaixo); acima do teto, fica so o
+// edital, como antes. O DOC, DOCX, ODT e RTF avulsos sao um documento so.
 //
 // Uso:
 //   node edital-pdf.mjs                -> todos os editais que nao sao PDF
@@ -46,7 +45,11 @@ let alvos = dados.editais.filter(e => String(e[C.arquivoExtensao] || '').toLower
 // O convertido guarda de que arquivo do PNCP veio ("arq"): se a varredura passa
 // a apontar outro (edital republicado, versao-do-edital.mjs, 13/10/2026), ele
 // e refeito mesmo com --faltantes — o robo do site guarda os convertidos em cache.
-if (FALTANTES) alvos = alvos.filter(e => !jaTem[e[C.path]] || (jaTem[e[C.path]].arq !== undefined && jaTem[e[C.path]].arq !== (e[C.arquivoSeq] || 1)));
+// E o convertido de versao anterior a montagem atual (VERSAO 2, 14/10/2026: o
+// zip e o rar viram o pacote inteiro num PDF so) e refeito tambem.
+const VERSAO = 2;
+if (FALTANTES) alvos = alvos.filter(e => !jaTem[e[C.path]] || (jaTem[e[C.path]].arq !== undefined && jaTem[e[C.path]].arq !== (e[C.arquivoSeq] || 1))
+  || (/^(?:zip|rar)$/.test(String(e[C.arquivoExtensao] || '').toLowerCase()) && (jaTem[e[C.path]].v || 1) < VERSAO));
 // e o edital que agora aponta um PDF nao precisa mais do convertido
 for (const e of dados.editais) if (String(e[C.arquivoExtensao] || '').toLowerCase() === 'pdf') delete jaTem[e[C.path]];
 if (SO.length) alvos = alvos.filter(e => SO.includes(e[C.path]));
@@ -83,6 +86,153 @@ function nota(nome) {
   if (/termo de referencia|(?:^|[^a-z])tr(?:[\s_.-]|\d{5})|especifica|descritiv|memorial/.test(s)) return 1;
   if (/etp|estudo tecnico|formalizacao|mapa de risco|pesquisa|cotacao|preco|planilha|media/.test(s)) return 3;
   return 2;
+}
+
+// ------------------------------------------------- o pacote inteiro num PDF so
+// O usuario, em 14/10/2026: "quando o edital esta em zip, coloque tudo em um
+// unico arquivo PDF seguindo a seguinte ordem: 1. Edital; 2. Termo de
+// Referencia; 3. Declaracoes (na ordem que apresenta); 4. ATA; 5. Contrato; 6.
+// Estudo Tecnico Preliminar. Exatamente nessa ordem, caso nao tenha algum desses
+// arquivos, siga a ordem do mesmo jeito." O que nao e nenhum dos seis (pesquisa
+// de precos, planilha, mapa de riscos, decreto) vai no fim, na ordem do pacote,
+// para nada do zip ficar de fora.
+export const PARTES = ['Edital', 'Termo de Referência', 'Declarações', 'Ata', 'Contrato', 'Estudo Técnico Preliminar', 'Outros'];
+export function parteDoPacote(nome) {
+  const s = norm(String(nome).split('/').pop());
+  if (/(?:^|[^a-z])etp(?:[^a-z]|$)|estudo tecnico/.test(s)) return 5;
+  // so a palavra "ata": "Edital ... para Registro de Precos" e edital
+  if (/(?:^|[^a-z])ata(?:[^a-z]|$)/.test(s)) return 3;
+  // (a nota de empenho faz as vezes do contrato: "Anexo II - Minuta Nota de
+  // Empenho", Sao Paulo/SP, edital 395)
+  if (/contrato(?!r)|nota de empenho/.test(s)) return 4;
+  // (e a relacao dos itens, que e especificacao: "03 - Anexo I - Relacao dos
+  // Itens da Licitacao", Fazenda Rio Grande/PR; "Anexo I - Termo de
+  // Referenc.odt", nome cortado, Caxias do Sul/RS; "Anexo I - Termo Ref
+  // Apendices", "Anexo VIII - Esp Tecnica PRODAUB", Uberlandia/MG; "ANEXO V-
+  // Descricao detalhada dos itens", Santa Maria/RS)
+  if (/termo\s+(?:de\s+)?ref|(?:^|[^a-z])tr(?:[\s_.-]|\d{5})|projeto basico|especificac|esp\.? tecnica|descritiv|descricao detalhada|memorial|relacao d[oe]s? itens/.test(s)) return 1;
+  if (/declarac|modelo|proposta|procurac|credenciamento|carta (?:de|para)|formulario/.test(s)) return 2;
+  if (/(?:^|[^a-z])(?:decreto|portaria|parecer|matriz de risco|mapa de riscos?)(?:[^a-z]|$)/.test(s)) return 6;
+  if (/edital|aviso de (?:licitacao|contratacao|dispensa)|^aviso(?:[^a-z]|$)|dispensa eletronica/.test(s)) return 0;
+  // o nome so com o codigo do pregao e o edital, menos o anexo que tambem comeca
+  // por ele: "PE 226-2026 - SRP - Anexo III - Protecao de Dados" (Florianopolis/SC)
+  if (CODIGO_DO_PREGAO.test(s) && !/(?:^|[^a-z])(?:anexo|apendice)(?:[^a-z]|$)/.test(s)) return 0;
+  return 6;
+}
+// "Anexo III - Declaracoes" vem antes de "Anexo IV - Modelo de Proposta": o
+// numero do anexo, em algarismo ou romano, ordena dentro do grupo; sem ele,
+// a ordem em que o pacote traz.
+const ROMANO = { i: 1, v: 5, x: 10, l: 50, c: 100 };
+function numeroDoAnexo(nome) {
+  const m = /(?:^|[^a-z])anexo\s*(?:n[ºo°.]?\s*)?([ivxlc]{1,6}|\d{1,2})(?![a-z0-9])/.exec(norm(String(nome).split('/').pop()));
+  if (!m) return null;
+  if (/\d/.test(m[1])) return +m[1];
+  let t = 0;
+  for (let i = 0; i < m[1].length; i++) { const a = ROMANO[m[1][i]], b = ROMANO[m[1][i + 1]] || 0; t += a < b ? -a : a; }
+  return t;
+}
+
+// As paginas de cada documento copiadas (RadarPDFLe.extraiPaginas) e gravadas
+// num PDF novo, sem pagina nossa. Cada documento ganha numeros proprios antes:
+// os dois tem um objeto 5, e juntos sem isso um apontaria para o do outro.
+function renumera(pacote, s) {
+  const novoId = id => (typeof id === 'number' ? (s + 1) * 10000000 + id : 'S' + s + id);
+  const troca = v => {
+    if (LE.ehRef(v)) return LE.Ref(novoId(v.num), 0);
+    if (Array.isArray(v)) return v.map(troca);
+    if (v && v.__fluxo) return { __fluxo: true, dict: troca(v.dict), bruto: v.bruto };
+    if (LE.ehDict(v)) { const m = {}; for (const k in v.__dict) m[k] = troca(v.__dict[k]); return LE.Dict(m); }
+    return v;
+  };
+  return { objetos: pacote.objetos.map(o => ({ id: novoId(o.id), valor: troca(o.valor) })), paginas: pacote.paginas.map(novoId) };
+}
+function pdfDasPaginas(pacotes) {
+  const objetos = pacotes.flatMap(p => p.objetos), paginas = pacotes.flatMap(p => p.paginas);
+  const mapa = new Map();
+  let prox = 3;
+  for (const o of objetos) mapa.set(o.id, prox++);
+  const remapeia = n => (n === -1 ? 2 : (mapa.get(n) ?? 0));
+  const partes = [];
+  let tam = 0;
+  const offsets = [0];
+  const poe = s => { const b = Buffer.from(s, 'latin1'); partes.push(b); tam += b.length; };
+  poe('%PDF-1.7\n%âãÏÓ\n');
+  offsets[1] = tam; poe('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+  offsets[2] = tam; poe('2 0 obj\n<< /Type /Pages /Count ' + paginas.length + ' /Kids [' + paginas.map(id => mapa.get(id) + ' 0 R').join(' ') + '] >>\nendobj\n');
+  for (const o of objetos) {
+    const n = mapa.get(o.id);
+    let v = o.valor;
+    offsets[n] = tam;
+    if (v && v.__fluxo) {
+      const d = { ...v.dict.__dict, Length: v.bruto.length };   // o /Length da origem pode ser referencia
+      poe(n + ' 0 obj\n' + LE.serializa(LE.Dict(d), remapeia) + '\nstream\n');
+      const b = Buffer.from(v.bruto); partes.push(b); tam += b.length;
+      poe('\nendstream\nendobj\n');
+      continue;
+    }
+    // a pagina copiada aponta para a arvore de paginas deste PDF
+    if (LE.ehDict(v) && LE.ehNome(v.__dict.Type) && v.__dict.Type.__nome === 'Page') v = LE.Dict({ ...v.__dict, Parent: LE.Ref(-1, 0) });
+    poe(n + ' 0 obj\n' + LE.serializa(v, remapeia) + '\nendobj\n');
+  }
+  const inicioXref = tam;
+  let xref = 'xref\n0 ' + prox + '\n0000000000 65535 f \n';
+  for (let n = 1; n < prox; n++) xref += String(offsets[n] || 0).padStart(10, '0') + ' 00000 n \n';
+  poe(xref + 'trailer\n<< /Size ' + prox + ' /Root 1 0 R >>\nstartxref\n' + inicioXref + '\n%%EOF\n');
+  return new Uint8Array(Buffer.concat(partes));
+}
+
+// Os documentos do pacote (e dos pacotes de dentro dele), em PDF, na ordem do
+// usuario, e o PDF unico. Sem edital nem termo de referencia no pacote,
+// devolve null: o zip so de decreto (Corrego Danta/MG) nao vira "o edital".
+async function juntaPacote(entradas) {
+  const todas = [];
+  const desce = (lista, fundo, pasta) => {
+    for (const x of lista) {
+      if (/\/$/.test(x.nome)) continue;
+      const ext = extDe(x.nome);
+      if ((ext === 'zip' || ext === 'rar') && fundo > 0) {
+        let dentro = null;
+        try { dentro = ext === 'rar' ? abreRar(x.abre()) : abreZip(x.abre()); } catch { dentro = null; }
+        if (dentro) desce(dentro, fundo - 1, x.nome + '/');
+        continue;
+      }
+      if (ext === 'pdf' || CONVERSIVEIS.has(ext)) todas.push({ x, ext, nome: pasta + x.nome, i: todas.length });
+    }
+  };
+  desce(entradas, 1, '');
+  // o mesmo documento em PDF e em Word ("Edital.pdf" e "Edital.docx", ou "02.7
+  // - Anexo VII do TR - Modelos de Declaracao.docx" ao lado do mesmo nome com o
+  // codigo do sistema no fim, em PDF — Telebras, Brasilia/DF): fica o PDF
+  const base = u => norm(u.nome.split('/').pop()).replace(/\.[a-z0-9]+$/, '').trim();
+  const pdfs = todas.filter(u => u.ext === 'pdf').map(base);
+  // Dentro do grupo, a ordem em que o pacote apresenta: o nome do arquivo com os
+  // numeros comparados como numero ("02 - Anexo A - Termo de Referencia" antes
+  // de "02.1 - Anexo I do TR", "02.10" depois de "02.9"); quando os dois tem
+  // numero de anexo, ele decide ("Anexo IX" depois de "Anexo V").
+  const docs = todas.filter(u => u.ext === 'pdf' || !pdfs.some(p => p === base(u) || p.startsWith(base(u) + ' ')))
+    .map(u => ({ ...u, parte: parteDoPacote(u.nome), anexo: numeroDoAnexo(u.nome),
+      // no grupo do edital, o edital antes do aviso ("Aviso PE RP 490 2026", Uberlandia/MG)
+      principal: parteDoPacote(u.nome) === 0 && !/edital/.test(norm(u.nome.split("/").pop())) ? 1 : 0 }))
+    .sort((a, b) => a.parte - b.parte || a.principal - b.principal
+      || (a.anexo != null && b.anexo != null ? a.anexo - b.anexo : 0)
+      || a.nome.split('/').pop().localeCompare(b.nome.split('/').pop(), 'pt-BR', { numeric: true, sensitivity: 'base' })
+      || a.i - b.i);
+  if (!docs.some(u => u.parte <= 1)) return null;
+  const pacotes = [], partes = [];
+  for (const u of docs) {
+    let bytes = null;
+    try { bytes = u.ext === 'pdf' ? u.x.abre() : pdfDeDocumento(u.x.abre(), u.ext); } catch { bytes = null; }
+    if (!bytes) { console.log(`      (sem conversao: ${u.nome.split('/').pop()})`); continue; }
+    try {
+      const le = await LE.abre(bytes);
+      const pac = await LE.extraiPaginas(le, Array.from({ length: le.total }, (_, k) => k));
+      if (!pac.paginas.length) continue;
+      pacotes.push(renumera(pac, pacotes.length));
+      partes.push({ nome: u.nome.split('/').pop(), parte: PARTES[u.parte], paginas: pac.paginas.length });
+    } catch (err) { console.log(`      (nao abre como PDF: ${u.nome.split('/').pop()} · ${err.message})`); }
+  }
+  if (!partes.some(p => p.parte === PARTES[0] || p.parte === PARTES[1])) return null;
+  return { bytes: pdfDasPaginas(pacotes), nome: partes[0].nome, origem: 'pacote inteiro', partes };
 }
 
 function tipoDe(bytes) {
@@ -188,6 +338,14 @@ for (const e of dados.editais) {
     const bruto = await baixa(urlDe(e[C.arquivoSeq] || 1));
     if (!bruto) { erros++; console.log(`  [erro] ${nome}: nao baixou`); continue; }
     let { tipo, achado } = doArquivo(bruto, e);
+    // ZIP ou RAR: o pacote inteiro num PDF so, na ordem do usuario. Acima do
+    // teto fica so o edital, como antes.
+    if (tipo === 'zip' || tipo === 'rar') {
+      let junto = null;
+      try { const d = tipo === 'rar' ? abreRar(bruto) : abreZip(bruto); junto = d && await juntaPacote(d); } catch (err) { console.log(`      (pacote nao juntou: ${err.message})`); }
+      if (junto && junto.bytes.length <= TETO_MB * 1024 * 1024) achado = junto;
+      else if (junto) console.log(`      pacote inteiro com ${(junto.bytes.length / 1024 / 1024).toFixed(1)} MB passa do teto de ${TETO_MB} MB — fica so o edital`);
+    }
     if (!achado) for (const o of await arquivosDe(e)) {
       const outro = await baixa(urlDe(o.seq));
       if (!outro) continue;
@@ -206,10 +364,12 @@ for (const e of dados.editais) {
       continue;
     }
     saida[e[C.path]] = { nome: achado.nome.split('/').pop(), origem: achado.origem, paginas: le.total, arq: e[C.arquivoSeq] || 1,
-                         de: String(e[C.arquivoExtensao] || '').toLowerCase(),
+                         de: String(e[C.arquivoExtensao] || '').toLowerCase(), v: VERSAO,
+                         ...(achado.partes ? { partes: achado.partes } : {}),
                          b64: Buffer.from(achado.bytes).toString('base64') };
     total += achado.bytes.length; feitos++;
-    console.log(`  ${nome} · ${achado.origem} · ${achado.nome.split('/').pop()} · ${le.total} pag · ${(achado.bytes.length / 1024).toFixed(0)} KB`);
+    console.log(`  ${nome} · ${achado.origem} · ${achado.nome.split('/').pop()} · ${le.total} pag · ${(achado.bytes.length / 1024).toFixed(0)} KB`
+      + (achado.partes ? '\n      ' + achado.partes.map(p => `${p.parte}: ${p.nome} (${p.paginas})`).join(' | ') : ''));
   } catch (err) { erros++; console.log(`  [erro] ${nome}: ${err.message}`); }
 }
 

@@ -30,6 +30,19 @@ export function extDe(nome) {
 const u16 = (b, i) => b[i] | (b[i + 1] << 8);
 const u32 = (b, i) => (b[i] | (b[i + 1] << 8) | (b[i + 2] << 16) | (b[i + 3] << 24)) >>> 0;
 
+// O nome do arquivo dentro do zip: UTF-8 quando o zip marca (bit 11 dos
+// sinalizadores) ou quando os bytes sao UTF-8 valido; senao a pagina de codigo
+// do Windows em portugues, a CP850 — "PE 226-2026 - SRP - Anexo III -
+// Proteção de Dados.pdf" saia "Prote��o" (Florianopolis/SC, 14/10/2026).
+const CP850 = 'ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜø£Ø×ƒáíóúñÑªº¿®¬½¼¡«»░▒▓│┤ÁÂÀ©╣║╗╝¢¥┐└┴┬├─┼ãÃ╚╔╩╦╠═╬¤ðÐÊËÈıÍÎÏ┘┌█▄¦Ì▀ÓßÔÒõÕµþÞÚÛÙýÝ¯´­±‗¾¶§÷¸°¨·¹³²■ ';
+function nomeNoZip(bytes, sinais) {
+  const utf8 = bytes.toString('utf8');
+  if ((sinais & 0x800) || !utf8.includes('�')) return utf8;
+  let s = '';
+  for (const c of bytes) s += c < 0x80 ? String.fromCharCode(c) : CP850[c - 0x80];
+  return s;
+}
+
 export function abreZip(bytes) {
   const b = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes);
   // O fim do diretorio central fica no fim do arquivo, depois de um comentario
@@ -50,7 +63,7 @@ export function abreZip(bytes) {
     const cru = u32(b, p + 24);
     const nLen = u16(b, p + 28), eLen = u16(b, p + 30), cLen = u16(b, p + 32);
     const local = u32(b, p + 42);
-    const nome = b.slice(p + 46, p + 46 + nLen).toString('utf8');
+    const nome = nomeNoZip(b.slice(p + 46, p + 46 + nLen), u16(b, p + 8));
     itens.push({ nome, metodo, comp, cru, local });
     p += 46 + nLen + eLen + cLen;
   }

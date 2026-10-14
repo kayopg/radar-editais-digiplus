@@ -1197,6 +1197,48 @@ function descritivoDoItem(r, it){
   if(!DESC_ATUAL) return "";
   return DESC_ATUAL.porNum[it[5]] || DESC_ATUAL.porDesc[umaLinha(it[3]).toLowerCase()] || "";
 }
+// A descrição do PORTAL junto, quando o edital só traz uma linha curta do item
+// (usuário, 14/10/2026, Sant'Ana do Livramento/RS, edital 19: "neste caso esta
+// faltando descritivo, por conta que os itens estao no portal e nao no
+// edital"). No Compras.gov a "Descrição detalhada" do item é o nome que o PNCP
+// publica — "Máquina Lavar Roupa, Tipo:Lavadora E Secadora, Capacidade:11 KG,
+// ... Abertura Frontal Com Trava De Segurança, ... Material Gabinete:Aço
+// Inoxidável CONFORME TR" —, e o termo de referência só dizia "MÁQUINA DE LAVAR
+// E SECAR ROUPA - Capacidade: 11Kg, 220V.". O card já mostra esse nome inteiro
+// acima do descritivo; a tabela do resumo, não. Entra quando o descritivo tem
+// menos de 150 caracteres e o portal tem ao menos dois "campo: valor" que ele
+// não diz; com o edital detalhado, vale o edital.
+function descricaoDoPortal(desc, rotulo){
+  var d = umaLinha(desc), r = umaLinha(rotulo);
+  if(!d || !r || d.length >= 150) return "";
+  // Sem o que não é do catálogo: o nome repetido na frente ("Freezer Freezer,
+  // Tipo:..."), a nota do órgão no fim ("CONFORME TR", "Em caso de eventual
+  // divergência ... prevalecem as disposições do Termo de Referência") e o
+  // texto do próprio edital colado depois (São Paulo/SP, edital 613, item 3;
+  // Presidente Prudente/SP, edital 475, item 2)
+  var k = d.length >= 25 ? r.toLowerCase().indexOf(d.slice(0, 25).toLowerCase()) : -1;
+  if(k > 20) r = r.slice(0, k);
+  r = r.replace(/^(.{4,60}?)\s+\1(?=[,\s])/i, "$1")
+    .replace(/\s*(?:Obs\.?:?\s*As\s+especifica[çc][õo]es\s+do\s+objeto|Em\s+caso\s+de\s+eventual\s+diverg[êe]ncia|Havendo\s+diverg[êe]ncia|Os\s+descritivos\s+e\s+as\s+unidades\s+a\s+serem\s+considerados)[\s\S]*$/i, "")
+    .replace(/\s*(?:CONFORME\s+(?:O\s+)?(?:TR|TERMO\s+DE\s+REFER[ÊE]NCIA|EDITAL)|Vide\s+Especifica[çc][ãa]o\s+Comp\S*\s+no\s+Edital)\.?\s*$/i, "")
+    .replace(/(\p{L}):(?=\S)/gu, "$1: ").replace(/(\s\d):(?=\p{L})/gu, "$1: ")
+    .replace(/[\s,;:]+$/, "").trim();
+  // O produto do portal tem de ser o do edital: o catálogo escolhido errado
+  // ("Equipamento Comunicação - Satélite ... Magnetotelúrica" no lugar do
+  // climatizador split, Telebras, Brasília/DF, edital 42, itens 159 e 160 — o
+  // próprio órgão avisa que vale o edital) não entra.
+  var letras = semAcentoMin(d).replace(/[^a-z]/g, "");
+  var nome = semAcentoMin(r.split(/[,:;]/)[0]).match(/[a-z]{5,}/g) || [];
+  if(!nome.some(function(w){ return letras.indexOf(w) >= 0; })) return "";
+  var dn = " " + semAcentoMin(d).replace(/[^a-z0-9]+/g, " ") + " ";
+  var faltam = 0, m, re = /([A-Za-zÀ-ú][A-Za-zÀ-ú .\d]{1,40}?)\s*:\s*([^,;]+?)(?=,|;|$)/g;
+  while((m = re.exec(r))){
+    var w = semAcentoMin(m[2]).replace(/[^a-z0-9]+/g, " ").trim().split(" ")
+      .filter(function(p){ return p.length >= 3 && !/^(?:com|sem|para|uma|dos|das)$/.test(p); });
+    if(w.length && w.filter(function(p){ return dn.indexOf(" " + p) >= 0; }).length / w.length < 0.5) faltam++;
+  }
+  return faltam >= 2 ? r : "";
+}
 
 async function montaResumo(r){
   var doc = RadarPDF.novo({ rodape: "Radar de Editais Digiplus · varredura de " + varreduraTxt() });
@@ -1290,7 +1332,10 @@ async function montaResumo(r){
                // que mais muda a decisão.
                cotaItem(it) || "—",
                DO_LOTE[it[0]] ? "Não cotamos · " + umaLinha(it[3])
-                              : umaLinha(descritivoDoItem(r, it) || it[3]) ];
+                              : (function(t){
+                                  var p = descricaoDoPortal(t, it[3]);
+                                  return umaLinha(t || it[3]) + (p ? " — Descrição no portal: " + p : "");
+                                })(descritivoDoItem(r, it)) ];
     }),
     { tam:8, estilo: function(k){
         return DO_LOTE[ordenados[k][0]] ? { cor:[0.42,0.42,0.42], fundo:[0.955,0.955,0.955] } : null;
@@ -1468,6 +1513,8 @@ async function bytesDoConvertido(caminho){
 // o que está entregando.
 function rotuloConvertido(r){
   var c = convertido(r), n = (c && c.nome) || "";
+  // o pacote inteiro num PDF só (edital-pdf.mjs, 14/10/2026)
+  if(c && c.partes && c.partes.length > 1) return "edital completo";
   if(/termo\s*de\s*refer/i.test(n)) return "termo de referência";
   if(/estudo\s*t[ée]cnico|\betp\b/i.test(n)) return "estudo técnico";
   return "edital";
@@ -1476,6 +1523,16 @@ function descreveConvertido(r){
   var c = convertido(r);
   if(!c) return "";
   var de = String(c.de || "").toUpperCase();
+  // O pacote inteiro, na ordem pedida pelo usuário (14/10/2026): edital, termo
+  // de referência, declarações, ata, contrato, estudo técnico preliminar e,
+  // por último, o que não é nenhum deles.
+  if(c.partes && c.partes.length > 1){
+    var grupos = [], conta = {};
+    c.partes.forEach(function(p){ if(!conta[p.parte]){ conta[p.parte] = 0; grupos.push(p.parte); } conta[p.parte]++; });
+    return "O órgão publicou em " + de + "; este PDF junta os " + c.partes.length + " documentos do pacote, nesta ordem: "
+         + grupos.map(function(g){ return g + (conta[g] > 1 ? " (" + conta[g] + ")" : ""); }).join(", ")
+         + " — " + c.paginas + " páginas.";
+  }
   var como = /convertido/.test(c.origem || "") ? "convertido para PDF" : "tirado de dentro do " + de;
   return "O órgão publicou em " + de + "; este é o " + (c.nome || "edital") + " "
        + como + " (" + c.paginas + " páginas).";
@@ -1489,7 +1546,7 @@ async function baixaEditalPdf(botao, i){
     var bytes = await bytesDoConvertido(r[7]);
     if(!bytes) throw new Error("o PDF convertido não veio junto");
     res = await RadarPDF.baixa(bytes,
-      nomeArquivo(nomeDoEdital(r) + (rotuloConvertido(r) === "edital" ? "" : " (" + rotuloConvertido(r) + ")")) + ".pdf");
+      nomeArquivo(nomeDoEdital(r) + (/^edital/.test(rotuloConvertido(r)) ? "" : " (" + rotuloConvertido(r) + ")")) + ".pdf");
   }catch(e){ res = { ok:false, motivo:e.message }; }
   botao.disabled = false;
   var erro = res && res.ok === false && res.motivo;

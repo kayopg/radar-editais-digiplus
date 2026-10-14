@@ -93,11 +93,11 @@ descritivos.mjs → itens-embutidos.mjs → descritivo-por-item.mjs → docs/des
 | `texto-pncp.mjs` | Limpa o texto que vem do PNCP: HTML do editor, entidades, UTF-8 lido como Latin-1 e o sinal que chega como "?". A letra acentuada trocada por "?" ("BOA VEDA??O", "N?O SENDO ACEITO") volta pelo vocabulário dos editais (`palavras-acentuadas.json`), só quando uma forma domina: "P?S" fica, porque podem ser pés ou pás. No texto que perdeu todos os acentos, o "?" solto depois de "pertencente", "resistente", "destinado" é a crase (São João da Ponte/MG, 09/10/2026). `testa-interrogacao.mjs` roda os casos reais. |
 | `vocabulario.mjs` | Monta o `palavras-acentuadas.json` com as palavras acentuadas do texto dos editais das últimas 12 varreduras e quantas vezes cada uma apareceu. Rodar de novo de vez em quando: `node vocabulario.mjs`. |
 | `confere-*.mjs`, `audita-descritivos.mjs` | Auditorias do recorte: texto de um item invadindo outro, cortes, numeração, mistura. Contam no Summary do job, não derrubam. |
-| `edital-pdf.mjs` | O edital que o órgão publicou em ZIP, RAR, DOC, DOCX, ODT ou RTF, convertido para PDF: abre o pacote (inclusive zip com rar dentro), escolhe o documento do edital e converte o que não é PDF. Grava `docs/editais-pdf.json`, que vai para o artefato e, desde 07/10/2026, para o site — no card o botão "Baixar edital (PDF)" entrega esse arquivo e o link ao lado continua levando ao original no PNCP. |
+| `edital-pdf.mjs` | O edital que o órgão publicou em ZIP, RAR, DOC, DOCX, ODT ou RTF, convertido para PDF. O ZIP e o RAR (inclusive zip com rar dentro) viram, desde 14/10/2026, **um PDF só com o pacote inteiro**, na ordem pedida pelo usuário: 1. Edital; 2. Termo de Referência; 3. Declarações (na ordem do pacote); 4. Ata; 5. Contrato; 6. Estudo Técnico Preliminar — e por último o que não é nenhum deles (pesquisa de preços, DFD, mapa de riscos), para nada ficar de fora. O grupo sai do nome do arquivo; dentro dele, a ordem do nome com os números comparados como número, e o número do anexo quando os dois têm. O documento que vem em PDF e em Word entra uma vez. Pacote acima do teto (`--teto`, 25 MB no robô do site) fica só com o edital, como antes. Grava `docs/editais-pdf.json`, que vai para o artefato e, desde 07/10/2026, para o site — no card o botão "Baixar edital (PDF)" entrega esse arquivo e o link ao lado continua levando ao original no PNCP. |
 | `pdf-do-documento.mjs` | Converte DOC, DOCX, ODT, RTF e HTML para PDF pelo LibreOffice, se houver, ou pelo Word (COM do Windows). Na máquina do usuário é o Word; no robô do site, o LibreOffice. |
 | `originais.mjs` | Copia do PNCP para a pasta `originais/` cada edital do dia que o órgão publicou em PDF (até 40 MB), para o site baixar o arquivo com o nome no padrão do usuário (14/10/2026). O link direto do PNCP não deixa trocar o nome: o arquivo vem de outro domínio e o PNCP manda o cabeçalho CORS duplicado. Roda no `site.yml`, com a pasta em cache: só baixa o edital novo e apaga o que saiu da lista. |
 | `site.mjs` | Monta o site na pasta `_site`: a `docs/` mais uma folha de abertura por edital (`capas/<cnpj-ano-seq>.json`), cada edital convertido (`pdfs/<cnpj-ano-seq>.pdf`, com o `pdfs/indice.json`) e a cópia de cada edital em PDF (`originais/<cnpj-ano-seq>.pdf`), para a página buscar só o edital que abriu. Roda no `.github/workflows/site.yml`, que gera as folhas e os convertidos e publica direto no Pages, sem commit (07/10/2026). O `descritivos.json` do site vai sem o texto das seções e com o nome de cada item limpo pelo `texto-pncp.mjs`, de onde sai a lista "Demais itens do edital" do resumo. |
-| `artefato.mjs` | Monta a página num arquivo só, com dados e PDF embutidos, para publicar como artefato. |
+| `artefato.mjs` | Monta a página num arquivo só, com dados e PDF embutidos, para publicar como artefato. Desde 14/10/2026 os editais convertidos (agora o pacote inteiro) têm orçamento de 120 MB: a versão do artefato aceita 256 MB, mas cada publicação leva no máximo 64 MB, então a página e as capas vão numa chamada e os `editais-N.js` em outras, ao mesmo artefato. |
 | `docs/index.html` | A página, com a identidade da Loja DigiPlus. Sem build; as fontes vêm do Google Fonts, com fonte do sistema de reserva. |
 | `docs/pdf.js` | Gerador de PDF próprio, sem biblioteca. "Baixar resumo + edital" baixa um arquivo por edital, com a tabela de itens e o edital oficial anexado. |
 | `docs/pdf-le.js` | Leitor de PDF: abre o edital oficial do órgão e copia páginas dele para dentro do PDF gerado. Entende xref clássico e xref stream, object stream e FlateDecode. |
@@ -192,7 +192,14 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    continuam sendo os dos nossos itens. A tabela do resumo em PDF traz os mesmos itens
    do card, os que não cotamos em cinza e com "Não cotamos" (usuário, 08/10/2026). O nome
    desses itens é o do PNCP, sem o texto do catálogo que o Compras.gov.br põe na frente
-   do código do órgão ("46950 - TUBULAÇÃO ADICIONAL…").
+   do código do órgão ("46950 - TUBULAÇÃO ADICIONAL…"). Quando o edital só traz uma linha
+   curta do item (menos de 150 caracteres) e a descrição do portal — o nome do item no PNCP,
+   que é a "Descrição detalhada" do Compras.gov — tem ao menos dois "campo: valor" que a
+   linha não diz, a célula leva as duas: "MÁQUINA DE LAVAR E SECAR ROUPA - Capacidade:
+   11Kg, 220V. — Descrição no portal: Máquina Lavar Roupa, Tipo: Lavadora E Secadora, …
+   Abertura Frontal Com Trava De Segurança …" (Sant'Ana do Livramento/RS, usuário,
+   14/10/2026). O catálogo escolhido errado (o "Sistema Magnetotelúrico" no lugar do
+   climatizador da Telebras) não entra: o produto do portal tem de ser o do edital.
 2. **Veto por objeto** — derruba o edital inteiro quando o objeto é de veículo, trator,
    alimento, material de limpeza e afins. Veículos casam com a busca porque têm
    ar-condicionado de fábrica. Se o objeto também compra eletrodoméstico ("Móveis,
