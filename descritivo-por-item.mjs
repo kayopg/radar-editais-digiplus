@@ -2980,6 +2980,17 @@ function descritivosPorItem(secoes, itens) {
       const tit = /(?:^|\s)(?:Unid\.?|UNID\.?|UN|UND|Unidade|UNIDADE)\s+((?:[A-ZÀ-Ú][^:]{2,90}:\s*){1,2})$/.exec(antes);
       if (tit && !/\d{1,3}(?:\.\d{3})*,\d{2}/.test(tit[1]) && !vencedor.startsWith(tit[1].trim().slice(0, 20)))
         vencedor = tit[1].trim() + ' ' + vencedor;
+      // ... e o NOME em caixa alta entre o numero do item e a marca, quando a
+      // marca caiu na palavra que o rotulo do PNCP tem: "CATMAT: 613924 04
+      // LAVADORA TIPO TANQUINHO DE ROUPAS Gabinete..." — o rotulo diz "Maquina
+      // Lavar Roupa tipo: tanquinho", a marca caiu em "TIPO" e o descritivo
+      // comecava sem dizer o que era (Paranavai/PR, edital 1, item 4,
+      // 14/10/2026). So com o numero do proprio item logo antes.
+      else {
+        const nome = /(?:^|\s)0*(\d{1,4})\s+((?:[A-ZÀ-ÚÇ]{3,}[\s/-]+){1,4})$/.exec(antes);
+        if (nome && +nome[1] === +itens[i][0] && !normIgual(vencedor.slice(0, 40)).includes(normIgual(nome[2]).trim()))
+          vencedor = nome[2].trim() + ' ' + vencedor;
+      }
     }
     if (DEPURA_ITEM && rotulo.includes(DEPURA_ITEM)) console.log('  DEPURA escolha', JSON.stringify({ candidatos: quais.length, cabecas: cabecas.length, nota, vencedor: String(vencedor).slice(0, 120) }));
     if (vencedor && nota >= 1e6) melhor.set(i, { texto: vencedor, confirmado: venceuPeloNumero });
@@ -5411,6 +5422,11 @@ for (const e of dados.editais) {
         // (o titulo e o endereco ja sairam com o timbre: chega "09:48 … 34/52")
         + '\\s+\\d{2}\\/\\d{2}\\/\\d{4},\\s+\\d{1,2}:\\d{2}(?::\\d{2})?\\s+(?:.{0,220}?\\s)?\\d{1,3}\\/\\d{1,3}\\s+(?=\\p{Ll})', 'gu'), ' ');
       corta(/\s\d{2}\/\d{2}\/\d{4},\s+\d{1,2}:\d{2}(?::\d{2})?\s/);
+      // a clausula seguinte do termo que lista os itens um por paragrafo, com
+      // a quantidade por extenso: "...abrangendo o aparelho e seus componentes.
+      // 1.3.1.1. 02 (dois) aparelhos de ar-condicionado novos, ... 30.000 BTUs"
+      // (Sorocaba/SP, dispensa 50, item 1, 14/10/2026) — e o item seguinte
+      corta(/(?<=[.;])\s+\d{1,2}(?:\.\d{1,2}){1,4}\.?\s+\d{1,4}\s+\([a-zà-ú\s]{2,30}\)\s+\p{L}/u);
       // o total do lote por extenso: "...A PARTIR DE 500 LITROS Total: 73.704,03
       // (Setenta e três mil...)" (São João do Polêsine/RS, PCE 23, item 3)
       corta(/\sTotal:?\s*(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}/);
@@ -5852,8 +5868,46 @@ for (const e of dados.editais) {
   for (const it of v.itens) {
     if (!it[6] || it[9]) continue;
     let s = it[6], antes;
+    // A ERRATA: o recorte pegou o "Onde se le: <especificacao velha>. Leia-se"
+    // da alteracao do edital, e o que vale e o que vem depois do "Leia-se:".
+    // "– REFRIGERADOR Onde se lê: REFRIGERADOR FROST FREE 2 PORTAS BRANCO 433
+    // LITROS ... VOLTAGEM: BIVOLT. Leia-se: REFRIGERADOR FROST FREE, 2 PORTAS
+    // ... CAPACIDADE TOTAL MINIMA DE 430 LITROS ... 1.2 – DA NOVA DATA"
+    // (Pedras de Maria da Cruz/MG, edital 013, item 39, 14/10/2026). O texto
+    // novo vai ate a clausula seguinte da alteracao.
+    if (/onde\s+se\s+l[êe]/i.test(s)) {
+      const plano = secoes.replace(/\s+/g, ' ');
+      const k = plano.indexOf(s.replace(/\s+/g, ' ').slice(0, 60));
+      const m = k >= 0 ? /Leia-?se\s*:?\s*/i.exec(plano.slice(k, k + s.length + 400)) : null;
+      if (m) {
+        const ini = k + m.index + m[0].length;
+        let novo = plano.slice(ini, ini + 3000);
+        const fim = /\s\d{1,2}(?:\.\d{1,2}){1,3}\.?\s*[–—-]|\s(?:[–—-]\s*)?[A-ZÀ-Ú]{4,}[^.]{0,60}?\s+Onde\s+se\s+l[êe]|\sOnde\s+se\s+l[êe]/i.exec(novo);
+        if (fim) novo = novo.slice(0, fim.index);
+        novo = novo.trim();
+        if (novo.length >= 30) s = novo;
+      }
+    }
     do {
       antes = s;
+      // O que sobra NA FRENTE da especificacao (14/10/2026, "confira este
+      // mesmo caso nos outros editais"): o travessao da lista ("– BEBEDOURO
+      // INDUSTRIAL...", Uberlandia/MG), a cota que o rotulo traz ("ME/EPP -
+      // CONDICIONADOR DE AR...", Wenceslau Braz/PR), o codigo do catalogo do
+      // orgao ("077.12.292382 FRIGOBAR", Florianopolis/SC, edital 377; "46950 -
+      // TUBULACAO ADICIONAL", Joinville/SC), o numero de clausula ("12.000
+      // 1.3.1. 09 (nove) aparelhos", Sorocaba/SP) e a quantidade do proprio item,
+      // em algarismo ou por extenso ("01 Forno micro-ondas", Roque Gonzales/RS).
+      const q = Math.round(+it[2] || 0);
+      s = s.replace(/^\s*[–—•·-]\s*/, '')
+           .replace(/^(?:COTA\s+(?:EXCLUSIVA|RESERVADA|PRINCIPAL)\s+)?(?:EXCLUSIV[OA]\s+)?ME\s*\/\s*EPP\s*[–—-]\s*/i, '')
+           .replace(/^\d{3}\.\d{2}\.\d{4,7}\s+(?=\p{Lu})/u, '')
+           .replace(/^\d{5,6}\s*[–—-]\s*(?=\p{Lu}{3})/u, '')
+           .replace(/^(?:[\d.]+\s+)?\d{1,2}(?:\.\d{1,2}){1,4}\.\s+(?=\d|\p{L})/u, '');
+      // (so "01 Forno" — zero na frente e maiuscula depois — ou "09 (nove)
+      // aparelhos": "4 bocas" num item de 4 unidades e especificacao)
+      if (q) s = s.replace(new RegExp('^(?:0+' + q + '\\s+(?=\\p{Lu})|0*' + q + '\\s*\\([a-zà-ú\\s]{2,30}\\)\\s+(?=\\p{L}))', 'u'), '');
+      if (s !== antes && /^\p{Ll}/u.test(s)) s = s[0].toUpperCase() + s.slice(1);
       s = s.replace(/(?<=[.;])\s+(?:UN|UND|UNID|UNIDADE|UNIDADES)\.?\s+(?:EXCLUSIV[OA]|AMPLA(?:\s+CONCORR[ÊE]NCIA)?|COTA\s+(?:PRINCIPAL|RESERVADA)|DESEMPATE)\s*$/i, '')
            .replace(/(?<=[.;])\s+\d{1,2}\.\s+D[AEO]S?\s+(?:[A-ZÀ-Ú]+\s+){0,5}[A-ZÀ-Ú]{3,}\s*$/, '')
            // e a quantidade com a unidade e o beneficio, separados pela virada
