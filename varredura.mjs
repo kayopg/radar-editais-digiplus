@@ -11,7 +11,7 @@ import { analisaExigencias } from './exigencias.mjs';
 import { devedorDe } from './devedores.mjs';
 import { linkDoPortal, ehComprasGov, montaLinkComprasGov } from './participar.mjs';
 import { portalOk, plataformaDoEdital, linkDaCasa } from './plataforma.mjs';
-import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, chaleiraDeFogao, criaCotaNaUf } from './veto-item.mjs';
+import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, chaleiraDeFogao, lavaLoucas, criaCotaNaUf } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 import { escolheEdital, daListaDoPncp, medidaPeloPncp } from './versao-do-edital.mjs';
 
@@ -86,6 +86,10 @@ const CAT = [
     // complemento de cozinha: "mixer" solto e tambem a mesa de som.
     // "EXTRATOR SUCO; MATERIAL: ACO INOX" (Minacu/GO, item 29): o catalogo sem o "de"
     "extrator de suco","extrator suco","centrifuga de fruta","centrifuga de alimento","centrifuga de suco",
+    // e o catalogo "Aparelho Extracao Suco tipo: industrial, capacidade: 120"
+    // (Bento Goncalves/RS, edital 442, item 49, 14/10/2026: "extrator de sucos
+    // cotamos")
+    "extracao suco","extracao de suco",
     "mixer de alimento","mixer de mao","mixer 2 em 1","mixer 3 em 1","mixer eletrico","mixer portatil",
     "mixer vertical","mixer profissional","mixer com lamina","mixer com haste",
     // Cortador de legumes: a Digiplus cota (usuario, 08/10/2026). O de mesa,
@@ -112,13 +116,15 @@ const CAT = [
   // Paraiso/PR, Renascenca/PR...), fora os editais que so compravam isso e nem
   // chegavam. "Lavadora automatica/semiautomatica" e o jeito da prefeitura de
   // escrever o mesmo. A de piso continua vetada (VETO_ITEM).
-  ["LV",["lavadora de roupa","maquina de lavar","secadora","centrifuga de roupa","calandra","tanquinho","lava-loucas","lava loucas","lavadora extratora",
+  ["LV",["lavadora de roupa","maquina de lavar","secadora","centrifuga de roupa","calandra","tanquinho","lavadora extratora",
     "maquina lavar","maquina secar","maquina lavadora","lavadora automatica","lavadora semiautomatica","lavadora semi automatica","lavadora semi-automatica",
     // "Lavadoura", com o "u", e como o usuario escreve (lista de 14/10/2026) e
     // como algumas prefeituras escrevem tambem (ver o lava-jato abaixo).
     "lavadoura de roupa","lavadoura automatica","lavadoura semiautomatica","lavadoura semi automatica",
-    // "Lavadora de louça industrial" (Santa Maria/RS, item 22, 29/09/2026)
-    "lavadora de louca","lava louca","lava-louca",
+    // A lavadora de louca saiu em 14/10/2026 (usuario: "maquina de lavar loucas
+    // industrial e item que nao cotamos" e "lavadora de loucas tambem nao
+    // cotamos"): os nomes sairam da tabela, e a "Maquina Lavar Loucas" do
+    // catalogo, que entra pelo "maquina lavar", sai pelo lavaLoucas do veto-item.mjs.
     // Lavadora de alta pressao, o lava-jato: a Digiplus cota (usuario,
     // 08/10/2026; tinha saido em 28/09). O prefixo "pres" cobre o "PRESAO"
     // escrito assim (Cerro Grande do Sul/RS, Cocalzinho/GO); "lavadoura" e
@@ -137,7 +143,12 @@ const CAT = [
   // A COIFA voltou em 14/10/2026 (usuario, na lista dos produtos que cotamos:
   // "Coifas"); exaustor e depurador continuam fora.
   ["CX",["coifa"]],
-  // BL (balancas) saiu em 23/09/2026: o usuario nao cota balanca.
+  // BL (balancas) saiu em 23/09/2026 ("nao cotam balanca") e VOLTOU em
+  // 14/10/2026: "Balancas tambem cotamos". Com os mesmos termos e o mesmo veto
+  // da balanca de pesar gente, de bebe e de laboratorio (VETO_BL_MEDICA), que
+  // foram decisoes do usuario antes de a categoria sair. Linha so de RS, SC e
+  // PR (LINHAS_DA_UF, veto-item.mjs).
+  ["BL",["balanca","balanca comercial","balanca industrial","balanca digital","balanca de plataforma","balanca eletronica"]],
   ["LD",["lousa digital","lousa interativa","lousa eletronica","quadro interativo","painel interativo","tela interativa"]],
   // GE entrou em 01/09/2026: gerador nao e climatizacao nem cozinha, e virava
   // "Outros" — categoria que a pagina mostra como se fosse sobra.
@@ -785,8 +796,50 @@ const VETO_OT_HALOGENO = ['halogen','alogen'];
 // dia: em 24/09/2026 o usuario tirou o gerador inteiro e a categoria GE saiu da
 // tabela. Os nomes de gerador estao todos no VETO_ITEM.
 
-// Balancas sairam do radar em 23/09/2026: o usuario nao cota balanca, entao a
-// categoria BL deixou de existir e a lista de vetos dela nao e mais necessaria.
+// 5.3d - balanca medica e de laboratorio (01/09/2026). "balanca" entrou como
+// termo e trouxe 143 itens, dos quais 95 sao de outro mercado: antropometrica
+// (pediatrica, para obeso, de bioimpedancia), analitica de laboratorio com
+// resolucao de 0,0001 g, e ate uma cama hospitalar e uma mesa de apoio para
+// balanca. Sobram as comerciais e industriais: cozinha, plataforma, eletronica
+// digital. A categoria saiu em 23/09/2026 e voltou em 14/10/2026 com esta lista.
+//
+// Escopado em BL, como o VETO_RF_CIENT e em RF: "paciente" e "corporal" soltos
+// derrubariam item legitimo de outra categoria. "antopometr" nao e erro meu, e
+// como o orgao escreveu ("BALANCA ANTOPOMETRICA ADULTO"). E o veto e por
+// PRODUTO, nao pela palavra: "balanca precisao" veta a balanca de precisao, mas
+// "precisao minima de 5 g" na balanca comercial de 15 kg continua passando.
+const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioimpedanc',
+  'biompedanc','pesar pessoas','obeso','paciente','corporal','balanca analitica',
+  'analitica de precisao','balanca precisao','balanca de precisao','cama hospitalar',
+  'mesa auxiliadora','tipo balanca','paleteira','pilha tipo bateria',
+  // 04/09/2026: a palavra no meio da descricao de outro produto (a incubadora
+  // neonatal "c/ balanca", a placa "aguarde a sua vez para entrar na balanca")
+  // e a balanca de pesar gente escrita de outros jeitos
+  'incubadora','placa sinalizadora','sinalizadora','pesagem de pessoas',
+  'balanca infantil','digital infantil','com regua','coluna articulada',
+  // 16/09/2026: a semi-analitica de 0,001 g da UFSM e a rodoviaria de 120
+  // toneladas, instalada e com obra civil, de Alcinopolis/MS
+  'semi-analitica','semi analitica','semianalitica','rodoviaria',
+  // 21/09/2026: balanca de banheiro e de bebe em compra de saude. 180 kg e a
+  // capacidade da balanca de pesar gente; a de plataforma comercial e 150, 200
+  // ou 300 kg. E a portatil de 200 kg com tapete antiderrapante, de pesar
+  // paciente na UBS (Uruguaiana/RS, decisao do usuario em 21/09/2026)
+  '180 kg','180kg','de banheiro','plataforma em vidro','em vidro temperado','para bebe','recem-nascido','recem nascido','neonat',
+  'tapete anti-derrapante','tapete antiderrapante','tapete anti derrapante',
+  // 22/09/2026: "Balanca de laboratorio, tipo analitica, 0,0001 g" (Januaria/MG),
+  // "BALANCA DIGITAL ATROPOMETRICA" (sic, Sao Gabriel/RS), "BALANCA DIGITAL DE
+  // VIDRO TEMPERADO" para a UBS (Timburi/SP), "BALANCA ADULTO DIGITAL 150KG"
+  'tipo analitica','balanca de laboratorio','atropometr','de vidro temperado','balanca adulto','adulto',
+  // 14/10/2026, na volta da categoria: a de gado ("BALANCA PARA PESAGEM DE
+  // BOVINOS", Sao Joao do Polesine/RS), o mesmo mercado da veterinaria que o
+  // usuario ja tinha tirado em 10/09/2026 ("pesagem de animais", VETO_ITEM)
+  'bovino','gado','pecuari','curral','suino','ovino','animais',
+  // e a de laboratorio que nao se diz analitica: "Balanca eletronica digital de
+  // precisao, destinada a pesagem de materiais e amostras em atividades
+  // laboratoriais" (UFSM, Santa Maria/RS, edital 140, item 72). Pela expressao,
+  // nao pela palavra: a balanca de cozinha de Sao Jose do Inhacora/RS diz "sem
+  // utilizacao para ... analises laboratoriais", e fica.
+  'atividades laboratoriais','uso laboratorial','uso em laboratorio','para laboratorio','pesagem de amostras','materiais e amostras'];
 
 // ---------------------------------------------------------------- utilidades
 // Cada linha de progresso sai carimbada com o tempo decorrido.
@@ -1104,6 +1157,8 @@ for (const o of cands) {
   for (const [cat, it, d] of interesse) {
     if (temVeto(d, cat)) continue;
     if (cat === 'RF' && VETO_RF_CIENT.some(v => d.includes(v))) { vCient++; continue; }
+    if (cat === 'BL' && VETO_BL_MEDICA.some(v => d.includes(v))) continue;
+    if (cat === 'LV' && lavaLoucas(d)) continue;
     if (cat === 'OT' && VETO_OT_HALOGENO.some(v => d.includes(v))) continue;
     if (!cotaNaUf(o.uf, d, '', true)) continue;
     if (cat === 'PR' && amassadeiraRapida(d)) continue;

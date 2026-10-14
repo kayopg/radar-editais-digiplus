@@ -20,7 +20,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, chaleiraDeFogao, criaCotaNaUf } from './veto-item.mjs';
+import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, chaleiraDeFogao, lavaLoucas, criaCotaNaUf } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 import { marcaCotas } from './cota.mjs';
 import { vendaPorLote, totaisPorLote, lotesPelosTotais, lotesPelaTabelaDeGrupo, lotesPeloRotulo, lotesPelaColunaDoLote, lotesPelaLinhaComLote, lotesPorFaixa, lotesPorSecao } from './lotes.mjs';
@@ -55,6 +55,9 @@ const VETO = {
   CC: ['banho maria de laboratorio', 'banho-maria de laboratorio', 'aplicacoes laboratoriais', 'uso laboratorial', 'pid fuzzy', 'precisao de controle', 'calibracao', 'variacao maxima aceitavel'],
   BB: ['laboratorial'],
   CX: ['soldagem', 'fumaca de bancada'],
+  // a balanca de pesar gente, de bebe e de laboratorio, a mesma lista do
+  // varredura.mjs (a categoria voltou em 14/10/2026)
+  BL: lista('VETO_BL_MEDICA'),
   // lavanderia hospitalar (Sonora/MS, 21/09/2026)
   LV: ['hospitalar', 'barreira sanitaria'],
   // o aquecedor halogeno saiu do radar (usuario, 30/09/2026); a mesma lista do
@@ -390,6 +393,7 @@ for (const e of dados.editais) {
       || (instalaNoObjeto && instalavel(norm(it[3]), it[0]) && 'instalacao quando necessaria, e o aparelho se instala')
       || (instalaNoLote && instalavel(norm(it[3]), it[0]) && 'instalacao em item do mesmo lote')
       || (it[0] === 'PR' && amassadeiraRapida(d + ' ' + norm(it[3])) && 'amassadeira rapida')
+      || (it[0] === 'LV' && (lavaLoucas(norm(it[3])) || lavaLoucas(d)) && 'lavadora de louca')
       || (it[0] === 'PR' && chaleiraDeFogao(norm(it[3]), d) && 'chaleira de fogao')
       || (!cotaNaUf(e[C.uf], norm(it[3]), d) && 'linha que nao se cota em ' + e[C.uf])
       || (ABRE_FORA_DO_RADAR.exec(d) || [])[1]));

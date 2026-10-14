@@ -34,6 +34,12 @@
 // nem tem "rapida" como palavra.
 export const amassadeiraRapida = d => /amassadeira/.test(d) && /(?<!semi[- ])\brapida\b/.test(d)
   && !/lenta|semi[- ]?r?rapida/.test(d);
+// A lavadora de louca a Digiplus nao cota, industrial nem domestica (usuario,
+// 14/10/2026). O catalogo a chama de "Maquina Lavar Loucas", que entra na
+// categoria "Para lavar" pelo "maquina lavar" da maquina de roupa: sai quando o
+// NOME do item (o comeco da descricao) e de louca. A sanduicheira que "pode ir
+// na lava-loucas" e outra categoria e nao passa por aqui.
+export const lavaLoucas = d => /^[^.;:]{0,40}?(?:lava[\s-]?lou[cç]|lavadora\s+(?:de\s+)?lou[cç]|lavar\s+lou[cç])/.test(d);
 
 // A chaleira que a Digiplus cota e a ELETRICA ou a industrial (5.4b do
 // varredura.mjs, 01/09/2026); a de aluminio, de por no fogao, e panela. Ate

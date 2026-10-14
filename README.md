@@ -218,7 +218,8 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    (Ribeirão Preto/SP, 08/10/2026, defletores de acrílico para o cassete) — é a peça, e sai.
 3c. **O que a Digiplus não cota** — diferente do veto por item, que corrige erro de captura:
    aqui o produto foi entendido certo, só não é da casa. A decisão é do usuário e cada uma
-   entrou na data em que ele pediu. Fora do radar: churrasqueira, balança, moedor/moinho de
+   entrou na data em que ele pediu. Fora do radar: churrasqueira, caldeirão (confirmado em
+   14/10/2026), lavadora de louças, industrial ou doméstica (14/10/2026), moedor/moinho de
    café, enceradeira e lustradeira de piso, exaustor e depurador (também quando o
    catálogo chama o exaustor de "Ventilador Axial" e só o descritivo do edital diz o que ele
    é, 29/09/2026, e quando o edital abre com "ventilador/ exaustor", 07/10/2026), os
@@ -257,6 +258,15 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    (toalha, concha, display), a coifa de carro (homocinética, direção, suspensão), a de
    serra circular e a cozinha infantil de brinquedo. E o item de buffet que é serviço
    sai sozinho, sem marcar o edital inteiro como de serviço.
+   As **balanças** saíram em 23/09/2026 e voltaram em 14/10/2026 ("Balanças também
+   cotamos"), só em RS, SC e PR, com os vetos que o usuário já tinha decidido: a balança de
+   pesar gente (antropométrica, de bebê, de banheiro, "mamãe-bebê"), a de laboratório
+   (analítica, de precisão "para atividades laboratoriais") e a de gado. Na mesma conversa
+   entrou o extrator pelo nome do catálogo ("Aparelho Extração Suco") e saiu a lavadora de
+   louças, que o catálogo chama de "Máquina Lavar Louças" e entrava pela máquina de roupa.
+   E quando a tabela do edital numera a linha diferente do PNCP, o resumo e o card mostram
+   os dois: "8 (no edital: 9)" — Paranaguá/PR numera o bebedouro de 9 no termo de
+   referência e de 8 na relação de itens, que é a da disputa.
 4. **Piso de preço unitário** de R$ 150 — equipamento de verdade custa. Chaleira elétrica,
    cafeteira, sanduicheira, grill e máquina de waffle não têm piso. O volume também salva o
    item: acima de R$ 140 com mais de 10 unidades, ou acima de R$ 100 com mais de 25 unidades

@@ -755,9 +755,12 @@ function abreCard(card){
     // O indice 9 marca o item cujo edital nao traz especificacao nenhuma e que
     // ficou com o rotulo do catalogo do PNCP (ver descritivo-por-item.mjs). O
     // texto serve para cotar, mas nao saiu do edital — e o card diz isso.
-    if(d && d.itens) d.itens.forEach(function(x){ if(x[6]) porNum[x[0]] = { t:x[6], catalogo:!!x[9] }; });
+    if(d && d.itens) d.itens.forEach(function(x){ if(x[6]) porNum[x[0]] = { t:x[6], catalogo:!!x[9], noEdital:x[10] || null }; });
     card.querySelectorAll(".idesc").forEach(function(el){
       var o = porNum[el.dataset.n], t = o && o.t;
+      // o número da linha no edital, quando não é o do PNCP (ver rotuloNaTabela)
+      var inum = o && o.noEdital && el.parentNode.querySelector(".inum");
+      if(inum) inum.textContent = inum.textContent.replace(/^Item (\d+)/, "Item $1 (no edital: " + o.noEdital + ")");
       if(!t){ el.innerHTML = '<span class="isem">Sem descritivo no texto do edital — confira o arquivo oficial.</span>'; return; }
       el.innerHTML = '<span class="irotulo">' + (o.catalogo ? 'Descrição do catálogo do PNCP' : 'Descritivo do edital') + '</span><span class="itexto">' + esc(t) + '</span>'
         + (t.length > 320 ? '<button type="button" class="imais" onclick="this.parentNode.classList.toggle(\'inteiro\');this.textContent=this.parentNode.classList.contains(\'inteiro\')?\'ver menos\':\'ver completo\'">ver completo</button>' : '');
@@ -1075,16 +1078,17 @@ function secao(doc, titulo){
 var DESC_ATUAL = null;
 function indexaDescritivos(r, base){
   var d = base && base.editais ? base.editais[r[7]] : null;
-  var porNum = {}, porDesc = {}, loteNum = {};
+  var porNum = {}, porDesc = {}, loteNum = {}, numEdital = {};
   if(d && d.itens) d.itens.forEach(function(x){
     if(x[6]){ porNum[x[0]] = x[6]; porDesc[umaLinha(x[1]).toLowerCase()] = x[6]; }
     if(x[7]) loteNum[x[0]] = { lote:x[7], item:x[8] || null };
+    if(x[10]) numEdital[x[0]] = x[10];
   });
   // O total de itens e o tamanho da lista: ela vai inteira no site e no
   // artefato (que so encurta o texto dos itens que nao cotamos). O d.total do
   // descritivos.json e o numero de PAGINAS do PDF lido — no site, o resumo de
   // Joinville/SC dizia "o edital tem 74 itens" para um edital de 47 (08/10/2026).
-  DESC_ATUAL = { porNum:porNum, porDesc:porDesc, loteNum:loteNum,
+  DESC_ATUAL = { porNum:porNum, porDesc:porDesc, loteNum:loteNum, numEdital:numEdital,
                  total: d && d.itens ? d.itens.length : 0,
                  outros: resumeOutros(r, d) };
 }
@@ -1182,7 +1186,11 @@ function ordenaPorLote(itens){
 
 function rotuloNaTabela(it){
   var L = DESC_ATUAL && DESC_ATUAL.loteNum ? DESC_ATUAL.loteNum[it[5]] : null;
-  if(!L) return String(it[5] || "");
+  // O edital que numera a linha diferente do PNCP (descritivo-por-item.mjs,
+  // indice 10): Paranaguá/PR chama de 9 no termo de referência o bebedouro que
+  // é o item 8 da disputa (usuário, 14/10/2026). Vão os dois.
+  var noEdital = DESC_ATUAL && DESC_ATUAL.numEdital ? DESC_ATUAL.numEdital[it[5]] : null;
+  if(!L) return String(it[5] || "") + (noEdital ? " (no edital: " + noEdital + ")" : "");
   // O numero que acompanha o lote e o da API, nao o lido no texto.
   //
   // O do texto erra: em Londrina/PR saiu "item 40" para o que a API chama de

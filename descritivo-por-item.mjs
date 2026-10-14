@@ -6032,6 +6032,27 @@ for (const e of dados.editais) {
     it[9] = 1;
     doCatalogo++;
   }
+
+  // O NUMERO DA LINHA na tabela do edital, quando nao e o do PNCP (usuario,
+  // 14/10/2026: "voce marcou como item 8, mas e o item 9"). Paranagua/PR
+  // (edital 14) numera o bebedouro de 9 na tabela do termo de referencia e de 8
+  // na relacao de itens do edital, que e a do sistema da disputa e do PNCP. O
+  // resumo e o card mostram os dois (indice 10). So com o codigo do catalogo na
+  // linha ("9 64931 UND. 10 BEBEDOURO"): "com 1 Unidade 1" e texto (Vicosa/MG).
+  {
+    const plano = secoes.replace(/\s+/g, ' ');
+    const UN = '(?:UND|UN|UNID|UNIDADES?|P[ÇC]|PE[ÇC]AS?|CX|KIT|CJ|CONJ|CONJUNTO)\\.?';
+    for (const it of v.itens) {
+      if (it.length > 10) it.length = 10;
+      if (!it[6] || it[9] || it[7]) continue;
+      const k = plano.indexOf(String(it[6]).replace(/\s+/g, ' ').slice(0, 40));
+      if (k < 0) continue;
+      const q = Math.round(+it[2] || 0);
+      const m = new RegExp('(?:^|\\s)0*(\\d{1,3})\\s+\\d{4,7}\\s+(?:' + UN + '\\s+0*' + q + '(?:,0+)?|0*' + q + '(?:,0+)?\\s+' + UN + ')\\s*$', 'i')
+        .exec(plano.slice(Math.max(0, k - 70), k));
+      if (m && +m[1] !== +it[0]) it[10] = +m[1];
+    }
+  }
 }
 
 fs.writeFileSync(arquivo, JSON.stringify(base), 'utf8');
