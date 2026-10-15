@@ -839,7 +839,12 @@ const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 // derrubaria "Aspirador Po/Liquido, potencia 1.200, aplicacao: laboratorio"
 // (Rio Verde/GO), que e produto legitimo. Escopar na categoria resolve sem
 // precisar adivinhar o contexto pelo texto.
-const VETO_RF_CIENT = ['imunobiolog','termolab','hemocompon','laboratori','vacina','cientific'];
+// (e o banco de gelo, que o catalogo chama de "Resfriador De Liquido": "capacidade util entre 1.000
+// e 1.200 litros ... agua gelada para processos industriais, especialmente para
+// pasteurizacao", IFC Rio do Sul, Blumenau/SC, edital 458, item 14 — usuario, 15/10/2026:
+// "banco de gelo sai". O "resfriador de liquido" do VETO_ITEM so vale na frente de outro
+// produto; aqui ele e o produto)
+const VETO_RF_CIENT = ['imunobiolog','termolab','hemocompon','laboratori','vacina','cientific','resfriador de liquido','banco de gelo'];
 // O aquecedor HALOGENO saiu do radar (usuario, 30/09/2026: "pode remover
 // aquecedor alogenio"): Arvorezinha/RS e Borrazopolis/PR, os dois de 1.200 W. O
 // aquecedor de ambiente de outro tipo (ceramico, a oleo, termoventilador)

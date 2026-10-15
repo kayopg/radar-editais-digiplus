@@ -230,8 +230,10 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    tico-tico, martelo demolidor, corte plasma, furadeira, parafusadeira, martelete, serra copo,
    esmerilhadeira, roçadeira, motosserra (15/10/2026) —, desumidificador de ar (15/10/2026; o
    ar-condicionado com "função desumidificar" fica, e o umidificador também), chapa de grelhar
-   carnes e char broiler (15/10/2026: "nem chapa para grelhar carnes"; a sanduicheira com "chapa grill"
-   e o fogão com chapa bifeteira ficam), churrasqueira, caldeirão (confirmado em
+   carnes e char broiler (15/10/2026: "nem chapa para grelhar carnes"; a sanduicheira com "chapa grill",
+   o grill elétrico portátil — confirmado: "grill eletrico fica" — e o fogão com chapa bifeteira
+   ficam), banco de gelo de processo, que o catálogo chama de "Resfriador De Líquido" (laticínio
+   do IFC em Blumenau/SC, 15/10/2026), churrasqueira, caldeirão (confirmado em
    14/10/2026), lavadora de louças, industrial ou doméstica (14/10/2026; também a "lava-pratos" e a "de bandejas e pratos", e em qualquer categoria quando o edital a descreve, 15/10/2026), moedor/moinho de
    café, enceradeira e lustradeira de piso, exaustor e depurador (também quando o
    catálogo chama o exaustor de "Ventilador Axial" e só o descritivo do edital diz o que ele

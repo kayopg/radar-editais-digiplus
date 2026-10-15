@@ -47,7 +47,9 @@ const PISO_EDITAL = Number((fonte.match(/const PISO_EDITAL = (\d+)/) || [])[1]) 
 const VETO = {
   // e o freezer de ultrabaixa temperatura, "-50 a -86 °C" (Paranavai/PR,
   // item 24, que o catalogo chama de "Refrigerador Alimentos", 22/09/2026)
-  RF: ['imunobiolog', 'termolab', 'hemocompon', 'vacina', '-86', '-80 °c', 'ultrabaix', 'ultra baix'],
+  RF: ['imunobiolog', 'termolab', 'hemocompon', 'vacina', '-86', '-80 °c', 'ultrabaix', 'ultra baix',
+    // e o banco de gelo de processo (Blumenau/SC, edital 458, item 14, 15/10/2026)
+    'banco de gelo', 'pasteuriz'],
   // e o banho-maria de controle digital com precisao de decimo de grau, que e de
   // laboratorio (IF Sudeste MG, Juiz de Fora, item 57, 22/09/2026)
   // (e o de calibracao, "Banho maria digital, 2 a 4 litros com calibracao ... variacao
