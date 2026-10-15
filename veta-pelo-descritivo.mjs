@@ -95,7 +95,7 @@ const VETO = {
 // Industrial tipo: resistivo" no catalogo e "PASS-THROUGH AQUECIDO EM ACO INOX -
 // CAPACIDADE PARA 24 GNS 1/1" no edital.
 // E o desumidificador (usuario, 15/10/2026: "desumidificador de ar tambem nao cotamos").
-const ABRE_FORA_DO_RADAR = /^[^a-z]*(?:ventilador\s*\/\s*|ventilador\s+(?=exaustor\s+industrial))?(exaustor|depurador|pass[\s-]?through|desumidificador(?:es)?)\b/;
+const ABRE_FORA_DO_RADAR = /^[^a-z]*(?:ventilador\s*\/\s*|ventilador\s+(?=exaustor\s+industrial))?(exaustor|depurador|pass[\s-]?through|desumidificador(?:es)?|chapa\s+(?:para\s+grelhar|de\s+grelhar|lisa|a\s+gas|industrial|de\s+coccao|assadeira)|chapeira|char\s?broiler)\b/;
 
 // E as listas do catalogo, sobre a descricao do PNCP, do mesmo jeito que o
 // varredura.mjs as aplica: termo novo entra no dados.json ja publicado sem

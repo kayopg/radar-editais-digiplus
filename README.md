@@ -229,8 +229,10 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    entrou na data em que ele pediu. Fora do radar: ferramenta elétrica e a gasolina — serra
    tico-tico, martelo demolidor, corte plasma, furadeira, parafusadeira, martelete, serra copo,
    esmerilhadeira, roçadeira, motosserra (15/10/2026) —, desumidificador de ar (15/10/2026; o
-   ar-condicionado com "função desumidificar" fica, e o umidificador também), churrasqueira, caldeirão (confirmado em
-   14/10/2026), lavadora de louças, industrial ou doméstica (14/10/2026), moedor/moinho de
+   ar-condicionado com "função desumidificar" fica, e o umidificador também), chapa de grelhar
+   carnes e char broiler (15/10/2026: "nem chapa para grelhar carnes"; a sanduicheira com "chapa grill"
+   e o fogão com chapa bifeteira ficam), churrasqueira, caldeirão (confirmado em
+   14/10/2026), lavadora de louças, industrial ou doméstica (14/10/2026; também a "lava-pratos" e a "de bandejas e pratos", e em qualquer categoria quando o edital a descreve, 15/10/2026), moedor/moinho de
    café, enceradeira e lustradeira de piso, exaustor e depurador (também quando o
    catálogo chama o exaustor de "Ventilador Axial" e só o descritivo do edital diz o que ele
    é, 29/09/2026, e quando o edital abre com "ventilador/ exaustor", 07/10/2026), os

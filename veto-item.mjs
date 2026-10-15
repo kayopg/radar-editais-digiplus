@@ -39,7 +39,9 @@ export const amassadeiraRapida = d => /amassadeira/.test(d) && /(?<!semi[- ])\br
 // categoria "Para lavar" pelo "maquina lavar" da maquina de roupa: sai quando o
 // NOME do item (o comeco da descricao) e de louca. A sanduicheira que "pode ir
 // na lava-loucas" e outra categoria e nao passa por aqui.
-export const lavaLoucas = d => /^[^.;:]{0,40}?(?:lava[\s-]?lou[cç]|lavadora\s+(?:de\s+)?lou[cç]|lavar\s+lou[cç])/.test(d);
+// (e pelos pratos, 15/10/2026: "maquina de lavar louca nao cotamos" — "LAVADORA,
+// INDUSTRIAL, APLICACAO BANDEJAS E PRATOS", UFG, Goiania/GO)
+export const lavaLoucas = d => /^[^.;:]{0,40}?(?:lava[\s-]?lou[cç]|lavadora\s+(?:de\s+)?lou[cç]|lavar\s+lou[cç]|lava[\s-]?pratos|lavadora\s+(?:de\s+)?pratos|lavar\s+pratos|bandejas\s+e\s+pratos)/.test(d);
 
 // A chaleira que a Digiplus cota e a ELETRICA ou a industrial (5.4b do
 // varredura.mjs, 01/09/2026); a de aluminio, de por no fogao, e panela. Ate

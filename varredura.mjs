@@ -68,7 +68,11 @@ const CAT = [
   // "carro termico (buffet)" —, na lista do usuario de 14/10/2026: "Buffet". O
   // movel de sala/cafe, o de madeira e o servico de buffet de evento saem — ver
   // VETO_ITEM e o item de servico no laco de itens.)
-  ["CC",["fogao","forno","microondas","micro-ondas","micro ondas","cooktop","fritadeira","salamandra","char broiler","charbroiler","caldeirao","panela eletrica","churrasqueira","buffet","banho maria","banho-maria","estufa para salgados"]],
+  // A chapa de grelhar carnes e o char broiler (o grelhador a gas) sairam em
+  // 15/10/2026: "nem chapa para grelhar carnes" (usuario). A chapa entrava pela
+  // "fritadeira" do catalogo "Chapa Assadeira/Fritadeira" (Florianopolis/SC, edital
+  // 377, item 20): sai pelo VETO_ITEM, so na frente do produto.
+  ["CC",["fogao","forno","microondas","micro-ondas","micro ondas","cooktop","fritadeira","salamandra","caldeirao","panela eletrica","churrasqueira","buffet","banho maria","banho-maria","estufa para salgados"]],
   // PR e EP viraram uma so em 23/09/2026, a pedido do usuario: na pagina as
   // duas eram "Para preparar" e "Para o dia a dia", e ele preferiu um rotulo
   // unico, "Eletrodomesticos". Masseira e amassadeira sairam na mesma conversa, e
@@ -767,7 +771,10 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // pressao e do radar). So na frente do produto (VETO_SO_NA_FRENTE)
 "furadeira","parafusadeira","serra tico","tico-tico","tico tico","martelete","martelo demolidor","demolidor","corte plasma","corte a plasma","corte de plasma","serra copo","serra-copo","esmerilhadeira","esmirilhadeira","rocadeira","motosserra","soprador termico","lixadeira",
 // 15/10/2026: o desumidificador ("desumidificador de ar tambem nao cotamos")
-"desumidificador"];
+"desumidificador",
+// e a chapa de grelhar carnes e o char broiler ("nem chapa para grelhar carnes",
+// 15/10/2026). A sanduicheira com "chapa grill" e o fogao "com chapa bifeteira" ficam.
+"chapa assadeira","chapa para grelhar","chapa de grelhar","chapa lisa","chapa a gas","chapa industrial","chapa de coccao","chapeira","char broiler","charbroiler"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
@@ -816,7 +823,10 @@ const VETO_SO_NA_FRENTE = ["gas liquefeito","botijoes","carga de gas","gas de co
 // e as ferramentas (15/10/2026, ver o VETO_ITEM)
 "furadeira","parafusadeira","serra tico","tico-tico","tico tico","martelete","martelo demolidor","demolidor","corte plasma","corte a plasma","corte de plasma","serra copo","serra-copo","esmerilhadeira","esmirilhadeira","rocadeira","motosserra","soprador termico","lixadeira",
 // 15/10/2026: o desumidificador ("desumidificador de ar tambem nao cotamos")
-"desumidificador"];
+"desumidificador",
+// e a chapa de grelhar carnes e o char broiler ("nem chapa para grelhar carnes",
+// 15/10/2026). A sanduicheira com "chapa grill" e o fogao "com chapa bifeteira" ficam.
+"chapa assadeira","chapa para grelhar","chapa de grelhar","chapa lisa","chapa a gas","chapa industrial","chapa de coccao","chapeira","char broiler","charbroiler"];
 
 const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 
