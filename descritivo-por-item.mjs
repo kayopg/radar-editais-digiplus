@@ -6161,6 +6161,9 @@ for (const e of dados.editais) {
       // (o item seguinte): "...DIMENSÕES APROXIMADAS 100X70X76CM 1 UNIDADE 611654
       // 5242000000681 CHAPA, ASSADEIRA..." (UFG, Goiania/GO, edital 353, item 32)
       if (q) s = s.replace(new RegExp('\\s+0*' + q + '\\s+(?:UNIDADES?|Unidades?|UN|UND)\\s+\\d{5,7}\\s+\\d{10,13}(?=\\s|$)[\\s\\S]*$'), '');
+      // e a unidade com a quantidade em decimal e mais uma coluna no fim: "...baixo
+      // consumo de energia. UN 1,00 1" (Itaguaru/GO, item 5)
+      if (q) s = s.replace(new RegExp('(?<=[.;])\\s+(?:UN|UND|UNID)\\.?\\s+0*' + q + ',0{1,4}(?:\\s+\\d{1,3})?\\s*$', 'i'), '');
       // e o numero do item SEGUINTE, com as colunas dele, no fim: "...GARANTIA
       // DE 1 ANO; 17", "...MEDIDAS EXATAS. 30 113594 80,00 UN 132,31 10.584,8 0"
       // (Porto Belo/SC, edital 263), "...com divisão de 5 g; 4" (Sapiranga/RS,

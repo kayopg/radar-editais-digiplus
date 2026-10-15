@@ -479,6 +479,13 @@ export function criaRevisor(textos) {
       if (j.length < 5 || !(pt(lj) || acentoResolve(lj)) || f(lj) < 3) return tudo;
       return a === a.toUpperCase() && b !== b.toUpperCase() ? a + b.toUpperCase() : j;
     });
+    // E a palavra com as letras espaçadas pela extracao: "baixo consumo de e n e r g
+    // i a" (Itaguaru/GO, item 5, 15/10/2026). So quando a palavra junta existe — o "a
+    // x l x p" das medidas fica.
+    t = t.replace(/(?<![\p{L}\p{N}])(?:\p{L} ){3,}\p{L}(?![\p{L}\p{N}])/gu, tudo => {
+      const j = tudo.replace(/ /g, ''), lj = j.toLowerCase();
+      return j.length >= 5 && (pt(lj) || acentoResolve(lj)) && f(lj) >= 3 ? j : tudo;
+    });
     // Palavra colada no numero: "Automatico140 litros", "altura1,76 metros",
     // "GARANTIA MINIMA DE12 MESES", "timer 60minutos", "8litros".
     t = t.replace(/(?<![\p{L}\p{N}])(\p{L}{4,})(\d+(?:[.,]\d+)?)(?![\p{L}\p{N}])/gu, (tudo, l, n, pos) => {
