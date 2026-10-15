@@ -226,7 +226,10 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    entulho "com aferição por balança" que o PNCP marcou como material (Braganey/PR).
 3c. **O que a Digiplus não cota** — diferente do veto por item, que corrige erro de captura:
    aqui o produto foi entendido certo, só não é da casa. A decisão é do usuário e cada uma
-   entrou na data em que ele pediu. Fora do radar: churrasqueira, caldeirão (confirmado em
+   entrou na data em que ele pediu. Fora do radar: ferramenta elétrica e a gasolina — serra
+   tico-tico, martelo demolidor, corte plasma, furadeira, parafusadeira, martelete, serra copo,
+   esmerilhadeira, roçadeira, motosserra (15/10/2026) —, desumidificador de ar (15/10/2026; o
+   ar-condicionado com "função desumidificar" fica, e o umidificador também), churrasqueira, caldeirão (confirmado em
    14/10/2026), lavadora de louças, industrial ou doméstica (14/10/2026), moedor/moinho de
    café, enceradeira e lustradeira de piso, exaustor e depurador (também quando o
    catálogo chama o exaustor de "Ventilador Axial" e só o descritivo do edital diz o que ele

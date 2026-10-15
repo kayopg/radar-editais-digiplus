@@ -140,7 +140,11 @@ const CAT = [
   // tres cortinas do IFFar de Santa Maria/RS (itens 25 a 27), a de Mariopolis/PR,
   // as duas de Minacu/GO e as tres de Iguaracu/PR ficavam fora (29/09/2026). Com
   // o espaco ou a virgula depois do "ar", para nao pegar "cortina articulada".
-  ["CL",["ar-condicionado","ar condicionado","arcondicionado","condicionador de ar","split","climatizador","cortina de ar","cortinas de ar","cortina ar ","cortina ar,","cortinas ar ","ventilador","desumidificador","umidificador","purificador de ar"]],
+  ["CL",["ar-condicionado","ar condicionado","arcondicionado","condicionador de ar","split","climatizador","cortina de ar","cortinas de ar","cortina ar ","cortina ar,","cortinas ar ","ventilador","umidificador","purificador de ar"]],
+  // O desumidificador saiu em 15/10/2026 ("desumidificador de ar tambem nao
+  // cotamos"). Como o "umidificador" acima esta dentro da palavra, ele sai pelo
+  // VETO_ITEM, so na frente do produto: "Ar condicionado ... funcao desumidificador"
+  // continua ar-condicionado.
   // CX (coifa, exaustor, depurador) saiu em 23/09/2026: o usuario nao cota
   // nenhum deles. Tinha voltado em 01/09 so com coifa industrial e exaustores.
   // A COIFA voltou em 14/10/2026 (usuario, na lista dos produtos que cotamos:
@@ -755,7 +759,15 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // material grafico (Pedra do Anta/MG, edital 27, item 1)
 "imas de geladeira","ima de geladeira","imas para geladeira","ima para geladeira","manta magnetica",
 // e os que so valem na frente do produto (VETO_SO_NA_FRENTE, abaixo)
-"container","conteiner","adesivo","recebimento, tratamento","destinacao final"];
+"container","conteiner","adesivo","recebimento, tratamento","destinacao final",
+// 15/10/2026: ferramenta eletrica e a gasolina (usuario: "Serra tico tico, martelo
+// demolidor, maquina de corte plasma, furadeira, martelete, serra copo,
+// esmirilhadeira, rocadeira lateral, sao itens que nao cotamos!", sobre o edital de
+// ferramentas do DMAE de Porto Alegre/RS, edital 200, em que so a lavadora de alta
+// pressao e do radar). So na frente do produto (VETO_SO_NA_FRENTE)
+"furadeira","parafusadeira","serra tico","tico-tico","tico tico","martelete","martelo demolidor","demolidor","corte plasma","corte a plasma","corte de plasma","serra copo","serra-copo","esmerilhadeira","esmirilhadeira","rocadeira","motosserra","soprador termico","lixadeira",
+// 15/10/2026: o desumidificador ("desumidificador de ar tambem nao cotamos")
+"desumidificador"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
@@ -800,7 +812,11 @@ const VETO_SO_NA_FRENTE = ["gas liquefeito","botijoes","carga de gas","gas de co
 // ar-condicionado" (UNIFEI, Itabira/MG, edital 150, item 27, R$ 56 mil), o
 // adesivo de ima (Pedra do Anta/MG) e o servico de entulho "com afericao por
 // balanca" que o PNCP marcou como material (Braganey/PR, edital 67, item 1)
-"container","conteiner","adesivo","recebimento, tratamento","destinacao final"];
+"container","conteiner","adesivo","recebimento, tratamento","destinacao final",
+// e as ferramentas (15/10/2026, ver o VETO_ITEM)
+"furadeira","parafusadeira","serra tico","tico-tico","tico tico","martelete","martelo demolidor","demolidor","corte plasma","corte a plasma","corte de plasma","serra copo","serra-copo","esmerilhadeira","esmirilhadeira","rocadeira","motosserra","soprador termico","lixadeira",
+// 15/10/2026: o desumidificador ("desumidificador de ar tambem nao cotamos")
+"desumidificador"];
 
 const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 
