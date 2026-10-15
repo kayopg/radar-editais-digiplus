@@ -469,6 +469,16 @@ export function criaRevisor(textos) {
     // Erros que formam outra palavra, ou que a regra geral nao prova por serem
     // raros demais nos editais. Cada um so no contexto em que e erro.
     for (const [re, por] of REPAROS) t = t.replace(re, por);
+    // A palavra partida pela quebra de linha com hifen: "MA- TERIAL", "PO-
+    // TÊNCIA", "AQUECI- MENTO" (Santos/SP, edital 13038), "VOL- TAGEM" (Palmas),
+    // "IN- CLUSOS" (Osorio/RS), 15/10/2026. Junta quando a palavra inteira e do
+    // dicionario e aparece nos editais; o traco que separa ("SPLIT- QUENTE",
+    // "LIGA- DESLIGA", "siga- me", "PRÉ- PINTADO") fica como esta.
+    t = t.replace(/(?<![\p{L}\p{N}])(\p{L}+)-\s(\p{L}{2,})(?![\p{L}\p{N}])/gu, (tudo, a, b) => {
+      const j = a + b, lj = j.toLowerCase();
+      if (j.length < 5 || !(pt(lj) || acentoResolve(lj)) || f(lj) < 3) return tudo;
+      return a === a.toUpperCase() && b !== b.toUpperCase() ? a + b.toUpperCase() : j;
+    });
     // Palavra colada no numero: "Automatico140 litros", "altura1,76 metros",
     // "GARANTIA MINIMA DE12 MESES", "timer 60minutos", "8litros".
     t = t.replace(/(?<![\p{L}\p{N}])(\p{L}{4,})(\d+(?:[.,]\d+)?)(?![\p{L}\p{N}])/gu, (tudo, l, n, pos) => {

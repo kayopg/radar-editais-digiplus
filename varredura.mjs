@@ -385,7 +385,7 @@ const INSTALACAO_NO_MATERIAL = new RegExp(
   + '|entreg(?:ar|ue|ues|a|ado|ados) (?:(?:o|a|os|as) [a-z]+ )?(?:devidamente )?montad|devidamente montad'
   + '|fornecid[oa]s? (?:completos?,? )?montad|montad[oa]s? (?:e em (?:perfeito )?funcionamento|no local)'
   + '|(?:instalacao|montagem) (?:sera |fica |ficara )?(?:por conta|a cargo|sob responsabilidade|de responsabilidade) d');
-const SERVICO_NA_FRENTE = /^(?:re|des)?(?:instalacao|montagem|manutencao|higienizacao|limpeza|recarga|reposicao|substituicao|conserto|reparo|servicos?|mao de obra|calibracao|locacao|troca de|assistencia tecnica|demolicao|remocao|retirada|desmontagem)(?![a-z])/;
+const SERVICO_NA_FRENTE = /^(?:re|des)?(?:instalacao|montagem|manutencao|higienizacao|limpeza|recarga|reposicao|substituicao|conserto|reparo|servicos?|mao de obra|calibracao|locacao|troca de|assistencia tecnica|demolicao|remocao|retirada|desmontagem|recebimento|destinacao|coleta)(?![a-z])/;
 // A descricao que ABRE com "instalacao"/"montagem" derruba o edital inteiro
 // (ver o `servico = true; break` mais abaixo), entao aqui o engano custa caro:
 // um item escrito "Instalacao: parede ou bancada" levaria junto a geladeira e o
@@ -736,7 +736,12 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // frasco coletor, registro na ANVISA): "Aspirador Portatil Hospitalar -Sistema
 // de succao por bomba de vacuo" (Humaita/RS, edital 89, item 4, 14/10/2026). O
 // da casa e o de po e agua.
-"aspirador portatil hospitalar","aspirador hospitalar","aspirador cirurgico","aspirador de secrec","aspirador de fluido","aspirador nasal","aspirador de muco"];
+"aspirador portatil hospitalar","aspirador hospitalar","aspirador cirurgico","aspirador de secrec","aspirador de fluido","aspirador nasal","aspirador de muco",
+// 15/10/2026: a manta magnetica "ideal para imas de geladeira" de uma compra de
+// material grafico (Pedra do Anta/MG, edital 27, item 1)
+"imas de geladeira","ima de geladeira","imas para geladeira","ima para geladeira","manta magnetica",
+// e os que so valem na frente do produto (VETO_SO_NA_FRENTE, abaixo)
+"container","conteiner","adesivo","recebimento, tratamento","destinacao final"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
@@ -776,7 +781,12 @@ const VETO_SO_NA_FRENTE = ["gas liquefeito","botijoes","carga de gas","gas de co
 "tampo","granito","mesa de apoio","borracha vedacao","borracha de vedacao","marmore",
 // 29/09/2026: painel eletrico de bomba que termina em "e ventilador"
 // (Vicentinopolis/GO). "Ar condicionado ... painel eletronico" fica.
-"painel montado","painel eletrico","quadro de comando","soft start","soft. start"];
+"painel montado","painel eletrico","quadro de comando","soft start","soft. start",
+// 15/10/2026: o conteiner de escritorio "com fornecimento de aparelho de
+// ar-condicionado" (UNIFEI, Itabira/MG, edital 150, item 27, R$ 56 mil), o
+// adesivo de ima (Pedra do Anta/MG) e o servico de entulho "com afericao por
+// balanca" que o PNCP marcou como material (Braganey/PR, edital 67, item 1)
+"container","conteiner","adesivo","recebimento, tratamento","destinacao final"];
 
 const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 
@@ -844,7 +854,11 @@ const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioim
   // laboratoriais" (UFSM, Santa Maria/RS, edital 140, item 72). Pela expressao,
   // nao pela palavra: a balanca de cozinha de Sao Jose do Inhacora/RS diz "sem
   // utilizacao para ... analises laboratoriais", e fica.
-  'atividades laboratoriais','uso laboratorial','uso em laboratorio','para laboratorio','pesagem de amostras','materiais e amostras'];
+  'atividades laboratoriais','uso laboratorial','uso em laboratorio','para laboratorio','pesagem de amostras','materiais e amostras',
+  // 15/10/2026: a veterinaria do canil (Castro/PR, edital 149, item 86) e a
+  // portatil de vidro de 200 kg do consorcio de saude, a de pesar paciente
+  // (Palmeira das Missoes/RS, edital 02, item 54)
+  'veterinari','portatil vidro','vidro visor'];
 
 // ---------------------------------------------------------------- utilidades
 // Cada linha de progresso sai carimbada com o tempo decorrido.

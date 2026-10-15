@@ -1,6 +1,7 @@
 // Orgaos que devem para a casa ou para as coligadas. Nao se cota licitacao
-// deles. Fonte: "DEVEDORES atualizado julho 2026.docx", de 13/07/2026,
-// informado pelo usuario em 03/09/2026. Cobre as cinco empresas da lista —
+// deles. Fonte: "DEVEDORES atualizado outubro 2026.pdf", listagem de
+// 14/10/2026, informada pelo usuario em 15/10/2026 (a anterior era a de julho,
+// de 13/07/2026, informada em 03/09/2026). Cobre as cinco empresas da lista —
 // Digiplus, VMLX, MV, MT e Medic — e nao so a Digiplus.
 //
 // Duas formas de casar, e a diferenca importa:
@@ -32,8 +33,10 @@ export const DEVEDORES = [
   { tipo: 'orgao', nome: 'educacao de tuntum', uf: 'MA' },
   { tipo: 'orgao', nome: 'saude publica de novo hamburgo', uf: 'RS' },
   { tipo: 'orgao', nome: 'saude do municipio de beberibe', uf: 'CE' },
+  { tipo: 'municipio', nome: 'inaja', uf: 'PR' },
   // --- MT
   { tipo: 'municipio', nome: 'grossos', uf: 'RN' },
+  // (o "FUNDO MUNICIPAL DE SAUDE- GROSSOS", de 14/10/2026, ja cai pelo municipio)
   // --- Medic
   { tipo: 'municipio', nome: 'estreito', uf: 'MA' },
   { tipo: 'orgao', nome: 'fundacao estatal piauiense', uf: 'PI' },
@@ -54,6 +57,7 @@ export const DEVEDORES = [
   { tipo: 'orgao', nome: 'saude de umarizal', uf: 'RN' },
   { tipo: 'orgao', nome: 'saude de sobral', uf: 'CE' },
   { tipo: 'municipio', nome: 'rio pardo', uf: 'RS' },
+  { tipo: 'municipio', nome: 'novo oriente de minas', uf: 'MG' },
 ];
 
 const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '')

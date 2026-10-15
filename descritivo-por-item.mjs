@@ -266,6 +266,14 @@ const municipioEmMaiusculas = nome => String(nome || '').toUpperCase().normalize
   .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   .replace(/A/g, '[AÁÀÂÃ]').replace(/E/g, '[EÉÊ]').replace(/I/g, '[IÍ]').replace(/O/g, '[OÓÔÕ]').replace(/U/g, '[UÚÜ]').replace(/C/g, '[CÇ]')
   .replace(/\s+/g, '\\s+');
+// A letra com o acento desenhado AO LADO dela, como caractere de espacamento:
+// "Pote^ncia", "mi´n.", "ventilac¸a~o" (Faxinal/PR, edital 50, item 57,
+// 15/10/2026). So minuscula com o acento que o portugues usa nela.
+const ACENTO_AO_LADO = { '^': '̂', '´': '́', '`': '̀', '~': '̃', '¸': '̧', '¨': '̈' };
+const compoeAcentos = s => s.replace(/([a-z])([\^´`~¸¨])(?=[a-zà-ú])/g, (m, l, a) => {
+  const c = (l + ACENTO_AO_LADO[a]).normalize('NFC');
+  return /^[áéíóúâêôãõçàü]$/.test(c) ? c : m;
+});
 
 // O texto dito duas vezes, "A - B", em que um lado repete o outro: o rotulo
 // da tabela cortado e a descricao inteira ("AR CONDICIONADO INVERTER 12.000
@@ -1488,6 +1496,7 @@ function limpaCelula(txt, timbres) {
 // (19) 3583.9300 - CEP 13690-091 www.descalvado.sp.gov.br". Aqui se REMOVE em
 // vez de cortar: cortar jogaria fora a continuacao da especificacao, que vem
 // logo depois do rodape e e justamente o que se quer.
+const CABECALHO_UFSM = /\s+UNIVERSIDADE\s+FEDERAL\s+[A-ZÀ-Ú][^_]{0,80}?\d{14}\s+Anexo ao Termo de Refer[êe]ncia\s+Item\s+Especifica[çc][ãa]o\s+Cat[áa]logo\s+Unidade\s+Pre[çc]o\s+M[áa]ximo\s+Quantidade\s+Pre[çc]o\s+Unit[áa]rio\s+Pre[çc]o\s+Total(?=\s+[a-zà-ú])/g;
 const RODAPE = [
   // A VIRADA DE FOLHA no meio da linha da planilha da UFSM (Santa Maria/RS): a
   // unidade, o preco, a quantidade e os campos em branco da linha, e o
@@ -1497,6 +1506,12 @@ const RODAPE = [
   // Quando o que vem depois e o numero da linha seguinte, o bloco fica: ai ele
   // e o fim da linha, e o corte pelos sublinhados continua valendo.
   /\s*Unidade\s+[\d.]+,\d{2,4}\s+[\d.]+,\d{2}\s+_{4,}\s+_{4,}\s+[A-ZÀ-Ú][^_]{0,80}?\d{14}\s+Anexo ao Termo de Refer[êe]ncia\s+Item\s+Especifica[çc][ãa]o\s+Cat[áa]logo\s+Unidade\s+Pre[çc]o\s+M[áa]ximo\s+Quantidade\s+Pre[çc]o\s+Unit[áa]rio\s+Pre[çc]o\s+Total(?=\s+(?!\d{1,3}\s)\S)/g,
+  // e o mesmo cabecalho sozinho, quando a folha vira no meio da frase e a
+  // unidade e o preco ficam no fim da linha: "...no minimo, 02 (duas)
+  // velocidades UNIVERSIDADE FEDERAL DE SANTA MARIA - UFSM 95591764000105 Anexo
+  // ao Termo de Referencia Item ... Preco Total incluindo funcao turbo" (Santa
+  // Maria/RS, edital 140, item 81, 15/10/2026). So antes de minuscula.
+  CABECALHO_UFSM,
   /\s*www\.[^\s]+/gi,
   // Cabecalho de impressao do sistema de compras no alto de cada folha, no meio
   // da celula: "...Tecnologia: Inverter; 17 Impressao: 01/09/2026 COMPRAS Hora:
@@ -4014,7 +4029,7 @@ try { manuais = JSON.parse(fs.readFileSync(path.join(DIR, 'descritivos-manuais.j
 
 const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v.secoes || []).map(s => s.texto)));
 
-let continuacoesDaFolha = 0, seguintesCortados = 0, comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, sobrasTiradas = 0, linhasPeloPreco = 0, linhasCompletadas = 0, restosPelaCopia = 0;
+let itensDentroDeOutro = 0, descricaoDepoisDoPreco = 0, continuacoesDaFolha = 0, seguintesCortados = 0, comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, sobrasTiradas = 0, linhasPeloPreco = 0, linhasCompletadas = 0, restosPelaCopia = 0;
 
 for (const e of dados.editais) {
   const v = base.editais[e[C.path]];
@@ -5926,7 +5941,55 @@ for (const e of dados.editais) {
   // 14/10/2026). Nao depois de preposicao: "ENTREGA NA CÂMARA MUNICIPAL DE..."
   // e texto do item.
   const timbreDoMunicipio = e[C.municipio] ? new RegExp('(?<!\\b(?:NA|DA|À|A|PARA|PELA|NO|DO|EM|AO)\\s)\\s(?:C[ÂA]MARA|PREFEITURA)\\s+MUNICIPAL\\s+DE\\s+'
-    + municipioEmMaiusculas(e[C.municipio]) + '(?=\\s+\\p{Lu})', 'gu') : null;
+    + municipioEmMaiusculas(e[C.municipio])
+    // e o estado na linha de baixo do timbre: "...FACAS EM AÇO INOX COM
+    // PREFEITURA MUNICIPAL DE IGUARAÇU ESTADO DO PARANÁ BORDAS EM ALUMINIO"
+    // (Iguaracu/PR, edital 052, item 53, 15/10/2026)
+    + '(?:\\s+ESTADO\\s+D[OEA]\\s+(?:PARAN[ÁA]|RIO\\s+GRANDE\\s+DO\\s+SUL|SANTA\\s+CATARINA|S[ÃA]O\\s+PAULO|MINAS\\s+GERAIS|GOI[ÁA]S|MATO\\s+GROSSO\\s+DO\\s+SUL))?'
+    + '(?=\\s+\\p{Lu})', 'gu') : null;
+  const temErrata = /onde\s+se\s+l[êe]/i.test(secoes);
+  // A TABELA COM A DESCRICAO DEPOIS DO PRECO: "13 130801 4,00 UN 2.688,53
+  // 10.754,12 FOGÃO INDUSTRIAL ... 14 130802 5,00 UN 246,50 1.232,50
+  // LIQUIDIFICADOR – COM NO MÍNIMO 12 VELOCIDADES..." (Porto Belo/SC, edital
+  // 263, 15/10/2026). O recorte, que espera a descricao ANTES do preco, dava ao
+  // liquidificador o texto do fogao, deixava o numero e as colunas do item
+  // seguinte no fim ("...GARANTIA DE 1 ANO; 17") e pegava a versao velha da
+  // tabela, que o edital traz duas vezes. Aqui o texto do item e o que vem
+  // depois da linha dele (numero, codigo, quantidade, unidade, o preco do
+  // proprio item e o total), ate a linha seguinte, o timbre da folha, o "Total
+  // Requisicao" ou a clausula seguinte; entre as copias, a mais parecida com o
+  // nome do item no PNCP. So no edital que tem essa tabela (dez linhas ou mais).
+  {
+    const UNI = '(?:UN|UND|UNID|CX|PC|KG|PCT|PAR|JG|CJ|Unidade|UNIDADE)\\.?';
+    const LINHA = new RegExp('(?:^|\\s)\\d{1,3}\\s+\\d{4,7}\\s+[\\d.]+,\\d{2}\\s+' + UNI + '\\s+[\\d.]+,\\d{2}\\s+[\\d.]+\\s?,\\s?\\d\\s?\\d\\s+(?=\\p{Lu})', 'gu');
+    const plano = secoes.replace(/\s+/g, ' ');
+    if ((plano.match(LINHA) || []).length >= 10) {
+      const nz = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+      const pal = t => new Set(nz(t).split(/[^a-z0-9]+/).filter(w => w.length >= 3));
+      const parecido = (a, b) => { const A = pal(a), Bp = pal(b); let i = 0; for (const w of A) if (Bp.has(w)) i++; return i / Math.max(1, Math.min(A.size, Bp.size)); };
+      for (const it of v.itens) {
+        if (it[9] || !(+it[4] > 0)) continue;
+        const [int, cent] = (+it[4]).toFixed(2).split('.');
+        const preco = int.replace(/\B(?=(\d{3})+(?!\d))/g, '\\.?') + ',' + cent;
+        const re = new RegExp('(?:^|\\s)0*' + it[0] + '\\s+\\d{4,7}\\s+[\\d.]+,\\d{2}\\s+' + UNI + '\\s+' + preco + '\\s+[\\d.]+\\s?,\\s?\\d\\s?\\d\\s+(?=\\p{Lu})', 'gu');
+        let melhor = null, nota = 0;
+        for (const m of plano.matchAll(re)) {
+          // o timbre da folha sai de onde estiver (a celula continua depois
+          // dele: "...COPO; ESTADO DE SANTA CATARINA MUNICÍPIO DE PORTO BELO ...
+          // Fone/Fax: 0**47 – 3369-4111 COMPRIMENTO DO FIO 1M; BIVOLT...")
+          let c = (' ' + plano.slice(m.index + m[0].length, m.index + m[0].length + 4000))
+            .replace(/\s*ESTADO\s+D[EOA]\s+[A-ZÀ-Ú ]{4,40}\s+MUNIC[ÍI]PIO\s+DE\s[\s\S]{0,500}?\d{4}\s*[-–]\s*\d{4}(?=\s)/gu, '');
+          const fim = new RegExp(LINHA.source + '|\\s-?\\s*ESTADO\\s+D[EOA]\\s+\\p{Lu}{4}|\\s-?\\s*Total\\s+Requisi|\\s\\d{1,2}(?:\\.\\d{1,2})*\\s*[-–—]\\s*\\p{Lu}|\\s-?\\s*<\\/?\\s*[A-Za-z]{1,6}[\\s>]', 'u').exec(c);
+          if (fim) c = c.slice(0, fim.index);
+          c = c.replace(/\s*[-–—]\s*$/, '').trim();
+          if (c.length < 20) continue;
+          const p = parecido(c, it[1]);
+          if (p > nota) { nota = p; melhor = c; }
+        }
+        if (melhor && nota >= 0.5 && melhor !== it[6]) { it[6] = melhor; descricaoDepoisDoPreco++; }
+      }
+    }
+  }
   for (const it of v.itens) {
     if (!it[6] || it[9]) continue;
     let s = it[6], antes;
@@ -5937,10 +6000,22 @@ for (const e of dados.editais) {
     // ... CAPACIDADE TOTAL MINIMA DE 430 LITROS ... 1.2 – DA NOVA DATA"
     // (Pedras de Maria da Cruz/MG, edital 013, item 39, 14/10/2026). O texto
     // novo vai ate a clausula seguinte da alteracao.
-    if (/onde\s+se\s+l[êe]/i.test(s)) {
+    // E quando o recorte pegou a especificacao velha da TABELA e a errata a
+    // repete depois do "Onde se lê:": "ITEM 15 – LAVADORA DE ALTA PRESSÃO Onde
+    // se lê: LAVADORA DE ALTA PRESSÃO 1900W ... Leia-se: LAVADORA DE ALTA
+    // PRESSÃO, ELÉTRICA, COM POTÊNCIA MÍNIMA DE 1.800 W..." (Pedras de Maria da
+    // Cruz/MG, edital 013, item 15, 15/10/2026 — o PNCP ja traz o texto novo).
+    const ini60 = s.replace(/\s+/g, ' ').slice(0, 60);
+    let kErrata = -1;
+    if (/onde\s+se\s+l[êe]/i.test(s)) kErrata = secoes.replace(/\s+/g, ' ').indexOf(ini60);
+    else if (temErrata && ini60.length >= 40) {
+      const m0 = new RegExp('Onde\\s+se\\s+l[êe]\\s*:?\\s*' + ini60.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i').exec(secoes.replace(/\s+/g, ' '));
+      if (m0) kErrata = m0.index + m0[0].length - ini60.length;
+    }
+    if (kErrata >= 0) {
       const plano = secoes.replace(/\s+/g, ' ');
-      const k = plano.indexOf(s.replace(/\s+/g, ' ').slice(0, 60));
-      const m = k >= 0 ? /Leia-?se\s*:?\s*/i.exec(plano.slice(k, k + s.length + 400)) : null;
+      const k = kErrata;
+      const m = /Leia-?se\s*:?\s*/i.exec(plano.slice(k, k + s.length + 400));
       if (m) {
         const ini = k + m.index + m[0].length;
         let novo = plano.slice(ini, ini + 3000);
@@ -6035,6 +6110,29 @@ for (const e of dados.editais) {
         // e o "í" que o PDF desenhou como "ı" com o acento solto, "Capacidade
         // Mı ́nima 30L" (Sant'Ana do Livramento/RS, itens 8 e 9).
         .replace(/ı\s?\u0301/g, 'í');
+      // (o cabecalho da folha da UFSM tambem aqui: a linha achada pelo preco
+      // nao passa pelo tiraRodape — Santa Maria/RS, edital 140, item 81)
+      s = compoeAcentos(s).replace(CABECALHO_UFSM, '');
+      // Na revisao de 15/10/2026 ("verifique novamente edital por edital"):
+      // o cabecalho do item seguinte e o que vem depois dele, "...Garantia
+      // minima de 12 meses. ITEM 08: GELADEIRA DUPLEX FROST FREE C3CCCC..."
+      // (Uberlandia/MG, edital 378, item 7 — o resto era a fonte do PDF sem
+      // mapa de caracteres). So com o numero de outro item;
+      {
+        const m = /(?<=[.;])\s+ITEM\s+0*(\d{1,3})\s*[:–—-]\s+\p{Lu}/u.exec(s);
+        if (m && +m[1] !== +it[0] && m.index >= 100) s = s.slice(0, m.index);
+      }
+      // o cabecalho da tabela (do lote seguinte) no fim: "...a base de pilhas.
+      // LOTE 12 – CORTINA E VARÃO ITEM PRODUTO / DESCRIÇÃO Unidad e QT D Valor
+      // Unitário Valor Total" (Ivai/PR, edital 38, itens 10, 19, 24 e 31), "...
+      // Item Nome do produto/serviço Quantidade" (Imbau/PR, edital 85);
+      // e "...Unid. 04 LOTE 03 (COTA EXCLUSIVA PARA ME/EPP/COOP) Item Descrição
+      // Marca/Mod. Unid. Quant." (Santos/SP, edital 13038, item 5);
+      s = s.replace(/\s+(?:LOTE\s+\d{1,3}\s*(?:[–—-]\s*[^.;]{3,80}?|\([^)]{3,60}\))\s+)?(?:ITEM|N[úu]mero|Item)\s+(?:PRODUTO|Descri[çc][ãa]o|Nome\s+do\s+produto)[^;]{0,100}?(?:Valor\s+Total|Quantidade|Quant\.?|Qtde\.?)\s*$/i, '')
+        // e a clausula do contrato, quando o recorte veio da minuta: "...pintura
+        // na cor verde folha. Parágrafo Segundo - O valor global deste Termo de
+        // Contrato é de R$..." (Caxias do Sul/RS, edital 145, item 4).
+        .replace(/(?<=[.;])\s+Par[áa]grafo\s+(?:[ÚU]nico|Primeiro|Segundo|Terceiro|Quarto|Quinto|\d+º?)\s*[-–—:.]\s[\s\S]*$/i, '');
       if (timbreDoMunicipio) s = s.replace(timbreDoMunicipio, '');
       // as colunas de unidade, quantidade, preco unitario e total no meio da
       // frase, quando a celula atravessa a folha: "...TODOS OS ACESSORIOS
@@ -6055,6 +6153,17 @@ for (const e of dados.editais) {
       // materiais e volumes diversos. 01 - SMED" (Barao do Triunfo/RS, edital 57,
       // itens 6, 9, 15 e 30, 14/10/2026). So com a quantidade do proprio item.
       if (q) s = s.replace(new RegExp('(?<=[.;])\\s+0*' + q + '\\s*-\\s*[A-ZÀ-Ú]{2,10}\\s*$'), '');
+      // e o campo da quantidade que fecha o bloco do item, com ou sem o numero e
+      // o item seguinte: "...garantia mínima de 12 meses. Quantidade:", "...
+      // Quantidade: 6 ITEM 19" (Embrapa, Brasilia/DF, edital 45, 15/10/2026)
+      s = s.replace(/(?<=[.;])\s+Quantidade\s*:\s*(?:\d+(?:\s+(?:unidades?|un)\.?)?\.?)?(?:\s+ITEM\s+\d+)?\s*$/i, '');
+      // e o numero do item SEGUINTE, com as colunas dele, no fim: "...GARANTIA
+      // DE 1 ANO; 17", "...MEDIDAS EXATAS. 30 113594 80,00 UN 132,31 10.584,8 0"
+      // (Porto Belo/SC, edital 263), "...com divisão de 5 g; 4" (Sapiranga/RS,
+      // edital 74), 15/10/2026. Nao depois de dois-pontos, "x", "de" e afins
+      // ("Bocas: 4", o "5 de 21" da folha).
+      s = s.replace(new RegExp('(?<![:=x×]|\\b(?:de|com|até|ate|a|e|por|n[º°o]|cerca|aprox\\.?))\\s0*' + (+it[0] + 1)
+        + '(?:\\s+\\d{4,7})?(?:\\s+[\\d.]+,\\d{1,2})?(?:\\s+(?:UN|UND|UNID|Unidade|UNIDADE|PC|CX|KG)\\.?)?(?:\\s+[\\d.]+,\\d{1,2})*(?:\\s+[\\d.]+,\\d\\s\\d)?\\s*$', 'i'), '');
       if (q) s = s.replace(new RegExp('\\s0*' + q + '\\s+unidades?\\s+(?:AMPLA(?:\\s+CONCORR[ÊE]NCIA)?|EXCLUSIV[OA](?:\\s+(?:PARA\\s+)?ME\\s*\\/?\\s*EPP)?|COTA\\s+(?:PRINCIPAL|RESERVADA)(?:\\s+(?:PARA\\s+)?ME\\s*\\/?\\s*EPP)?)(?:\\s+\\S*PREFEITURA)?(?=\\s)', 'gi'), '');
     } while (s !== antes);
     // A COPIA LIMPA do mesmo item em outro ponto do edital, quando a que o
@@ -6088,6 +6197,54 @@ for (const e of dados.editais) {
       }
     }
     it[6] = s;
+  }
+
+  // UM ITEM DENTRO DO OUTRO (15/10/2026, "verifique novamente edital por
+  // edital"): o descritivo que engoliu o item seguinte inteiro, "...garantia de
+  // no mínimo 12 meses. 06 UNID. AUTOCLAVE HORIZONTAL, de bancada..." (Jardim/MS,
+  // edital 1, item 1: o ar-condicionado levava a autoclave do item 2), corta onde
+  // o outro comeca — quando o outro e produto diferente e o texto dele diz o
+  // produto. E a frase de um item dada a outro produto, "Acionamento através de
+  // controle remoto sem fio. Gás ecológico r-32..." no compressor odontologico
+  // (Osorio/RS, edital 79, itens 7 e 12, pedacos do ar-condicionado do item 1):
+  // o item de fora do radar cujo texto e um pedaco do de um item do radar, de
+  // outro produto, e nao diz o proprio produto fica sem descritivo (e ganha o
+  // nome do PNCP logo abaixo, se ele servir).
+  {
+    const nzp = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    const sp = t => String(t || '').replace(/\s+/g, ' ').trim();
+    const pal = t => new Set(nzp(t).split(/[^a-z0-9]+/).filter(w => w.length >= 3));
+    const parecido = (a, b) => { const A = pal(a), Bp = pal(b); let i = 0; for (const w of A) if (Bp.has(w)) i++; return i / Math.max(1, Math.min(A.size, Bp.size)); };
+    // o texto diz o proprio produto: a primeira palavra de 4 letras ou mais do nome
+    const dizOProduto = (txt, nome) => { const w = (nzp(nome).match(/[a-z]{4,}/) || [])[0]; return !!w && nzp(txt).slice(0, 160).includes(w.slice(0, 5)); };
+    const doRadar = new Set((e[C.itens] || []).filter(r => r[0] !== 'LT' && r[0] !== 'ED').map(r => String(r[5])));
+    const com = v.itens.filter(x => x[6] && !x[9]);
+    for (const y of com) {
+      const t = sp(y[6]);
+      let corte = -1;
+      for (const x of com) {
+        if (x === y) continue;
+        const s = sp(x[6]);
+        if (s.length < 60 || t.length <= s.length + 60) continue;
+        const k = t.indexOf(s);
+        if (k < 60) continue;
+        if (parecido(x[1], y[1]) >= 0.5 || !dizOProduto(s, x[1])) continue;
+        if (corte < 0 || k < corte) corte = k;
+      }
+      if (corte > 0) {
+        const q = Math.round(+y[2] || 0);
+        y[6] = t.slice(0, corte).replace(new RegExp('\\s+0*' + q + '\\s+(?:UN|UND|UNID|UNIDADES?)\\.?\\s*$', 'i'), '').trim();
+        itensDentroDeOutro++;
+      }
+    }
+    for (const x of com) {
+      if (doRadar.has(String(x[0])) || !x[6]) continue;
+      const s = sp(x[6]);
+      if (s.length < 40 || dizOProduto(s, x[1])) continue;
+      if (com.some(y => y !== x && doRadar.has(String(y[0])) && sp(y[6]).length > s.length + 20 && sp(y[6]).includes(s) && parecido(x[1], y[1]) < 0.3)) {
+        x[6] = ''; itensDentroDeOutro++;
+      }
+    }
   }
 
   // E, por fim, o item que o edital nao especifica em lugar nenhum: se o
@@ -6153,4 +6310,6 @@ console.log(habilitacaoTirada + " descritivo(s) que eram texto de habilitacao sa
 console.log(`${linhasPeloPreco} item(ns) do radar achados pela linha entre o numero e o preco · ${linhasCompletadas} descritivo(s) cortados completados por ela · ${restosPelaCopia} completados pela outra copia do edital`);
 console.log(`${seguintesCortados} descritivo(s) que levavam o item seguinte inteiro cortados no numero dele`);
 console.log(`${continuacoesDaFolha} descritivo(s) completados com a continuacao depois da virada de folha`);
+console.log(`${descricaoDepoisDoPreco} descritivo(s) da tabela com a descricao depois do preco`);
+console.log(`${itensDentroDeOutro} descritivo(s) com o texto de outro item (cortado ou tirado)`);
 console.log(`docs/descritivos.json: ${(fs.statSync(arquivo).size / 1024).toFixed(0)} KB`);
