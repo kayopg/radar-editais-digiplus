@@ -401,6 +401,11 @@ for (const e of dados.editais) {
       || (instalaNoObjeto && instalavel(norm(it[3]), it[0]) && 'instalacao quando necessaria, e o aparelho se instala')
       || (instalaNoLote && instalavel(norm(it[3]), it[0]) && 'instalacao em item do mesmo lote')
       || (it[0] === 'PR' && amassadeiraRapida(d + ' ' + norm(it[3])) && 'amassadeira rapida')
+      // a "mesa inox" do catalogo que o edital descreve como outro movel: o item 18
+      // de Itaberai/GO e "Mesa material estrutura: aco inoxidavel..." no PNCP e
+      // "Banqueta ergonomica giratoria" no edital, pelo numero e pelo preco
+      // (15/10/2026)
+      || (it[0] === 'MI' && !/(?:^|[^a-z])(?:mesa|bancada)/.test(d.slice(0, 200)) && 'o edital descreve outro movel, nao uma mesa')
       || (it[0] === 'LV' && (lavaLoucas(norm(it[3])) || lavaLoucas(d)) && 'lavadora de louca')
       || (it[0] === 'PR' && chaleiraDeFogao(norm(it[3]), d) && 'chaleira de fogao')
       || (!cotaNaUf(e[C.uf], norm(it[3]), d) && 'linha que nao se cota em ' + e[C.uf])

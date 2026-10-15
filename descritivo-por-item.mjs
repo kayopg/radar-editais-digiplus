@@ -6157,6 +6157,10 @@ for (const e of dados.editais) {
       // o item seguinte: "...garantia mínima de 12 meses. Quantidade:", "...
       // Quantidade: 6 ITEM 19" (Embrapa, Brasilia/DF, edital 45, 15/10/2026)
       s = s.replace(/(?<=[.;])\s+Quantidade\s*:\s*(?:\d+(?:\s+(?:unidades?|un)\.?)?\.?)?(?:\s+ITEM\s+\d+)?\s*$/i, '');
+      // e a quantidade do item com os dois codigos do catalogo, e o que vem depois
+      // (o item seguinte): "...DIMENSÕES APROXIMADAS 100X70X76CM 1 UNIDADE 611654
+      // 5242000000681 CHAPA, ASSADEIRA..." (UFG, Goiania/GO, edital 353, item 32)
+      if (q) s = s.replace(new RegExp('\\s+0*' + q + '\\s+(?:UNIDADES?|Unidades?|UN|UND)\\s+\\d{5,7}\\s+\\d{10,13}(?=\\s|$)[\\s\\S]*$'), '');
       // e o numero do item SEGUINTE, com as colunas dele, no fim: "...GARANTIA
       // DE 1 ANO; 17", "...MEDIDAS EXATAS. 30 113594 80,00 UN 132,31 10.584,8 0"
       // (Porto Belo/SC, edital 263), "...com divisão de 5 g; 4" (Sapiranga/RS,

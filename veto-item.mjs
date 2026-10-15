@@ -76,10 +76,14 @@ export const chaleiraDeFogao = (d, resto = '') => {
 //     itens", e o usuario: "itens que cotamos estao de fora". SP nao entrou na
 //     pergunta e fica como estava. A camara fria, o expositor, a cervejeira e o
 //     resfriador continuam so em RS, SC e PR.
+//   e, em todas elas, a MESA INOX e a BALANCA (usuario, 15/10/2026: "mesa inox e
+//     balancas pode adicionar nos demais estados"), que tinham entrado so em RS,
+//     SC e PR (a balanca em 14/10, a mesa em 15/10). A mesa de hospital continua
+//     fora em todo lugar (VETO_MI, varredura.mjs).
 // A linha e a do PRODUTO, o primeiro termo de categoria da descricao: o
 // "Climatizador ... com ventilador" e climatizador, e a "Cortina de ar" nao e
 // ar-condicionado.
-const INDUSTRIAIS = ['ar-condicionado', 'bebedouro industrial', 'fogao industrial', 'batedeira industrial', 'lavadora de alta pressao'];
+const INDUSTRIAIS = ['ar-condicionado', 'bebedouro industrial', 'fogao industrial', 'batedeira industrial', 'lavadora de alta pressao', 'mesa inox', 'balanca'];
 const DO_CENTRO = [...INDUSTRIAIS, 'forno industrial', 'refrigeracao', 'liquidificador industrial', 'climatizador'];
 export const LINHAS_DA_UF = {
   MT: new Set(),
@@ -92,6 +96,9 @@ const REFRIGERACAO = /^(?:refrigerador|geladeira|frigobar|freezer|congelador|con
 export function linhaDoProduto(d, posicaoDoTermo) {
   const p = posicaoDoTermo(d);
   if (!p || !p.t) return null;
+  // pela categoria: a mesa inox (MI) e a balanca (BL), de qualquer nome
+  if (p.c === 'MI') return 'mesa inox';
+  if (p.c === 'BL') return 'balanca';
   // "SPLITTER OTICO 1X8" e de rede (Guariba/SP, 05/10/2026), nao split
   if (p.t === 'split' && /^split[a-z]/.test(d.slice(p.i))) return null;
   if (/^(?:ar[- ]?condicionado|arcondicionado|condicionador de ar|split)$/.test(p.t)) return 'ar-condicionado';

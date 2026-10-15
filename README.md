@@ -23,9 +23,9 @@ estado tem as suas linhas de produto (`LINHAS_DA_UF`, em `veto-item.mjs`):
 
 | UF | O que se cota |
 |---|---|
-| RS, SC, PR | tudo o que o radar pega (a balança e a mesa inox, só aqui) |
-| SP | ar-condicionado, bebedouro industrial, fogão industrial, batedeira industrial, micro-ondas e ventilador |
-| DF, GO, MS, MG | ar-condicionado, bebedouro industrial, fogão industrial, batedeira industrial e, desde 09/10/2026, forno industrial, refrigeração (freezer, geladeira, refrigerador, frigobar), liquidificador industrial e climatizador |
+| RS, SC, PR | tudo o que o radar pega |
+| SP | ar-condicionado, bebedouro industrial, fogão industrial, batedeira industrial, micro-ondas, ventilador e, desde 15/10/2026, balança e mesa inox |
+| DF, GO, MS, MG | ar-condicionado, bebedouro industrial, fogão industrial, batedeira industrial e, desde 09/10/2026, forno industrial, refrigeração (freezer, geladeira, refrigerador, frigobar), liquidificador industrial e climatizador; desde 15/10/2026, balança e mesa inox |
 
 "Industrial" é a palavra no rótulo ou no começo do descritivo; a batedeira, o
 liquidificador e o forno "de uso profissional" contam, o liquidificador também
@@ -270,21 +270,26 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    cotamos"), só em RS, SC e PR, com os vetos que o usuário já tinha decidido: a balança de
    pesar gente (antropométrica, de bebê, de banheiro, "mamãe-bebê"), a de laboratório
    (analítica, de precisão "para atividades laboratoriais") e a de gado — e, desde 15/10/2026,
+   também nas demais UFs ("mesa inox e balanças pode adicionar nos demais estados"), a de
+   bebê escrita errado ("Antompométrica infantil ... concha", Bicas/MG),
    a veterinária (canil de Castro/PR) e a portátil de vidro de 200 kg de consórcio de saúde
    (Palmeira das Missões/RS), que é a de pesar paciente. Na mesma conversa
    entrou o extrator pelo nome do catálogo ("Aparelho Extração Suco") e saiu a lavadora de
    louças, que o catálogo chama de "Máquina Lavar Louças" e entrava pela máquina de roupa.
    A **mesa inox** entrou em 15/10/2026 ("Mesa Inox agora é um item que cotamos também"),
-   categoria MI ("Mesas inox"), só em RS, SC e PR: a descrição que COMEÇA por "mesa" e fala
+   categoria MI ("Mesas inox"), em todas as UFs, e só a de inox ("apenas cotamos mesas em
+   INOX, demais mesas não queremos"): a descrição que COMEÇA por "mesa" e fala
    em inox logo adiante — "MESA DE TRABALHO AÇO INOX", "Mesa Manipulação / Preparação
    Alimentos material tampo: aço inoxidável", "LOTE 1 - Mesa inox 160 x 70 x 90 cm" — com
    cuba, de apoio, de manipulação. O garfo, a faca e a colher "de mesa", a autoclave e a
    balança "de mesa" e o fogão "com mesa inox" não são mesa. Saem a de hospital e de clínica
    (de Mayo, ginecológica, auxiliar hospitalar, instrumental, de exame, a auxiliar de 40 × 40 ×
    80, de necropsia, veterinária, odontológica, de autoclave) e, pelo texto do edital, a de
-   tampo de MDF, madeira, granito ou fórmica — no nome do PNCP não, porque o catálogo pode
+   tampo de MDF, madeira, granito ou fórmica, a de estrutura em aço carbono pintado (Assis
+   Chateaubriand/PR) e a que o edital descreve como outro móvel (a "mesa inox" do catálogo
+   que é uma banqueta no edital, Itaberaí/GO) — no nome do PNCP não, porque o catálogo pode
    estar errado (a UNILA, Foz do Iguaçu/PR: "tampo: mdf" no PNCP, "inteiro em aço inox" no
-   edital). Na lista de 15/10 entraram 16 mesas em 10 editais, entre elas 210 mesas de apoio
+   edital). Na lista de 15/10 ficaram 20 mesas em 11 editais (RS, SC, PR, MG e GO), entre elas 210 mesas de apoio
    para buffet em Porto Alegre/RS (edital 333).
    E quando a tabela do edital numera a linha diferente do PNCP, o resumo e o card mostram
    os dois: "8 (no edital: 9)" — Paranaguá/PR numera o bebedouro de 9 no termo de

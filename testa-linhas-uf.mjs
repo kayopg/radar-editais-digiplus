@@ -21,6 +21,12 @@ const CASOS = [
   ['SP', 'LAVADORA JATO DE ALTA PRESSÃO, para uso semi-profissional, motor: 1,6 cv', '', true], // Birigui/SP
   ['DF', 'MÁQUINA LAVADORA DE ALTA PRESSÃO 1800 PSI', '', true],
   ['SP', 'Máquina de lavar roupas automática 12 kg', '', false],                    // a de roupa continua fora
+  // a mesa inox e a balanca nas cinco UFs (15/10/2026)
+  ['SP', 'MESA DE TRABALHO AÇO INOX 1,90X70X70CM. TOTAL INOX 304', '', true],
+  ['GO', 'Mesa Manipulação / Preparação Alimentos material tampo: aço inoxidável, material estrutura: tubular', '', true],
+  ['MG', 'BALANÇA DIGITAL PARA ALIMENTOS – capacidade máxima de pesagem de 40 kg', '', true],
+  ['DF', 'Balança Eletrônica Balança Eletrônica, Tipo:Digital, Tipo Painel:Cristal Líquido', '', true],
+  ['MS', 'Mesa Copa/Cozinha material mesa: madeira, forma mesa: retangular', '', false],   // sem inox nao e mesa inox
   ['MG', 'CONDICIONADOR, de ar, tipo SPLIT INVERTER, CICLO FRIO, HI WALL', '', true],
   ['MS', 'APARELHO DE AR-CONDICIONADO SPLIT 9000 BTUS', '', true],
   ['MG', 'BEBEDOURO DE 150 LITROS INOX, CARACTERISTICAS: RESERVATORIO EM POLIPROPILENO', '', true],

@@ -872,7 +872,10 @@ const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioim
   // 15/10/2026: a veterinaria do canil (Castro/PR, edital 149, item 86) e a
   // portatil de vidro de 200 kg do consorcio de saude, a de pesar paciente
   // (Palmeira das Missoes/RS, edital 02, item 54)
-  'veterinari','portatil vidro','vidro visor'];
+  'veterinari','portatil vidro','vidro visor',
+  // 15/10/2026, na ampliacao para as demais UFs: "Balanca Antompometrica infantil
+  // ... dimensoes de concha" (Bicas/MG, edital 7, item 3), a de bebe escrita errado
+  'antompometr','concha'];
 
 // A mesa inox que nao e de cozinha (15/10/2026, na entrada da categoria MI): a de
 // hospital e de clinica — "MESA DE MAYO", "Mesa Ginecologica", "Mesa auxiliar
@@ -889,7 +892,10 @@ const VETO_MI = ['mayo','ginecolog','hospitalar','hospital','cirurgic','instrume
 // orgao escolheu pode estar errado — o item 19 da UNILA (Foz do Iguacu/PR) e "Mesa
 // Copa/Cozinha ... revestimento tampo: mdf com lamina de imbuia" no PNCP e "Produto
 // inteiro fabricado em Aco Inox AISI 430 (Tampo e Estrutura)" no edital.
-const VETO_MI_TAMPO = ['mdf','mdp','madeira','granito','formica','melamin'];
+// E a de estrutura de outro material (usuario, 15/10/2026: "apenas cotamos mesas em
+// INOX, demais mesas nao queremos"): "MESA DE SERVICO, TAMPO DE INOX ..., ESTRUTURA
+// EM ACO CARBONO, COM PINTURA EPOXI" (Assis Chateaubriand/PR, item 151).
+const VETO_MI_TAMPO = ['mdf','mdp','madeira','granito','formica','melamin','aco carbono','pintura epoxi','pintura eletrostatica'];
 
 // ---------------------------------------------------------------- utilidades
 // Cada linha de progresso sai carimbada com o tempo decorrido.
