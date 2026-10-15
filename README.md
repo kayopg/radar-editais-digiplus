@@ -247,6 +247,10 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    de outra categoria — um gerador "com ventilador de arrefecimento" cairia em climatização.
    O aquecedor de **ambiente** continua, em "Outros" — menos o **halógeno**, que saiu em
    30/09/2026 (só na categoria dele: a "lâmpada halógena" do forno não derruba o forno).
+   Nem o aquecedor de animais, a campânula de aviário e pocilga (IFC Rio do Sul, Blumenau/SC,
+   15/10/2026). E a lava-louças sai em qualquer categoria quando o texto do edital abre com
+   ela: o CEFET-MG (edital 335, item 39) cadastrou no PNCP com o catálogo de balança a
+   "LAVA-LOUÇAS INDUSTRIAL TIPO CAPÔ" de R$ 50.902,50.
    A **lavadora de alta pressão** (lava-jato) saiu em 28/09/2026 e voltou em 08/10/2026, na
    categoria "Para lavar"; ali o "veículo" da descrição ("limpeza de pisos, paredes,
    veículos") não veta. A **lavadora/secadora de piso** (a bateria, tipo Kärcher BR) fica fora mesmo quando o PNCP a chama de "lavadora alta pressão": o descritivo do item derruba (Paranavaí/PR, 14/10/2026). Ela entra também em SP, MG, GO, MS e DF, de qualquer porte (08/10/2026).

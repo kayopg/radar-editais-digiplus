@@ -820,6 +820,11 @@ const VETO_RF_CIENT = ['imunobiolog','termolab','hemocompon','laboratori','vacin
 // continua em "Outros". So na categoria dele: "lampada halogena" e a luz do
 // forno, e o forno fica.
 const VETO_OT_HALOGENO = ['halogen','alogen'];
+// e o aquecedor de ANIMAIS: "Campanula (Resistencia) Refletora de Calor Eletrica ...
+// destinada ao aquecimento localizado de animais em criacao, especialmente indicada
+// para suinocultura e avicultura" (IFC Rio do Sul, Blumenau/SC, edital 458, item 11,
+// 15/10/2026), o mesmo mercado da balanca veterinaria
+const VETO_OT_ANIMAIS = ['campanula','avicultura','suinocultura','pintinho','leitoes','aves e suinos','animais em criacao'];
 
 // A VETO_GE_GRUPO, que separava o grupo gerador trifasico do portatil, durou um
 // dia: em 24/09/2026 o usuario tirou o gerador inteiro e a categoria GE saiu da
@@ -1217,6 +1222,7 @@ for (const o of cands) {
     if (cat === 'MI' && VETO_MI.some(v => d.includes(v))) continue;
     if (cat === 'LV' && lavaLoucas(d)) continue;
     if (cat === 'OT' && VETO_OT_HALOGENO.some(v => d.includes(v))) continue;
+    if (cat === 'OT' && VETO_OT_ANIMAIS.some(v => d.includes(v))) continue;
     if (!cotaNaUf(o.uf, d, '', true)) continue;
     if (cat === 'PR' && amassadeiraRapida(d)) continue;
     if (cat === 'PR' && chaleiraDeFogao(d)) continue;

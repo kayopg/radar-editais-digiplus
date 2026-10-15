@@ -70,7 +70,7 @@ const VETO = {
     'secadora de piso', 'lavadora de piso', 'lavadora de pisos', 'lavadora/secadora de piso', 'automatica de piso'],
   // o aquecedor halogeno saiu do radar (usuario, 30/09/2026); a mesma lista do
   // varredura.mjs (VETO_OT_HALOGENO), so na categoria dele
-  OT: ['halogen', 'alogen'],
+  OT: ['halogen', 'alogen', ...lista('VETO_OT_ANIMAIS')],
   // Em qualquer categoria: o item 16 da EBSERH Santa Maria/RS e "Ventilador
   // tipo: parede, potencia motor: 500" no catalogo e "Longarina de espera com
   // 03 (tres) lugares de assento" no anexo de descricao detalhada (18/09/2026).
@@ -406,6 +406,11 @@ for (const e of dados.editais) {
       // "Banqueta ergonomica giratoria" no edital, pelo numero e pelo preco
       // (15/10/2026)
       || (it[0] === 'MI' && !/(?:^|[^a-z])(?:mesa|bancada)/.test(d.slice(0, 200)) && 'o edital descreve outro movel, nao uma mesa')
+      // e a lava-loucas em QUALQUER categoria, quando o texto do edital abre com
+      // ela: o item 39 do CEFET-MG (Belo Horizonte, edital 335) e "Balanca
+      // Eletronica ... capacidade pesagem: 500" no PNCP e "FORNECIMENTO E
+      // INSTALACAO DE LAVA-LOUCAS INDUSTRIAL TIPO CAPO", R$ 50.902,50, no edital
+      || (it[0] !== 'LV' && lavaLoucas(d) && 'lavadora de louca')
       || (it[0] === 'LV' && (lavaLoucas(norm(it[3])) || lavaLoucas(d)) && 'lavadora de louca')
       || (it[0] === 'PR' && chaleiraDeFogao(norm(it[3]), d) && 'chaleira de fogao')
       || (!cotaNaUf(e[C.uf], norm(it[3]), d) && 'linha que nao se cota em ' + e[C.uf])
