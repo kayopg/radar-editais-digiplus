@@ -22,7 +22,7 @@ const LE = req(path.join(DIR, 'docs', 'pdf-le.js'));
 // nao sao linha de produto da Digiplus.
 export const CAT = { RF: 'Refrigeração', CL: 'Climatização', CC: 'Cocção', PR: 'Preparo',
   EP: 'Eletroportáteis', LV: 'Lavanderia', BB: 'Bebedouro', CX: 'Coifa/Exaustão',
-  BL: 'Balanças', LD: 'Lousa digital', GE: 'Geradores', AQ: 'Aquecimento', OT: 'Outros' };
+  BL: 'Balanças', MI: 'Mesa inox', LD: 'Lousa digital', GE: 'Geradores', AQ: 'Aquecimento', OT: 'Outros' };
 
 export const moeda = v => 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 export const dataBR = iso => iso.slice(8, 10) + '/' + iso.slice(5, 7) + '/' + iso.slice(0, 4);

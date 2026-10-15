@@ -58,6 +58,9 @@ const VETO = {
   // a balanca de pesar gente, de bebe e de laboratorio, a mesma lista do
   // varredura.mjs (a categoria voltou em 14/10/2026)
   BL: lista('VETO_BL_MEDICA'),
+  // a mesa inox de hospital, clinica e laboratorio (a categoria entrou em 15/10/2026)
+  // e a de tampo de MDF, madeira, granito (so aqui, no texto do edital)
+  MI: [...lista('VETO_MI'), ...lista('VETO_MI_TAMPO')],
   // lavanderia hospitalar (Sonora/MS, 21/09/2026)
   LV: ['hospitalar', 'barreira sanitaria',
     // e a lavadora/secadora de PISO, que o VETO_ITEM ja tira pelo nome do PNCP

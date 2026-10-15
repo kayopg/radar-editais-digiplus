@@ -193,10 +193,22 @@ const FRONTEIRA = new Map([['trator', 'inicio'], ['mop', 'palavra'], ['rack', 'p
 // categoria. "de" nao e marca: "Aparelho de ar condicionado" e o produto.
 const USO = /(?:apt[oa]s?(?: (?:para|em|ao|a))?|aptos em uso|utilizac(?:ao|oes) seguras?|compativel com(?: lavagem em)?|uso recomendado|(?:para )?uso em|lavad[oa] (?:manualmente )?(?:ou )?em|lavagem (?:manual )?(?:ou )?em|ou em|resistente (?:ao|a)|ir (?:ao|a|para|no|na)|aplicacao|recomendad[oa] (?:para|em)|indicad[oa] para uso)[\s:,(]*(?:[a-z0-9-]+[\s,]+){0,3}$/;
 const PARA = /(?:para|p\/)(?: (?:o|a|os|as|uso))?\s+$/;
+// A MESA INOX (categoria MI, 15/10/2026) e a descricao que COMECA por "mesa" e
+// fala em inox logo adiante: "MESA DE TRABALHO AÇO INOX", "Mesa Manipulação /
+// Preparação Alimentos material tampo: aço inoxidável", "LOTE 1 - Mesa inox 160 x
+// 70 x 90 cm". O "mesa" no meio e de outra coisa: "Garfo de mesa em aço inox",
+// "Autoclave horizontal de mesa", "Fogão ... mesa inox".
+const MESA_NA_FRENTE = /^[^a-z]*(?:(?:lote|item)\s*\d+\s*[-–:.]?\s*)?mesa(?![a-z])/;
 export function criaPosicaoDoTermo(CAT) {
+  const comMesa = CAT.some(([c]) => c === 'MI');
   return d => {
     let melhor = null;
+    if (comMesa) {
+      const m = MESA_NA_FRENTE.exec(d);
+      if (m && /inox/.test(d.slice(0, 350))) return { c: 'MI', i: m[0].length - 4, t: 'mesa' };
+    }
     for (const [c, ts] of CAT) for (const t of ts) {
+      if (c === 'MI') break;
       for (let i = d.indexOf(t); i >= 0; i = d.indexOf(t, i + 1)) {
         if (melhor && i >= melhor.i) break;
         const antes = d.slice(Math.max(0, i - 40), i);

@@ -43,7 +43,10 @@ const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira",
 "buffet eletrico","picador de batata","cortador de batata","cabrita",
 // 08/10/2026: a lavadora de alta pressao voltou ao radar, e edital so de
 // lava-jato (material de limpeza, de garagem) nao casava com termo nenhum.
-"lavadora de alta pressao"];
+"lavadora de alta pressao",
+// 15/10/2026: a mesa inox entrou (usuario, "Mesa Inox agora e um item que cotamos
+// tambem")
+"mesa inox","mesa aco inox"];
 // DF entrou em 05/10/2026 e MT saiu em 06/10/2026 ("MT nao cotamos mais nada").
 // Fora de RS, SC e PR cada UF tem as suas linhas de produto (LINHAS_DA_UF, no
 // veto-item.mjs). O veta-pelo-descritivo.mjs le esta lista e tira da lista ja
@@ -149,6 +152,17 @@ const CAT = [
   // foram decisoes do usuario antes de a categoria sair. Linha so de RS, SC e
   // PR (LINHAS_DA_UF, veto-item.mjs).
   ["BL",["balanca","balanca comercial","balanca industrial","balanca digital","balanca de plataforma","balanca eletronica"]],
+  // MI (mesa inox) entrou em 15/10/2026: "Mesa Inox agora e um item que cotamos
+  // tambem". A categoria nao sai destes termos, e sim de a descricao COMECAR por
+  // "mesa" e falar em inox logo adiante (criaPosicaoDoTermo, veto-item.mjs): o
+  // PNCP escreve "MESA DE TRABALHO AÇO INOX", "Mesa Manipulação / Preparação
+  // Alimentos material tampo: aço inoxidável", "Mesa, Material:Aço Inoxidável",
+  // e o "inox" solto tambem vem no garfo, na faca e na colher DE MESA, na
+  // autoclave e na balanca "de mesa" e no fogao "com mesa inox". Os termos
+  // ficam para o objeto da compra (vetoDoObjeto). Linha de RS, SC e PR
+  // (LINHAS_DA_UF, veto-item.mjs). A mesa de hospital, de clinica e de
+  // laboratorio sai pelo VETO_MI.
+  ["MI",["mesa inox","mesa de inox","mesa em inox","mesa aco inox","mesa de aco inox","mesa em aco inox"]],
   ["LD",["lousa digital","lousa interativa","lousa eletronica","quadro interativo","painel interativo","tela interativa"]],
   // GE entrou em 01/09/2026: gerador nao e climatizacao nem cozinha, e virava
   // "Outros" — categoria que a pagina mostra como se fosse sobra.
@@ -860,6 +874,23 @@ const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioim
   // (Palmeira das Missoes/RS, edital 02, item 54)
   'veterinari','portatil vidro','vidro visor'];
 
+// A mesa inox que nao e de cozinha (15/10/2026, na entrada da categoria MI): a de
+// hospital e de clinica — "MESA DE MAYO", "Mesa Ginecologica", "Mesa auxiliar
+// hospitalar em aco inox", "MESA INSTRUMENTAL CIRURGICA", "MESA DE EXAMES FIXA
+// EM ACO INOX", a auxiliar de 40 x 40 x 80 cm, a de refeicao de leito, "MESA
+// PARA AUTOCLAVE", "Mesa para atendimento veterinario", "Mesa Para Anatomia
+// ... necropsia", "Mesa auxiliar odontologica". A
+// Digiplus cota a de cozinha (manipulacao, apoio, trabalho, com cuba).
+const VETO_MI = ['mayo','ginecolog','hospitalar','hospital','cirurgic','instrumental','instrumentos','exame','necropsia','anatomia','autopsia',
+  'veterinari','odontolog','procedimento','curativo','enfermagem','paciente','unidades de saude','autoclave','40x40x80','40 x 40 x 80',
+  'mesa de refeicao','refeicao acoplada','cabeceira','elevatoria','pantograf','obstetric','massagem','maca'];
+// E a mesa de tampo de outro material, que so tem o pe ou a borda de inox. So no
+// texto do EDITAL (veta-pelo-descritivo.mjs), nao no nome do PNCP: o catalogo que o
+// orgao escolheu pode estar errado — o item 19 da UNILA (Foz do Iguacu/PR) e "Mesa
+// Copa/Cozinha ... revestimento tampo: mdf com lamina de imbuia" no PNCP e "Produto
+// inteiro fabricado em Aco Inox AISI 430 (Tampo e Estrutura)" no edital.
+const VETO_MI_TAMPO = ['mdf','mdp','madeira','granito','formica','melamin'];
+
 // ---------------------------------------------------------------- utilidades
 // Cada linha de progresso sai carimbada com o tempo decorrido.
 //
@@ -1177,6 +1208,7 @@ for (const o of cands) {
     if (temVeto(d, cat)) continue;
     if (cat === 'RF' && VETO_RF_CIENT.some(v => d.includes(v))) { vCient++; continue; }
     if (cat === 'BL' && VETO_BL_MEDICA.some(v => d.includes(v))) continue;
+    if (cat === 'MI' && VETO_MI.some(v => d.includes(v))) continue;
     if (cat === 'LV' && lavaLoucas(d)) continue;
     if (cat === 'OT' && VETO_OT_HALOGENO.some(v => d.includes(v))) continue;
     if (!cotaNaUf(o.uf, d, '', true)) continue;

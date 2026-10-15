@@ -916,7 +916,7 @@
   },
   "04213529000144/2026/150": {
     "edital": "Cruzaltense/RS, Pregao Eletronico 35/2026 (itens diversos II)",
-    "conferido": "2026-10-13",
+    "conferido": "2026-10-15",
     "itens": {
       "2": {
         "qtd": 2,
@@ -929,6 +929,12 @@
         "valor": 2501.45,
         "fonte": "Termo de Referencia, item 7 da tabela (o edital numera por lote e o PNCP de 1 a 21; o recorte misturava a pesquisa de precos)",
         "texto": "Freezer horizontal com uma porta/tampa, capacidade mínima de 200 litros, gabinete interno e externo em chapa de aço com tratamento anticorrosivo, dreno frontal, rodízios, fechadura com chave, alimentação elétrica doméstica, classificação energética \"A\" pelo Inmetro e dimensões aproximadas de 94 x 75 x 80 cm."
+      },
+      "7": {
+        "qtd": 1,
+        "valor": 1476.05,
+        "fonte": "Termo de referencia, lote 01, item 1 (mesa inox 160 x 70 x 90 cm; no PNCP e o item 7)",
+        "texto": "Mesa de manipulação e preparo de alimentos, totalmente fabricada em aço inoxidável (AISI 304 ou 430), espessura mínima de 0,8 mm a 1,5 mm, com reforço estrutural inferior. Estrutura em tubos redondos ou quadrados em aço inox, pés niveladores em polietileno ou nylon (regulagem ± 30 mm). Prateleira lisa, gradeada ou perfurada em aço inox, carga distribuída mínima de 50 kg. Acabamento escovado ou polido, cantos arredondados (tipo sanitário). Dimensões 160 x 70 x 90 cm."
       },
       "10": {
         "qtd": 2,
@@ -954,11 +960,23 @@
         "fonte": "Termo de Referencia, item 8 da tabela (o edital numera por lote e o PNCP de 1 a 21; o recorte misturava a pesquisa de precos)",
         "texto": "Refrigerador 2 portas com capacidade mínima de 451 litros, 220 V, cor branca, frost free, eficiência energética A."
       },
+      "17": {
+        "qtd": 1,
+        "valor": 1714.4,
+        "fonte": "Termo de referencia, lote 01, item 2 (mesa inox 180 x 70 x 90 cm; no PNCP e o item 17)",
+        "texto": "Mesa totalmente confeccionada em aço inoxidável (AISI 304 ou 430), chapa com espessura mínima entre 0,8 mm e 1,5 mm, reforço estrutural inferior, estrutura tubular em aço inox, pés niveladores, prateleira inferior em aço inox, acabamento escovado ou polido e cantos arredondados para facilitar a higienização. Dimensões aproximadas de 180 x 70 x 90 cm."
+      },
       "19": {
         "qtd": 2,
         "valor": 1680,
         "fonte": "Termo de Referencia, item 6 da tabela (o edital numera por lote e o PNCP de 1 a 21; o recorte misturava a pesquisa de precos)",
         "texto": "Liquidificador comercial em aço inox, baixa rotação, copo monobloco em formato \"V\" com capacidade mínima de 10 litros, acoplamento metálico com eixo sextavado, tampa de borracha atóxica com dosador, potência nominal de 665 W, motor de 0,5 HP, tensão 220 V, consumo de 0,67 kWh, rotação de 3.500 rpm e dimensões aproximadas de 780 x 340 x 330 mm."
+      },
+      "21": {
+        "qtd": 1,
+        "valor": 1574.73,
+        "fonte": "Termo de referencia, lote 01, item 3 (mesa inox 190 x 70 x 90 cm; no PNCP e o item 21)",
+        "texto": "Mesa de manipulação e preparo de alimentos, totalmente fabricada em aço inoxidável (AISI 304 ou 430), espessura mínima de 0,8 mm a 1,5 mm, com reforço estrutural inferior. Estrutura em tubos redondos ou quadrados em aço inox, pés niveladores em polietileno ou nylon (regulagem ± 30 mm). Prateleira lisa, gradeada ou perfurada em aço inox, carga distribuída mínima de 50 kg. Acabamento escovado ou polido, cantos arredondados (tipo sanitário). Dimensões 190 x 70 x 90 cm."
       }
     }
   },
