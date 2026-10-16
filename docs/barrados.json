@@ -1,43 +1,6 @@
 {
- "varredura": "2026-10-15",
+ "varredura": "2026-10-16",
  "editais": [
-  {
-   "path": "78640489000153/2026/833",
-   "municipio": "Londrina",
-   "uf": "PR",
-   "edital": "Edital nº 84/2026",
-   "objeto": "Aquisição de regrigerador, freezer, cafeteira elétrica, fogão industrial, televisores e outros para unidades da Universidade Estadual de Londrina.",
-   "exige": [
-    "Amostra"
-   ],
-   "trechos": {
-    "Amostra": [
-     "e devera constar na proposta final das arrematantes, conforme modelo descritivo da proposta de precos (anexo iii). 4 proposta parcial 4.1 nao sera permitido ao licitante oferecer proposta parcial. 5 amostra 5.1 sera exigida do arrematante amostra do(s) objeto(s) licitado(s), na forma do item 1.5 do termo de referencia, anexo i. (quando for o caso) 7 consorcio 7.1 a participacao de empresas em regi",
-     "so seja requisitada a apresentacao de amostras do arrematante do item, a entrega devera ocorrer no prazo maximo de 05 (cinco) dias uteis, a contar da notificacao, o descritivo tecnico e a respectiva amostra do objeto licitado, a fim de verificar se atende as especificacoes do edital e anexos, no seguinte local: endereco: universidade estadual de londrina-uel / almoxarifado central-campus rodovia c"
-    ]
-   }
-  },
-  {
-   "path": "46384111000140/2026/1118",
-   "municipio": "São Paulo",
-   "uf": "SP",
-   "edital": "Aviso de Contratação Direta nº 3842/2026",
-   "objeto": "Bebedouros refrigerados de 200L de inox com 04 torneiras.",
-   "exige": [
-    "Carta de solidariedade",
-    "Garantia contratual"
-   ],
-   "trechos": {
-    "Carta de solidariedade": [
-     " um todo considerado o ciclo de vida do objeto e especificacao do produto 3.1. a descricao da solucao como um todo encontra-se neste termo de referencia. 4. requisitos da contratacao da exigencia de carta de solidariedade 4.1. em caso de fornecedor revendedor ou distribuidor, sera exigida carta de solidariedade emitida pelo fabricante, que assegure a execucao do contrato. garantia da contratacao 4",
-     " da solucao como um todo encontra-se neste termo de referencia. 4. requisitos da contratacao da exigencia de carta de solidariedade 4.1. em caso de fornecedor revendedor ou distribuidor, sera exigida carta de solidariedade emitida pelo fabricante, que assegure a execucao do contrato. garantia da contratacao 4.2. sera exigida a garantia da contratacao de que tratam os arts. 96 e seguintes da lei nº"
-    ],
-    "Garantia contratual": [
-     "ratacao da exigencia de carta de solidariedade 4.1. em caso de fornecedor revendedor ou distribuidor, sera exigida carta de solidariedade emitida pelo fabricante, que assegure a execucao do contrato. garantia da contratacao 4.2. sera exigida a garantia da contratacao de que tratam os arts. 96 e seguintes da lei nº 14.133, de 2021, no percentual e condicoes descritas nas clausulas do instrumento de",
-     "de 4.1. em caso de fornecedor revendedor ou distribuidor, sera exigida carta de solidariedade emitida pelo fabricante, que assegure a execucao do contrato. garantia da contratacao 4.2. sera exigida a garantia da contratacao de que tratam os arts. 96 e seguintes da lei nº 14.133, de 2021, no percentual e condicoes descritas nas clausulas do instrumento de celebracao da contratacao (definido pela do"
-    ]
-   }
-  },
   {
    "path": "76245067000158/2026/52",
    "municipio": "Bela Vista do Paraíso",
@@ -50,6 +13,22 @@
    "trechos": {
     "Amostra": [
      " a descricao da solucao como um todo encontra-se pormenorizada em topico especifico dos estudos tecnicos preliminares, apendice deste termo de referencia. 5. requisitos da contratacao da exigencia de amostra 5.1. havendo o aceite da proposta quanto ao valor, o interessado classificado provisoriamente em primeiro lugar devera apresentar amostra, que tera data, local e horario de sua realizacao divu"
+    ]
+   }
+  },
+  {
+   "path": "00530279000115/2026/334",
+   "municipio": "Brasília",
+   "uf": "DF",
+   "edital": "Edital nº 279/2026",
+   "objeto": "Aquisição de Itens de suporte às atividades do Senado Federal, compreendendo mobiliário de escritório, cadeiras, sofás, armários, balanças para pesagem de resíd",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "ibama.gov.br/ctf/publico/certificado_regularidade_consulta.php, se o fabricante dos itens ofertados esta incluso no cadastro tecnico federal do ibama (ctf/app). 10.1.6. independentemente de se exigir amostra do produto, a licitante devera apresentar, no momento da apresentacao da proposta, por meio de catalogos ou de site, as especificacoes tecnicas detalhadas dos produtos ofertados, sendo vedada ",
+     "respingos e falta de acabamento); revestimento (costuras, fechamentos, uniformidade, textura, composicao e outras caracteristicas ligadas a estetica e acabamento); e dimensoes; 11.1.2.3. reprova-se a amostra que apresente inconformidade. 11.2. as amostras deverao ser entregues devidamente identificadas, em quantidade suficiente para os testes de qualidade, na coordenacao de administracao patrimoni"
     ]
    }
   },
@@ -122,6 +101,21 @@
    "trechos": {
     "Garantia contratual": [
      " do certame e sera considerado sigiloso. 15 – disposicoes gerais 15.1. o objeto desta contratacao nao se enquadra como sendo de bem de luxo, conforme decreto municipal nº 065/2024. 15.2. sera exigida garantia contratual, nos termos dos arts. 96 e seguintes da lei nº 14.133/21, tendo em vista a natureza do objeto, que envolve o fornecimento de equipamentos e materiais permanentes. nao sera admitida"
+    ]
+   }
+  },
+  {
+   "path": "56089790000188/2026/301",
+   "municipio": "São Paulo",
+   "uf": "SP",
+   "edital": "Edital nº 245/2026",
+   "objeto": "Registro de Preços para eventual aquisição de enxoval completo e utensílios de cozinha destinados às hospedarias das áreas protegidas da Fundação Florestal",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "nto ao cumprimento das especificacoes do objeto, podera ser colhida a manifestacao escrita do setor requisitante ou da area especializada no objeto. 7.12. considerando a exigencia de apresentacao de amostra(s) / link de acesso ao catalogo ou a ficha tecnica dos itens de enxoval ofertados na documentacao que integra este edital como anexo, por ocasiao do julgamento das propostas, sera exigido do li"
     ]
    }
   },
@@ -254,6 +248,52 @@
    }
   },
   {
+   "path": "11463194000188/2026/73",
+   "municipio": "Ivolândia",
+   "uf": "GO",
+   "edital": "Edital nº 25/2026",
+   "objeto": "PROCEDIMENTO LICITATÓRIO NA MODALIDADE PREGÃO ELETRÔNICO N° 025/2026, REFERENTE A REGISTRO DE PREÇOS PARA A FUTURA E EVENTUAL AQUISIÇÃO DE MEDICAMENTOS E CORREL",
+   "exige": [
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Garantia contratual": [
+     " tecnicas ou recomendacoes, editadas na forma da lgpd. 10.12. os contratos e convenios de que trata o § 1º do art. 26 da lgpd deverao ser comunicados a autoridade nacional. clausula decima primeira – garantia de execucao 11.1. a contratacao conta com garantia de execucao, nos moldes do art. 96 da lei nº 14.133, de 2021, na modalidade concorrencia publica, em valor correspondente a 5% do valor tota",
+     "pd. 10.12. os contratos e convenios de que trata o § 1º do art. 26 da lgpd deverao ser comunicados a autoridade nacional. clausula decima primeira – garantia de execucao 11.1. a contratacao conta com garantia de execucao, nos moldes do art. 96 da lei nº 14.133, de 2021, na modalidade concorrencia publica, em valor correspondente a 5% do valor total do contrato. 11.2. o contratado apresentara, no p"
+    ]
+   }
+  },
+  {
+   "path": "18715383000140/2026/773",
+   "municipio": "Belo Horizonte",
+   "uf": "MG",
+   "edital": "Edital nº 109/2026",
+   "objeto": "AQUISIÇÃO DE VENTILADORES E CLIMATIZADORES",
+   "exige": [
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Garantia contratual": [
+     "te prejuizo ao erario decorrente de inexecucao contratual e impossibilidade de ressarcimento. baixo medio aceitavel listas de verificacao (checklist) para formalizacao dos contratos e apresentacao de garantia contratual, de modo que o servidor responsavel tenha um referencial claro para atuar na fase da referida formalizacao. o setor de contabilidade ou a assessoria juridica identificam que o cont"
+    ]
+   }
+  },
+  {
+   "path": "46611117000102/2026/43",
+   "municipio": "Urânia",
+   "uf": "SP",
+   "edital": "Edital nº 027/2026",
+   "objeto": "CONTRATAÇÃO DE EMPRESA ESPECIALIZADA PARA AQUISIÇÃO DE EQUIPAMENTOS E MATERIAIS PERMANENTES DESTINADOS ÀS UNIDADES BÁSICAS DE SAÚDE ESF I E ESF III DO MUNICÍPIO",
+   "exige": [
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Garantia contratual": [
+     "urania secretaria municipal de contratos, convenios e parcerias endereco: avenida brasil, nº 390 - paco municipal - centro - 15760-045 telefone: (17) 3634-9020 | email: licitacao2@urania.sp.gov.br 7. garantia contratual: 7.1. a garantia contratual dos equipamentos e materiais permanentes devera observar as disposicoes previstas neste termo de referencia, nas normas do fabricante, na lei federal nº"
+    ]
+   }
+  },
+  {
    "path": "76208479000118/2026/163",
    "municipio": "Assis Chateaubriand",
    "uf": "PR",
@@ -265,6 +305,26 @@
    "trechos": {
     "Garantia contratual": [
      "ao futura de equipamentos, a possibilidade de surgimento de novos espacos de atendimento aos municipes e a conveniencia de aquisicao parcelada ao longo da vigencia da ata. 5.16. quanto a exigencia de garantia da contratacao prevista nos arts. 96 e seguintes da lei federal nº 14.133/2021, entende-se que, para o presente objeto, nao se mostra necessaria sua previsao, considerando a natureza comum do"
+    ]
+   }
+  },
+  {
+   "path": "82926551000145/2026/170",
+   "municipio": "Braço do Norte",
+   "uf": "SC",
+   "edital": "Edital nº RPPE111/2026",
+   "objeto": "[Portal de Compras Públicas] - REGISTRO DE PREÇOS PARA FUTURA E EVENTAL AQUISIÇÃO MEDIANTE SISTEMA DE REGISTRO DE PREÇOS, DE EQUIPAMENTOS E FERRAMENTAS MOTOMECA",
+   "exige": [
+    "Amostra",
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Amostra": [
+     "o caso. nao ha vedacao previa de marca ou produto especifico, sem prejuizo da recusa de proposta que nao comprove o atendimento integral aos requisitos deste termo de referencia. 4.4. da exigencia de prova de conceito 4.4.1. sera exigida prova de conceito exclusivamente para os itens 15 – lavadora/secadora automatica de pisos a bateria e 33 – varredeira de pisos a bateria com aspiracao ativa, a se",
+     " ou produto especifico, sem prejuizo da recusa de proposta que nao comprove o atendimento integral aos requisitos deste termo de referencia. 4.4. da exigencia de prova de conceito 4.4.1. sera exigida prova de conceito exclusivamente para os itens 15 – lavadora/secadora automatica de pisos a bateria e 33 – varredeira de pisos a bateria com aspiracao ativa, a ser realizada com o licitante provisoria"
+    ],
+    "Garantia contratual": [
+     "s tecnicas ou recomendacoes, editadas na forma da lgpd. 10.12 os contratos e convenios de que trata o § 1º do art. 26 da lgpd deverao ser comunicados a autoridade nacional. clausula decima primeira – garantia de execucao (art. 92, xii) 11.1.1 os prazos de garantia observarao o que consta da especificacao de cada item. em regra, a garantia minima sera de 12 (doze) meses, contada do primeiro dia uti"
     ]
    }
   }
