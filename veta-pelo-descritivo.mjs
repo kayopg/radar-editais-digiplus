@@ -56,7 +56,9 @@ const VETO = {
   // laboratorio (IF Sudeste MG, Juiz de Fora, item 57, 22/09/2026)
   // (e o de calibracao, "Banho maria digital, 2 a 4 litros com calibracao ... variacao
   // maxima aceitavel de 0,5°C", DMAE de Porto Alegre/RS, 06/10/2026)
-  CC: ['banho maria de laboratorio', 'banho-maria de laboratorio', 'aplicacoes laboratoriais', 'uso laboratorial', 'pid fuzzy', 'precisao de controle', 'calibracao', 'variacao maxima aceitavel'],
+  // (e o "Banho maria Beads, 5L" de laboratorio, de microesferas no lugar da
+  // agua, R$ 18 mil: UEM, Maringa/PR, edital 236, item 1, 20/10/2026)
+  CC: ['banho maria de laboratorio', 'banho-maria de laboratorio', 'aplicacoes laboratoriais', 'uso laboratorial', 'pid fuzzy', 'precisao de controle', 'calibracao', 'variacao maxima aceitavel', 'beads'],
   BB: ['laboratorial'],
   CX: ['soldagem', 'fumaca de bancada'],
   // a balanca de pesar gente, de bebe e de laboratorio, a mesma lista do

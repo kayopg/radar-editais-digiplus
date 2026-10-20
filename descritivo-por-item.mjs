@@ -6256,6 +6256,22 @@ for (const e of dados.editais) {
           if (m && m.index >= 80) s = s.slice(0, m.index).trim();
         }
       }
+      // e a linha seguinte da tabela da proposta, com o numero do item ilegivel
+      // ("ITEM 7" saiu "fqbj T"): "...Garantia mínima de 12 meses. fqbj T · Unid.:
+      // UNIDADE · Qtd.: 1 · marca: Valor Unitário:", e o "Unitário:" solto no fim
+      // (Nova Londrina/PR, edital 60, itens 4, 6 e 8, 20/10/2026)
+      s = s.replace(/\s+(?:\S+\s+){0,2}·\s+Unid\.:\s[\s\S]*$/, '')
+        .replace(/(?<=[.;])\s+(?:Valor\s+)?Unit[áa]rio:\s*$/, '')
+        // o codigo do catalogo com o rodape do SEI da Justica Federal: "...junto
+        // à proposta de preços. 636747* ETP - LEI 14.133/2021 - RES. 587/2023 -
+        // JF3R 13498192 SEI 0002449-48.2026.4.03.8002 / pg." (Campo Grande/MS,
+        // edital 40, item 4)
+        .replace(/(?<=[.;])\s+(?:\d{5,7}\*?\s+)?(?:ETP|Termo\s+de\s+Refer[êe]ncia)\s*-?\s*(?:LEI\s+14\.133\/2021\s*-\s*RES\.\s*\d+\/\d{4}\s*-\s*\S+\s+)?\d{6,}\s+SEI\s+[\d.\/-]+\s*\/\s*pg\.(?:\s*\d+)?\s*$/i, '')
+        // o "CATMAT" solto no fim (Araxá/MG, edital 81, item 1) e o cabecalho da
+        // tabela de precos ("...26 A 30 LITROS 1 Nome do Equipamento Qtd. Valor
+        // Unitário Valor Total (R$)", Cruzaltense/RS, edital 37, item 3)
+        .replace(/\s+CATMAT\s*$/, '')
+        .replace(/\s+(?:\d{1,3}\s+)?Nome\s+do\s+Equipamento\s+Qtd\.[\s\S]*$/, '');
       // e o numero do item SEGUINTE, com as colunas dele, no fim: "...GARANTIA
       // DE 1 ANO; 17", "...MEDIDAS EXATAS. 30 113594 80,00 UN 132,31 10.584,8 0"
       // (Porto Belo/SC, edital 263), "...com divisão de 5 g; 4" (Sapiranga/RS,

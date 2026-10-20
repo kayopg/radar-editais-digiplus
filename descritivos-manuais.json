@@ -1321,5 +1321,29 @@
         "texto": "Bebedouro de Garrafão, Tipo Coluna; Compatibilidade e Abastecimento: Sistema para uso com garrafões/galões de água mineral com capacidade de 20 litros (com abastecimento e encaixe na parte superior); Tipo/Instalação: Modelo vertical de coluna, de sobrepor no piso, dispensando a necessidade de mesas ou suportes adicionais de apoio; Sistema de Refrigeração: Por meio de motocompressor hermético (utilizando gás refrigerante ecológico e livre de CFC); Capacidade do Reservatório e Atendimento: Volume interno do reservatório de água gelada de, no mínimo, 2,0 litros, com capacidade mínima de fornecimento/vazão de água gelada de 1,2 litros por hora; Estrutura, Acabamento e Cuba: Gabinete externo confeccionado em chapa metálica tratada com acabamento em aço inoxidável; reservatório de água obrigatoriamente confeccionado em material atóxico (como aço inoxidável ou polímero de alta resistência homologado para alimentos), que garanta a total pureza da água e impeça a contaminação química ou física; Higiene e Manutenção: Sistema interno totalmente vedado contra a entrada de insetos e poeira; torneiras e bicos de fácil acesso ou desmontáveis para fins de higienização periódica sanitária; Dispensadores e Acionamento: Dotado de 02 (duas) torneiras (sendo uma para fornecimento de água em temperatura natural e uma para água refrigerada; Controle de Temperatura: Equipado com termostato regulável localizado na área externa do aparelho (lateral ou traseira), permitindo o ajuste fácil da temperatura da água refrigerada; Segurança Estrutural: Base inferior equipada com pés antiderrapantes, sapatas reguláveis ou estrutura de alta aderência para garantir estabilidade e impedir o tombamento do equipamento; Tensão e Aspectos Elétricos: Alimentação elétrica monofásica em 127V (admitindo-se compatibilidade bivolt), operando em frequência de 60 Hz; potência nominal de funcionamento de até 100W e consumo mensal máximo de energia de 13,0 kWh/mês; Certificação Compulsória: O equipamento deve possuir obrigatoriamente o selo de identificação da conformidade do INMETRO (segurança elétrica e classificação de eficiência energética) fixado no corpo do produto; Dimensões Máximas Admitidas: Largura de até 35 cm, Altura de até 102 cm e Profundidade de até 36 cm (para garantir a perfeita adequação ao layout físico preestabelecido pelo órgão); Acessórios Inclusos: Acompanhado de manual de instruções/instalação em língua portuguesa. Garantia Técnica: Período mínimo de 12 (doze) meses, contado a partir da data de recebimento definitivo do objeto."
       }
     }
+  },
+  "79151312000156/2026/773": {
+    "edital": "Maringa/PR, UEM, Edital 236/2026 (Anexo I-D, Laboratorio de Tecnicas Dieteticas)",
+    "conferido": "2026-10-20",
+    "itens": {
+      "8": {
+        "qtd": 1,
+        "valor": 3101.33,
+        "fonte": "Termo de referencia do Anexo I-D, 1.2.1 (Item 1); o recorte pegava a justificativa",
+        "texto": "Refrigerador, MODELO: Duplex Frost Free, APRESENTAÇÃO: 02 (duas) portas independentes, 01 (uma) para freezer e 01 (uma) para refrigerador, capacidade mínima de 400L. VOLTAGEM: 127V. UNID. DE MEDIDA: Unitário."
+      },
+      "9": {
+        "qtd": 1,
+        "valor": 657.99,
+        "fonte": "Termo de referencia do Anexo I-D, 1.2.2 (Item 2)",
+        "texto": "Forno Micro-ondas, CAPACIDADE MÍNIMA: 30 litros, POTÊNCIA: 1000W, VOLTAGEM: 127V, UNID. DE MEDIDA: Unitário."
+      },
+      "10": {
+        "qtd": 4,
+        "valor": 1657.67,
+        "fonte": "Termo de referencia do Anexo I-D, 1.2.3 (Item 3)",
+        "texto": "Mesa, MATERIAL: Aço Inox, Com estrutura e Contraventamento, UNID. DE MEDIDA: Unitário. Mesa de preparação de alimentos em aço inox AISI 304 (alimentício) com 1,50 a 1,80 m (comprimento) x 0,70 m (largura) x 0,85 m (altura), com prateleira inferior."
+      }
+    }
   }
 }
