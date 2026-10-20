@@ -1,13 +1,17 @@
-// O que se cota em cada UF (LINHAS_DA_UF, no veto-item.mjs), com rotulos e
-// descritivos reais da lista de 05/10/2026. Uso: node testa-linhas-uf.mjs
+// O que se cota em cada UF, com rotulos e descritivos reais. Uso: node
+// testa-linhas-uf.mjs. Desde 20/10/2026 so MT tem restricao (LINHAS_DA_UF, no
+// veto-item.mjs): os casos de AGORA, no fim, conferem isso. Os de antes conferem
+// a tabela de 05/10 a 20/10 (LINHAS_DE_05_10), que fica para o caso de o usuario
+// voltar a restringir alguma UF.
 import fs from 'node:fs';
-import { criaPosicaoDoTermo, criaCotaNaUf } from './veto-item.mjs';
+import { criaPosicaoDoTermo, criaCotaNaUf, LINHAS_DE_05_10 } from './veto-item.mjs';
 
 const fonte = fs.readFileSync('varredura.mjs', 'utf8');
 const iCat = fonte.indexOf('const CAT = [');
 const CAT = eval(fonte.slice(iCat, fonte.indexOf('\n];', iCat) + 3).replace('const CAT = ', ''));
 const norm = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ');
-const cotaNaUf = criaCotaNaUf(criaPosicaoDoTermo(CAT));
+const cotaAntes = criaCotaNaUf(criaPosicaoDoTermo(CAT), LINHAS_DE_05_10);
+const cotaAgora = criaCotaNaUf(criaPosicaoDoTermo(CAT));
 
 // [uf, rotulo, descritivo, esperado, semDescritivo?]
 const CASOS = [
@@ -109,13 +113,30 @@ const CASOS = [
   ['MG', 'FOGAO DOMESTICO 4 BOCAS', '', false, true],
   ['MG', 'VENTILADOR DE COLUNA 40 CM', '', false, true],
 ];
+// AGORA (20/10/2026): fora de MT, tudo. Itens que a tabela antiga cortava na
+// lista de 19/10.
+const AGORA = [
+  ['SP', 'SECADORA DE ROUPAS - 11KG, tensão 127/220V', '', true],                  // Lucelia/SP 182
+  ['SP', 'MIXER DE ALIMENTOS PORTÁTIL 3 EM 1', '', true],                            // Lucelia/SP 170
+  ['SP', 'Multiprocessador de alimentos 1000W de potência 110V', '', true],          // Birigui/SP 12
+  ['SP', 'Geladeira / Refrigerador Duplex, com capacidade total de armazenamento', '', true], // Lucelia/SP 114
+  ['SP', 'Forno Industrial tipo: elétrico, material: chapa aço inoxidável', 'Forno com convecção 4 esteiras Elétrico 55L 220V', true], // TRF3
+  ['SP', 'Fogão doméstico – De 04 bocas, com pés, acendimento automático', '', true], // Lucelia/SP 88
+  ['MG', 'Forno microondas capacidade: 25', '', true],                               // Uberlandia/MG 6
+  ['MG', 'Processador Alimentos material corpo: aço inoxidável', '', true],          // BH 314, 31
+  ['GO', 'Fritadeira elétrica sem óleo (air fryer)', '', true],                      // Damolandia/GO 24
+  ['MS', 'Lavadora (lava e seca) 13 kg de capacidade de lavagem', '', true],          // Anastacio/MS 53
+  ['DF', 'Forno Microondas, material: aço inoxidável', '', true],                    // Brasilia/DF 45, 13
+  ['MT', 'FORNO DE MICROONDAS 34 LITROS', '', false],
+  ['MT', 'AR CONDICIONADO - Split 12.000 Btus Frio 220v', '', false],
+];
 
 let erros = 0;
-for (const [uf, rot, desc, esperado, semDesc] of CASOS) {
-  const deu = cotaNaUf(uf, norm(rot), norm(desc), !!semDesc);
+for (const [uf, rot, desc, esperado, semDesc, agora] of [...CASOS, ...AGORA.map(c => [...c, false, true])]) {
+  const deu = (agora ? cotaAgora : cotaAntes)(uf, norm(rot), norm(desc), !!semDesc);
   const ok = deu === esperado;
   if (!ok) erros++;
-  console.log(`${ok ? 'ok  ' : 'ERRO'} ${uf} ${deu ? 'fica' : 'sai '}${semDesc ? ' (varredura)' : ''} · ${rot.slice(0, 70)}`);
+  console.log(`${ok ? 'ok  ' : 'ERRO'} ${agora ? 'agora' : 'antes'} ${uf} ${deu ? 'fica' : 'sai '}${semDesc ? ' (varredura)' : ''} · ${rot.slice(0, 70)}`);
 }
-console.log(`\n${CASOS.length - erros} de ${CASOS.length} corretos`);
+console.log(`\n${CASOS.length + AGORA.length - erros} de ${CASOS.length + AGORA.length} corretos`);
 process.exitCode = erros ? 1 : 0;

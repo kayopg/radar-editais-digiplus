@@ -88,7 +88,7 @@ const CAT = [
   // "processador de alimentos" por causa do "industrial" no meio; o produto so
   // era achado depois, em "fatiador", e o "disco" do acessorio incluso — que
   // veta quando vem antes do produto — tirava o item.
-  ["PR",["liquidificador","batedeira","amassadeira","processador de alimentos","processador alimentos","processador industrial","mini processador","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador",
+  ["PR",["liquidificador","batedeira","amassadeira","processador de alimentos","processador alimentos","preparador de alimentos","processador industrial","mini processador","multiprocessador","espremedor","moedor","cortador de frios","fatiador","descascador",
     // 18/09/2026: nomes que o PNCP usa e a tabela nao tinha. Mixer so com
     // complemento de cozinha: "mixer" solto e tambem a mesa de som.
     // "EXTRATOR SUCO; MATERIAL: ACO INOX" (Minacu/GO, item 29): o catalogo sem o "de"
@@ -123,7 +123,7 @@ const CAT = [
   // Paraiso/PR, Renascenca/PR...), fora os editais que so compravam isso e nem
   // chegavam. "Lavadora automatica/semiautomatica" e o jeito da prefeitura de
   // escrever o mesmo. A de piso continua vetada (VETO_ITEM).
-  ["LV",["lavadora de roupa","maquina de lavar","secadora","centrifuga de roupa","calandra","tanquinho","lavadora extratora",
+  ["LV",["lavadora de roupa","maquina de lavar","secadora","lava e seca","lava-e-seca","centrifuga de roupa","calandra","tanquinho","lavadora extratora",
     "maquina lavar","maquina secar","maquina lavadora","lavadora automatica","lavadora semiautomatica","lavadora semi automatica","lavadora semi-automatica",
     // "Lavadoura", com o "u", e como o usuario escreve (lista de 14/10/2026) e
     // como algumas prefeituras escrevem tambem (ver o lava-jato abaixo).
@@ -489,6 +489,10 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // o pass-through, aquecido ou refrigerado: a Digiplus nao cota (usuario,
 // 14/10/2026, "pass-through nao cotamos"; Bento Goncalves/RS, edital 442)
 "pass-through","pass through","passthrough",
+// e o "pass-thru", a grafia curta: "Câmara Frigorífica, Tipo:Pass-Thru Vertical"
+// (Goiania/GO, edital 353, itens 9 e 10) e "Estufa Elétrica Para Cozinha tipo:
+// pass-thru refrigerado" (Belo Horizonte/MG, 439), 20/10/2026
+"pass-thru","pass thru","passthru",
 // a carne da merenda, agora que "cabrita" (o picador de batata) e produto
 "carne de cabrit","carne caprina","cabrito",
 // acrescentados em 30/08/2026
@@ -774,7 +778,13 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 "desumidificador",
 // e a chapa de grelhar carnes e o char broiler ("nem chapa para grelhar carnes",
 // 15/10/2026). A sanduicheira com "chapa grill" e o fogao "com chapa bifeteira" ficam.
-"chapa assadeira","chapa para grelhar","chapa de grelhar","chapa lisa","chapa a gas","chapa industrial","chapa de coccao","chapeira","char broiler","charbroiler"];
+"chapa assadeira","chapa para grelhar","chapa de grelhar","chapa lisa","chapa a gas","chapa industrial","chapa de coccao","chapeira","char broiler","charbroiler",
+// 20/10/2026: a correia de transmissao ("correia de transmissao definitivamente
+// nao cotamos"). "Correia Transmissão ... Aplicação: Equipamento Ventilação/
+// Exaustão/Ar Condicionado" (Embrapa, Brasilia/DF, edital 10, itens 41 a 55)
+// entrava pelo ar-condicionado da aplicacao. So na frente do produto
+// (VETO_SO_NA_FRENTE): a amassadeira "com transmissao por correia" fica.
+"correia"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
@@ -826,7 +836,12 @@ const VETO_SO_NA_FRENTE = ["gas liquefeito","botijoes","carga de gas","gas de co
 "desumidificador",
 // e a chapa de grelhar carnes e o char broiler ("nem chapa para grelhar carnes",
 // 15/10/2026). A sanduicheira com "chapa grill" e o fogao "com chapa bifeteira" ficam.
-"chapa assadeira","chapa para grelhar","chapa de grelhar","chapa lisa","chapa a gas","chapa industrial","chapa de coccao","chapeira","char broiler","charbroiler"];
+"chapa assadeira","chapa para grelhar","chapa de grelhar","chapa lisa","chapa a gas","chapa industrial","chapa de coccao","chapeira","char broiler","charbroiler",
+// e a correia (20/10/2026, ver o VETO_ITEM). E o "eliptico" do aparelho de
+// academia, que vetava em qualquer ponto e derrubava a "Batedeira planetária,
+// potência mínima de 700W ... movimentos planetários" de batedor eliptico
+// (Rancho Alegre/PR, edital 38, item 19, 20/10/2026): so na frente.
+"correia","eliptico"];
 
 const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 

@@ -251,7 +251,8 @@ let partesEditais = [];
     atual.editais[k] = v.b64;
     atual.tam += naPagina; usado += naPagina;
     mapaEdital[k] = atual.n;
-    indiceEdital[k] = { de: v.de, paginas: v.paginas, nome: v.nome, origem: v.origem, ...(v.partes ? { partes: v.partes } : {}) };
+    indiceEdital[k] = { de: v.de, paginas: v.paginas, nome: v.nome, origem: v.origem, ...(v.partes ? { partes: v.partes } : {}),
+                        ...(v.separados ? { separados: v.separados } : {}) };
   }
   if (partesEditais.length) fs.mkdirSync(pastaCapas, { recursive: true });
   for (const p of partesEditais) {

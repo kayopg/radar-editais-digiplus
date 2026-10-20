@@ -47,7 +47,9 @@ const PISO_EDITAL = Number((fonte.match(/const PISO_EDITAL = (\d+)/) || [])[1]) 
 const VETO = {
   // e o freezer de ultrabaixa temperatura, "-50 a -86 °C" (Paranavai/PR,
   // item 24, que o catalogo chama de "Refrigerador Alimentos", 22/09/2026)
-  RF: ['imunobiolog', 'termolab', 'hemocompon', 'vacina', '-86', '-80 °c', 'ultrabaix', 'ultra baix',
+  // (e escrito com espaco, "temperatura operação: - 50 a - 86", Belo Horizonte/MG,
+  // contratacao direta 439, item 7, 20/10/2026)
+  RF: ['imunobiolog', 'termolab', 'hemocompon', 'vacina', '-86', '-80 °c', 'a - 86', 'a - 80', '- 86 °c', '- 80 °c', 'ultrabaix', 'ultra baix',
     // e o banco de gelo de processo (Blumenau/SC, edital 458, item 14, 15/10/2026)
     'banco de gelo', 'pasteuriz'],
   // e o banho-maria de controle digital com precisao de decimo de grau, que e de
@@ -97,7 +99,7 @@ const VETO = {
 // Industrial tipo: resistivo" no catalogo e "PASS-THROUGH AQUECIDO EM ACO INOX -
 // CAPACIDADE PARA 24 GNS 1/1" no edital.
 // E o desumidificador (usuario, 15/10/2026: "desumidificador de ar tambem nao cotamos").
-const ABRE_FORA_DO_RADAR = /^[^a-z]*(?:ventilador\s*\/\s*|ventilador\s+(?=exaustor\s+industrial))?(exaustor|depurador|pass[\s-]?through|desumidificador(?:es)?|chapa\s+(?:para\s+grelhar|de\s+grelhar|lisa|a\s+gas|industrial|de\s+coccao|assadeira)|chapeira|char\s?broiler)\b/;
+const ABRE_FORA_DO_RADAR = /^[^a-z]*(?:ventilador\s*\/\s*|ventilador\s+(?=exaustor\s+industrial))?(exaustor|depurador|pass[\s-]?(?:through|thru)|desumidificador(?:es)?|chapa\s+(?:para\s+grelhar|de\s+grelhar|lisa|a\s+gas|industrial|de\s+coccao|assadeira)|chapeira|char\s?broiler)\b/;
 
 // E as listas do catalogo, sobre a descricao do PNCP, do mesmo jeito que o
 // varredura.mjs as aplica: termo novo entra no dados.json ja publicado sem

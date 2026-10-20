@@ -1537,6 +1537,11 @@ function descreveConvertido(r){
   if(c.partes && c.partes.length > 1){
     var grupos = [], conta = {};
     c.partes.forEach(function(p){ if(!conta[p.parte]){ conta[p.parte] = 0; grupos.push(p.parte); } conta[p.parte]++; });
+    // os documentos que o órgão publicou SEPARADOS no PNCP, juntos (16/10/2026)
+    if(c.separados) return "O órgão publicou os documentos em " + c.separados + " arquivos separados no PNCP; este PDF junta os "
+         + c.partes.length + " documentos, nesta ordem: "
+         + grupos.map(function(g){ return g + (conta[g] > 1 ? " (" + conta[g] + ")" : ""); }).join(", ")
+         + " — " + c.paginas + " páginas.";
     return "O órgão publicou em " + de + "; este PDF junta os " + c.partes.length + " documentos do pacote, nesta ordem: "
          + grupos.map(function(g){ return g + (conta[g] > 1 ? " (" + conta[g] + ")" : ""); }).join(", ")
          + " — " + c.paginas + " páginas.";

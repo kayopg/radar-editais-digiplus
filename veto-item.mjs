@@ -60,9 +60,17 @@ export const chaleiraDeFogao = (d, resto = '') => {
   return !/eletric/.test(t) && (/aluminio/.test(t) || !t.includes('chaleira industrial'));
 };
 
-// O QUE SE COTA EM CADA UF (usuario, 05/10/2026). A UF que nao esta aqui — RS,
-// SC e PR — cota tudo o que o radar pega. Nas outras fica so o item dessas
-// linhas, e o edital sem nenhum sai:
+// O QUE SE COTA EM CADA UF. Desde 20/10/2026 SP, MG, GO, MS e DF cotam TUDO,
+// como RS, SC e PR (usuario: "Esta sendo cortado muitos itens que cotamos,
+// secadora de roupas, refrigeradores, multiprocessador de alimentos, Microondas,
+// Mixer e muitos outros itens" — e, perguntado, "cotar tudo em todos"). So MT
+// continua fora. A instalacao continua so em RS e SC (UF_INSTALA, na varredura e
+// no veta-pelo-descritivo): "lembrando que apenas RS, SC tem instalacao".
+//
+// A tabela de 05/10 a 20/10/2026 fica abaixo (LINHAS_DE_05_10), com o teste
+// dela, para o caso de o usuario voltar a restringir alguma UF. Nela a UF que
+// nao estava — RS, SC e PR — cotava tudo, e nas outras ficava so o item dessas
+// linhas (o edital sem nenhum saia):
 //   MT: nada — saiu do radar em 06/10/2026 ("MT nao cotamos mais nada"). Fica
 //     aqui vazio para o edital de MT que ainda estiver na lista sair inteiro.
 //   DF, GO, MS e MG: "ar condicionado, bebedouro industrial, fogao industrial e
@@ -87,11 +95,12 @@ export const chaleiraDeFogao = (d, resto = '') => {
 // ar-condicionado.
 const INDUSTRIAIS = ['ar-condicionado', 'bebedouro industrial', 'fogao industrial', 'batedeira industrial', 'lavadora de alta pressao', 'mesa inox', 'balanca'];
 const DO_CENTRO = [...INDUSTRIAIS, 'forno industrial', 'refrigeracao', 'liquidificador industrial', 'climatizador'];
-export const LINHAS_DA_UF = {
+export const LINHAS_DE_05_10 = {
   MT: new Set(),
   DF: new Set(DO_CENTRO), GO: new Set(DO_CENTRO), MS: new Set(DO_CENTRO), MG: new Set(DO_CENTRO),
   SP: new Set([...INDUSTRIAIS, 'micro-ondas', 'ventilador']),
 };
+export const LINHAS_DA_UF = { MT: new Set() };
 // o que conta como refrigeracao nessas UFs
 const REFRIGERACAO = /^(?:refrigerador|geladeira|frigobar|freezer|congelador|conservadora)$/;
 
@@ -168,9 +177,9 @@ export function ehIndustrial(linha, rot, desc = '') {
 // UF? Sem o descritivo (a varredura, que ainda nao o tem), o bebedouro, o fogao
 // e a batedeira passam se o rotulo nao se diz domestico: quem decide se e
 // industrial e o veta-pelo-descritivo.mjs, depois, com o descritivo na mao.
-export function criaCotaNaUf(posicaoDoTermo) {
+export function criaCotaNaUf(posicaoDoTermo, tabela = LINHAS_DA_UF) {
   return (uf, rot, desc, semDescritivo = false) => {
-    const linhas = LINHAS_DA_UF[uf];
+    const linhas = tabela[uf];
     if (!linhas) return true;
     const linha = linhaDoProduto(rot, posicaoDoTermo) || (desc ? linhaDoProduto(desc, posicaoDoTermo) : null);
     if (!linha) return false;
@@ -207,14 +216,18 @@ const PARA = /(?:para|p\/)(?: (?:o|a|os|as|uso))?\s+$/;
 // Preparação Alimentos material tampo: aço inoxidável", "LOTE 1 - Mesa inox 160 x
 // 70 x 90 cm". O "mesa" no meio e de outra coisa: "Garfo de mesa em aço inox",
 // "Autoclave horizontal de mesa", "Fogão ... mesa inox".
-const MESA_NA_FRENTE = /^[^a-z]*(?:(?:lote|item)\s*\d+\s*[-–:.]?\s*)?mesa(?![a-z])/;
+// A BANCADA de inox e a mesma mesa (20/10/2026): "Bancada em inox, estrutura
+// inteiramente em inox, com duas chapas, pes tubulares" (Lucelia/SP), "Bancada
+// material: aço inoxidável, comprimento: 135, largura: 75" (Campo Grande/MS) e a
+// "Mesa Bancada Em Aço Inox com duas prateleiras" do TRF3.
+const MESA_NA_FRENTE = /^[^a-z]*(?:(?:lote|item)\s*\d+\s*[-–:.]?\s*)?(mesa|bancada)(?![a-z])/;
 export function criaPosicaoDoTermo(CAT) {
   const comMesa = CAT.some(([c]) => c === 'MI');
   return d => {
     let melhor = null;
     if (comMesa) {
       const m = MESA_NA_FRENTE.exec(d);
-      if (m && /inox/.test(d.slice(0, 350))) return { c: 'MI', i: m[0].length - 4, t: 'mesa' };
+      if (m && /inox/.test(d.slice(0, 350))) return { c: 'MI', i: m[0].length - m[1].length, t: 'mesa' };
     }
     for (const [c, ts] of CAT) for (const t of ts) {
       if (c === 'MI') break;

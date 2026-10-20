@@ -19,6 +19,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
 import { abreZip, abreRar, extDe } from './arquivo-oficial.mjs';
 import { pdfDeDocumento, CONVERSIVEIS } from './pdf-do-documento.mjs';
 
@@ -50,8 +51,10 @@ let alvos = dados.editais.filter(e => String(e[C.arquivoExtensao] || '').toLower
 const VERSAO = 2;
 if (FALTANTES) alvos = alvos.filter(e => !jaTem[e[C.path]] || (jaTem[e[C.path]].arq !== undefined && jaTem[e[C.path]].arq !== (e[C.arquivoSeq] || 1))
   || (/^(?:zip|rar)$/.test(String(e[C.arquivoExtensao] || '').toLowerCase()) && (jaTem[e[C.path]].v || 1) < VERSAO));
-// e o edital que agora aponta um PDF nao precisa mais do convertido
-for (const e of dados.editais) if (String(e[C.arquivoExtensao] || '').toLowerCase() === 'pdf') delete jaTem[e[C.path]];
+// e o edital que agora aponta um PDF nao precisa mais do convertido — menos o
+// PDF unico dos arquivos separados ("arqs", 16/10/2026)
+for (const e of dados.editais)
+  if (String(e[C.arquivoExtensao] || '').toLowerCase() === 'pdf' && !(jaTem[e[C.path]] && jaTem[e[C.path]].arqs)) delete jaTem[e[C.path]];
 if (SO.length) alvos = alvos.filter(e => SO.includes(e[C.path]));
 
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -219,7 +222,13 @@ async function juntaPacote(entradas) {
       || a.i - b.i);
   if (!docs.some(u => u.parte <= 1)) return null;
   const pacotes = [], partes = [];
+  // o mesmo arquivo duas vezes (no pacote e solto no PNCP, ou cadastrado duas
+  // vezes: Goiania/GO, edital 353) entra uma vez so
+  const vistos = new Set();
   for (const u of docs) {
+    const h = createHash('sha1').update(u.x.abre()).digest('hex');
+    if (vistos.has(h)) continue;
+    vistos.add(h);
     let bytes = null;
     try { bytes = u.ext === 'pdf' ? u.x.abre() : pdfDeDocumento(u.x.abre(), u.ext); } catch { bytes = null; }
     if (!bytes) { console.log(`      (sem conversao: ${u.nome.split('/').pop()})`); continue; }
@@ -327,14 +336,115 @@ const arquivosDe = async (e) => {
   } catch { return []; }
 };
 
+// ------------------------------------- os documentos SEPARADOS no PNCP, juntos
+// O usuario, em 16/10/2026: "quando aparecer o termo de referencia, o edital,
+// etc, separados no portal, faca o mesmo esquema que voce fez com os arquivos
+// .zip, organize eles em um PDF so". O orgao que publica o edital, o termo de
+// referencia, o estudo tecnico e as declaracoes como arquivos separados do
+// mesmo edital ganha o PDF unico, na mesma ordem do pacote (juntaPacote) — vale
+// tambem para o edital publicado em PDF, que ate aqui so tinha a copia do
+// arquivo principal (originais.mjs). Cada arquivo e classificado pelo titulo; o
+// titulo generico ("TR", "ETP", "918/2026.pdf") vai pelo tipo de documento que o
+// PNCP informa ("Termo de Referencia", "Estudo Tecnico Preliminar"). A certidao
+// e o comprovante de publicacao, que o orgao as vezes cadastra como "Edital",
+// ficam no fim, com o resto.
+const listaDeArquivos = async e => {
+  const [c, a, s] = e[C.path].split('/');
+  for (let t = 0; t < 3; t++) {
+    try {
+      const r = await fetch(`https://pncp.gov.br/api/pncp/v1/orgaos/${c}/compras/${a}/${s}/arquivos`, { signal: AbortSignal.timeout(60000) });
+      if (!r.ok) return null;
+      const j = await r.json();
+      return (Array.isArray(j) ? j : []).filter(x => x.statusAtivo !== false && x.sequencialDocumento)
+        .map(x => ({ seq: +x.sequencialDocumento, titulo: String(x.titulo || ''), tipo: String(x.tipoDocumentoNome || '') }))
+        .sort((x, y) => x.seq - y.seq);
+    } catch { await new Promise(x => setTimeout(x, 3000)); }
+  }
+  return null;
+};
+const nomeNoPacote = (titulo, tipo) => {
+  const t = String(titulo).replace(/[\\/]+/g, '-').replace(/\.(?:pdf|docx?|odt|rtf|zip|rar|html?)$/i, '').trim() || 'documento';
+  if (parteDoPacote(t) !== 6 || /certid|comprovante|publicac|extrato/.test(norm(t))) return t;
+  return String(tipo).replace(/[\\/]+/g, '-').trim() + ' - ' + t;
+};
+const chaveDosArquivos = lista => (lista || []).map(f => f.seq).join(',');
+// O arquivo que o orgao cadastrou duas vezes ("353-2026 proposta.pdf" e "353-2026
+// minuta de contrato.pdf" repetidos, Goiania/GO, edital 353) entra uma vez so, e
+// o original que tem a versao retificada ao lado sai ("EDITAL_PE_1562026_..." e
+// "EDITAL_PE_1562026_..._RETIFICADO", Palmeiras de Goias/GO, edital 156).
+const semExt = t => norm(t).replace(/\.(?:pdf|docx?|odt|rtf|zip|rar|html?)$/, '').trim();
+const retificado = (f, lista) => lista.some(g => g !== f && semExt(g.titulo).startsWith(semExt(f.titulo))
+  && /^[\s_-]*(?:\(?\s*)?retifica/.test(semExt(g.titulo).slice(semExt(f.titulo).length)));
+async function juntaSeparados(e, lista, urlDe) {
+  const entradas = [];
+  const vistos = new Set();
+  let mb = 0;
+  for (const f of lista) {
+    if (retificado(f, lista)) { console.log(`      (fica so a versao retificada: ${f.titulo})`); continue; }
+    const b = await baixa(urlDe(f.seq));
+    if (!b) { console.log(`      (nao baixou o arquivo ${f.seq}: ${f.titulo})`); continue; }
+    const h = createHash('sha1').update(b).digest('hex');
+    if (vistos.has(h)) { console.log(`      (repetido: ${f.titulo})`); continue; }
+    vistos.add(h);
+    mb += b.length / 1048576;
+    if (mb > 200) { console.log('      (mais de 200 MB de arquivos: para por aqui)'); break; }
+    const tipo = tipoDe(b);
+    const ext = tipo === 'ole' ? 'doc' : tipo || extDe(f.titulo);
+    if (!ext) continue;
+    entradas.push({ nome: nomeNoPacote(f.titulo, f.tipo) + '.' + ext, abre: () => b });
+  }
+  const junto = entradas.length >= 2 ? await juntaPacote(entradas) : null;
+  return junto && junto.partes.length >= 2 ? { ...junto, origem: 'arquivos separados do PNCP', separados: lista.length } : null;
+}
+
+// a lista de arquivos de cada edital do dia: quem tem mais de um documento entra
+// (e o de --faltantes so de novo quando a lista muda: errata, anexo novo)
+const listas = new Map();
+{
+  const fila = dados.editais.filter(e => !SO.length || SO.includes(e[C.path]));
+  for (let i = 0; i < fila.length; i += 6)
+    await Promise.all(fila.slice(i, i + 6).map(async e => listas.set(e[C.path], await listaDeArquivos(e))));
+}
+const varios = e => (listas.get(e[C.path]) || []).length >= 2;
+for (const e of dados.editais) {
+  if (alvos.includes(e) || !varios(e) || (SO.length && !SO.includes(e[C.path]))) continue;
+  const ja = jaTem[e[C.path]];
+  if (FALTANTES && ja && ja.arqs === chaveDosArquivos(listas.get(e[C.path]))) continue;
+  alvos.push(e);
+}
+// e o nao-PDF ja convertido que agora tem varios arquivos (ou outra lista deles)
+if (FALTANTES) for (const e of dados.editais) {
+  const ja = jaTem[e[C.path]];
+  if (!alvos.includes(e) && varios(e) && ja && ja.arqs !== chaveDosArquivos(listas.get(e[C.path]))) alvos.push(e);
+}
+
 const saida = { ...jaTem };
-let feitos = 0, semJeito = 0, grandes = 0, erros = 0, total = 0;
+let feitos = 0, semJeito = 0, grandes = 0, erros = 0, total = 0, juntados = 0;
 for (const e of dados.editais) {
   if (!alvos.includes(e)) continue;
   const nome = `${e[C.municipio]}/${e[C.uf]} ${e[C.edital]}`;
   const [c, a, s] = e[C.path].split('/');
   const urlDe = seq => `https://pncp.gov.br/pncp-api/v1/orgaos/${c}/compras/${a}/${s}/arquivos/${seq}`;
   try {
+    const lista = listas.get(e[C.path]);
+    const ehPdf = String(e[C.arquivoExtensao] || '').toLowerCase() === 'pdf';
+    // os documentos separados no PNCP, juntos
+    if (lista && lista.length >= 2) {
+      const junto = await juntaSeparados(e, lista, urlDe);
+      if (junto && junto.bytes.length <= TETO_MB * 1024 * 1024) {
+        const le = await LE.abre(junto.bytes);
+        saida[e[C.path]] = { nome: junto.nome.split('/').pop(), origem: junto.origem, paginas: le.total, arq: e[C.arquivoSeq] || 1,
+                             de: String(e[C.arquivoExtensao] || '').toLowerCase(), v: VERSAO, arqs: chaveDosArquivos(lista),
+                             separados: junto.separados, partes: junto.partes, b64: Buffer.from(junto.bytes).toString('base64') };
+        total += junto.bytes.length; feitos++; juntados++;
+        console.log(`  ${nome} · ${junto.origem} (${lista.length}) · ${le.total} pag · ${(junto.bytes.length / 1024).toFixed(0)} KB\n      `
+          + junto.partes.map(p => `${p.parte}: ${p.nome} (${p.paginas})`).join(' | '));
+        continue;
+      }
+      if (junto) console.log(`  ${nome} · os ${lista.length} arquivos juntos dao ${(junto.bytes.length / 1024 / 1024).toFixed(1)} MB, passa do teto de ${TETO_MB} MB`);
+      // o edital em PDF sem o PDF unico fica com a copia do arquivo principal (originais.mjs)
+      if (ehPdf) { delete saida[e[C.path]]; continue; }
+    }
     const bruto = await baixa(urlDe(e[C.arquivoSeq] || 1));
     if (!bruto) { erros++; console.log(`  [erro] ${nome}: nao baixou`); continue; }
     let { tipo, achado } = doArquivo(bruto, e);
@@ -378,5 +488,5 @@ const vivos = new Set(dados.editais.map(e => e[C.path]));
 for (const k of Object.keys(saida)) if (!vivos.has(k)) delete saida[k];
 
 fs.writeFileSync(arquivoSaida, JSON.stringify({ varredura: dados.meta && dados.meta.varredura, editais: saida }), 'utf8');
-console.log(`\n${feitos} edital(is) convertido(s) agora · ${semJeito} sem jeito · ${grandes} acima do teto · ${erros} erro(s)`);
+console.log(`\n${feitos} edital(is) convertido(s) agora (${juntados} com os arquivos separados do PNCP juntos) · ${semJeito} sem jeito · ${grandes} acima do teto · ${erros} erro(s)`);
 console.log(`docs/editais-pdf.json: ${Object.keys(saida).length} editais · ${(fs.statSync(arquivoSaida).size / 1024 / 1024).toFixed(1)} MB`);

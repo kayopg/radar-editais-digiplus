@@ -1512,6 +1512,14 @@ const RODAPE = [
   // ao Termo de Referencia Item ... Preco Total incluindo funcao turbo" (Santa
   // Maria/RS, edital 140, item 81, 15/10/2026). So antes de minuscula.
   CABECALHO_UFSM,
+  // O rodape com o numero da folha, o endereco, o e-mail e o mandato, no meio da
+  // frase: "...dotado de R$ 2.028,49 R$ 4.056,98 30 AV. RIO DE JANEIRO, 720,
+  // ASSAI – PR, CEP: 86.220-000 Email: licitacao@assai.pr.gov.br GESTAO 2025 -
+  // 2028 compartimento interno de freezer..." (Assai/PR, edital 102, item 18,
+  // 20/10/2026 — sobravam o "30" e o "2025 - 2028"). E o mandato sozinho, em
+  // qualquer timbre: "Administracao 2025-2028" (Roque Gonzales/RS).
+  /\s*\d{1,3}\s+(?:AV\.|AVENIDA|RUA)\s[^@]{0,150}?@\S+\s+(?:GEST[ÃA]O|ADMINISTRA[ÇC][ÃA]O)\s+20\d\d\s*[-–\/]\s*20\d\d(?!\d)/gi,
+  /\s*(?:GEST[ÃA]O|ADMINISTRA[ÇC][ÃA]O)\s+20\d\d\s*[-–\/]\s*20\d\d(?!\d)/gi,
   /\s*www\.[^\s]+/gi,
   // Cabecalho de impressao do sistema de compras no alto de cada folha, no meio
   // da celula: "...Tecnologia: Inverter; 17 Impressao: 01/09/2026 COMPRAS Hora:
@@ -6112,7 +6120,11 @@ for (const e of dados.editais) {
         .replace(/ı\s?\u0301/g, 'í');
       // (o cabecalho da folha da UFSM tambem aqui: a linha achada pelo preco
       // nao passa pelo tiraRodape — Santa Maria/RS, edital 140, item 81)
-      s = compoeAcentos(s).replace(CABECALHO_UFSM, '');
+      s = compoeAcentos(s).replace(CABECALHO_UFSM, '')
+        // e o resto do rodape de mandato que chegou por outro caminho: o numero
+        // da folha e os anos, "dotado de 30 2025 - 2028 compartimento" (Assai/PR)
+        .replace(/\s\d{1,3}\s+(?:(?:GEST[ÃA]O|ADMINISTRA[ÇC][ÃA]O)\s+)?20\d\d\s*[-–]\s*20\d\d(?=\s+\p{Ll})/gu, '')
+        .replace(/\s(?:GEST[ÃA]O|ADMINISTRA[ÇC][ÃA]O)\s+20\d\d\s*[-–\/]\s*20\d\d(?=\s)/g, '');
       // Na revisao de 15/10/2026 ("verifique novamente edital por edital"):
       // o cabecalho do item seguinte e o que vem depois dele, "...Garantia
       // minima de 12 meses. ITEM 08: GELADEIRA DUPLEX FROST FREE C3CCCC..."
@@ -6164,6 +6176,86 @@ for (const e of dados.editais) {
       // e a unidade com a quantidade em decimal e mais uma coluna no fim: "...baixo
       // consumo de energia. UN 1,00 1" (Itaguaru/GO, item 5)
       if (q) s = s.replace(new RegExp('(?<=[.;])\\s+(?:UN|UND|UNID)\\.?\\s+0*' + q + ',0{1,4}(?:\\s+\\d{1,3})?\\s*$', 'i'), '');
+      // e a quantidade da ultima coluna com o numero e o texto do item SEGUINTE:
+      // "...Marca: Venâncio, ou equivalente. 4 4 Micro- ondas 32 litros 220V
+      // BMS46AR..." (TRF3, edital 56, item 3, 20/10/2026)
+      if (q) s = s.replace(new RegExp('(?<=[.;])\\s+0*' + q + '\\s+0*' + (+it[0] + 1) + '\\s+\\p{Lu}[\\s\\S]*$', 'u'), '');
+      // e a unidade e a quantidade das colunas seguidas do texto da folha
+      // seguinte, que continua outra frase: "...com duas prateleiras 140x70 cm
+      // unida de 10 [rodape do SEI] o gerenciador e para os participantes." (TRF3,
+      // edital 56, item 6)
+      if (q) s = s.replace(new RegExp('\\s(?:[Uu]nida\\s?de|UNIDA\\s?DE|UN|UND|Und)\\.?\\s+0*' + q + '\\s+(?=\\p{Ll})[\\s\\S]*$', 'u'), '');
+      // Os itens que entraram com SP, MG, GO, MS e DF cotando tudo (20/10/2026):
+      // a tabela de distribuicao por escola depois do descritivo, "...potência
+      // de 600 W. - 1 Educação Fundamental DARCY APARECIDA BURANELLO MARIN EMEF
+      // PROF9", "...LR-01 1 Educação Infantil ADHEMAR MÓDENA CENTRO DE EDUCAÇÃO
+      // INFANTIL MUNICIPAL" (Penápolis/SP, edital 114)
+      s = s.replace(/\s+(?:-\s*)?\d{1,3}\s+Educa[çc][ãa]o\s+(?:Infantil|Fundamental|Especial)\s[\s\S]*$/, '');
+      // a quantidade solta no fim, da coluna ao lado: "Freezer 420 litros
+      // horizontal 2", "Umidificador de ar ultrassônico 2,2, litros 4", "...e 12
+      // meses de garantia 3" (Lucélia/SP, edital 48, itens 102, 196 e 186). So
+      // a quantidade do proprio item, e nao depois de dois-pontos, "x", "de" e
+      // afins ("Bocas: 4")
+      if (q) s = s.replace(new RegExp('(?<![:=x×]|\\b(?:de|com|até|ate|a|e|por|n[º°o]|cerca|aprox\\.?))\\s0*' + q + '\\s*$'), '');
+      // as colunas unidade, codigo do catalogo, quantidade e total no fim:
+      // "FRIGOBAR 76 LTS UNIDADE 346623 33 R$ 33.438,90" (Bento Gonçalves/RS,
+      // edital 442, itens 57 e 78); e o codigo com asterisco, "...manual do
+      // produto. 621443*" (Campo Grande/MS, edital 40, item 1)
+      if (q) s = s.replace(new RegExp('\\s+(?:UNIDADES?|Unidades?|UND|UN)\\.?\\s+\\d{5,7}\\s+0*' + q + '\\s+R\\$\\s*[\\d.]+,\\d{2}(?:\\s+EXCLUSIVO\\s+ME\\s*\\/\\s*EPP)?\\s*$'), '');
+      s = s.replace(/(?<=[;.])\s+\d{5,7}\*\s*$/, '');
+      // o codigo do catalogo da BEC no fim, "...COM SELO PROCEL LETRA "A"
+      // 548087-6/463056", e o codigo com o orgao comprador, "...Letra A; 6251340
+      // DEPARTAMENTO DE ADMINISTRAÇÃO DA REGIÃO III – DAR-III" (São Paulo/SP,
+      // editais 307 e 395)
+      s = s.replace(/\s+\d{5,7}-\d(?:\/\d{5,7})?\s*$/, '')
+        .replace(/(?<=[;.])\s+\d{5,7}\s+(?:DEPARTAMENTO|SECRETARIA|DIRETORIA|COORDENADORIA|SUBPREFEITURA)\s[A-ZÀ-Ú0-9 ,.–-]{3,120}$/, '');
+      // a unidade, a quantidade, os dois precos e o "Não" da cota no meio da
+      // frase, quando a celula atravessa a folha: "...ALTURA: 200 CM, UNIDAD E
+      // 6,00 R$ 21.300,0000 R$ 127.800,0000 Não LARGURA: 180 CM" (Hidrolândia/GO,
+      // edital 41, item 15); e o "Exclusivo ME/EPP." da coluna no fim (item 16, e
+      // "...- 01 Manual Exclusivo para ME e EPP", Rio Novo/MG)
+      if (q) s = s.replace(new RegExp('\\s(?:UNIDAD\\s?E|UNIDADES?|Unidad\\s?e|Unidades?|UND|UN)\\.?\\s+0*' + q + '(?:,0{1,4})?\\s+R\\$\\s*[\\d.]+,\\d{2,4}\\s+R\\$\\s*[\\d.]+,\\d{2,4}(?:\\s+(?:Não|Sim|NÃO|SIM))?(?=\\s)', 'g'), '');
+      s = s.replace(/\s+Exclusivo\s+(?:para\s+)?ME\s*(?:\/|e)\s*EPP\.?\s*$/i, '')
+        // a pesquisa de precos depois do descritivo: "...TENSÃO 220 V R$ 643,87
+        // 0,0000% R$ 643,87 R$ 700,00 3,8197% ..." (Uberaba/MG, edital 251, item 5)
+        .replace(/\s+R\$\s*[\d.]+,\d{2}\s+\d+,\d{2,4}%[\s\S]*$/, '')
+        // o "de NN" da folha sem o numero dela, depois de frase fechada: "...LIGAR
+        // + 30 SEG. de 33" (Uberaba/MG, item 7)
+        .replace(/(?<=[.:;])\s+de\s+\d{1,3}\s*$/, '')
+        // o cabecalho do item seguinte sozinho no fim: "...0,30m de profundidade.
+        // ITEM 06" (Uberlândia/MG, edital 378, item 3)
+        .replace(/(?<=[.;])\s+ITEM\s+\d{1,3}\s*$/, '')
+        // as notas de entrega do termo de referencia: "...peso aprox. 42kg. Notas:
+        // LOCAL DE ENTREGA • As entregas deverão..." (Assis/SP, edital 45, item 15)
+        // (so como nota: o "...GARANTIA: 36 MESES. PRAZO DE ENTREGA DE 60 A 90
+        // DIAS. CABO DE FORÇA DEVE ATENDER A NBR 14136." e do proprio item,
+        // Florianópolis/SC, edital 386, item 6)
+        .replace(/(?<=[.;])\s+(?:Notas?:\s+(?:LOCAL|PRAZO)\s+DE\s+ENTREGA|LOCAL\s+DE\s+ENTREGA\s*[•:])[\s\S]*$/, '')
+        // o cabecalho da folha do termo de referencia de Uberlândia/MG (edital 378)
+        .replace(/\s*\d{1,3}\s+Secretaria\s+Municipal\s+d[eao]\s+[^.]{3,40}?Atualiza[çc][ãa]o:\s*\d{2}\/\d{2}\/\d{4}\s+Termo\s+de\s+Refer[êe]ncia\s+Compras\s*[–-]\s*Modelo\s+para\s+Preg[ãa]o\s+Eletr[ôo]nico,\s+Concorr[êe]ncia,\s+Inexigibilidades\s+e\s+Dispensas\s*/g, ' ');
+      // e o lixo da fonte sem mapa de caracteres: "...compatível com o modelo
+      // fornecido. /uPu}WŒ}µš}uŒuvš]oµ..." e "PURIFICADOR DE ÁGUA RDDR¤\q¤o..."
+      // (Uberlândia/MG, edital 378, itens 3 e 9): corta na primeira palavra com
+      // dois desses caracteres
+      {
+        // (a barra invertida nao: e a formula do edital, "\(200W\)", Ivaí/PR)
+        const lixo = /(?:^|\s)\S*[¤½¶¡¯©ŒšŸ]\S*[¤½¶¡¯©ŒšŸ]/.exec(s);
+        if (lixo) s = s.slice(0, lixo.index).trim();
+      }
+      // e o item SEGUINTE escrito como o catalogo da UFG, em maiusculas e com
+      // virgulas, logo depois da garantia: "...GARANTIA MÍNIMA DE 12 (DOZE) MESES
+      // BALCÃO, TÉRMICO, CARRINHO BUFFET..." (Goiânia/GO, edital 12, item 3, o
+      // aspirador; o item 4 e o "Balcão Térmico" no PNCP)
+      {
+        const nx = v.itens.find(x => +x[0] === +it[0] + 1);
+        const sa = t => [...String(t || '')].map(c => c.normalize('NFD')[0]).join('');
+        const w = nx ? (sa(nx[1]).match(/[A-Za-z]{3,}/g) || []).slice(0, 2) : [];
+        const meu = (sa(it[1]).match(/[A-Za-z]{3,}/) || [''])[0].toLowerCase();
+        if (w.length === 2 && w[0].toLowerCase() !== meu) {
+          const m = new RegExp('\\s' + w[0].toUpperCase() + ',\\s+' + w[1].toUpperCase() + ',\\s').exec(sa(s));
+          if (m && m.index >= 80) s = s.slice(0, m.index).trim();
+        }
+      }
       // e o numero do item SEGUINTE, com as colunas dele, no fim: "...GARANTIA
       // DE 1 ANO; 17", "...MEDIDAS EXATAS. 30 113594 80,00 UN 132,31 10.584,8 0"
       // (Porto Belo/SC, edital 263), "...com divisão de 5 g; 4" (Sapiranga/RS,
@@ -6202,6 +6294,20 @@ for (const e of dados.editais) {
         }
         if (melhor) s = melhor;
       }
+    }
+    // O descritivo que e so o comeco do rotulo do PNCP, cortado no meio:
+    // "REFRIGERADOR DOMÉSTICO; MODELO VERTICAL DUPLEX, FROST FREE, CAPACIDADE"
+    // (Eldorado/SP, edital 28, item 19, 20/10/2026), com o rotulo dizendo
+    // "...CAPACIDADE TOTAL 463 LITROS...": fica o rotulo (no fim, abaixo)
+    {
+      const nz = t => String(t || '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+      const a = nz(s), b = nz(limpaTextoPncp(it[1]));
+      if (a.length >= 10 && b.length > a.length + 15 && b.startsWith(a) && !/[.;)]$/.test(s.trim())) s = '';
+      // e o caco de outro item, curto e sem as palavras do rotulo: "PRODUÇÃO
+      // 300KG /H", o fim do descascador de legumes, no processador de alimentos
+      // (Goiânia/GO, edital 353, item 38)
+      const ws = a.split(' ').filter(w => w.length >= 3 && !/^\d/.test(w));
+      if (a && a.length < 40 && b.length > 60 && ws.filter(w => b.includes(w)).length < Math.max(1, ws.length / 2)) s = '';
     }
     it[6] = s;
   }
