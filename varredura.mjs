@@ -784,7 +784,9 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // Exaustão/Ar Condicionado" (Embrapa, Brasilia/DF, edital 10, itens 41 a 55)
 // entrava pelo ar-condicionado da aplicacao. So na frente do produto
 // (VETO_SO_NA_FRENTE): a amassadeira "com transmissao por correia" fica.
-"correia"];
+"correia",
+// e o ventilador centrifugo de processo (20/10/2026, ver o VETO_SO_NA_FRENTE)
+"ventilador centrifugo","ventiladores centrifugos"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
@@ -841,7 +843,11 @@ const VETO_SO_NA_FRENTE = ["gas liquefeito","botijoes","carga de gas","gas de co
 // academia, que vetava em qualquer ponto e derrubava a "Batedeira planetária,
 // potência mínima de 700W ... movimentos planetários" de batedor eliptico
 // (Rancho Alegre/PR, edital 38, item 19, 20/10/2026): so na frente.
-"correia","eliptico"];
+"correia","eliptico",
+// e o ventilador centrifugo de processo ("Ventilador Centrífugo com pás voltadas
+// para trás tipo Limit load ... Vazão m³/h: 5.058; Pressão", Tres Passos/RS,
+// edital 184, 20/10/2026): equipamento de ventilacao industrial, como o exaustor
+"ventilador centrifugo","ventiladores centrifugos"];
 
 const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 
@@ -888,7 +894,10 @@ const VETO_OT_ANIMAIS = ['campanula','avicultura','suinocultura','pintinho','lei
 // como o orgao escreveu ("BALANCA ANTOPOMETRICA ADULTO"). E o veto e por
 // PRODUTO, nao pela palavra: "balanca precisao" veta a balanca de precisao, mas
 // "precisao minima de 5 g" na balanca comercial de 15 kg continua passando.
-const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioimpedanc',
+// (e a de laboratorio pelo nome do lote ou pela precisao: "Balança eletrônica de
+// precisão de bancada", "Lote 1 - Instrumentos e equipamentos laboratoriais de
+// pequeno porte", Ribeirao Preto/SP, edital 27, item 2, 20/10/2026)
+const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioimpedanc','laboratoriais','eletronica de precisao',
   'biompedanc','pesar pessoas','obeso','paciente','corporal','balanca analitica',
   'analitica de precisao','balanca precisao','balanca de precisao','cama hospitalar',
   'mesa auxiliadora','tipo balanca','paleteira','pilha tipo bateria',

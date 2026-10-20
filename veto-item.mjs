@@ -266,7 +266,13 @@ export function criaVetoItem({ VETO_ITEM, VETO_SO_NA_FRENTE, VETO_FORA_DE = {}, 
       let i;
       if (re) { const m = re.exec(d); if (!m) continue; i = m.index + m[0].length - v.length; }
       else { i = d.indexOf(v); if (i < 0) continue; }
-      if (naFrente.has(v) && i >= produto) continue;
+      // (o termo que E o nome do produto, mais comprido que o da categoria e
+      // comecando no mesmo lugar, tambem veta: "Ventilador Centrífugo com pás
+      // voltadas para trás tipo Limit load", Tres Passos/RS, 20/10/2026)
+      // (a mesa inox fica de fora: o "mesa" e o gancho da categoria, e "mesa de
+      // apoio" na frente e a mesa de apoio de inox — Porto Alegre/RS, edital 333)
+      const eONome = p && p.t && p.c !== 'MI' && i === produto && v.startsWith(p.t) && v.length > p.t.length;
+      if (naFrente.has(v) && i >= produto && !eONome) continue;
       return v;
     }
     return RE_VAN && RE_VAN.test(d) ? 'van' : null;

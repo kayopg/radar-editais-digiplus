@@ -5115,6 +5115,7 @@ for (const e of dados.editais) {
       let junta = null;
       // DEPURA_FOLHA="caminho#numero" mostra por onde a costura deste item passou
       const dbg = process.env.DEPURA_FOLHA === e[C.path] + '#' + it[0] ? (...a) => console.error('FOLHA', ...a) : () => {};
+      dbg('fim do descritivo', JSON.stringify(fimN), planoN.indexOf(fimN));
       for (let k = planoN.indexOf(fimN); k >= 0 && !junta; k = planoN.indexOf(fimN, k + 1)) {
         const trecho = plano.slice(k + fimN.length, k + fimN.length + 3500);
         // 1. o resto da linha de cima e as colunas, com o preco deste item
@@ -5137,6 +5138,19 @@ for (const e of dados.editais) {
         let p = -1;
         for (const m of semTimbre.slice(0, 700).matchAll(new RegExp(MARCA_DE_FOLHA.source, 'gi'))) p = m.index + m[0].length;
         if (p < 0) { if (!tirouTimbre) continue; p = 0; }
+        // e o rodape com endereco, fone e CNPJ logo depois da marca: "Página 27
+        // de 60 Secretaria Municipal de Administração – Departamento de
+        // Licitações Rua São Paulo, 80. CEP 84350-000. Ortigueira/PR. FONE:
+        // 32771388 CNPJ 77.721.363/0001-40 Sistema de Ar Forçado.-..."
+        // (Ortigueira/PR, edital 99, item 4, 20/10/2026)
+        {
+          let fimRodape = -1;
+          for (const m of semTimbre.slice(p, p + 400).matchAll(/CNPJ:?\s*\d{2}\.?\d{3}\.?\d{3}\s*\/?\s*\d{4}\s*-?\s*\d{2}|(?:FONE|TELEFONE|Fone|Telefone)[:\s]*\(?\d{2}\)?\s*\d[\d\s.-]{6,}\d|CEP:?\s*\d{2}\.?\d{3}-?\d{3}\.?/g)) fimRodape = p + m.index + m[0].length;
+          if (fimRodape > 0) p = fimRodape;
+        }
+        // a lista de caracteristicas separada por "- " continua em maiuscula
+        // ("...degelo automático- UND 1 7.565,00 [folha] Sistema de Ar Forçado.-")
+        const listaAberta = /^[-–]$/.test(solto);
         // ...pulando o cabecalho repetido que o timbre nao levou (com cara de
         // timbre: orgao, estado, minuta, lei) e o da tabela, em maiusculas
         // ("ITEM QUANT. UNID. DESCRICAO / ESPECIFICACAO V. UNIT. (R$)",
@@ -5150,7 +5164,7 @@ for (const e of dados.editais) {
         dbg('cabecalho repetido', q, JSON.stringify(ws.slice(0, q + 3).join(' ')));
         if (q && !MARCA_DE_TIMBRE.test(ws.slice(0, q).join(' '))) continue;
         while (q < ws.length && q < 200 && (!/[a-zà-ÿ]/.test(ws[q]) || /^(?:de|e)$/.test(ws[q]))) q++;
-        if (q >= ws.length || !/^[a-zà-ÿ]{2,}/.test(ws[q])) continue;
+        if (q >= ws.length || !(/^[a-zà-ÿ]{2,}/.test(ws[q]) || (listaAberta && /^\p{Lu}[a-zà-ÿ]{2,}/u.test(ws[q])))) continue;
         // sem marca da folha nem cabecalho repetido, o que fica entre as
         // colunas e a continuacao nao pode ter palavra minuscula (o timbre ja
         // saiu inteiro)
@@ -5160,12 +5174,19 @@ for (const e of dados.editais) {
         let fim = -1;
         if (prox) {
           const nome5 = letras(prox[1]).slice(0, 5);
-          for (const m of cont.matchAll(new RegExp('\\s0*' + prox[0] + '\\s+(?:\\d{1,6}(?:,\\d{1,4})?\\s+)?(?:' + UNIDADE + '\\.?\\s+)?(?:\\d{4,7}\\s+)?', 'g'))) {
+          // (com a cota entre o numero e o nome: "02 Exclusiva ME/EPP AUTOCLAVE",
+          // Caraguatatuba/SP, edital 32)
+          for (const m of cont.matchAll(new RegExp('\\s0*' + prox[0] + '\\s+(?:\\d{1,6}(?:,\\d{1,4})?\\s+)?(?:' + UNIDADE + '\\.?\\s+)?(?:\\d{4,7}\\s+)?(?:(?:Exclusiv[ao]|EXCLUSIV[AO])\\s+(?:para\\s+)?ME\\s*\\/\\s*EPP\\s+|(?:Ampla|AMPLA)\\s+(?:Concorr[êe]ncia\\s+|CONCORR[ÊE]NCIA\\s+)?)?', 'g'))) {
             if (nome5.length === 5 && letras(cont.slice(m.index + m[0].length, m.index + m[0].length + 30)).startsWith(nome5)) { fim = m.index; break; }
           }
         }
         const cl = /\s\d{1,2}(?:\.\d{1,2}){1,3}\.?\s+\p{Lu}/u.exec(cont);
         if (cl && (fim < 0 || cl.index < fim)) fim = cl.index;
+        // (e o titulo da secao seguinte: "...Certificado pelo INMETRO 3 – DA
+        // NATUREZA DO OBJETO", Ortigueira/PR, que fecha a celula sem ponto)
+        const tit = /\s\d{1,2}\s*[–-]\s*D[AO]S?\s+\p{Lu}{3,}/u.exec(cont);
+        const fimTitulo = !!tit && (fim < 0 || tit.index < fim);
+        if (fimTitulo) fim = tit.index;
         if (fim < 10 || fim > 1500) continue;
         dbg('fim', fim, JSON.stringify(cont.slice(0, 300)));
         let pedaco = cont.slice(0, fim).trim();
@@ -5180,13 +5201,14 @@ for (const e of dados.editais) {
           // Tupancireta/RS; "justificativa constante do", Sao Paulo/SP, 613), e
           // termina em frase fechada
           || /julgamento|licita[cç]|\bpropostas?\b|preg[aã]o|\bedital\b|adjudica|habilita[cç]|justificativa|dota[cç][aã]o|empenho/i.test(pedaco)
-          || !/[.;)!]$/.test(pedaco)) continue;
+          || (!/[.;)!]$/.test(pedaco) && !fimTitulo)) continue;
         junta = (solto ? solto + ' ' : '') + pedaco;
       }
       if (junta) { it[6] = String(it[6]).trim() + ' ' + junta; continuacoesDaFolha++; }
     }
   }
 
+  rastro('depois da continuacao da folha');
   // O ITEM SEGUINTE INTEIRO dentro do descritivo: a tabela sem preco de
   // Caarapo/MS (edital 35, 09/10/2026) e "8 16,000 UNI GELADEIRA ... 127V 9
   // 51,000 UNI TV de 55 polegadas ...", e a geladeira levava a TV junto (a
@@ -5321,6 +5343,7 @@ for (const e of dados.editais) {
       .trim();
   }
 
+  rastro('antes da coluna de quantidade');
   // A coluna de QUANTIDADE da tabela grudada no fim: o ar-condicionado do item
   // 6 de Quarai/RS termina em "Garantia de 01 ano 10 unidade", e "10 unidade" e
   // a coluna, nao a especificacao. So sai quando o numero BATE com a quantidade
@@ -5697,6 +5720,14 @@ for (const e of dados.editais) {
       // a unidade, a quantidade, o preco e o total, e o que vem depois: "...12
       // meses. UNI 3 1.740,13 5.220,39 5 Conjunto composto por 01 (uma) mesa
       // plástica" (Guarapuava/PR, PCE 136, item 4; no PCE 137 era a justificativa)
+      // (mas quando a frase continua depois das colunas, em minuscula, e a
+      // celula que atravessou a folha: "...Origem: Nacional ou importado, UNI 05
+      // 1.925,00 9.625,00 109 desde que atenda às normas brasileiras vigentes"
+      // — Caraguatatuba/SP, edital 32, item 1, 20/10/2026: so as colunas saem)
+      // (com o total de folhas que sobrou do rodape, "109", como prova da
+      // virada: sem ele, o que segue em minuscula e a justificativa —
+      // Guarapuava/PR, PCE 137, item 10)
+      if (q) t = t.replace(new RegExp('\\sUNI(?:D(?:ADE)?)?\\.?\\s+0*' + q + '\\s+[\\d.]+,\\d{2}\\s+[\\d.]+,\\d{2}\\s+\\d{2,3}(?=\\s+\\p{Ll})', 'u'), '');
       if (q) corta(new RegExp('\\sUNI(?:D(?:ADE)?)?\\.?\\s+0*' + q + '\\s+[\\d.]+,\\d{2}\\s+[\\d.]+,\\d{2}(?!\\d)'));
       // o codigo do catalogo no fim: "...capacidade equivalente. Código Gov:
       // 613924 PDM: 1045" (Sorocaba/SP, aviso 13), "...do Equipamento; 446165
@@ -5900,6 +5931,7 @@ for (const e of dados.editais) {
     it[6] = t.replace(/\s{2,}/g, ' ').trim();
   }
 
+  rastro('antes da habilitacao');
   // TEXTO DE HABILITACAO no lugar do produto. A geladeira do item 2 de
   // Santos/SP (aviso 098/2026) saiu com "Registro Comercial, no caso de empresa
   // individual." — o recorte ancorou no "1.2." da lista de documentos exigidos,
@@ -5956,6 +5988,7 @@ for (const e of dados.editais) {
     + '(?:\\s+ESTADO\\s+D[OEA]\\s+(?:PARAN[ÁA]|RIO\\s+GRANDE\\s+DO\\s+SUL|SANTA\\s+CATARINA|S[ÃA]O\\s+PAULO|MINAS\\s+GERAIS|GOI[ÁA]S|MATO\\s+GROSSO\\s+DO\\s+SUL))?'
     + '(?=\\s+\\p{Lu})', 'gu') : null;
   const temErrata = /onde\s+se\s+l[êe]/i.test(secoes);
+  rastro('antes da descricao depois do preco');
   // A TABELA COM A DESCRICAO DEPOIS DO PRECO: "13 130801 4,00 UN 2.688,53
   // 10.754,12 FOGÃO INDUSTRIAL ... 14 130802 5,00 UN 246,50 1.232,50
   // LIQUIDIFICADOR – COM NO MÍNIMO 12 VELOCIDADES..." (Porto Belo/SC, edital
@@ -6151,7 +6184,18 @@ for (const e of dados.editais) {
       // INDISPENSAVEIS UNIDADE 3 1596.6000 4.789,80 AO PERFEITO FUNCIONAMENTO"
       // (Bom Jardim de Minas/MG, edital 6, itens 2 e 11, 14/10/2026). So com a
       // quantidade do proprio item.
-      if (q) s = s.replace(new RegExp('\\s(?:UNIDADES?|Unidades?|UND|Und|UN|UNID|CJ|P[ÇC])\\.?\\s+0*' + q + '\\s+[\\d.]+[.,]\\d{2,4}\\s+[\\d.]+,\\d{2}(?=\\s)', 'g'), '');
+      if (q) s = s.replace(new RegExp('\\s(?:UNIDADES?|Unidades?|UND|Und|UNI|UN|UNID|CJ|P[ÇC])\\.?\\s+0*' + q + '\\s+[\\d.]+[.,]\\d{2,4}\\s+[\\d.]+,\\d{2}(?:\\s+\\d{1,3}(?=\\s+\\p{Ll}))?(?=\\s)', 'gu'), '');
+      // (o "UNI 05 1.925,00 9.625,00" com o total de folhas que sobrou do
+      // rodape, "109", antes da continuacao: Caraguatatuba/SP, edital 32, item
+      // 1, 20/10/2026; e o NCM que o recorte cortou no meio, "NCM: 8415")
+      // (e a unidade com a quantidade duas vezes, o numero e o codigo do item
+      // seguinte, e o resto: "...CASSETE 55.000 A 60.000 BTUS Serviço 35 35 19
+      // 46.951 TUBULAÇÃO ADICIONAL..." — Joinville/SC, edital 87, item 18)
+      if (q) s = s.replace(new RegExp('\\s+(?:Servi[çc]o|SERVI[ÇC]O|Metro|METRO|Unidade|UNIDADE|Unid\\.?|UN|Pe[çc]a|PE[ÇC]A|Kit|KIT|Conjunto)\\s+0*' + q + '\\s+0*' + q + '\\s+\\d{1,3}\\s+\\d{2}\\.\\d{3}\\s[\\s\\S]*$'), '');
+      s = s.replace(/(?<=[.;])\s+NCM:?\s*[\d.]{1,7}$/, '')
+        // e o comeco da linha seguinte com a cota: "...já existentes. 05 Exclusiva
+        // ME/" (Caraguatatuba/SP, edital 32, item 4)
+        .replace(/(?<=[.;])\s+\d{1,3}\s+(?:Exclusiv[ao]|EXCLUSIV[AO]|Ampla|AMPLA|Cota|COTA)\b[^.;]{0,20}$/, '');
       // e as colunas de quantidade, beneficio e orgao no meio da lista de
       // caracteristicas: "...ambientes de aproximadamente 45 m²; 08 unidades
       // AMPLA vPREFEITURA · Voltagem (V): 220V" e "12 unidades EXCLUSIVO ME/EPP
@@ -6248,7 +6292,7 @@ for (const e of dados.editais) {
       // aspirador; o item 4 e o "Balcão Térmico" no PNCP)
       {
         const nx = v.itens.find(x => +x[0] === +it[0] + 1);
-        const sa = t => [...String(t || '')].map(c => c.normalize('NFD')[0]).join('');
+        const sa = t => [...String(t || '')].map(c => c.length > 1 ? c : c.normalize('NFD')[0]).join('');
         const w = nx ? (sa(nx[1]).match(/[A-Za-z]{3,}/g) || []).slice(0, 2) : [];
         const meu = (sa(it[1]).match(/[A-Za-z]{3,}/) || [''])[0].toLowerCase();
         if (w.length === 2 && w[0].toLowerCase() !== meu) {
@@ -6260,7 +6304,13 @@ for (const e of dados.editais) {
       // ("ITEM 7" saiu "fqbj T"): "...Garantia mínima de 12 meses. fqbj T · Unid.:
       // UNIDADE · Qtd.: 1 · marca: Valor Unitário:", e o "Unitário:" solto no fim
       // (Nova Londrina/PR, edital 60, itens 4, 6 e 8, 20/10/2026)
+      // (e qualquer coluna depois do ponto medio, como "...12 meses. epai NT · $
+      // 2.681,67", Nova Londrina/PR, item 27)
       s = s.replace(/\s+(?:\S+\s+){0,2}·\s+Unid\.:\s[\s\S]*$/, '')
+        // (so com coluna depois do ponto: ele tambem e marcador de lista, "...
+        // placa de grill. · placa lisa: para as mais...", Wenceslau Braz/PR, e
+        // "...410 litros. LOCAL · Despensa.", São Jerônimo/RS)
+        .replace(/(?<=[.;])\s+(?:\S+\s+){0,2}·\s+(?:R?\$|Unid\.|Qtd\.|marca:)[\s\S]*$/i, '')
         .replace(/(?<=[.;])\s+(?:Valor\s+)?Unit[áa]rio:\s*$/, '')
         // o codigo do catalogo com o rodape do SEI da Justica Federal: "...junto
         // à proposta de preços. 636747* ETP - LEI 14.133/2021 - RES. 587/2023 -
@@ -6271,6 +6321,24 @@ for (const e of dados.editais) {
         // tabela de precos ("...26 A 30 LITROS 1 Nome do Equipamento Qtd. Valor
         // Unitário Valor Total (R$)", Cruzaltense/RS, edital 37, item 3)
         .replace(/\s+CATMAT\s*$/, '')
+        // a clausula do termo de referencia depois da especificacao ("...GARANTIA
+        // MÍNIMA DE 12 MESES E DOCUMENTAÇÃO TÉCNICA DO FABRICANTE. Constituem
+        // requisitos mínimos do objeto...", Amambaí/MS, 019), a carta do orgao
+        // ("...Regulador Sucção, Atenciosamente, MARIO BUENO DE LARA Diretor
+        // Geral...", Campo Magro/PR, 14), "MARCA: MODELO" das colunas (Guaíba/RS,
+        // 43), o "LOTE 35" do cabecalho seguinte (Mondaí/SC) e o cabecalho da
+        // tabela de especificacoes (Ribeirão Preto/SP, 27), 20/10/2026
+        .replace(/(?<=[.;])\s+Constituem\s+requisitos\s+m[íi]nimos\b[\s\S]*$/i, '')
+        .replace(/[,;]?\s+Atenciosamente\b[\s\S]*$/i, '')
+        .replace(/\s+MARCA:\s*MODELO:?\s*$/, '')
+        .replace(/(?<=[.;])\s+LOTE\s+\d{1,3}\s*$/i, '')
+        .replace(/\s+(?:ITEM\s+ESPECIFICA[ÇC][ÃA]O\s+CATMAT|ESPECIFICA[ÇC][ÕO]ES\s+T[ÉE]CNICAS\s+DOS\s+ITENS)\b[\s\S]*$/, '')
+        .replace(/\s+Quantidade:\s*\d+\s+Unidades?\s+autenticidade\b[\s\S]*$/i, '')
+        // o rodape com endereco, CEP e "Página N de M" no meio da frase: "...220
+        // volts (monofásico) Praça Cel. Joaquim Luiz da Costa Maia, 01 – Centro
+        // PABX / 2203 / 2204 / 2205 CEP 37.275-000 – Cristais - Minas Gerais
+        // Página OS de NMQ • Tipo: Split" (Cristais/MG, edital 71, item 3)
+        .replace(/\s*(?:Pra[çc]a|P[çc]a\.|Rua|Av\.|Avenida)\s[^•]{0,160}?CEP\s*[\d.]+-\d{3}\s*[–-][^•]{0,80}?P[áa]gina\s+\S{1,4}\s+de\s+\S{1,4}\s*/g, ' ')
         .replace(/\s+(?:\d{1,3}\s+)?Nome\s+do\s+Equipamento\s+Qtd\.[\s\S]*$/, '');
       // e o numero do item SEGUINTE, com as colunas dele, no fim: "...GARANTIA
       // DE 1 ANO; 17", "...MEDIDAS EXATAS. 30 113594 80,00 UN 132,31 10.584,8 0"
@@ -6292,7 +6360,12 @@ for (const e of dados.editais) {
       const q = Math.round(+it[2] || 0);
       const UN = '(?:Unidades?|UNIDADES?|UND|Und|UN|UNID|CJ|P[ÇC])\\.?';
       const sujo = t => (q && new RegExp('\\s' + UN + '\\s+0*' + q + '\\s+(?=\\S.{20,})').test(t)) || /\s\d{1,3} de \d{1,3}\s(?=[a-zà-ú])/.test(t);
-      if (q && sujo(s)) {
+      // (e tambem o descritivo que termina no meio da frase: a tabela de
+      // distribuicao por escola de Penápolis/SP, edital 114, item 19, corta em
+      // "...315 mm de largura e 370 mm de", e o termo traz a copia inteira,
+      // "...370 mm de profundidade. - UN 17", 20/10/2026)
+      const aberto = s.length > 100 && !/[.;)!]\s*$/.test(s);
+      if (q && (sujo(s) || aberto)) {
         const plano = secoes.replace(/\s+/g, ' ');
         const ini = s.replace(/\s+/g, ' ').slice(0, 50);
         let k = -1, melhor = null;
@@ -6300,7 +6373,16 @@ for (const e of dados.editais) {
           const resto = plano.slice(k, k + 6000);
           const fim = new RegExp('\\s' + UN + '\\s+0*' + q + '(?:[,.]0+)?(?=\\s|$)|\\sR\\$\\s*[\\d.]+,\\d{2}').exec(resto);
           if (!fim) continue;
-          const c = resto.slice(0, fim.index).trim();
+          const c = resto.slice(0, fim.index).trim().replace(/\s*[-–]$/, '');
+          // (no descritivo aberto, so a copia que CONTINUA o mesmo texto, com
+          // palavra no pedaco a mais e sem coluna nem item seguinte: "UND 12
+          // Condicionador..." em Wenceslau Braz/PR, "(2012948 - 1)" em Palmas/PR)
+          if (!sujo(s)) {
+            const sN = s.replace(/\s+/g, ' ').trim();
+            const mais = c.slice(sN.length);
+            if (c.length <= sN.length + 5 || !c.startsWith(sN.slice(0, Math.max(40, sN.length - 15))) || mais.length > 400
+              || !/\p{L}{4,}/u.test(mais) || /\s(?:UND|UN|Unid|UNID)\.?\s+\d|R\$/.test(mais)) continue;
+          }
           // e OUTRA copia, nao a mesma cortada onde a sujeira comeca: a
           // motosserra de Sao Francisco de Paula/RS perdia o "Conteudo da
           // Embalagem" que vinha depois de um "UN. 5" no meio
@@ -6309,6 +6391,41 @@ for (const e of dados.editais) {
           if (!melhor || c.length > melhor.length) melhor = c;
         }
         if (melhor) s = melhor;
+      }
+    }
+    // A TABELA "000/019 UN 2,00 00113784 - FORNO MICROONDAS Descrição adicional:
+    // ..." (Santo Cristo/RS, edital 91, 20/10/2026): o nome do item vem ANTES da
+    // descricao, e o recorte dava ao item a do anterior ("FORNO ELÉTRICO
+    // Descrição adicional..." no micro-ondas, a fritadeira no liquidificador).
+    // Quando o rotulo abre com "NOME." e o edital tem "- NOME Descrição
+    // adicional:", vale o texto dali ate a linha seguinte da tabela; quando o
+    // edital nao traz o item (o forno a gas de 5 esteiras) e o descritivo abre
+    // com o nome de OUTRO item, fica o rotulo.
+    {
+      const sa = t => [...String(t || '')].map(c => c.length > 1 ? c : c.normalize('NFD')[0]).join('');
+      const nomeRot = (/^([A-ZÀ-Ú0-9][A-ZÀ-Ú0-9 \/-]{2,60}?)\.\s/.exec(String(it[1])) || [])[1];
+      const plano = sa(secoes.replace(/\s+/g, ' '));
+      if (nomeRot && /\sDescricao adicional:/.test(plano)) {
+        const esc = sa(nomeRot).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const re = new RegExp('\\s-\\s+' + esc + '(?:\\s+UN\\s+[\\d.,]+\\s+[\\d.,]+)?\\s+Descricao adicional:\\s*([\\s\\S]*?)(?=\\s+\\d{3,4}\\/\\d{3}\\s+(?:UN|UND|PC|PCT|CX|KG|LT|CJ|KIT|JG|[\\d.]+,\\d{2})\\s|\\s+Acesso\\s+Projeto\\b'
+          // (e o rodape do sistema quando o item e o ultimo da folha: "...12
+          // meses. Usuário/Matricula: ... Página 1 de 4", "TERMO DE REFERENCIA:
+          // DEFINIÇÃO DO OBJETO", "02/09/2026 ÀS 08:17:37 PEDIDO AUTORIZADO" —
+          // São José do Inhacorá e Tucunduva/RS, 20/10/2026)
+          + '|\\s+(?:Usuario\\/Matricula|TERMO DE REFERENCIA|Pagina\\s+\\d+\\s+de\\s+\\d+|\\d{2}\\/\\d{2}\\/\\d{4}\\s+AS\\s+\\d|Assinaturas e Autenticidade|Lote\\/Item\\s+Unid)'
+          + '|$)', 'gi');
+        const conta = new Map(); let m;
+        while ((m = re.exec(plano))) { const k = secoes.replace(/\s+/g, ' ').slice(m.index + m[0].length - m[1].length, m.index + m[0].length).trim(); if (k.length >= 15) conta.set(k, (conta.get(k) || 0) + 1); }
+        const melhor = [...conta].sort((a, b) => b[1] - a[1] || a[0].length - b[0].length)[0];
+        const outro = /^([A-ZÀ-Ú][A-ZÀ-Ú0-9 \/-]{2,60}?)\s+Descri[çc][ãa]o adicional:/.exec(s);
+        // (so troca quando o descritivo e de outro item ou a copia da tabela
+        // esta inteira: o lava-jato de São José do Inhacorá/RS, item 20, ja
+        // vinha completo, e a copia da tabela parava na virada de folha)
+        const nzn = t => sa(t).toUpperCase().replace(/[^A-Z0-9]+/g, ' ').trim();
+        const ehDele = nzn(s).startsWith(nzn(nomeRot));
+        if (melhor && (!ehDele || /[.;)]$/.test(melhor[0]) || melhor[0].length + nomeRot.length + 2 >= 0.9 * s.length)) s = nomeRot + '. ' + melhor[0];
+        else if (melhor) s = s.replace(/\s+\d{3,4}\/\d{3}\s*$/, '');
+        else if (outro && sa(outro[1]).toUpperCase() !== sa(nomeRot).toUpperCase()) s = '';
       }
     }
     // O descritivo que e so o comeco do rotulo do PNCP, cortado no meio:
@@ -6328,6 +6445,7 @@ for (const e of dados.editais) {
     it[6] = s;
   }
 
+  rastro('depois da limpeza final');
   // UM ITEM DENTRO DO OUTRO (15/10/2026, "verifique novamente edital por
   // edital"): o descritivo que engoliu o item seguinte inteiro, "...garantia de
   // no mínimo 12 meses. 06 UNID. AUTOCLAVE HORIZONTAL, de bancada..." (Jardim/MS,
@@ -6405,6 +6523,24 @@ for (const e of dados.editais) {
       .replace(/\s*[,;:]\s*$/, '');
     it[9] = 1;
     doCatalogo++;
+  }
+
+  // A NOMENCLATURA DE LOTE DO EQUIPLANO/BLL (usuario, 20/10/2026: "este edital
+  // esta por lote, e voce colocou os itens sem ordem e fora do lote"):
+  // Bandeirantes/PR (edital 39) julga por item, mas a plataforma chama cada
+  // linha de lote — "ITENS - JULGAMENTO POR ITEM Lotes de 3 a 84 e itens de 15
+  // a 96 Nomenclatura lote e usada pelo sistema Equiplano e plataforma BLL", e a
+  // tabela "LOTE IT. MED." traz "20. 32. UNID AR-CONDICIONADO...". O item do
+  // PNCP e o IT; o card mostra "Lote 20 · item 32", que e como se disputa.
+  {
+    const plano = secoes.replace(/\s+/g, ' ');
+    if (/Nomenclatura\s+(?:de\s+)?lote|Equiplano/i.test(plano)) {
+      for (const m of plano.matchAll(/Lotes?\s+de\s+(\d{1,3})\s+a\s+(\d{1,3})\s+e\s+itens\s+de\s+(\d{1,3})\s+a\s+(\d{1,3})/gi)) {
+        const [a, b, c, d] = m.slice(1).map(Number);
+        if (b - a !== d - c || c < a) continue;
+        for (const it of v.itens) { const n = +it[0]; if (n >= c && n <= d && !it[7]) { it[7] = n - (c - a); it[8] = 1; } }
+      }
+    }
   }
 
   // O NUMERO DA LINHA na tabela do edital, quando nao e o do PNCP (usuario,

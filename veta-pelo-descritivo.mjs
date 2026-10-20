@@ -159,7 +159,9 @@ const EXIGE_INSTALACAO = [
   // Instalação" (Goiania/GO, edital 115, item 2, 13/10/2026)
   /aquisicao e instalacao/,
   /instalacao (inclusa|incluida|inclusive)/,
-  /(incluindo|inclusa|incluida|inclusive) (a )?instalacao/,
+  // (nao o "nao incluindo montagem, instalacao fisica" de Caraguatatuba/SP,
+  // edital 32, item 1, 20/10/2026)
+  /(?<!nao )(incluindo|inclusa|incluida|inclusive) (a )?instalacao/,
   // "Inclui instalacao padrao completa por profissional habilitado" (Goioxim/PR, 29/09/2026)
   /(?<!nao )inclui (a )?instalacao/,
   // "INCLUSO: INSTALACAO DO EQUIPAMENTO INCLUINDO CORTE DA PAREDE" e "A
@@ -178,6 +180,16 @@ const EXIGE_INSTALACAO = [
   /(?<!(?:sem|nao|compativel|compatibilidade) )\bcom (a )?instalacao\s*(?:[.;]|$)/,
   // "com mao de obra de instalacao e drenos" (Sertanopolis/PR, 21/09/2026)
   /(mao de obra|servicos?) de (instalacao|montagem)/,
+  // o INSTALADO no nome do produto: "AR CONDICIONADO 9000 BTU'S INSTALADO -
+  // FRIO", "AR CONDICIONADO INSTALADO - AR-CONDICIONADO TIPO SPLIT TETO",
+  // "CORTINA DE AR ... (EQUIPAMENTO INSTALADO)" (Tres Pontas/MG, edital 88,
+  // 20/10/2026). "Instalado em parede" descreve o aparelho e fica.
+  /^[^.;]{0,80}?\binstalad[oa]s?\s*(?:[-–(:]|$)/,
+  // "ATENÇÃO: O fornecimento dos aparelhos de ar-condicionado deverá contemplar,
+  // obrigatoriamente, a instalação completa dos equipamentos no Campus" (UFTM,
+  // Uberaba/MG, edital 251, item 30, 20/10/2026)
+  /(?:contemplar|contempla|prever|preve|abranger|abrange)[^.;]{0,40}\binstalacao (?:completa|dos equipamentos|do equipamento|dos aparelhos|do aparelho)/,
+  /\(equipamento instalado\)/,
   /instalacao (sera |fica |ficara )?(por conta|a cargo|sob responsabilidade|de responsabilidade) d[ao] (contratad|fornecedor|licitante|empresa)/,
   // MONTADO conta como instalacao (usuario, 29/09/2026): "entregar o fogao
   // montado" (Pedras de Maria da Cruz/MG), "produto entregue montado ou montagem
@@ -191,7 +203,7 @@ const EXIGE_INSTALACAO = [
   /montad[oa]s? (e em (perfeito )?funcionamento|no local)/,
   /fornecimento e montagem/,
   /montagem (inclusa|incluida|inclusive)/,
-  /(incluindo|inclusa|incluida|inclusive|(?<!nao )inclui) (a )?montagem/,
+  /(?<!nao )(incluindo|inclusa|incluida|inclusive|(?<!nao )inclui) (a )?montagem/,
   /montagem (sera |fica |ficara )?(por conta|a cargo|sob responsabilidade|de responsabilidade) d[ao] (contratad|fornecedor|licitante|empresa)/,
 ];
 const exigeInstalacao = d => (EXIGE_INSTALACAO.find(r => r.test(d)) || '') && 'entrega instalada ou montada';

@@ -785,7 +785,9 @@ function separaLotes(card, d){
   var deLinha = function(tr){ return lote[tr.querySelector(".idesc").dataset.n]; };
   if(!linhas.length || linhas.some(function(tr){ return !deLinha(tr); })) return;
   var lotes = linhas.map(deLinha).filter(function(v, i, a){ return a.indexOf(v) === i; });
-  if(lotes.length < 2) return;
+  // (um item por lote, como no Equiplano de Bandeirantes/PR: o "Lote N · item M"
+  // da coluna ja diz tudo, e um titulo por linha so poluiria)
+  if(lotes.length < 2 || lotes.length === linhas.length) return;
   linhas.sort(function(a, b){ return deLinha(a) - deLinha(b) || (+a.querySelector(".idesc").dataset.n) - (+b.querySelector(".idesc").dataset.n); });
   var ultimo = null;
   linhas.forEach(function(tr){

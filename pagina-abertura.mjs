@@ -422,6 +422,11 @@ function prioridadeCapa(nome, tipo) {
   // "TR984767_000186_2026.pdf" e "ETP984767_..." sao o TR e o ETP do Compras.gov,
   // com o numero da UASG colado na sigla (Leopoldina/MG, 29/09/2026): sem isso
   // passavam por edital e o .doc do edital de verdade nunca era convertido.
+  // A COLETA de estimativas e o AVISO de retificacao tambem: em Caxias do Sul/RS
+  // (edital 160, 20/10/2026) a capa saia do "RETIFICACAO.pdf" e da folha
+  // "Coleta de Estimativa - Itens" do COLETA_GCCP.pdf, e o Edital.odt do zip nem
+  // era convertido (o usuario: "a capa certa e a do edital").
+  if (/coleta|retificac|errata|esclarecimento|impugnac/.test(n)) return 0;
   if (/termo de referencia|(^|[^a-z])tr(?:[\s_.-]|\d{5})|estudo tecnico|(^|[^a-z])etp(?:[\s_.-]|\d{5})|planilha|anexo|historico|quantitativ|estimativa|cotac|orcamento|relacao ?(?:de ?)?itens|mapa de riscos?|matriz de riscos?|(^|[^a-z])dfd[\s_.-]|parecer|portaria|decreto|autorizac|solicitac|memorando|publicac|minuta|contrato|ata de registro|pesquisa de preco/.test(n)) return 0;
   return 1;
 }
