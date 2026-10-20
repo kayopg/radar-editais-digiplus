@@ -785,9 +785,17 @@ function separaLotes(card, d){
   var deLinha = function(tr){ return lote[tr.querySelector(".idesc").dataset.n]; };
   if(!linhas.length || linhas.some(function(tr){ return !deLinha(tr); })) return;
   var lotes = linhas.map(deLinha).filter(function(v, i, a){ return a.indexOf(v) === i; });
-  // (um item por lote, como no Equiplano de Bandeirantes/PR: o "Lote N · item M"
-  // da coluna ja diz tudo, e um titulo por linha so poluiria)
-  if(lotes.length < 2 || lotes.length === linhas.length) return;
+  // (um item por lote, como no Equiplano de Bandeirantes/PR, 20/10/2026: em vez
+  // de um titulo por linha, o lote vai na propria linha, "Lote 22 · Item 34",
+  // que e como a plataforma chama a disputa)
+  if(lotes.length === linhas.length){
+    linhas.forEach(function(tr){
+      var inum = tr.querySelector(".inum");
+      if(inum && !/^Lote /.test(inum.textContent)) inum.textContent = "Lote " + deLinha(tr) + " · " + inum.textContent;
+    });
+    return;
+  }
+  if(lotes.length < 2) return;
   linhas.sort(function(a, b){ return deLinha(a) - deLinha(b) || (+a.querySelector(".idesc").dataset.n) - (+b.querySelector(".idesc").dataset.n); });
   var ultimo = null;
   linhas.forEach(function(tr){
