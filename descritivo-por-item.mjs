@@ -1745,8 +1745,14 @@ const limpaNum = w => (/^\d/.test(w) ? w.replace(/[.,]/g, '') : w);
 // "Termo, exceto para os itens em que consta no descritivo do item..." passava
 // por especificacao do filtro de agua do item 13.
 const AVISO_NO_ROTULO = /\s*(?:Os descritivos e as unidades a serem considerados|Maiores informa[çc][õo]es sobre a descri[çc][ãa]o|Considerar itens descritos no Anexo|ATEN[ÇC][ÃA]O,? LICITANTES|ATEN[ÇC][ÃA]O: Considerar a descri[çc][ãa]o|O item ser[áa] solicitado conforme)[^]*$/i;
+// E o numero e a cota que o orgao poe no nome: "Item 1 - Ampla Concorrência -
+// Refrigerador", "Item 2 - Exclusive ME/MEI/EPP - Microondas" (BRB, Brasilia/DF,
+// pregao 075/2026, 21/10/2026). Com "item", "ampla" e "concorrencia" contando, o
+// nome do produto sozinho nao chegava as duas palavras e a planilha do edital,
+// com "Refrigerador com volume interno total de 410 litros", nao valia.
+const COTA_NO_ROTULO = /\bitem\s*\d{1,4}\s*[-–:]\s*|\b(?:ampla\s+concorr[eê]ncia|exclusiv[oea]s?\s+(?:para\s+)?(?:me|mei|epp)(?:\s*\/\s*(?:me|mei|epp))*|cota\s+(?:reservada|principal))\b/gi;
 const palavrasDoItem = rotulo => [...new Set(
-  fatia(String(rotulo).replace(AVISO_NO_ROTULO, ' ').replace(REMISSAO, ' ')).filter(util).map(limpaNum))];
+  fatia(String(rotulo).replace(AVISO_NO_ROTULO, ' ').replace(REMISSAO, ' ').replace(COTA_NO_ROTULO, ' ')).filter(util).map(limpaNum))];
 
 // Segunda passada, para o item cujo rotulo nao aparece LITERAL no edital.
 //
@@ -4025,7 +4031,19 @@ function linhaDepoisDoPreco(plano, it, timbres) {
 function tabelaBate(tabela, itens) {
   const julgaveis = itens.filter(it => tabela[it[0]] && palavrasDoItem(it[1]).length >= 2);
   const batem = julgaveis.filter(it => falaDoMesmoProduto(it[1], tabela[it[0]])).length;
-  return batem >= 2 && batem >= julgaveis.length * 0.7;
+  if (batem >= 2 && batem >= julgaveis.length * 0.7) return true;
+  // Os rotulos de uma palavra so: "Item 1 - Ampla Concorrência - Refrigerador",
+  // "... - Microondas", "... - Bebedouro" e os tres televisores do BRB
+  // (Brasilia/DF, pregao 075/2026, 21/10/2026), em que nenhum item tinha duas
+  // palavras para julgar. Vale quando nao ha rotulo maior, sao tres itens ou mais
+  // na tabela, e TODOS tem a sua palavra no comeco da linha do mesmo numero.
+  const curtos = itens.filter(it => tabela[it[0]] && palavrasDoItem(it[1]).length === 1);
+  if (julgaveis.length || curtos.length < 3) return false;
+  return curtos.every(it => {
+    const w = palavrasDoItem(it[1])[0];
+    const cabeca = new Set(fatiaTexto(tabela[it[0]].slice(0, CABECA)).map(limpaNum));
+    return cabeca.has(w) || cabeca.has(w + 's') || (/s$/.test(w) && cabeca.has(w.slice(0, -1)));
+  });
 }
 
 // o nome do estado como os timbres de prefeitura escrevem

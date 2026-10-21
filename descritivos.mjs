@@ -346,7 +346,7 @@ function descricoesDaPlanilha(folhas) {
   const porItem = {};
   const curta = /simplif|resum|sucint|abrevia/;
   for (const linhas of folhas) {
-    let colItem = null, colDesc = [];
+    let colItem = null, colDesc = [], colNome = null;
     for (const l of linhas) {
       if (!colItem) {
         const cab = Object.entries(l).map(([k, t]) => [k, norm(t).trim()]);
@@ -354,6 +354,11 @@ function descricoesDaPlanilha(folhas) {
         const ds = cab.filter(([, t]) => /desc+ri|especifica/.test(t));
         if (it && ds.length) {
           colItem = it[0];
+          // a coluna do nome, ao lado da descricao: "ITEM | Produto | Descricao
+          // Minima" com "Refrigerador com volume interno total de 410 litros -
+          // Ampla Concorrencia" e "• Tecnologia: Frost Free • ..." (BRB, Brasilia/DF,
+          // pregao 075/2026, uma aba por item, 21/10/2026)
+          colNome = (cab.find(([, t]) => /^(?:produto|nome(?: do (?:produto|item|material))?|objeto|material|bem)$/.test(t)) || [])[0] || null;
           // a detalhada primeiro; a simplificada so quando a detalhada da linha
           // esta vazia (o item 30 de Juiz de Fora so tem a simplificada)
           const peso = t => (/detalhad|complet|especifica|tecnic/.test(t) ? 0 : 1) + (curta.test(t) ? 2 : 0);
@@ -375,7 +380,8 @@ function descricoesDaPlanilha(folhas) {
       // palavra da simplificada nao aparece no comeco da detalhada, ela vai
       // na frente.
       else if (d) {
-        const nome = colDesc.map(k => l[k]).find(t => t && t !== d && t.length <= 120);
+        const nome = colDesc.map(k => l[k]).find(t => t && t !== d && t.length <= 120)
+          || (colNome && String(l[colNome] || '').replace(/(?:\s*-)+\s*(?:ampla concorr[eê]ncia|exclusiv[oa]\b.*|cota reservada.*)$/i, '').trim()) || null;
         const w = nome && (norm(nome).match(/[a-z]{4,}/) || [])[0];
         if (w && !norm(d.slice(0, 80)).includes(w)) d = nome.trim().replace(/[\s,;:.-]+$/, '') + ': ' + d;
       }
