@@ -1,22 +1,6 @@
 {
- "varredura": "2026-10-20",
+ "varredura": "2026-10-21",
  "editais": [
-  {
-   "path": "46374500000194/2026/8338",
-   "municipio": "Guarulhos",
-   "uf": "SP",
-   "edital": "Edital nº 104/2026",
-   "objeto": "Aquisição de Material Médico Hospitalar - Soprador Térmico e outros",
-   "exige": [
-    "Amostra"
-   ],
-   "trechos": {
-    "Amostra": [
-     " cumprimento das especificacoes do objeto, podera ser colhida a manifestacao escrita do setor requisitante do servico ou da area especializada no objeto. 7.13. considerando a exigencia de execucao de prova de conceito na documentacao que integra este edital como anexo, por ocasiao do julgamento das propostas, sera exigido do licitante classificado em primeiro lugar a sua realizacao, conforme proce",
-     "desclassificacao do licitante, o pregoeiro convocara o proximo licitante, obedecida a ordem de classificacao, sucessivamente, ate que um licitante cumpra os requisitos e funcionalidades previstas na prova de conceito. 8. da fase da habilitacao 8. da fase de habilitacao 8.1. os documentos que serao exigidos para fins de habilitacao estao especificados na documentacao que constitui anexo i deste edi"
-    ]
-   }
-  },
   {
    "path": "48664304000180/2026/244",
    "municipio": "Guariba",
@@ -201,6 +185,21 @@
    }
   },
   {
+   "path": "78198975000163/2026/218",
+   "municipio": "Goioerê",
+   "uf": "PR",
+   "edital": "Edital nº 27/2026",
+   "objeto": "Registro de Preços visando aquisições futuras de MOBILIÁRIO destinados aos ambientes administrativos, operacionais, educacionais e às unidades de saúde, visando",
+   "exige": [
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Garantia contratual": [
+     "cacao, contados a partir do recebimento definitivo do objeto. para os demais itens, aplica-se a garantia legal prevista na lei nº 8.078/1990 (codigo de defesa do consumidor), sem prejuizo de eventual garantia contratual adicional oferecida pelo fabricante ou fornecedor. durante o periodo de garantia, a contratada devera disponibilizar procedimento para abertura e acompanhamento de chamados, presta"
+    ]
+   }
+  },
+  {
    "path": "11463194000188/2026/73",
    "municipio": "Ivolândia",
    "uf": "GO",
@@ -263,6 +262,37 @@
    }
   },
   {
+   "path": "76282656000106/2026/893",
+   "municipio": "Maringá",
+   "uf": "PR",
+   "edital": "Edital nº 422/2026",
+   "objeto": "Registro de Preços para aquisição de Mobiliário para as Secretarias e órgãos vinculados ao município de Maringá visando atender às necessidades da Administração",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "finicoes utilizadas em certames, ritos de esclarecimentos e impugnacoes, analise das condicoes de participacao e condicoes de julgamento das propostas e habilitacao, criterios sobre a apresentacao de amostras, regras de negociacao, procedimentos de recursos e contrarrazoes, alem de outras explicacoes detalhadas sobre as formas de licitacao, ordem das etapas, modos de disputa, criterios de julgamen",
+     "finicoes utilizadas em certames, ritos de esclarecimentos e impugnacoes, analise das condicoes de participacao e condicoes de julgamento das propostas e habilitacao, criterios sobre a apresentacao de amostras, regras de negociacao, procedimentos de recursos e contrarrazoes, alem de outras explicacoes detalhadas sobre as formas de licitacao, ordem das etapas, modos de disputa, criterios de julgamen"
+    ]
+   }
+  },
+  {
+   "path": "46374500000194/2026/8664",
+   "municipio": "São Paulo",
+   "uf": "SP",
+   "edital": "Edital nº 168/2026",
+   "objeto": "Aquisição de lacres de segurança, kit filtro p/ incubadora e outros, nos termos da tabela abaixo",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "s da consultoria-geral da uniao modelo de edital para pregao eletronico - atualizacao: maio/2023 aprovado pela secretaria de gestao e inovacao 9 de 15 7.12 considerando a exigencia de apresentacao de amostra(s) na documentacao que integra este edital como anexo, por ocasiao do julgamento das propostas, sera exigido do licitante classificado em primeiro lugar a sua realizacao, conforme procedimento"
+    ]
+   }
+  },
+  {
    "path": "18243246000150/2026/79",
    "municipio": "Areado",
    "uf": "MG",
@@ -310,6 +340,38 @@
    }
   },
   {
+   "path": "59851600000106/2026/106",
+   "municipio": "São José da Bela Vista",
+   "uf": "SP",
+   "edital": "Edital nº 00010/2026",
+   "objeto": "REGISTRO DE PREÇOS PARA EVENTUAL AQUISIÇÃO DE ELETRODOMÉSTICOS PARA ATENDER AS NECESSIDADES DA SECRETARIA DE EDUCAÇÃO DO MUNICÍPIO DE SÃO JOSE DA BELA VISTA/SP.",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "o objeto, podera ser colhida a manifestacao escrita do setor requisitante do objeto ou da area especializada no objeto. 6.15. caso o item 6 da parte i e o termo de referencia exijam a apresentacao de amostra(s) considerando o objeto da licitacao, o licitante classificado em primeiro lugar devera apresenta-la(s), conforme procedimento disciplinado no termo de referencia, sob pena de nao aceitacao d",
+     " sao jose da bela vista sao paulo 21 rua major joao soares, nº 1.236 – centro – cep: 14.440-005 telefone (16) 3142-8101 - e-mail: licitacao@sjbelavista.sp.gov.br – site: saojosedabelavista.sp.gov.br prova de conceito. 7. da fase de habilitacao 7.1. os documentos que serao exigidos para fins de habilitacao estao especificados no item “forma e criterios de selecao do fornecedor” do termo de referenc"
+    ]
+   }
+  },
+  {
+   "path": "18240119000105/2026/340",
+   "municipio": "Varginha",
+   "uf": "MG",
+   "edital": "Edital nº PE138/2026",
+   "objeto": "[Portal de Compras Públicas] - Aquisição de eletrodomésticos para o atendimento das Unidades Básicas de Saúde e Unidade de Pronto-Atendimento UPA de Varginha/MG",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "sicao da administracao serao tratados como prototipos, podendo ser manuseados e desmontados pela equipe tecnica responsavel pela analise, nao gerando direito a ressarcimento ou devolucao. 8.6.3.6. as amostras/exemplares referidos no subitem anterior nao serao abatidos em eventual contratacao. 8.6.3.7. os licitantes deverao colocar a disposicao da administracao todas as prefeitura do municipio de v",
+     "sicao da administracao serao tratados como prototipos, podendo ser manuseados e desmontados pela equipe tecnica responsavel pela analise, nao gerando direito a ressarcimento ou devolucao. 8.6.3.6. as amostras/exemplares referidos no subitem anterior nao serao abatidos em eventual contratacao. 8.6.3.7. os licitantes deverao colocar a disposicao da administracao todas as prefeitura do municipio de v"
+    ]
+   }
+  },
+  {
    "path": "18715391000196/2026/319",
    "municipio": "Betim",
    "uf": "MG",
@@ -322,6 +384,22 @@
     "Amostra": [
      "ha passivel de correyao a indicayao de recolhimento de impostos e contribuiyoes na forma do simples nacional, quando nao cabivel esse regime. 7.12 - caso 0 termo de referencia exija a apresentayao de amostra, a licitante c1assificada em 1° (primeiro) lugar devera apresenta-ia, conforme disciplinado no termo de referencia, sob pena de nao aceitayao da proposta. 7.13 - por meio de mensagem no sistem",
      "ssoa juridica de direito publico ou privado, que com prove a execuyao satisfat6ria de fornecimento de bens de natureza e complexidade semelhantes aos objetos desta contratayao. 24- da ~resenta<;ao de amostraiportfolio pela arrematante \" deve ser apresentada amostra/portf6lio (marcar com x) i sim x nao- ., . f', lui;::fbiip!r:aula s!ivcl malr[cula: 01 4' •assessor cool jenaaoria adr n 'trativa e fi"
+    ]
+   }
+  },
+  {
+   "path": "76206473000101/2026/227",
+   "municipio": "Céu Azul",
+   "uf": "PR",
+   "edital": "Edital nº PCE 74/2026",
+   "objeto": "Registro de Preços para futura e eventual aquisição de mobiliário, eletrodomésticos, eletroeletrônicos, equipamentos de informática, equipamentos audiovisuais, ",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "tabelecidas neste termo de referencia. 9. da apresentacao de amostras para o item nº 52 devera ser apresentada amostra conforme com as especificacoes do item 9.13 a 9.18 do edital. da apresentacao da amostra e comprovacao da qualidade do produto entrega da amostra: a) a empresa classificada em primeiro lugar, apos a etapa de lances do lote e verificacao da existencia do beneficio da lei complement",
+     " de amostras para o item nº 52 devera ser apresentada amostra conforme com as especificacoes do item 9.13 a 9.18 do edital. da apresentacao da amostra e comprovacao da qualidade do produto entrega da amostra: a) a empresa classificada em primeiro lugar, apos a etapa de lances do lote e verificacao da existencia do beneficio da lei complementar 123/06, durante a fase de aceitacao da proposta e ante"
     ]
    }
   },
