@@ -1241,6 +1241,12 @@
         "valor": 0,
         "fonte": "Termo de referencia, bloco do item 5 (Requisitos minimos), quantidade conferida: 20",
         "texto": "REFRIGERADOR DUPLEX FROST FREE – Requisitos mínimos: refrigerador de duas portas; sistema Frost Free; Tipo de Refrigerador: Geladeira 2 Portas Quantidade de Portas: 2 Portas Refrigerador: 307 Litros Capacidade minima do Freezer: 108 Litros Capacidade Total Líquida: 415 Litros capacidade total líquida mínima de aproximadamente 415 litros; capacidade do freezer de aproximadamente 108 litros ou superior; capacidade do compartimento refrigerador de aproximadamente 307 litros ou superior; prateleiras reguláveis e removíveis; controle de temperatura; alimentação elétrica: 220 V; frequência: 60 Hz; classificação de eficiência energética conforme PBE/Inmetro vigente; garantia mínima de 12 meses."
+      },
+      "12": {
+        "qtd": 30,
+        "valor": 0,
+        "fonte": "Termo de referencia, ITEM 12 (lote 04): a ficha continua na folha 28, depois do rodape do SEI; conferido em 21/10/2026",
+        "texto": "CONDICIONADOR DE AR – 9.000 BTU/h [LOTE 04] Requisitos mínimos tipo Split System Hi Wall; Auto Restart Sim função de reinicialização automática; capacidade nominal de refrigeração: 9.000 BTU/h; ciclo frio; alimentação elétrica: 220 V; sistema monofásico; Tubulação (Bitolas) 1/4 e 3/8 Consumo Aproximado de Energia (kWh) 623 kWh/ano Vazão de Ar (m³/h) 505m³/h Sleep Sim Turbo Sim Filtro Anti-Bactéria Sim Desumidificação Sim tecnologia inverter; controle remoto sem fio; função de desumidificação; função Sleep; função Turbo, quando disponível; filtro de ar; função de reinicialização automática; serpentina adequada à aplicação; fluido refrigerante conforme regulamentação ambiental vigente; eficiência energética conforme PBE/Inmetro vigente; garantia mínima de 12 meses."
       }
     }
   },
@@ -1350,6 +1356,12 @@
     "edital": "Cornelio Procopio/PR, UTFPR, Edital 198/2026",
     "conferido": "2026-10-21",
     "itens": {
+      "28": {
+        "qtd": 16,
+        "valor": 4858.23,
+        "fonte": "Termo de referencia, linha do item 28 (\"- 28 231937\"): a linha acaba em \"NAO SERA NECESSARIA.\" e as colunas \"UNIDADE 8 8 0 16 R$ 4.858,23\"; o que vinha depois era a celula do item 29, que comeca no pe da folha 7; conferido em 21/10/2026",
+        "texto": "APARELHO DE AR CONDICIONADO - MODELO SPLIT HIGH WALL - CAPACIDADE REFRIGERAÇÃO 30.000 BTUS - CICLO FRIO - TECNOLOGIA INVERTER - TENSÃO 220V - FREQUÊNCIA 60HZ - SMART COM CONEXÃO WI-FI - 1 CONTROLE REMOTO COM DISPLAY DIGITAL - COM CLASSIFICAÇÃO DE EFICIÊNCIA ENERGÉTICA A - PROCEDÊNCIA NACIONAL PARA ASSISTÊNCIA TÉCNICA - GARANTIA DE MÍNIMA 12 MESES. A INSTALAÇÃO DO ITEM NÃO SERÁ NECESSÁRIA."
+      },
       "29": {
         "qtd": 1,
         "valor": 5063.74,
