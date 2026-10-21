@@ -364,11 +364,14 @@ const TETO_VERSAO = 256, TETO_PUBLICACAO = 64;
   if (tv > TETO_VERSAO - 2) console.error(`\naviso: a ${(TETO_VERSAO - tv).toFixed(1)} MB do teto da versao.`);
   // os lotes de publicacao: a pagina e as capas no primeiro, os editais depois
   const arquivos = fs.readdirSync(pastaCapas).sort((a, b) => (a.startsWith('capas') ? 0 : 1) - (b.startsWith('capas') ? 0 : 1) || a.localeCompare(b, 'en', { numeric: true }));
-  const lotes = [{ mb: fs.statSync(saida).size / 1048576, arquivos: ['(pagina)'] }];
+  // (a pagina vai em TODA chamada — e o file_path de cada publicacao —, entao
+  // conta em todas: com ela so na primeira, a segunda de 21/10/2026 deu 68 MB)
+  const mbPagina = fs.statSync(saida).size / 1048576;
+  const lotes = [{ mb: mbPagina, arquivos: ['(pagina)'] }];
   for (const f of arquivos) {
     const mbF = fs.statSync(path.join(pastaCapas, f)).size / 1048576;
     let l = lotes[lotes.length - 1];
-    if (l.mb + mbF > TETO_PUBLICACAO - 2) { l = { mb: 0, arquivos: [] }; lotes.push(l); }
+    if (l.mb + mbF > TETO_PUBLICACAO - 2) { l = { mb: mbPagina, arquivos: [] }; lotes.push(l); }
     l.mb += mbF; l.arquivos.push(f);
   }
   if (lotes.length > 1) console.log('publicar em ' + lotes.length + ' chamadas: ' + lotes.map((l, i) => `${i + 1}) ${l.arquivos.join(' ')} (${l.mb.toFixed(1)} MB)`).join(' · '));
