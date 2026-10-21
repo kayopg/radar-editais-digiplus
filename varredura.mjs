@@ -458,7 +458,12 @@ const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motocicle
 // e o contrato de MANUTENCAO com pecas (Dois Vizinhos/PR, 06/10/2026: "prestacao de
 // servicos de manutencao preventiva, corretiva e fornecimento de pecas" das camaras
 // de vacina, com o motor do ventilador como item)
-"prestacao de servicos de manutencao","fornecimento de pecas"];
+"prestacao de servicos de manutencao","fornecimento de pecas",
+// e a funilaria (usuario, 21/10/2026: "editais de funilaria pode tirar"): "RP para
+// futuras prestacoes de servicos de funilaria (fabricacao, fornecimento e instalacao
+// de ... calhas, condutores, rufos, pingadeiras, dutos, chamines e coifas)", Santa
+// Cruz do Sul/RS, edital 131, lote unico com a coifa inox no meio das calhas
+"funilaria"];
 // 5.2c — o objeto que TAMBEM compra eletrodomestico nao cai inteiro por uma
 // palavra (18/09/2026). "Aquisicao de Moveis, Eletrodomesticos, Eletronicos e
 // brinquedos", "motocicleta, bicicleta eletrica e refrigerador frost free" e
@@ -468,7 +473,7 @@ const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motocicle
 // dizem que o edital inteiro e outra coisa (sucata, velorio, varricao urbana,
 // pecas de manutencao) seguem derrubando sempre. "trator" como comeco de
 // palavra, pelo mesmo motivo do veto-item.mjs ("extrator").
-const VETO_OBJ_SEMPRE = new Set(["sucata","velorio","locacao de estrutura","prestacao de servicos de manutencao","fornecimento de pecas","coletor de residuos","residuos organicos","rede de gases","manutencao de aparelhos","inversores de frequencia","inversor de frequencia"]);
+const VETO_OBJ_SEMPRE = new Set(["sucata","velorio","locacao de estrutura","prestacao de servicos de manutencao","fornecimento de pecas","coletor de residuos","residuos organicos","rede de gases","manutencao de aparelhos","inversores de frequencia","inversor de frequencia","funilaria"]);
 const OBJ_ELETRO = /eletrodomestic|eletroportat|linha branca/;
 const vetoDoObjeto = txt => {
   const v = VETO_OBJ.find(t => t === 'trator' ? /(?:^|[^a-z])trator/.test(txt) : txt.includes(t));

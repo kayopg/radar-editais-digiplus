@@ -232,6 +232,9 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    alimento, material de limpeza e afins. Veículos casam com a busca porque têm
    ar-condicionado de fábrica. Se o objeto também compra eletrodoméstico ("Móveis,
    Eletrodomésticos, Eletrônicos e brinquedos"), quem decide é o item.
+   Alguns termos derrubam sempre, mesmo com eletrodoméstico no objeto (sucata, velório,
+   manutenção com peças); desde 21/10/2026 também a **funilaria** ("editais de funilaria pode
+   tirar": Santa Cruz do Sul/RS, edital 131, calhas e rufos com a coifa inox no mesmo lote).
 3b. **Refrigeração científica** — itens de refrigeração para vacina, imunobiológico,
    hemocomponente ou laboratório saem: é outro mercado, com registro na Anvisa. O teste vale
    só para a categoria Refrigeração, senão derrubaria aspirador de pó "aplicação: laboratório".
