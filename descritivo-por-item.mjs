@@ -5088,7 +5088,9 @@ for (const e of dados.editais) {
     const radar = new Set((e[C.itens] || []).filter(r => r[0] !== 'LT' && r[0] !== 'ED').map(r => r[5]));
     const UNIDADE = '(?:UN|UND|Und|und|Un|un|UNID\\.?|Unid\\.?|unid\\.?|Unidade|UNIDADE|unidade|PC|PÇ|CX|KIT|Kit|CJ|JG|PAR)';
     const COLUNAS = new RegExp('(?:\\s+\\d{4,7}(?:-\\d)?)*(?:\\s+' + UNIDADE + ')?(?:\\s+\\d{1,6}(?:,\\d{1,4})?)?(?:\\s+' + UNIDADE + ')?\\s*(?:R\\$\\s*)?$');
-    const MARCA_DE_FOLHA = /(?:P[áa]gina|p[áa]g\.|\bpg\.|\bfl\.|\bfolha)\s*\d{1,4}(?:\s*(?:de|\/|\|)\s*\d{1,4})?|‖‖|(?<![\d,./])\d{1,3}\s*\/\s*\d{1,3}(?![\d,./])/i;
+    // (o "N/M" solto nao e a voltagem: "Bivolt (127/220V)" no meio da continuacao
+    // de Ressaquinha/MG, edital 24, item 54, passava por marca de folha, 21/10/2026)
+    const MARCA_DE_FOLHA = /(?:P[áa]gina|p[áa]g\.|\bpg\.|\bfl\.|\bfolha)\s*\d{1,4}(?:\s*(?:de|\/|\|)\s*\d{1,4})?|‖‖|(?<![\d,./(])\d{1,3}\s*\/\s*\d{1,3}(?![\d,./]|\s*[Vv](?![a-z]))/i;
     const letras = s => normIgual(s).replace(/[^a-z]/g, '');
     // o cabecalho que o timbresDoEdital nao aprendeu: trechos de seis palavras
     // que se repetem em quatro folhas ou mais ("Campus de Sao Jose dos Campos
@@ -5156,7 +5158,14 @@ for (const e of dados.editais) {
         // ("ITEM QUANT. UNID. DESCRICAO / ESPECIFICACAO V. UNIT. (R$)",
         // Sentinela do Sul/RS) — e tem de abrir em minuscula
         dbg('marca/timbre', p, tirouTimbre, JSON.stringify(semTimbre.slice(0, 400)));
-        const ws = semTimbre.slice(p).trim().split(' ');
+        // (e o brasao lido como texto com o timbre e o estado, antes da
+        // continuacao: "ERA a e) Lu LE PREFEITURA MUNICIPAL DE RESSAQUINHA Estado
+        // de Minas Gerais velocidades; Controle por chave..." — Ressaquinha/MG)
+        const resto = semTimbre.slice(p)
+          .replace(/^(?:\s*\S{1,3}){1,8}\s+(?=PREFEITURA\s+MUNICIPAL)/, ' ')
+          .replace(/^\s*PREFEITURA\s+MUNICIPAL\s+D[EO]\s+[A-ZÀ-Ú][A-ZÀ-Ú ]{2,40}?(?=\s+(?:Estado\s|\p{Ll}))/u, ' ')
+          .replace(/^\s*Estado\s+d[eo]\s+(?:Minas Gerais|S[ãa]o Paulo|Goi[áa]s|Paran[áa]|Santa Catarina|Rio Grande do Sul|Mato Grosso do Sul)(?=\s)/, ' ');
+        const ws = resto.trim().split(' ');
         const wn = ws.map(x => normIgual(x));
         const coberto = q => { for (let s0 = Math.max(0, q - 5); s0 <= q; s0++) if (s0 + 6 <= wn.length && repetida().has(wn.slice(s0, s0 + 6).join(' '))) return true; return false; };
         let q = 0;
@@ -5179,6 +5188,14 @@ for (const e of dados.editais) {
           for (const m of cont.matchAll(new RegExp('\\s0*' + prox[0] + '\\s+(?:\\d{1,6}(?:,\\d{1,4})?\\s+)?(?:' + UNIDADE + '\\.?\\s+)?(?:\\d{4,7}\\s+)?(?:(?:Exclusiv[ao]|EXCLUSIV[AO])\\s+(?:para\\s+)?ME\\s*\\/\\s*EPP\\s+|(?:Ampla|AMPLA)\\s+(?:Concorr[êe]ncia\\s+|CONCORR[ÊE]NCIA\\s+)?)?', 'g'))) {
             if (nome5.length === 5 && letras(cont.slice(m.index + m[0].length, m.index + m[0].length + 30)).startsWith(nome5)) { fim = m.index; break; }
           }
+        }
+        // (ou o numero do seguinte com o codigo do catalogo e o nome em
+        // maiusculas, quando o edital chama o produto de outro jeito: "...Admitido
+        // equivalente técnico. 55 461261 KIT DE ELETRODOS..." — o PNCP diz
+        // "Eletrodo Uso Médico", Ressaquinha/MG, edital 24, 21/10/2026)
+        if (fim < 0 && prox) {
+          const m = new RegExp('\\s0*' + prox[0] + '\\s+\\d{4,7}\\s+(?=\\p{Lu}{3,})', 'u').exec(cont);
+          if (m) fim = m.index;
         }
         const cl = /\s\d{1,2}(?:\.\d{1,2}){1,3}\.?\s+\p{Lu}/u.exec(cont);
         if (cl && (fim < 0 || cl.index < fim)) fim = cl.index;
@@ -6031,6 +6048,100 @@ for (const e of dados.editais) {
       }
     }
   }
+  // A CELULA COM AS COLUNAS NO MEIO: "98 622129 PURIFICADOR DE ÁGUA Unidade 5
+  // R$1.147,75 R$5.738,75 REFRIGERADO COM FILTRO E LUZ UV. Aquisição de
+  // purificador..." (Ressaquinha/MG, edital 24, 21/10/2026: "Muitos com o
+  // descritivo faltando por quebra de pagina ainda, como o edital de RESSAQUINHA"):
+  // a leitura poe as colunas depois da primeira linha da descricao, e o resto
+  // vem depois delas, ate o numero e o codigo do item seguinte. O rodape do
+  // sistema de assinatura ("Rua PREFEITURA MUNICIPAL ... codigo: ...") e o brasao
+  // lido como texto saem do meio.
+  {
+    const plano = secoes.replace(/\s+/g, ' ');
+    const UNI = '(?:Unidade|UNIDADE|UN|UND|Und|KIT|Kit|PCT|CX|PAR|JG|CJ|Conjunto)\\.?';
+    const COLS = new RegExp('(?:^|\\s)\\d{1,3}\\s+\\d{5,7}\\s+\\S[\\s\\S]{0,300}?\\s' + UNI + '\\s+[\\d.]+(?:,\\d{1,4})?\\s+R\\$\\s?[\\d.]+,\\d{2}\\s+R\\$\\s?[\\d.]+,\\d{2}\\s', 'g');
+    if ((plano.match(COLS) || []).length >= 5) {
+      const tiraRodape = t => t
+        .replace(/\s*Rua\s+PREFEITURA\s+MUNICIPAL[\s\S]{0,900}?c[óo]digo:\s*[\dA-Fa-f-]{10,}/g, ' ')
+        .replace(/(?:\s\S{1,3}){1,8}\s+(?=PREFEITURA\s+MUNICIPAL\s+DE\s)/g, ' ')
+        .replace(/\s*PREFEITURA\s+MUNICIPAL\s+DE\s+[A-ZÀ-Ú][A-ZÀ-Ú ]{2,40}?\s+Estado\s+d[eo]\s+(?:Minas Gerais|S[ãa]o Paulo|Goi[áa]s|Paran[áa]|Santa Catarina|Rio Grande do Sul|Mato Grosso do Sul)(?:(?:\s\S{1,3}){1,8}(?=\s))?/g, ' ')
+        .replace(/\s+/g, ' ').trim();
+      const aMao = (manuais[e[C.path]] || {}).itens || {};
+      for (const it of v.itens) {
+        if (!(+it[4] > 0) || aMao[String(it[0])]) continue;
+        // (so o descritivo curto ou que para no meio da frase: o longo e fechado
+        // ja e a celula, e o que vem depois dela e outra coisa — a tabela
+        // "Campus demandante Quantidade" do IFRS, Bento Gonçalves/RS, edital 442)
+        // (e so o curto: o que para no meio da frase a junção da folha e a cópia
+        // limpa completam adiante — Anastácio/MS, item 50, ganhava o "124" da folha)
+        const atual = String(it[6] || '').trim();
+        if (atual.length > 150) continue;
+        const q = Math.round(+it[2] || 0);
+        const [int, cent] = (+it[4]).toFixed(2).split('.');
+        const preco = int.replace(/\B(?=(\d{3})+(?!\d))/g, '\\.?') + ',' + cent;
+        const re = new RegExp('(?:^|\\s)0*' + it[0] + '\\s+\\d{5,7}\\s+(\\S[\\s\\S]{0,300}?)\\s' + UNI + '\\s+0*' + q + '(?:,0{1,4})?\\s+R\\$\\s?' + preco + '\\s+R\\$\\s?[\\d.]+,\\d{2}\\s', 'u');
+        const m = re.exec(plano);
+        if (!m) continue;
+        let resto = plano.slice(m.index + m[0].length, m.index + m[0].length + 12000);
+        const prox = new RegExp('\\s0*' + (+it[0] + 1) + '\\s+\\d{5,7}\\s+(?=\\p{Lu})', 'u').exec(resto);
+        if (!prox) continue;
+        resto = resto.slice(0, prox.index);
+        // (sem o cabecalho da folha no meio, "ESTADO DE MATO GROSSO DO SUL
+        // MUNICÍPIO DE ANASTÁCIO Coordenadoria...", e sem a tabela de
+        // distribuicao "Campus demandante Quantidade" do IFRS no fim)
+        const c = tiraRodape(tiraTimbre(m[1] + ' ' + resto, timbresDoEdital(secoes)))
+          .replace(/[;,]?\s+Campus\s+demandante\s+Quantidade[\s\S]*$/i, '').trim();
+        // (e so quando ganha texto de verdade: "LAVAR E S E C A R ROUPA" nao e
+        // mais que "LAVAR E SECAR ROUPA", Sant'Ana do Livramento/RS)
+        // (so letras: o "124" da folha que sobra do cabecalho nao e ganho —
+        // Anastácio/MS, edital 41, item 50, ja vinha inteiro)
+        const letras = t => String(t || '').replace(/[^\p{L}]/gu, '').length;
+        if (c.length < 40 || letras(c) <= letras(it[6]) + 20) continue;
+        // (a celula de verdade: o comeco dela e o comeco do que o recorte tinha)
+        const nz = t => String(t || '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+        if (it[6] && !nz(c).startsWith(nz(it[6]).split(' ').slice(0, 3).join(' '))) continue;
+        it[6] = c; it.length = Math.min(it.length, 9); descricaoDepoisDoPreco++;
+      }
+    }
+  }
+  // E a mesma tabela com lote e ordem na frente e a unidade antes da
+  // quantidade: "LOTE ORDEM ITEM UNIDADE QTDE VALOR UNITÁRIO VALOR TOTAL
+  // DESCRIÇÃO 1 1 52346 UNIDADE 2 2.387,70 4.775,40 CONDICIONADOR DE AR SPLIT
+  // HI- WALL..." (Ubiratã/PR, edital 18, 21/10/2026: o recorte ficava com o nome
+  // do catalogo). A linha e achada pelo numero, pela quantidade e pelo preco do
+  // proprio item; o texto vai ate a linha seguinte, sem o rodape da assinatura
+  // eletronica no meio.
+  {
+    const UNI = '(?:UNIDADE|Unidade|UN|UND|UNID|CX|PC|KG|PCT|PAR|JG|CJ)\\.?';
+    const LINHA2 = new RegExp('(?:^|\\s)\\d{1,3}\\s+\\d{1,3}\\s+\\d{4,7}\\s+' + UNI + '\\s+[\\d.]+(?:,\\d{1,4})?\\s+[\\d.]+,\\d{2}\\s+[\\d.]+,\\d{2}\\s+(?=\\p{Lu})', 'gu');
+    const plano = secoes.replace(/\s+/g, ' ');
+    if ((plano.match(LINHA2) || []).length >= 3) {
+      const aMao = (manuais[e[C.path]] || {}).itens || {};
+      for (const it of v.itens) {
+        // (o transcrito a mao ganha: o texto lido nao tem todas as folhas)
+        if (!(+it[4] > 0) || aMao[String(it[0])]) continue;
+        const q = Math.round(+it[2] || 0);
+        const [int, cent] = (+it[4]).toFixed(2).split('.');
+        const preco = int.replace(/\B(?=(\d{3})+(?!\d))/g, '\\.?') + ',' + cent;
+        const re = new RegExp('(?:^|\\s)0*' + it[0] + '\\s+\\d{1,3}\\s+\\d{4,7}\\s+' + UNI + '\\s+0*' + q + '(?:,0{1,4})?\\s+' + preco + '\\s+[\\d.]+,\\d{2}\\s+(?=\\p{Lu})', 'gu');
+        const achados = new Set();
+        for (const m of plano.matchAll(re)) {
+          let c = plano.slice(m.index + m[0].length, m.index + m[0].length + 6000)
+            .replace(/\s*Assinatura\s+Eletr[ôo]nica\s*-\s*Verifique\s+pelo\s+QRCode[\s\S]{0,300}?P[áa]gina\s+\d+\s*\|\s*\d+\s*/g, ' ');
+          const fim = new RegExp(LINHA2.source + '|\\s(?:VALOR TOTAL DA REQUISI|Total\\s+Requisi)', 'u').exec(c);
+          if (fim) c = c.slice(0, fim.index);
+          // (o bloco do item fecha no paragrafo da garantia: quando a linha
+          // seguinte nao esta no texto lido, as de 3, 4, 9 e 10 de Ubiratã, o
+          // texto corria pelos itens de fora)
+          const gar = /\sGARANTIA\s+Garantia\b[^.]*\./.exec(c);
+          if (gar) c = c.slice(0, gar.index + gar[0].length);
+          c = c.replace(/\s+/g, ' ').trim();
+          if (c.length >= 30) achados.add(c);
+        }
+        if (achados.size === 1) { const c = [...achados][0]; if (c !== it[6]) { it[6] = c; it.length = Math.min(it.length, 9); delete it[9]; descricaoDepoisDoPreco++; } }
+      }
+    }
+  }
   for (const it of v.itens) {
     if (!it[6] || it[9]) continue;
     let s = it[6], antes;
@@ -6192,6 +6303,40 @@ for (const e of dados.editais) {
       // seguinte, e o resto: "...CASSETE 55.000 A 60.000 BTUS Serviço 35 35 19
       // 46.951 TUBULAÇÃO ADICIONAL..." — Joinville/SC, edital 87, item 18)
       if (q) s = s.replace(new RegExp('\\s+(?:Servi[çc]o|SERVI[ÇC]O|Metro|METRO|Unidade|UNIDADE|Unid\\.?|UN|Pe[çc]a|PE[ÇC]A|Kit|KIT|Conjunto)\\s+0*' + q + '\\s+0*' + q + '\\s+\\d{1,3}\\s+\\d{2}\\.\\d{3}\\s[\\s\\S]*$'), '');
+      // (e a linha da tabela do termo da UTFPR: "...NÃO SERÁ NECESSÁRIA. UNIDADE 8 8
+      // 0 16 R$ 4.858,23 R$ 77.731,68 APARELHO DE AR-CONDICIONADO PORTÁTIL..." —
+      // unidade, quantidades por campus, total e os dois precos fecham a linha,
+      // e o que vem depois e o item seguinte; e a sobra "UNIDADE 0 0", "UNIDADE 6
+      // 2 Compras:" no fim, Cornélio Procópio/PR, edital 198, 21/10/2026)
+      s = s.replace(/\s+UNIDADE(?:\s+\d{1,5}){2,4}\s+R\$\s*[\d.]+,\d{2}\s+R\$\s*[\d.]+,\d{2}(?:\s[\s\S]*)?$/, '')
+        .replace(/(?<=[.;\]])\s+UNIDADE(?:\s+\d{1,5}){1,4}(?:\s+Compras:?)?\s*$/, '');
+      // (e a clausula seguinte do termo com o rodape do telefone na frente: "...
+      // COTA RESERVADA PARA MEI/ME/EPP :(16)3749.1000 – Fax:(16)3749.1010 –
+      // Ribeirão Corrente-SP 11 ADEQUAÇÃO ORÇAMENTÁRIA 11.1 As despesas..."
+      // (Ribeirão Corrente/SP, edital 14, itens 1 e 2, 21/10/2026); e o
+      // cabecalho da folha no meio da frase, "...com garantia IO DE CANOAS
+      // Secretaria Municipal de Licitações e Contratos 9 mínima de 12 (doze)
+      // meses" (Canoas/RS, edital 290)
+      s = s.replace(/\s+\d{1,2}(?:\.\d{1,2})?\.?\s+(?:ADEQUA[ÇC][ÃA]O|DOTA[ÇC][ÃA]O)\s+OR[ÇC]AMENT[ÁA]RIA\b[\s\S]*$/, '')
+        .replace(/\s*:?\s*\(\d{2}\)\s*\d{4}[.\s-]?\d{4}\s*[–-]\s*Fax:?\s*\(\d{2}\)\s*\d{4}[.\s-]?\d{4}\s*[–-]\s*[^\d]{3,40}$/, '')
+        .replace(/\s+(?:MUNIC[ÍI]P)?IO\s+DE\s+[A-ZÀ-Ú][A-ZÀ-Ú ]{2,30}\s+Secretaria\s+Municipal\s+de\s+[\p{L} ]{3,40}?\s+\d{1,3}(?=\s+\p{Ll})/gu, '');
+      // e o item SEGUINTE inteiro depois da frase fechada, pelo numero e pelo
+      // nome do PNCP: "...defeitos de fabricação. 02 Computador Ultracompacto com
+      // Monitor..." no bebedouro de Cravinhos/SP (edital 67, item 1)
+      {
+        const nx = v.itens.find(x => +x[0] === +it[0] + 1);
+        const sa = t => [...String(t || '')].map(c => c.length > 1 ? c : c.normalize('NFD')[0]).join('');
+        const w = nx ? (sa(nx[1]).match(/[A-Za-z]{4,}/) || [''])[0].slice(0, 6) : '';
+        const meu = (sa(it[1]).match(/[A-Za-z]{4,}/) || [''])[0].slice(0, 6).toLowerCase();
+        if (w.length >= 4 && w.toLowerCase() !== meu) {
+          const m = new RegExp('(?<=[.;])\\s+0*' + (+it[0] + 1) + '\\s+' + w, 'i').exec(sa(s));
+          if (m && m.index >= 80) s = s.slice(0, m.index).trim();
+        }
+      }
+      // (e o brasao lido como texto antes do nome do estado, no meio da frase:
+      // "...3. ALIMENTAÇÃO: ERA a e) Lu LE Estado de Minas Gerais Alimentação por
+      // pilhas..." — Ressaquinha/MG, edital 24, item 70, 21/10/2026)
+      s = s.replace(/(?:\s\S{1,3}){3,8}\s+Estado\s+d[eo]\s+(?:Minas Gerais|S[ãa]o Paulo|Goi[áa]s|Paran[áa]|Santa Catarina|Rio Grande do Sul|Mato Grosso do Sul)(?=\s+\p{Lu})/gu, '');
       s = s.replace(/(?<=[.;])\s+NCM:?\s*[\d.]{1,7}$/, '')
         // e o comeco da linha seguinte com a cota: "...já existentes. 05 Exclusiva
         // ME/" (Caraguatatuba/SP, edital 32, item 4)

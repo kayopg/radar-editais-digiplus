@@ -766,6 +766,17 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // 15/10/2026: a manta magnetica "ideal para imas de geladeira" de uma compra de
 // material grafico (Pedra do Anta/MG, edital 27, item 1)
 "imas de geladeira","ima de geladeira","imas para geladeira","ima para geladeira","manta magnetica",
+// 21/10/2026: a diaria de hotel que cita o ventilador do quarto ("APARTAMENTO
+// AREJADO VENTILADOR CAMA E TV WI FI CAFE DA MANHA INDIVIDUAL", Morrinhos/GO,
+// contratacao direta 001.188, itens 1 a 3). "apartamento" so na frente
+"hospedagem","cafe da manha","apartamento",
+// e a marmita e o pote "apto para freezer, forno convencional e microondas"
+// (Diorama/GO, edital 35, itens 126 e 167, 21/10/2026): utensilio. So na
+// frente — o "marmiteiro eletrico" e outra palavra
+"marmita",
+// e o "balancar" da poltrona reclinavel ("ao mesmo tempo balancar", Patrocinio
+// do Muriae/MG, edital 175, item 1, 21/10/2026), que entrava como balanca
+"balancar",
 // e os que so valem na frente do produto (VETO_SO_NA_FRENTE, abaixo)
 "container","conteiner","adesivo","recebimento, tratamento","destinacao final",
 // 15/10/2026: ferramenta eletrica e a gasolina (usuario: "Serra tico tico, martelo
@@ -786,7 +797,12 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // (VETO_SO_NA_FRENTE): a amassadeira "com transmissao por correia" fica.
 "correia",
 // e o ventilador centrifugo de processo (20/10/2026, ver o VETO_SO_NA_FRENTE)
-"ventilador centrifugo","ventiladores centrifugos"];
+"ventilador centrifugo","ventiladores centrifugos",
+// e o termostato de ar-condicionado, peca: "Termostato Termostato, Aplicação:Ar
+// Condicionado, Referência:T6861v8wg ... Tipo Equipamento:Honeywell, Split" (Embrapa,
+// Brasilia/DF, edital 10, item 56, 21/10/2026) entrava pelo "Split" do fim; o
+// "termostato aplicacao" acima nao pegava por causa da virgula. So na frente.
+"termostato"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
@@ -843,7 +859,7 @@ const VETO_SO_NA_FRENTE = ["gas liquefeito","botijoes","carga de gas","gas de co
 // academia, que vetava em qualquer ponto e derrubava a "Batedeira planetária,
 // potência mínima de 700W ... movimentos planetários" de batedor eliptico
 // (Rancho Alegre/PR, edital 38, item 19, 20/10/2026): so na frente.
-"correia","eliptico",
+"correia","eliptico","apartamento","marmita","termostato",
 // e o ventilador centrifugo de processo ("Ventilador Centrífugo com pás voltadas
 // para trás tipo Limit load ... Vazão m³/h: 5.058; Pressão", Tres Passos/RS,
 // edital 184, 20/10/2026): equipamento de ventilacao industrial, como o exaustor
@@ -897,28 +913,25 @@ const VETO_OT_ANIMAIS = ['campanula','avicultura','suinocultura','pintinho','lei
 // (e a de laboratorio pelo nome do lote ou pela precisao: "Balança eletrônica de
 // precisão de bancada", "Lote 1 - Instrumentos e equipamentos laboratoriais de
 // pequeno porte", Ribeirao Preto/SP, edital 27, item 2, 20/10/2026)
-const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioimpedanc','laboratoriais','eletronica de precisao',
-  'biompedanc','pesar pessoas','obeso','paciente','corporal','balanca analitica',
-  'analitica de precisao','balanca precisao','balanca de precisao','cama hospitalar',
+// 21/10/2026: a balanca de PESAR PESSOAS volta ao radar, em todos os editais
+// (usuario: "algumas balancas ficaram de fora deste edital", sobre a infantil,
+// a adulta com regua antropometrica e a de obesos de Fenix/PR, edital 19; e,
+// perguntado, "Sim, em todos os editais"). Sairam desta lista a antropometrica,
+// a pediatrica e de bebe, a de obesos, a de bioimpedancia, a de banheiro e de
+// vidro, a de 180 kg e a de pesar paciente. Continuam fora a de laboratorio
+// (analitica, de precisao), a veterinaria, a de gado e a rodoviaria, e os
+// outros produtos que citam balanca (incubadora, placa, cama hospitalar).
+const VETO_BL_MEDICA = ['laboratoriais','eletronica de precisao',
+  'balanca analitica','analitica de precisao','balanca precisao','balanca de precisao','cama hospitalar',
   'mesa auxiliadora','tipo balanca','paleteira','pilha tipo bateria',
   // 04/09/2026: a palavra no meio da descricao de outro produto (a incubadora
   // neonatal "c/ balanca", a placa "aguarde a sua vez para entrar na balanca")
-  // e a balanca de pesar gente escrita de outros jeitos
-  'incubadora','placa sinalizadora','sinalizadora','pesagem de pessoas',
-  'balanca infantil','digital infantil','com regua','coluna articulada',
+  'incubadora','placa sinalizadora','sinalizadora',
   // 16/09/2026: a semi-analitica de 0,001 g da UFSM e a rodoviaria de 120
   // toneladas, instalada e com obra civil, de Alcinopolis/MS
   'semi-analitica','semi analitica','semianalitica','rodoviaria',
-  // 21/09/2026: balanca de banheiro e de bebe em compra de saude. 180 kg e a
-  // capacidade da balanca de pesar gente; a de plataforma comercial e 150, 200
-  // ou 300 kg. E a portatil de 200 kg com tapete antiderrapante, de pesar
-  // paciente na UBS (Uruguaiana/RS, decisao do usuario em 21/09/2026)
-  '180 kg','180kg','de banheiro','plataforma em vidro','em vidro temperado','para bebe','recem-nascido','recem nascido','neonat',
-  'tapete anti-derrapante','tapete antiderrapante','tapete anti derrapante',
-  // 22/09/2026: "Balanca de laboratorio, tipo analitica, 0,0001 g" (Januaria/MG),
-  // "BALANCA DIGITAL ATROPOMETRICA" (sic, Sao Gabriel/RS), "BALANCA DIGITAL DE
-  // VIDRO TEMPERADO" para a UBS (Timburi/SP), "BALANCA ADULTO DIGITAL 150KG"
-  'tipo analitica','balanca de laboratorio','atropometr','de vidro temperado','balanca adulto','adulto',
+  // 22/09/2026: "Balanca de laboratorio, tipo analitica, 0,0001 g" (Januaria/MG)
+  'tipo analitica','balanca de laboratorio',
   // 14/10/2026, na volta da categoria: a de gado ("BALANCA PARA PESAGEM DE
   // BOVINOS", Sao Joao do Polesine/RS), o mesmo mercado da veterinaria que o
   // usuario ja tinha tirado em 10/09/2026 ("pesagem de animais", VETO_ITEM)
@@ -929,13 +942,8 @@ const VETO_BL_MEDICA = ['antropometr','antopometr','pediatric','pediatri','bioim
   // nao pela palavra: a balanca de cozinha de Sao Jose do Inhacora/RS diz "sem
   // utilizacao para ... analises laboratoriais", e fica.
   'atividades laboratoriais','uso laboratorial','uso em laboratorio','para laboratorio','pesagem de amostras','materiais e amostras',
-  // 15/10/2026: a veterinaria do canil (Castro/PR, edital 149, item 86) e a
-  // portatil de vidro de 200 kg do consorcio de saude, a de pesar paciente
-  // (Palmeira das Missoes/RS, edital 02, item 54)
-  'veterinari','portatil vidro','vidro visor',
-  // 15/10/2026, na ampliacao para as demais UFs: "Balanca Antompometrica infantil
-  // ... dimensoes de concha" (Bicas/MG, edital 7, item 3), a de bebe escrita errado
-  'antompometr','concha'];
+  // 15/10/2026: a veterinaria do canil (Castro/PR, edital 149, item 86)
+  'veterinari'];
 
 // A mesa inox que nao e de cozinha (15/10/2026, na entrada da categoria MI): a de
 // hospital e de clinica — "MESA DE MAYO", "Mesa Ginecologica", "Mesa auxiliar

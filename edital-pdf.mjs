@@ -348,7 +348,18 @@ const arquivosDe = async (e) => {
 // PNCP informa ("Termo de Referencia", "Estudo Tecnico Preliminar"). A certidao
 // e o comprovante de publicacao, que o orgao as vezes cadastra como "Edital",
 // ficam no fim, com o resto.
+// E os documentos que estao SO no portal da disputa (usuario, 21/10/2026: "Os
+// arquivos deste edital estao na BLL, e nao estao no PNCP, verifique, e arrume
+// o edital com aquela ordem que passei para voce anteriormente"): Cruz Alta/RS,
+// dispensa 04/2026, com so o aviso no PNCP e o link para a BLL quebrado. Os
+// links ficam em arquivos-do-portal.json, conferidos a mao no portal, e valem no
+// lugar da lista do PNCP.
+let PORTAL = {};
+try { PORTAL = JSON.parse(fs.readFileSync(path.join(DIR, 'arquivos-do-portal.json'), 'utf8')); } catch { /* sem lista */ }
 const listaDeArquivos = async e => {
+  const doPortal = PORTAL[e[C.path]];
+  if (doPortal && (doPortal.arquivos || []).length)
+    return doPortal.arquivos.map((f, i) => ({ seq: 'p' + (i + 1), titulo: String(f.titulo || ''), tipo: '', url: f.url, portal: doPortal.portal || 'portal' }));
   const [c, a, s] = e[C.path].split('/');
   for (let t = 0; t < 3; t++) {
     try {
@@ -381,7 +392,7 @@ async function juntaSeparados(e, lista, urlDe) {
   let mb = 0;
   for (const f of lista) {
     if (retificado(f, lista)) { console.log(`      (fica so a versao retificada: ${f.titulo})`); continue; }
-    const b = await baixa(urlDe(f.seq));
+    const b = await baixa(f.url || urlDe(f.seq));
     if (!b) { console.log(`      (nao baixou o arquivo ${f.seq}: ${f.titulo})`); continue; }
     const h = createHash('sha1').update(b).digest('hex');
     if (vistos.has(h)) { console.log(`      (repetido: ${f.titulo})`); continue; }
@@ -394,7 +405,9 @@ async function juntaSeparados(e, lista, urlDe) {
     entradas.push({ nome: nomeNoPacote(f.titulo, f.tipo) + '.' + ext, abre: () => b });
   }
   const junto = entradas.length >= 2 ? await juntaPacote(entradas) : null;
-  return junto && junto.partes.length >= 2 ? { ...junto, origem: 'arquivos separados do PNCP', separados: lista.length } : null;
+  const portal = (lista.find(f => f.portal) || {}).portal;
+  return junto && junto.partes.length >= 2
+    ? { ...junto, origem: portal ? 'arquivos do portal ' + portal : 'arquivos separados do PNCP', separados: lista.length, ...(portal ? { portal } : {}) } : null;
 }
 
 // a lista de arquivos de cada edital do dia: quem tem mais de um documento entra
@@ -435,7 +448,7 @@ for (const e of dados.editais) {
         const le = await LE.abre(junto.bytes);
         saida[e[C.path]] = { nome: junto.nome.split('/').pop(), origem: junto.origem, paginas: le.total, arq: e[C.arquivoSeq] || 1,
                              de: String(e[C.arquivoExtensao] || '').toLowerCase(), v: VERSAO, arqs: chaveDosArquivos(lista),
-                             separados: junto.separados, partes: junto.partes, b64: Buffer.from(junto.bytes).toString('base64') };
+                             separados: junto.separados, ...(junto.portal ? { portal: junto.portal } : {}), partes: junto.partes, b64: Buffer.from(junto.bytes).toString('base64') };
         total += junto.bytes.length; feitos++; juntados++;
         console.log(`  ${nome} · ${junto.origem} (${lista.length}) · ${le.total} pag · ${(junto.bytes.length / 1024).toFixed(0)} KB\n      `
           + junto.partes.map(p => `${p.parte}: ${p.nome} (${p.paginas})`).join(' | '));

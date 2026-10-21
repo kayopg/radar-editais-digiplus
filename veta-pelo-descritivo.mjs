@@ -23,7 +23,8 @@ import { fileURLToPath } from 'node:url';
 import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, chaleiraDeFogao, lavaLoucas, criaCotaNaUf } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 import { marcaCotas } from './cota.mjs';
-import { vendaPorLote, totaisPorLote, lotesPelosTotais, lotesPelaTabelaDeGrupo, lotesPeloRotulo, lotesPelaColunaDoLote, lotesPelaLinhaComLote, lotesPorFaixa, lotesPorSecao } from './lotes.mjs';
+import { vendaPorLote, totaisPorLote, lotesPelosTotais, lotesPelaTabelaDeGrupo, lotesPeloRotulo, lotesPelaColunaDoLote, lotesPelaLinhaComLote, lotesPorFaixa, lotesPorSecao,
+  lotesLoteUnico, lotesPelaTabelaLoteItem, lotesPeloTextoDoItem, lotesPorFaixaDeItens, lotesPorSecaoComItem, lotesPelaLinhaLoteNome, lotesUmItemPorLote, lotesPelaTabelaLoteItemNome } from './lotes.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const arqDados = path.join(DIR, 'docs', 'dados.json');
@@ -59,7 +60,10 @@ const VETO = {
   // (e o "Banho maria Beads, 5L" de laboratorio, de microesferas no lugar da
   // agua, R$ 18 mil: UEM, Maringa/PR, edital 236, item 1, 20/10/2026)
   CC: ['banho maria de laboratorio', 'banho-maria de laboratorio', 'aplicacoes laboratoriais', 'uso laboratorial', 'pid fuzzy', 'precisao de controle', 'calibracao', 'variacao maxima aceitavel', 'beads'],
-  BB: ['laboratorial'],
+  // (e o purificador de osmose reversa de laboratorio: "água com elevado grau de
+  // pureza ... atendendo as exigências laboratoriais ... substituição do uso de
+  // destiladores", FMRP-USP, Ribeirao Preto/SP, edital 186, item 5, 21/10/2026)
+  BB: ['laboratorial', 'laboratoriais', 'destiladores', 'elevado grau de pureza'],
   CX: ['soldagem', 'fumaca de bancada'],
   // a balanca de pesar gente, de bebe e de laboratorio, a mesma lista do
   // varredura.mjs (a categoria voltou em 14/10/2026)
@@ -101,7 +105,9 @@ const VETO = {
 // Industrial tipo: resistivo" no catalogo e "PASS-THROUGH AQUECIDO EM ACO INOX -
 // CAPACIDADE PARA 24 GNS 1/1" no edital.
 // E o desumidificador (usuario, 15/10/2026: "desumidificador de ar tambem nao cotamos").
-const ABRE_FORA_DO_RADAR = /^[^a-z]*(?:ventilador\s*\/\s*|ventilador\s+(?=exaustor\s+industrial))?(exaustor|depurador|pass[\s-]?(?:through|thru)|desumidificador(?:es)?|chapa\s+(?:para\s+grelhar|de\s+grelhar|lisa|a\s+gas|industrial|de\s+coccao|assadeira)|chapeira|char\s?broiler)\b/;
+const ABRE_FORA_DO_RADAR = /^[^a-z]*(?:ventilador\s*\/\s*|ventilador\s+(?=exaustor\s+industrial))?(exaustor|depurador|pass[\s-]?(?:through|thru)|desumidificador(?:es)?|chapa\s+(?:bifeteira|para\s+grelhar|de\s+grelhar|lisa|a\s+gas|industrial|de\s+coccao|assadeira)|chapeira|char\s?broiler)\b/;
+// (a "CHAPA BIFETEIRA A GÁS LISA" que o catalogo chama de "Fogão Industrial ...
+// chapa bifeteira": Cornelio Procopio/PR, edital 198, item 73, 21/10/2026)
 
 // E as listas do catalogo, sobre a descricao do PNCP, do mesmo jeito que o
 // varredura.mjs as aplica: termo novo entra no dados.json ja publicado sem
@@ -138,7 +144,10 @@ const UF_INSTALA = new Set(['RS', 'SC']);
 // o item de SERVICO de instalacao do aparelho, entre os itens do edital:
 // "INSTALACAO DE AR 60.000 BTUS", "46895 - INSTALACAO DE CONDICIONADOR DE AR
 // CASSETE", "Ar condicionado - instalação/montagem/desmontagem/remoção"
-const ITEM_DE_INSTALACAO = /^(?:\d{3,7}\s*-\s*)?(?:servicos? de |mao de obra (?:para |de )?)?(?:instalac|montagem)|ar[ -]?condicionado\s*-\s*instalac|instalacao\/montagem/;
+// (e o servico de engenharia do catalogo, "Serviço Engenharia Serviço de Retrofit e
+// ...", no lote unico da manutencao das estacoes da Telebras, Brasilia/DF, edital
+// 42/2026, com o split piso-teto e o dutado no meio, 21/10/2026)
+const ITEM_DE_INSTALACAO = /^(?:\d{3,7}\s*-\s*)?(?:servicos? de |mao de obra (?:para |de )?)?(?:instalac|montagem)|ar[ -]?condicionado\s*-\s*instalac|instalacao\/montagem|^servicos? (?:de )?engenharia/;
 // As UFs atendidas, do varredura.mjs: o edital de UF que saiu (MT, em 05/10/2026)
 // sai tambem da lista ja publicada, sem esperar a proxima varredura.
 const UFS_ATENDIDAS = new Set(JSON.parse((fonte.match(/const UFS = (\[[^\]]*\])/) || [, '[]'])[1]));
@@ -179,7 +188,12 @@ const EXIGE_INSTALACAO = [
   // de operacao de 60 Hz" — Rio Azul/PR, edital 98, item 10, aspirador, 13/10/2026)
   /(?<!(?:sem|nao|compativel|compatibilidade) )\bcom (a )?instalacao\s*(?:[.;]|$)/,
   // "com mao de obra de instalacao e drenos" (Sertanopolis/PR, 21/09/2026)
-  /(mao de obra|servicos?) de (instalacao|montagem)/,
+  // (nao quando a frase diz que NAO inclui: "Não estão incluídos serviços de
+  // instalação, montagem em parede ... ou mão de obra de instalação", "sem
+  // inclusão de serviços de instalação" — Ubiratã/PR, edital 18, 21/10/2026)
+  // (e "A ausência de contratação dos serviços de instalação não afasta a
+  // responsabilidade da fornecedora", o mesmo edital, item 2)
+  /(?<!(?:nao|sem|ausencia|exceto|excluid[oa]s?)\b[^.;]{0,300})(mao de obra|servicos?) de (instalacao|montagem)/,
   // o INSTALADO no nome do produto: "AR CONDICIONADO 9000 BTU'S INSTALADO -
   // FRIO", "AR CONDICIONADO INSTALADO - AR-CONDICIONADO TIPO SPLIT TETO",
   // "CORTINA DE AR ... (EQUIPAMENTO INSTALADO)" (Tres Pontas/MG, edital 88,
@@ -432,6 +446,12 @@ for (const e of dados.editais) {
       || (it[0] !== 'LV' && lavaLoucas(d) && 'lavadora de louca')
       || (it[0] === 'LV' && (lavaLoucas(norm(it[3])) || lavaLoucas(d)) && 'lavadora de louca')
       || (it[0] === 'PR' && chaleiraDeFogao(norm(it[3]), d) && 'chaleira de fogao')
+      // o "UMIDIFICADOR" sem mais nada no edital de oxigenio medicinal e o frasco
+      // do fluxometro, nao o umidificador de ambiente (Campina da Lagoa/PR,
+      // edital 108, item 6, 21/10/2026: "RECARGA DE OXIGENIO MEDICINAL COM
+      // CILINDROS EM COMODATO")
+      || (it[0] === 'CL' && /^[^a-z]*umidificador/.test(norm(it[3])) && /oxigenio|gasoterapia/.test(objN)
+        && !/ambiente|umidificador de ar(?![a-z])/.test(d + ' ' + norm(it[3])) && 'umidificador do oxigenio medicinal')
       || (!cotaNaUf(e[C.uf], norm(it[3]), d) && 'linha que nao se cota em ' + e[C.uf])
       || (ABRE_FORA_DO_RADAR.exec(d) || [])[1]));
     if (!termo) return true;
@@ -504,17 +524,24 @@ for (const e of ficam) {
   // acham o seu lote, e nenhum adivinha.
   const lote = lotesPeloRotulo(todos) || lotesPelosTotais(todos, totaisPorLote(texto))
     || lotesPelaColunaDoLote(todos, texto) || lotesPelaLinhaComLote(todos, texto)
-    || lotesPorFaixa(todos, texto) || lotesPorSecao(todos, texto) || lotesPelaTabelaDeGrupo(todos, texto);
+    || lotesPorFaixa(todos, texto) || lotesPorSecao(todos, texto) || lotesPelaTabelaDeGrupo(todos, texto)
+    // (e as formas de 21/10/2026: o texto do proprio item, as faixas de itens do
+    // grupo, as secoes com o primeiro item, a tabela "LOTE ITEM" e o lote unico)
+    || lotesPeloTextoDoItem(todos) || lotesPorFaixaDeItens(todos, texto) || lotesPorSecaoComItem(todos, texto)
+    || lotesPelaTabelaLoteItem(todos, texto) || lotesPelaTabelaLoteItemNome(todos, texto) || lotesPelaLinhaLoteNome(todos, texto) || lotesUmItemPorLote(todos, texto)
+    || lotesLoteUnico(todos, texto);
   let entram, cod;
   if (lote) {
     const lotesNossos = new Set([...nossos].map(n => lote.get(n)));
-    entram = todos.filter(t => lotesNossos.has(lote.get(t.n)) && !nossos.has(t.n));
+    // (o lote 0 e o item fora de grupo, "ITENS NAO AGRUPADOS" de Pelotas/RS: nao
+    // puxa ninguem e vai sem lote para o descritivos.json)
+    entram = todos.filter(t => lote.get(t.n) && lotesNossos.has(lote.get(t.n)) && !nossos.has(t.n));
     cod = 'LT'; editaisComLote++;
     // o lote confirmado vai para o descritivos.json, para o resumo agrupar por lote
     const noLote = {};
     for (const t of todos) {
-      const l = lote.get(t.n), k = (noLote[l] = (noLote[l] || 0) + 1);
-      if (t.x[7] !== l || t.x[8] !== k) { t.x[7] = l; t.x[8] = k; lotesMarcados++; }
+      const l = lote.get(t.n) || undefined, k = l && (noLote[l] = (noLote[l] || 0) + 1) || undefined;
+      if ((t.x[7] ?? undefined) !== l || (t.x[8] ?? undefined) !== k) { t.x[7] = l; t.x[8] = k; lotesMarcados++; }
     }
   } else {
     entram = todos.filter(t => !nossos.has(t.n));

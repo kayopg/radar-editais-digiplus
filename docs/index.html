@@ -22,6 +22,7 @@
   --hot:#c0321c; --hot-soft:#fdeae6;
   --warn:#8f5e12; --warn-soft:#fcf1de;
   --ok:#17703f; --ok-soft:#e3f4ea;
+  --desc:#c62828;
   --shadow:0 1px 2px rgba(12,33,68,.05),0 6px 18px rgba(12,33,68,.07);
   --shadow-hover:0 2px 4px rgba(12,33,68,.08),0 14px 32px rgba(31,95,191,.16);
   --display:"Exo 2","Arial Black",system-ui,sans-serif;
@@ -36,6 +37,7 @@ body.escuro{
   --hot:#ff8a72; --hot-soft:#3a1c18;
   --warn:#e8b562; --warn-soft:#2f2614;
   --ok:#6fd6a0; --ok-soft:#10291d;
+  --desc:#ff6b6b;
   --shadow:0 1px 2px rgba(0,0,0,.35),0 6px 18px rgba(0,0,0,.3);
   --shadow-hover:0 2px 4px rgba(0,0,0,.4),0 14px 32px rgba(0,0,0,.45);
   color-scheme:dark;
@@ -319,8 +321,15 @@ button.btn{font-family:inherit;cursor:pointer}
 .ag-imp:hover{border-color:var(--ok)}
 .ag-imp[aria-pressed="true"]{border-color:var(--ok);background:var(--ok)}
 .ag-imp:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+/* e o vermelho embaixo dele, do edital impresso mas descartado (21/10/2026): os
+   dois empilhados, para nao apertar o texto do edital na coluna do dia */
+.ag-marcas{flex:none;display:flex;flex-direction:column;gap:3px;margin-top:2px}
+.ag-marcas .ag-imp{width:20px;height:20px;margin-top:0}
+.ag-imp.desc:hover{border-color:var(--desc)}
+.ag-imp.desc[aria-pressed="true"]{border-color:var(--desc);background:var(--desc)}
 .mun .imp{display:none;width:13px;height:13px;margin-left:8px;border-radius:3px;background:var(--ok);vertical-align:1px}
 .card.impresso .mun .imp{display:inline-block}
+.card.descartado .mun .imp{background:var(--desc)}
 .ag-vazio{padding:28px 16px;text-align:center;color:var(--ink3)}
 .card.destaque{animation:destaque 1.8s ease}
 @keyframes destaque{0%,45%{box-shadow:0 0 0 3px var(--brand),var(--shadow)}100%{box-shadow:var(--shadow)}}
@@ -661,7 +670,7 @@ function render(){
     }).join("");
     var pp=r[7].split("/");
     var fechado=encerrado(r[4]);
-    return '<div class="card'+(fechado?" fechado":horas(r[4])<=24?" urg":"")+(impresso(r)?" impresso":"")+'" style="--n:'+Math.min(ordem,14)+'" data-i="'+D.indexOf(r)+'">'
+    return '<div class="card'+(fechado?" fechado":horas(r[4])<=24?" urg":"")+(impresso(r)?" impresso":"")+(descartado(r)?" descartado":"")+'" style="--n:'+Math.min(ordem,14)+'" data-i="'+D.indexOf(r)+'">'
       +'<div class="chead" onclick="abreCard(this.parentNode)">'
       +'<div class="cmain"><div class="mun">'+esc(r[0])+'<span class="uf">'+r[1]+'</span><span class="imp" aria-hidden="true"></span></div>'
       +'<div class="org">'+esc(r[2])+" · "+esc(r[3])+'</div>'
@@ -688,10 +697,12 @@ function render(){
         +(/^mailto:/i.test(r[20]) ? 'Participar por e-mail' : 'Participar'+portalCurto(r[18], r[20]))+' ↗</button>' : '')
       +'<button type="button" class="btn'+(r[20] ? ' alt' : '')+'" data-fora="https://pncp.gov.br/app/editais/'+r[7]+'" title="Abre em uma nova aba">Abrir no PNCP ↗</button>'
       // Edital que o órgão publicou em ZIP, RAR, DOC, DOCX, ODT ou RTF viaja
-      // convertido para PDF (ver edital-pdf.mjs): o botão entrega o PDF e o
-      // link ao lado continua levando ao arquivo original no PNCP.
-      +(convertido(r) ? '<button class="btn alt" type="button" onclick="baixaEditalPdf(this,'+D.indexOf(r)+')" title="'+esc(descreveConvertido(r))+'">Baixar '+rotuloConvertido(r)+' (PDF)</button>' : '')
-      +'<a class="btn alt" target="_blank" rel="noopener"'+(convertido(r) ? '' : ' data-original="'+D.indexOf(r)+'"')+' href="https://pncp.gov.br/api/pncp/v1/orgaos/'+pp[0]+"/compras/"+pp[1]+"/"+pp[2]+'/arquivos/'+(r[13]||1)+'">'+(convertido(r)?"Arquivo original ("+String(r[14]).toUpperCase()+")":r[14]?"Baixar edital ("+String(r[14]).toUpperCase()+")":"Baixar edital (arquivo oficial)")+'</a>'
+      // convertido para PDF (ver edital-pdf.mjs), e o publicado em arquivos
+      // separados vai junto num PDF só: o botão entrega o PDF e é a única opção
+      // de baixar o edital. O link "Arquivo original" ao lado saiu a pedido do
+      // usuário em 21/10/2026 (o original segue no PNCP, pelo "Abrir no PNCP").
+      +(convertido(r) ? '<button class="btn alt" type="button" onclick="baixaEditalPdf(this,'+D.indexOf(r)+')" title="'+esc(descreveConvertido(r))+'">Baixar '+rotuloConvertido(r)+' (PDF)</button>'
+        : '<a class="btn alt" target="_blank" rel="noopener" data-original="'+D.indexOf(r)+'" href="https://pncp.gov.br/api/pncp/v1/orgaos/'+pp[0]+"/compras/"+pp[1]+"/"+pp[2]+'/arquivos/'+(r[13]||1)+'">'+(r[14]?"Baixar edital ("+String(r[14]).toUpperCase()+")":"Baixar edital (arquivo oficial)")+'</a>')
       +'<button class="btn alt" type="button" onclick="resumo(this,'+D.indexOf(r)+')">Baixar resumo + edital</button>'
       +notaParticipar(r, fechado)
       +'</div></div></div>';
@@ -795,7 +806,9 @@ function separaLotes(card, d){
     });
     return;
   }
-  if(lotes.length < 2) return;
+  // (e o lote so, com mais de um item, tambem ganha o titulo: os 4 bebedouros do
+  // grupo 13 de Pelotas/RS, 21/10/2026 — "tem muitos editais que sao em lote
+  // (grupo) e voce nao esta marcando")
   linhas.sort(function(a, b){ return deLinha(a) - deLinha(b) || (+a.querySelector(".idesc").dataset.n) - (+b.querySelector(".idesc").dataset.n); });
   var ultimo = null;
   linhas.forEach(function(tr){
@@ -1548,6 +1561,11 @@ function descreveConvertido(r){
     var grupos = [], conta = {};
     c.partes.forEach(function(p){ if(!conta[p.parte]){ conta[p.parte] = 0; grupos.push(p.parte); } conta[p.parte]++; });
     // os documentos que o órgão publicou SEPARADOS no PNCP, juntos (16/10/2026)
+    // os que estao so no portal da disputa (arquivos-do-portal.json, 21/10/2026)
+    if(c.portal) return "Os documentos estão na plataforma " + c.portal + " (o PNCP só traz o aviso); este PDF junta os "
+         + c.partes.length + " documentos de lá, nesta ordem: "
+         + grupos.map(function(g){ return g + (conta[g] > 1 ? " (" + conta[g] + ")" : ""); }).join(", ")
+         + " — " + c.paginas + " páginas.";
     if(c.separados) return "O órgão publicou os documentos em " + c.separados + " arquivos separados no PNCP; este PDF junta os "
          + c.partes.length + " documentos, nesta ordem: "
          + grupos.map(function(g){ return g + (conta[g] > 1 ? " (" + conta[g] + ")" : ""); }).join(", ")
@@ -1704,6 +1722,10 @@ var chaveDia=function(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pa
 var CHAVE_IMPRESSOS="radar-impressos", impressosDb=null, IMPRESSOS={};
 try{ IMPRESSOS=JSON.parse(localStorage.getItem(CHAVE_IMPRESSOS)||"{}")||{}; }catch(e){ IMPRESSOS={}; }
 function impresso(r){ return !!IMPRESSOS[r[7]]; }
+// O quadrado vermelho, ao lado do verde (pedido de 21/10/2026: "um quadradinho
+// vermelho, para marcar os editais que foram impressos porem descartados"): a
+// mesma marca, com descartado: true. Um quadrado ou o outro, nunca os dois.
+function descartado(r){ var m=IMPRESSOS[r[7]]; return !!(m && m.descartado); }
 // o caminho "cnpj/ano/seq" nao serve de id de documento (a barra separa colecao)
 function idImpresso(p){ return String(p).replace(/[^0-9A-Za-z]+/g,"-"); }
 // Marca de edital que ja saiu da lista e tem mais de 90 dias nao serve a ninguem.
@@ -1711,7 +1733,7 @@ function velhaDemais(p, m){ return !D.some(function(r){ return r[7]===p; }) && (
 function atualizaImpressos(){
   if(vista==="agenda") return render();
   document.querySelectorAll(".card[data-i]").forEach(function(c){
-    var r=D[+c.dataset.i]; if(r) c.classList.toggle("impresso", impresso(r));
+    var r=D[+c.dataset.i]; if(r){ c.classList.toggle("impresso", impresso(r)); c.classList.toggle("descartado", descartado(r)); }
   });
 }
 // AS MARCAS DO SITE, PARA TODOS (pedido de 13/10/2026: "sempre que for marcado
@@ -1741,6 +1763,7 @@ function gravaNuvem(p, m){
   if(m){
     var campos={ path:{ stringValue:p }, em:{ stringValue:m.em } };
     if(m.quem) campos.quem={ stringValue:String(m.quem).slice(0,39) };
+    if(m.descartado) campos.descartado={ booleanValue:true };
     marcas[id]={ mapValue:{ fields:campos } };
   }
   // a chave na mascara e na marca: com a marca, grava; sem ela, apaga
@@ -1765,6 +1788,7 @@ function leNuvem(){
       Object.keys(f).forEach(function(id){
         var x=f[id].mapValue && f[id].mapValue.fields || {}, p=x.path && x.path.stringValue;
         if(p) m[p]={ em:x.em && x.em.stringValue || "", quem:x.quem && x.quem.stringValue || "" };
+        if(p && x.descartado && x.descartado.booleanValue) m[p].descartado=true;
       });
       // a primeira leitura deste aparelho manda para a nuvem as marcas que ele
       // tinha so no navegador (antes de 13/10/2026 cada um marcava para si)
@@ -1797,11 +1821,12 @@ function avisoMarca(txt){
 }
 function quemMarcou(){ return ACESSO && ACESSO.nome || ""; }
 // "Impresso · marcado por Volney em 13/10"
-function textoDaMarca(r){
+// (desc: o texto do quadrado vermelho)
+function textoDaMarca(r, desc){
   var m=IMPRESSOS[r[7]];
-  if(!m) return "Marcar como impresso";
+  if(!m || !!m.descartado!==!!desc) return desc ? "Marcar como impresso, mas descartado" : "Marcar como impresso";
   var d=m.em ? new Date(m.em) : null;
-  return "Impresso"+(m.quem?" · marcado por "+m.quem:"")+(d&&!isNaN(d)?" em "+pad2(d.getDate())+"/"+pad2(d.getMonth()+1):"")+" · clique para desmarcar";
+  return (desc?"Impresso, mas descartado":"Impresso")+(m.quem?" · marcado por "+m.quem:"")+(d&&!isNaN(d)?" em "+pad2(d.getDate())+"/"+pad2(d.getMonth()+1):"")+" · clique para desmarcar";
 }
 if(nuvem){
   leNuvem();
@@ -1810,9 +1835,11 @@ if(nuvem){
   setInterval(function(){ voltas++; if(document.visibilityState==="visible" || voltas%6===0) leNuvem(); }, 30000);
   document.addEventListener("visibilitychange", function(){ if(document.visibilityState==="visible") leNuvem(); });
 }
-function marcaImpresso(r, sim){
+// (desc: a marca vermelha, de impresso mas descartado)
+function marcaImpresso(r, sim, desc){
   var p=r[7], antes=IMPRESSOS[p];
-  if(sim) IMPRESSOS[p]={ em:new Date().toISOString(), quem:quemMarcou() }; else delete IMPRESSOS[p];
+  if(sim){ IMPRESSOS[p]={ em:new Date().toISOString(), quem:quemMarcou() }; if(desc) IMPRESSOS[p].descartado=true; }
+  else delete IMPRESSOS[p];
   atualizaImpressos();
   if(nuvem){
     guardaCopiaLocal();
@@ -1830,7 +1857,7 @@ function marcaImpresso(r, sim){
   }
   if(impressosDb){
     var ref=impressosDb.doc(idImpresso(p));
-    (sim ? ref.set({ path:p, em:IMPRESSOS[p].em }) : ref.delete()).catch(function(e){
+    (sim ? ref.set(desc ? { path:p, em:IMPRESSOS[p].em, descartado:true } : { path:p, em:IMPRESSOS[p].em }) : ref.delete()).catch(function(e){
       // nao gravou: volta ao que era (o banco manda o estado certo de novo)
       if(antes) IMPRESSOS[p]=antes; else delete IMPRESSOS[p];
       atualizaImpressos();
@@ -1852,6 +1879,7 @@ if(window.claude && typeof window.claude.use==="function"){
         var x=d.data(); if(!x || !x.path) return;
         if(!limpou && pronto && velhaDemais(x.path, x)){ col.doc(d.id).delete().catch(function(){}); return; }
         m[x.path]={ em:x.em };
+        if(x.descartado) m[x.path].descartado=true;
       });
       if(pronto) limpou=true;
       IMPRESSOS=m; atualizaImpressos();
@@ -1896,7 +1924,7 @@ function renderAgenda(rows){
     +'<div class="ag-nav"><button type="button" data-nav="-1" aria-label="Mês anterior">‹ anterior</button>'
     +'<button type="button" data-nav="0">hoje</button>'
     +'<button type="button" data-nav="1" aria-label="Próximo mês">próximo ›</button></div></div>'
-    +'<div class="ag-nota"><span>Cada edital aparece no <strong>dia da disputa</strong>, com a hora em que as propostas fecham. Clique num edital para abri-lo na lista: lá ficam <strong>Baixar resumo + edital</strong> e <strong>Baixar edital</strong>, para imprimir.</span>'
+    +'<div class="ag-nota"><span>Cada edital aparece no <strong>dia da disputa</strong>, com a hora em que as propostas fecham. Clique num edital para abri-lo na lista: lá ficam <strong>Baixar resumo + edital</strong> e <strong>Baixar edital</strong>, para imprimir. Os quadrados ao lado marcam o edital <strong>impresso</strong> (verde) e o <strong>impresso, mas descartado</strong> (vermelho).</span>'
     +'<button type="button" data-lista="1">Ver a lista de editais</button></div>'
     +'<div class="ag-grade">'+SEMANA.map(function(s){ return '<div class="ag-sem">'+s+'</div>'; }).join("");
   var cursor=new Date(agMes.a, agMes.m, 1-ini.getDay());
@@ -1909,8 +1937,9 @@ function renderAgenda(rows){
     evs.forEach(function(r){
       var fech=encerrado(r[4]), urg=!fech && horas(r[4])<=24;
       var hm=String(r[4]).slice(11,16);
-      var imp=impresso(r);
-      h+='<div class="ag-item"><button type="button" class="ag-imp" data-imp="'+D.indexOf(r)+'" aria-pressed="'+(imp?'true':'false')+'" aria-label="'+(imp?'Desmarcar':'Marcar')+' '+esc(r[0])+'" title="'+esc(textoDaMarca(r))+'"></button>'
+      var des=descartado(r), imp=impresso(r) && !des;
+      h+='<div class="ag-item"><span class="ag-marcas"><button type="button" class="ag-imp" data-imp="'+D.indexOf(r)+'" aria-pressed="'+(imp?'true':'false')+'" aria-label="'+(imp?'Desmarcar':'Marcar')+' '+esc(r[0])+' como impresso" title="'+esc(textoDaMarca(r))+'"></button>'
+        +'<button type="button" class="ag-imp desc" data-desc="'+D.indexOf(r)+'" aria-pressed="'+(des?'true':'false')+'" aria-label="'+(des?'Desmarcar':'Marcar')+' '+esc(r[0])+' como impresso, mas descartado" title="'+esc(textoDaMarca(r, true))+'"></button></span>'
         +'<button type="button" class="ag-ev'+(fech?' fech':urg?' urg':'')+'" data-i="'+D.indexOf(r)+'" title="'+esc(r[2]+' · '+r[3])+'">'
         +'<b>'+(hm&&hm!=="00:00"?hm:"—")+'</b> '+esc(r[0])+'/'+r[1]+' <i>· '+(r[6]?brl(r[6]):'sigiloso')+(fech?' · encerrado':'')+(dataAlterada(r)?' · data alterada (era '+esc(dataAnteriorTxt(r))+')':'')+(ehPresencial(r)?' · <b>presencial</b>':'')+(situacaoAlerta(r)?' · '+esc(String(r[17]).toLowerCase()):'')+'</i></button></div>';
     });
@@ -1940,7 +1969,9 @@ document.getElementById("vLista").addEventListener("click",function(){ mostraVis
 document.getElementById("vAgenda").addEventListener("click",function(){ mostraVista("agenda"); });
 document.getElementById("painelAgenda").addEventListener("click",function(ev){
   var alvo=ev.target.closest("button"); if(!alvo) return;
-  if(alvo.dataset.imp!==undefined){ var ri=D[+alvo.dataset.imp]; if(ri) marcaImpresso(ri, !impresso(ri)); return; }
+  // o verde e o vermelho: clicar no que esta marcado desmarca; no outro, troca
+  if(alvo.dataset.imp!==undefined){ var ri=D[+alvo.dataset.imp]; if(ri) marcaImpresso(ri, !impresso(ri) || descartado(ri)); return; }
+  if(alvo.dataset.desc!==undefined){ var rd=D[+alvo.dataset.desc]; if(rd) marcaImpresso(rd, !descartado(rd), true); return; }
   if(alvo.dataset.i!==undefined) return irParaEdital(+alvo.dataset.i);
   if(alvo.dataset.lista) { mostraVista("lista"); window.scrollTo({top: document.getElementById("list").getBoundingClientRect().top + window.scrollY - 120}); return; }
   if(alvo.dataset.nav!==undefined){

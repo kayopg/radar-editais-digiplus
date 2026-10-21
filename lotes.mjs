@@ -41,8 +41,13 @@ export function vendaPorLote(texto) {
   const declarado = new Set([...t.matchAll(DECLARA)].filter(m => m[1] === 'item' || !CITA_A_LEI(m)).map(m => (m[1] === 'item' ? 'item' : 'lote')));
   if (declarado.has('lote')) return true;
   if (declarado.has('item')) return false;
-  return POR_LOTE.test(t);
+  return POR_LOTE.test(t) || EM_GRUPOS.test(t);
 }
+// E o termo que so justifica os grupos, sem a frase do julgamento: "a analise
+// realizada indicou que a divisao dos itens em grupos constitui a alternativa
+// mais adequada para a administracao" (IFSul, Pelotas/RS, edital 144/2026,
+// 21/10/2026). Com "nao" perto, e a justificativa do contrario.
+const EM_GRUPOS = /(?<!\bnao\b[^.;]{0,60})(?:divisao|organizacao|agrupamento|reuniao) dos itens em (?:grupos|lotes)(?![^.;]{0,60}\bnao\b)/;
 
 const valor = s => +s.replace(/\./g, '').replace(',', '.');
 
@@ -61,6 +66,11 @@ export function totaisPorLote(texto) {
   const re = /(?:total|global)\b[^0-9.;]{0,45}?\b(?:lote|grupo)\s*(?:n[º°o.]*\s*)?0*(\d{1,3})\b[^0-9]{0,30}?((?:\d{1,3}(?:\.\d{3})+|\d{1,6}),\d{2})(?!\d)/gi;
   const t = {};
   for (const m of String(texto).matchAll(re)) (t[+m[1]] ||= new Set()).add(valor(m[2]));
+  // e a lista "Valor total estimado da Contratacao: Lote 01 - R$ 21.840,40.
+  // Lote 02 - R$ 17.357,20. Lote 03 - R$ 3.789,14." (Santos/SP, edital
+  // 13038/2026, 21/10/2026), em que so o primeiro vem depois de "total"
+  for (const m of String(texto).matchAll(/\blote\s*0*(\d{1,3})\s*[-–:]\s*R\$\s*((?:\d{1,3}(?:\.\d{3})+|\d{1,6}),\d{2})(?!\d)/gi))
+    (t[+m[1]] ||= new Set()).add(valor(m[2]));
   if (Object.keys(t).length) return t;
   const cabs = [...String(texto).matchAll(CABECALHO_LOTE)].map(m => ({ i: m.index, l: +m[1] }));
   if (cabs.length < 2) return t;
@@ -69,6 +79,11 @@ export function totaisPorLote(texto) {
     for (const x of cabs) { if (x.i < m.index) c = x; else break; }
     if (c && m.index - c.i < 20000) (t[c.l] ||= new Set()).add(valor(m[1]));
   }
+  // So um lote com total, num texto com cabecalho de varios: e o total geral
+  // depois do ultimo lote, e nao o dele. Em Mondai/SC (pregao 65/2026, 37 lotes
+  // de um item cada) o "TOTAL 4.267.942,80" do fim caia no lote 35 e jogava os
+  // 37 itens nele (21/10/2026).
+  if (Object.keys(t).length === 1 && new Set(cabs.map(x => x.l)).size >= 2) return {};
   return t;
 }
 
@@ -288,4 +303,202 @@ export function lotesPelosTotais(itens, totais) {
   const res = new Map();
   for (const [a, b, l] of solucoes[0]) for (let k = a; k <= b; k++) res.set(itens[k].n, l);
   return res;
+}
+
+// ---------------------------------------------------------------------------
+// 21/10/2026 (usuario: "tem muitos editais que sao em lote (grupo) e voce nao
+// esta marcando, esta ficando apenas os produtos fora de ordem"). Cinco formas
+// novas, todas de editais da lista do dia. Cada uma so responde quando TODOS os
+// itens do PNCP acham o seu lote.
+
+// O LOTE UNICO: "MENOR PRECO POR GRUPO DE ITENS (LOTE UNICO)" (Telebras,
+// Brasilia/DF, edital 42), "A licitacao sera realizada em lote unico, formados
+// por 11 (ONZE) itens" (Santa Cruz do Sul/RS, edital 131).
+export function lotesLoteUnico(itens, texto) {
+  const t = normL(texto);
+  if (!/\blote unico\b/.test(t) || /nao (?:sera|havera)[^.;]{0,30}lote unico/.test(t)) return null;
+  return new Map(itens.map(x => [x.n, 1]));
+}
+
+// A TABELA COM A COLUNA DO LOTE NA FRENTE: "LOTE ITEM DESCRICAO UNIDADE QTD.
+// VALOR MEDIO TOTAL 1 1 Fritadeira eletrica sem oleo..." (Sao Carlos/SP, SL
+// 72), "LOTE ITEM CATMAT / CATSER COD.GRP OBJETO ... 1 1 4247 64575 Calha..."
+// (Santa Cruz do Sul/RS). O item vem na ordem do PNCP e o lote nao volta atras.
+export function lotesPelaTabelaLoteItem(itens, texto) {
+  const t = String(texto);
+  const nums = new Set(itens.map(x => x.n));
+  for (const cab of t.matchAll(/\bLOTE\s+ITEM\b/g)) {
+    const trecho = t.slice(cab.index, cab.index + 120000);
+    const res = new Map();
+    let ultimoItem = 0, ultimoLote = 0;
+    for (const m of trecho.matchAll(/(?:^|\s)(\d{1,3})\s+(\d{1,3})\s+(?:\d{3,7}\s+){0,2}(?=[A-ZÀ-Ú][A-Za-zÀ-ú])/g)) {
+      const l = +m[1], n = +m[2];
+      if (!nums.has(n) || res.has(n)) continue;
+      if (n <= ultimoItem || l < ultimoLote || l > ultimoLote + 1 && ultimoLote) continue;
+      res.set(n, l); ultimoItem = n; ultimoLote = l;
+    }
+    if (res.size === itens.length) return res;
+  }
+  return null;
+}
+
+// O LOTE NO TEXTO DO PROPRIO ITEM: "...Item 2 do TR – Lote 01. Especificacao
+// completa conforme Termo de Referencia" e "FORNO MICRO-ONDAS [LOTE 02]"
+// (Embrapa, Brasilia/DF, edital 45). itens: [{ n, rot, x }] (x[6] e o descritivo).
+export function lotesPeloTextoDoItem(itens) {
+  const res = new Map();
+  for (const it of itens) {
+    const s = String((it.x && it.x[6]) || '') + ' ' + String(it.rot || '');
+    const m = /\[\s*LOTE\s*0*(\d{1,3})\s*\]|Item\s+\d{1,3}\s+do\s+TR\s*[–-]\s*Lote\s*0*(\d{1,3})\b/i.exec(s);
+    if (!m) return null;
+    res.set(it.n, +(m[1] || m[2]));
+  }
+  return new Set(res.values()).size >= 2 ? res : null;
+}
+
+// AS FAIXAS DE ITENS NO CABECALHO DO GRUPO: "GRUPO 1 – Material eletrico e
+// eletronico – ND 3.3.90.30.26 – itens 1 a 39 e 308 a 310 ... GRUPO 2 – ... –
+// itens 40 a 58" (Embrapa, Brasilia/DF, edital 10). O item que nenhuma faixa
+// cobre (o grupo de um item so, que o texto lido nao trouxe) derruba a forma.
+export function lotesPorFaixaDeItens(itens, texto) {
+  const t = String(texto);
+  const res = new Map();
+  for (const m of t.matchAll(/\b(?:GRUPO|LOTE)\s*0*(\d{1,3})\s*[–-][^]{0,220}?[–-]\s*itens?\s+((?:\d{1,3}(?:\s*(?:a|ao|at[eé])\s*\d{1,3})?(?:\s*(?:,|e)\s*)?)+)/g)) {
+    const l = +m[1];
+    for (const f of m[2].matchAll(/(\d{1,3})(?:\s*(?:a|ao|at[eé])\s*(\d{1,3}))?/g)) {
+      const a = +f[1], b = f[2] ? +f[2] : a;
+      for (let k = a; k <= b; k++) if (!res.has(k)) res.set(k, l);
+    }
+  }
+  const out = new Map();
+  for (const x of itens) { if (!res.has(x.n)) return null; out.set(x.n, res.get(x.n)); }
+  return new Set(out.values()).size >= 2 ? out : null;
+}
+
+// AS SECOES DO GRUPO COM O PRIMEIRO ITEM DELE: "GRUPO 2 - MESAS E ESTACOES
+// OPERACIONAIS ADMINISTRATIVAS ITEM DESCRICAO 6 MESA DE TRABALHO..." (Pelotas/RS,
+// edital 144): o item segue o numero do PNCP, e o grupo vai do primeiro item
+// dele ate o primeiro do seguinte. O texto lido pode nao trazer o grupo 1: se o
+// 2 comeca depois do item 1, o 1 e o que vem antes. Os grupos tem de vir em
+// sequencia, sem buraco, e o primeiro item de cada um tem de crescer. Os
+// "ITENS NAO AGRUPADOS E ACESSORIOS ... ITEM DESCRICAO 49" do fim (la, do 49 ao
+// 52) nao sao do ultimo grupo: ficam com o lote 0, cada um por si.
+export function lotesPorSecaoComItem(itens, texto) {
+  const t = String(texto);
+  const primeiro = new Map();
+  for (const m of t.matchAll(/\b(?:GRUPO|LOTE)\s*0*(\d{1,3})\s*[-–—:]\s*[^]{3,160}?\bITEM\s+DESCRI[ÇC][ÃA]O\s+(\d{1,3})\s/g)) {
+    const g = +m[1], n = +m[2];
+    if (!primeiro.has(g)) primeiro.set(g, n);
+  }
+  if (primeiro.size < 2) return null;
+  const gs = [...primeiro.keys()].sort((a, b) => a - b);
+  if (gs[0] === 2 && primeiro.get(2) > 1) { primeiro.set(1, 1); gs.unshift(1); }
+  if (gs[0] !== 1) return null;
+  for (let k = 1; k < gs.length; k++) if (gs[k] !== gs[k - 1] + 1 || primeiro.get(gs[k]) <= primeiro.get(gs[k - 1])) return null;
+  const soltos = /\bITENS\s+N[ÃA]O\s+AGRUPADOS\b[^]{0,2000}?\bITEM\s+DESCRI[ÇC][ÃA]O\s+(\d{1,3})\s/i.exec(t);
+  const soltoDe = soltos && +soltos[1] > primeiro.get(gs[gs.length - 1]) ? +soltos[1] : Infinity;
+  const res = new Map();
+  for (const x of itens) {
+    if (x.n >= soltoDe) { res.set(x.n, 0); continue; }
+    let g = null;
+    for (const k of gs) if (primeiro.get(k) <= x.n) g = k;
+    if (g === null) return null;
+    res.set(x.n, g);
+  }
+  return res;
+}
+
+// A LINHA "LOTE N ITEM NOME", com o item recomecando em 1 a cada lote: "LOTE 1
+// 1 ARADO ALEIRADOR DE DISCO, com uma estrutura reforcada... LOTE 2 1 ARADO
+// SUBSOLADOR..." (Mondai/SC, pregao 65/2026, 35 lotes). O lote com mais de um
+// item segue sem repetir o lote: "LOTE 34 1 GUINDASTE (CANIVETE)... 2 CACAMBA
+// BASCULANTE... 3 GARRA FLORESTAL", e o numero da folha pode cair no meio
+// ("LOTE 28 49 1 TRITURADOR"). Cada item do PNCP, na ordem, acha a sua linha
+// pelo comeco do nome, depois da do item anterior: "lote L 1 nome" abre o lote
+// seguinte, "k nome" (k = o anterior + 1) continua o mesmo. E a linha sem o
+// item, "LOTE 1 CAPOTRASTE BRACADEIRA UNID 21.0000 R$ 27,30 ... LOTE 2 PALHETA"
+// (Rio Branco do Ivai/PR, edital 36/2026), tambem abre o lote.
+// itens: [{ n, rot }] na ordem do PNCP. Devolve Map(n -> lote) ou null.
+export function lotesPelaLinhaLoteNome(itens, texto) {
+  const t = normL(texto);
+  if ((t.match(/\blote\s*0*\d{1,3}\s+(?:(?:\d{1,3}\s+)?0*1\s+)?[a-z]/g) || []).length < 2) return null;
+  const res = new Map();
+  let pos = 0, lote = 0, k = 0;
+  for (const x of itens) {
+    const inicio = normL(x.rot).split(' ').slice(0, 3).join(' ');
+    if (inicio.length < 6) return null;
+    let achou = false;
+    for (let i = t.indexOf(inicio, pos); i >= 0; i = t.indexOf(inicio, i + 1)) {
+      const antes = t.slice(Math.max(0, i - 30), i);
+      const novo = /\blote\s*0*(\d{1,3})\s+(?:(?:\d{1,3}\s+)?0*1\s+)?$/.exec(antes);
+      if (novo && +novo[1] > lote) { lote = +novo[1]; k = 1; }
+      else if (lote && new RegExp('(?:^|\\s)0*' + (k + 1) + '\\s+$').test(antes)) k++;
+      else continue;
+      res.set(x.n, lote); pos = i + inicio.length; achou = true;
+      break;
+    }
+    if (!achou) return null;
+  }
+  return new Set(res.values()).size >= 2 ? res : null;
+}
+
+// A TABELA "LOTE ITEM DESCRICAO ... TOTAL POR LOTE" com a celula do lote so na
+// primeira linha dele: "1 1 CALHA FLUORESCENTE SOBREPOR ... 2 CALHA ... 4
+// LUMINARIA ... 2 5 CANALETA PVC ... 6 CANALETA PVC VENTILADO ... 3 7 CENTRO
+// DISTRIBUICAO" (Cocal do Sul/SC, edital 54/2026, 214 itens). Cada item do PNCP,
+// na ordem, acha a sua linha pelo numero seguido do comeco do nome — so as tres
+// primeiras letras, porque o PNCP abrevia ("INTER. EMB." e "9 39 INTERUPTOR
+// EMBUTIR" na tabela); o numero logo antes, quando e o lote seguinte, abre o lote.
+// itens: [{ n, rot }] na ordem do PNCP. Devolve Map(n -> lote) ou null.
+export function lotesPelaTabelaLoteItemNome(itens, texto) {
+  const t = normL(texto);
+  for (const cab of t.matchAll(/\blote item (?:descricao|especificacao|objeto)/g)) {
+    const res = new Map();
+    let pos = cab.index, lote = 0;
+    for (const x of itens) {
+      const letras = normL(x.rot).split(' ')[0].replace(/[^a-z]/g, '').slice(0, 3);
+      if (letras.length < 2) break;
+      const re = new RegExp('(?:\\s(\\d{1,3}))?\\s0*' + x.n + '\\s+' + letras, 'g');
+      re.lastIndex = pos;
+      let achou = false;
+      for (let m; (m = re.exec(t)) && m.index - pos < 60000;) {
+        const l = m[1] ? +m[1] : 0;
+        if (l && l === lote + 1) lote = l;
+        else if (!lote) continue;
+        res.set(x.n, lote); pos = m.index + m[0].length; achou = true;
+        break;
+      }
+      if (!achou) break;
+    }
+    if (res.size === itens.length && new Set(res.values()).size >= 2) return res;
+  }
+  return null;
+}
+
+// UM ITEM POR LOTE, o lote com o numero do item: "LOTE 1 CAPOTRASTE BRACADEIRA
+// ... LOTE 2 PALHETA 1.2MM ... LOTE 50 AR CONDICIONADO 12000BTUS" (Rio Branco do
+// Ivai/PR, edital 36/2026, 51 lotes). O nome do PNCP nem sempre e o da tabela
+// ("ESTANTE DE PARTITURA" la, "ESTANTE EM PARTITURA" aqui), entao vale quando a
+// tabela traz "LOTE 1", "LOTE 2", ... ate o ultimo item, em ordem, e o nome
+// confere em pelo menos 60% deles.
+// itens: [{ n, rot }] na ordem do PNCP, numerados de 1 a N. Devolve Map(n -> n) ou null.
+export function lotesUmItemPorLote(itens, texto) {
+  if (itens.length < 2 || itens.some((x, k) => x.n !== k + 1)) return null;
+  const t = normL(texto);
+  const comeco = [];
+  let pos = 0;
+  for (const x of itens) {
+    const re = new RegExp('\\blote\\s*0*' + x.n + '\\s+(?=[a-z])', 'g');
+    re.lastIndex = pos;
+    const m = re.exec(t);
+    if (!m) return null;
+    pos = m.index + m[0].length;
+    comeco.push(pos);
+  }
+  let bate = 0;
+  itens.forEach((x, k) => {
+    const nome = normL(x.rot).split(' ').slice(0, 2).join(' ');
+    if (nome.length >= 4 && t.startsWith(nome, comeco[k])) bate++;
+  });
+  return bate >= Math.max(2, Math.ceil(0.6 * itens.length)) ? new Map(itens.map(x => [x.n, x.n])) : null;
 }
