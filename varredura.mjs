@@ -807,7 +807,11 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // Condicionado, Referência:T6861v8wg ... Tipo Equipamento:Honeywell, Split" (Embrapa,
 // Brasilia/DF, edital 10, item 56, 21/10/2026) entrava pelo "Split" do fim; o
 // "termostato aplicacao" acima nao pegava por causa da virgula. So na frente.
-"termostato"];
+"termostato",
+// e a passadeira a vapor (usuario, 22/10/2026: "passadeira a vapor nao cotamos"; a
+// "Ferro Passar Roupa, Tipo:Passadeira A Vapor" da Embrapa, Brasilia/DF, edital 45,
+// lote 05, fica so em cinza no lote)
+"passadeira a vapor","passadeira vertical","vaporizador de roupa","vaporizador vertical"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
