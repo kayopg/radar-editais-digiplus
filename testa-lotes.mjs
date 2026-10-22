@@ -86,7 +86,8 @@ const CASOS = [
   ['tabela "LOTE ITEM" com o lote so na primeira linha e o nome abreviado (Cocal do Sul)', lotesPelaTabelaLoteItemNome([{ n: 1, rot: 'CALHA FLUORESCENTE 1 X 20W' }, { n: 2, rot: 'CALHA FLUOR. 40W' }, { n: 3, rot: 'CANALETA PVC' }, { n: 4, rot: 'INTER. EMB.' }],
     'LOTE ITEM DESCRICAO QTD UN VALOR 1 1 CALHA FLUORESCENTE SOBREPOR 50 PC 23,60 1.180,00 R$ 2.637,00 2 CALHA FLUORESCENTE 1 X 40W 50 PC 29,14 1.457,00 2 3 CANALETA PVC COM TAMPA 1500 BR 16,83 25.245,00 R$ 25.939,00 4 INTERUPTOR EMBUTIR 50 UN 13,88 694,00'), '1:1 2:1 3:2 4:2'],
   ['"divisao dos itens em grupos constitui a alternativa": e por grupo (Pelotas)', vendaPorLote('a analise realizada indicou que a divisao dos itens em grupos constitui a alternativa mais adequada') ? '1:1' : null, '1:1'],
-  ['"nao havera agrupamento dos itens em lotes": nao e', vendaPorLote('1.3. do agrupamento de itens em lotes nao havera agrupamento dos itens em lotes, sendo adotado') ? 'sim' : null, null],
+  ['"por item" declarado mais vezes que um "por lote" de outro processo colado no PDF (Palmas): nao e', vendaPorLote('tipo de julgamento: menor preco por item. criterio de julgamento: menor preco por item. politica publica compra mercedes tipo: menor preco por lote objeto') ? 'sim' : null, null],
+  ['"nao havera agrupamento dos itens em lotes": nao e',vendaPorLote('1.3. do agrupamento de itens em lotes nao havera agrupamento dos itens em lotes, sendo adotado') ? 'sim' : null, null],
 ];
 
 let erros = 0;

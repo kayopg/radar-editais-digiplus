@@ -4430,9 +4430,51 @@ for (const e of dados.editais) {
       // (com os codigos e a folha antes, "431265 29464 | 38 Item Descricao
       // Catmat Codigo IPM Und Qtd R$ Unit R$ Total", Mercedes/PR)
       .replace(/(?:(?:\s+\d{4,})*\s+\|\s+\d{1,3})?\s(?:Item|Ordem)\s+(?:Produto\s+-\s+)?Descri[çc][ãa]o[\s\p{L}.\-–$]{5,160}?(?:Total|m[áa]xima)(?=\s|$)/u, ' ')
+      // e o resto da planilha de proposta (22/10/2026): o codigo do sistema
+      // "*CÓD INTERNO BETHA:" (Varginha/MG), "und 01 VALOR TOTAL" (Campo Largo/PR),
+      // "UND 10 Emenda Municipal 1342/2026 ANEXO II DO" (Belo Horizonte/MG, edital
+      // 109), a quantidade por extenso no meio, "144 (cento e quarenta e quatro) R$
+      // R$ 83", e o "TOTAL: R$ Havendo divergência no descritivo..." com os dados
+      // bancarios no fim (Cajamar/SP, edital 75)
+      .replace(/\s*\*?\s*C[óÓoO][dD]\.?\s+interno\s+Betha:?[\s\d.\-/]*$/i, '')
+      .replace(/\s+(?:und|UND|Und|UN|Un|unid\.?|UNID\.?)\s+\d{1,5}\s+VALOR\s+TOTAL\s*$/i, '')
+      .replace(/\s+(?:UND|UN|und)\s+\d{1,5}\s+Emenda\s+Municipal\b.*$/s, '')
+      .replace(/\s\d{1,5}\s+\((?:[a-zà-ú]+\s?){1,8}\)\s+R\$\s+R\$(?:\s+\d{1,3}(?=\s))?/g, ' ')
+      .replace(/\s+(?:TOTAL:\s*R\$\s*)?(?:Havendo diverg[êe]ncia no descritivo|DADOS BANC[ÁA]RIOS PARA PAGAMENTO)[^]*$/i, '')
       // e a letra que abre a frase seguinte, colada no ponto: "...ficha tecnica
       // oficial do fabricante.O" (Januaria/MG, "O licitante vencedor devera...")
       .replace(/([.;])\s?[A-ZÀ-Ú]$/, '$1');
+    // O item seguinte inteiro colado no fim (22/10/2026): as colunas da linha e o
+    // numero do proximo item, "... Meses. Unidade 327808 1 4 Micro-ondas Micro-ondas
+    // com Capacidade..." (Sao Paulo/SP, contratacao 158), "... Nacional. 308879
+    // unidade 06 11 Tanquinho - ..." (Araraquara/SP, edital 7), "... 15 VELOCIDADES
+    // 6. 04 UNID FRIGOBAR, ..." (Sao Jose da Bela Vista/SP, edital 10); e, sem
+    // numero, o nome do proximo item depois do ponto, com outra palavra dele logo
+    // em seguida: "... Selo INMETRO. Televisor Smart TV Tecnologia do painel..."
+    // (MJSP, Brasilia/DF, contratacao 48, no climatizador).
+    {
+      const seg = +it[0] + 1, prox = v.itens.find(y => +y[0] === seg);
+      const UNI = '(?:Unidade|unidade|UNIDADE|UNID|Unid|UND|Und|und|UN|Un)\\.?';
+      const m = new RegExp('\\s(?:\\d{5,7}\\s+)?' + UNI + '\\s+(?:\\d{5,7}\\s+)?\\d{1,5}\\s+0*' + seg + '\\.?\\s+(?=[A-ZÀ-Ú])|\\s0*' + seg + '\\.\\s+\\d{1,5}\\s+' + UNI + '\\s+(?=[A-ZÀ-Ú])').exec(it[6]);
+      if (m && m.index >= 60 && it[6].length - m.index >= 40) it[6] = it[6].slice(0, m.index).trim();
+      else if (prox) {
+        const palavras = normIgual(String(prox[1])).split(/[^a-z0-9]+/).filter(Boolean);
+        const atual = new Set(normIgual(String(it[1])).split(/[^a-z0-9]+/));
+        // (a palavra que confirma tem de dizer algo: "Suporte a tecnologias de
+        // audio" e do televisor, nao o item "Suporte De Videocassete / Televisao
+        // ... para tv de 32 a 75" seguinte, Sao Paulo/SP, contratacao 158, item 6)
+        const GENERICA = new Set(['tipo', 'para', 'material', 'modelo', 'marca', 'capacidade', 'voltagem', 'tensao', 'minimo', 'minima', 'sendo', 'deve', 'devera', 'quando', 'como', 'mais']);
+        const confirma = w => w && w.length >= 4 && !GENERICA.has(normIgual(w)) && palavras.slice(1).includes(normIgual(w));
+        if (palavras[0] && palavras[0].length >= 5 && !atual.has(palavras[0])) {
+          for (const mm of it[6].matchAll(/[.;]\s+([A-ZÀ-Ú][\p{L}]+)\s+([\p{L}\d-]+)(?:\s+([\p{L}\d-]+))?/gu)) {
+            if (normIgual(mm[1]) === palavras[0] && (confirma(mm[2]) || confirma(mm[3])) && mm.index >= 60 && it[6].length - mm.index >= 150) {
+              it[6] = it[6].slice(0, mm.index + 1).trim();
+              break;
+            }
+          }
+        }
+      }
+    }
     // O preco unitario e o total da linha no meio da celula, com o numero da
     // folha depois: "...drenagem por sistema manual ou 484,84 R$ 2.424,20 44
     // automatico" (Arvorezinha/RS, item 55). So quando o primeiro valor e o

@@ -38,9 +38,14 @@ export function vendaPorLote(texto) {
   const t = String(texto);
   // (a trava da lei citada so vale para "por lote/grupo": a declaracao "por item"
   // logo depois de "nao se justifica a adjudicacao por grupo" continua valendo)
-  const declarado = new Set([...t.matchAll(DECLARA)].filter(m => m[1] === 'item' || !CITA_A_LEI(m)).map(m => (m[1] === 'item' ? 'item' : 'lote')));
-  if (declarado.has('lote')) return true;
-  if (declarado.has('item')) return false;
+  const declarado = [...t.matchAll(DECLARA)].filter(m => m[1] === 'item' || !CITA_A_LEI(m)).map(m => (m[1] === 'item' ? 'item' : 'lote'));
+  const nLote = declarado.filter(d => d === 'lote').length, nItem = declarado.length - nLote;
+  // Declarando os dois, vale o que o edital diz mais: Palmas/PR (edital 32/2026,
+  // 22/10/2026) diz "menor preco por item" cinco vezes, e o PDF traz colado um
+  // trecho de outro processo ("politica publica Compra Mercedes ... tipo: menor
+  // preco por lote") que fazia o card mostrar o edital inteiro em cinza.
+  if (nLote && nLote >= nItem) return true;
+  if (nItem) return false;
   return POR_LOTE.test(t) || EM_GRUPOS.test(t);
 }
 // E o termo que so justifica os grupos, sem a frase do julgamento: "a analise

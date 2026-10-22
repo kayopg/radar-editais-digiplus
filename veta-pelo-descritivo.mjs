@@ -106,6 +106,16 @@ const VETO = {
 // CAPACIDADE PARA 24 GNS 1/1" no edital.
 // E o desumidificador (usuario, 15/10/2026: "desumidificador de ar tambem nao cotamos").
 const ABRE_FORA_DO_RADAR = /^[^a-z]*(?:ventilador\s*\/\s*|ventilador\s+(?=exaustor\s+industrial))?(exaustor|depurador|pass[\s-]?(?:through|thru)|desumidificador(?:es)?|chapa\s+(?:bifeteira|para\s+grelhar|de\s+grelhar|lisa|a\s+gas|industrial|de\s+coccao|assadeira)|chapeira|char\s?broiler)\b/;
+// O ar-condicionado que exige Wi-Fi (usuario, 22/10/2026: "neste edital, pede WI-FI
+// em alguns ar condicionados" — e escolheu tirar do radar): "SMART COM CONEXÃO
+// WI-FI" (UTFPR, Cornelio Procopio/PR, edital 198), "controle via wi-fi" (Relvado/RS),
+// "conexão wifi, função SmartThings" (Davinopolis/GO). O "Wi-Fi opcional", "com ou
+// sem Wi-Fi" e o "não é obrigatório" ficam. Em edital por lote, o aparelho fica em
+// cinza no lote.
+const AR_CONDICIONADO = /ar[- ]?condicionad|arcondicionad|condicionador(?:es)? de ar|\bsplit\b|piso[ /-]?teto|cassete|hi[- ]?wall/;
+const WIFI = /wi[\s-]?fi\b|\bwifi\b/;
+const WIFI_OPCIONAL = /(?:opcional|opcionalmente|desejavel|preferencialmente|nao (?:e |sera |sendo )?(?:obrigatori|necessari|exigid)|dispensad|com ou sem)[^.;]{0,40}(?:wi[\s-]?fi\b|\bwifi\b)|(?:wi[\s-]?fi\b|\bwifi\b)[^.;]{0,30}(?:opcional|desejavel|nao (?:e |sera )?obrigatori|se houver|quando disponivel)/;
+const pedeWifi = t => WIFI.test(t) && !WIFI_OPCIONAL.test(t);
 // (a "CHAPA BIFETEIRA A GÁS LISA" que o catalogo chama de "Fogão Industrial ...
 // chapa bifeteira": Cornelio Procopio/PR, edital 198, item 73, 21/10/2026)
 
@@ -446,6 +456,11 @@ for (const e of dados.editais) {
       || (it[0] !== 'LV' && lavaLoucas(d) && 'lavadora de louca')
       || (it[0] === 'LV' && (lavaLoucas(norm(it[3])) || lavaLoucas(d)) && 'lavadora de louca')
       || (it[0] === 'PR' && chaleiraDeFogao(norm(it[3]), d) && 'chaleira de fogao')
+      // o item comprado em HORAS e servico, nao aparelho: "BALANÇAS mecânicas
+      // (antropométricas)", 100 Horas, e a manutencao de balancas do contrato de
+      // manutencao do parque de equipamentos (Lunardelli/PR, edital 34, 22/10/2026)
+      || (/^horas?\b/i.test(String(it[4] || '').trim()) && 'item em horas (servico)')
+      || (it[0] === 'CL' && AR_CONDICIONADO.test(norm(it[3]) + ' ' + d.slice(0, 300)) && pedeWifi(d + ' ' + norm(it[3])) && 'ar-condicionado com Wi-Fi')
       // o "UMIDIFICADOR" sem mais nada no edital de oxigenio medicinal e o frasco
       // do fluxometro, nao o umidificador de ambiente (Campina da Lagoa/PR,
       // edital 108, item 6, 21/10/2026: "RECARGA DE OXIGENIO MEDICINAL COM
