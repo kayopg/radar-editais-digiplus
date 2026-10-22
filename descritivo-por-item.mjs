@@ -3661,6 +3661,7 @@ const PRECOS_DEPOIS = /^(?:\s+(?:R\s?\$\s*)?\d{1,3}(?:\.?\d{3})*\s?,\s?\d{2}(?!\
 // III) 379929 ASPIRADOR...", Santa Maria/RS, edital 25/2026)
 const ANTES_DO_NUMERO = /^(?:(?:\d{5,7}|LOTE\s+\d{1,3}|ME\s?\/\s?EPP|EXCLUSIVO|COTA\s+(?:PRINCIPAL|RESERVADA)|AMPLA(?:\s+CONCORR[ÊE]NCIA)?|\(BENEF[ÍI]CIO\s+TIPO\s+[IVX]+\)|\*?AC)\s+)*/i;
 const CABECALHO_ANTES = /(?:ITEM|VALOR\s+TOTAL|VALOR\s+UNIT[ÁA]RIO|\(R\$\)|REFER[ÊE]NCIA\)|QUANT\S*|QTDE?\.?|UNID\.?|MEDIDA|M[ÁA]X\.?)\s*$/i;
+const JUSTIFICATIVA_NO_LUGAR = /^\(?[^()]{3,60}\s-\s\d{1,4}\s*UN\)\s*:|^.{0,160}?\b(?:Dimensionad[oa] para|Quantidade estipulada para|Quantitativo dimensionado para)\b|^Item\s+\d{1,3}\s*[–-]\s*[^;()]{3,60}\((?:ampla concorr[eê]ncia|exclusiv[oa][^)]{0,30})\)\s*[;.]?\s*(?:e\s+)?(?:\d{1,2}\.){2,}/i;
 const LIXO_DE_LINHA = /As\s+quantidades\s+foram\s+definidas|JUSTIFICATIVA\s+D[AO]\s|FUNDAMENTA[ÇC][ÃA]O\s+E\s+DESCRI|Lan[çc]ado\s+por:|Metodologia\s+Menor\s+Valor|Menor\s+Valor\s+Valor\s+Estimado/i;
 function linhaPelaCauda(plano, caudas, it, timbres) {
   const n = +it[0], q = Math.round(+it[2] || 0);
@@ -4347,6 +4348,13 @@ for (const e of dados.editais) {
   //   do ar-condicionado, o produto que mais aparece no radar.
   for (const it of v.itens) {
     if (!it[6]) continue;
+    // - a justificativa da quantidade ou a lista de cotas no lugar da
+    //   especificacao: "(Refrigerador 450L - 02 UN): Dimensionado para o
+    //   armazenamento rotineiro de marmitas..." (SSP/SP, edital 51) e "Item 1 –
+    //   Refrigerador (ampla concorrência); 13.2.5.2. Item 4 - Televisor..." (BRB,
+    //   Brasilia/DF, pregao 075), 21/10/2026. Sem ele, o item fica com o nome
+    //   do PNCP. (Em 14 listas, de 01/10 a 21/10, so esses casos casam.)
+    if (JUSTIFICATIVA_NO_LUGAR.test(it[6])) { it[6] = ''; continue; }
     it[6] = cortaOrcamento(it[6]);
     // a quantidade da linha na frente: "60 Bebedouro - purificador de coluna, ..."
     // (Alegrete/RS, planilha "QTD DESCRICAO UN VALOR")

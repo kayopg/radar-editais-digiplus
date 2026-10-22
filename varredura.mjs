@@ -811,7 +811,11 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // e a passadeira a vapor (usuario, 22/10/2026: "passadeira a vapor nao cotamos"; a
 // "Ferro Passar Roupa, Tipo:Passadeira A Vapor" da Embrapa, Brasilia/DF, edital 45,
 // lote 05, fica so em cinza no lote)
-"passadeira a vapor","passadeira vertical","vaporizador de roupa","vaporizador vertical"];
+"passadeira a vapor","passadeira vertical","vaporizador de roupa","vaporizador vertical",
+// e a torneira (usuario, 22/10/2026: "torneira nao cotamos"): "TORNEIRA PARA TANQUE E
+// MAQUINA DE LAVAR – DE PAREDE" (Campos Novos/SC, PE 62/2026, item 254) entrava pela
+// maquina de lavar. So na frente (VETO_SO_NA_FRENTE): "BEBEDOURO INDUSTRIAL 4 TORNEIRAS" fica
+"torneira"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
@@ -868,7 +872,7 @@ const VETO_SO_NA_FRENTE = ["gas liquefeito","botijoes","carga de gas","gas de co
 // academia, que vetava em qualquer ponto e derrubava a "Batedeira planetária,
 // potência mínima de 700W ... movimentos planetários" de batedor eliptico
 // (Rancho Alegre/PR, edital 38, item 19, 20/10/2026): so na frente.
-"correia","eliptico","apartamento","marmita","termostato",
+"correia","eliptico","apartamento","marmita","termostato","torneira",
 // e o ventilador centrifugo de processo ("Ventilador Centrífugo com pás voltadas
 // para trás tipo Limit load ... Vazão m³/h: 5.058; Pressão", Tres Passos/RS,
 // edital 184, 20/10/2026): equipamento de ventilacao industrial, como o exaustor
