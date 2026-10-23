@@ -971,7 +971,11 @@ const VETO_BL_MEDICA = ['laboratoriais','eletronica de precisao',
 // Digiplus cota a de cozinha (manipulacao, apoio, trabalho, com cuba).
 const VETO_MI = ['mayo','ginecolog','hospitalar','hospital','cirurgic','instrumental','instrumentos','exame','necropsia','anatomia','autopsia',
   'veterinari','odontolog','procedimento','curativo','enfermagem','paciente','unidades de saude','autoclave','40x40x80','40 x 40 x 80',
-  'mesa de refeicao','refeicao acoplada','cabeceira','elevatoria','pantograf','obstetric','massagem','maca'];
+  'mesa de refeicao','refeicao acoplada','cabeceira','elevatoria','pantograf','obstetric','massagem','maca',
+  // e a bancada/mesa com PIA (usuario, 23/10/2026: "bancada com pia nao cotamos"; Goioere/PR,
+  // edital 27, itens 58 e 59, "TAMPO/BANCADA DE PIA EM ACO INOX COM 01 CUBA"). A mesa de
+  // trabalho "com cuba", sem pia, continua (15/10/2026). Com espaco ou sinal em volta: "copia" nao.
+  ' pia ',' pia,',' pia.',' pia/','/pia ',' pias ','pia em aco','pia inox','pia de aco','tampo de pia','bancada de pia'];
 // E a mesa de tampo de outro material, que so tem o pe ou a borda de inox. So no
 // texto do EDITAL (veta-pelo-descritivo.mjs), nao no nome do PNCP: o catalogo que o
 // orgao escolheu pode estar errado — o item 19 da UNILA (Foz do Iguacu/PR) e "Mesa
