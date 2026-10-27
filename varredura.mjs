@@ -476,7 +476,12 @@ const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motocicle
 "pneus",
 // e a compra de viatura (Rio das Pedras/SP, edital 38, "AQUISICAO DE (02) DUAS VIATURAS
 // AUTOMOTIVAS, TIPO SUV", 27/10/2026, com o carro entrando pelo ar-condicionado)
-"viatura"];
+"viatura",
+// e a locacao para eventos ("contratacao de empresas especializadas na locacao de bens,
+// na prestacao de servicos correlatos ... destinados ao apoio a realizacao dos eventos",
+// Aguas Lindas de Goias/GO, edital 38, 146 itens de som, ambulancia e trofeu, com uma
+// "Balança digital de pesagem homologada" no meio, 27/10/2026)
+"locacao de bens"];
 // 5.2c — o objeto que TAMBEM compra eletrodomestico nao cai inteiro por uma
 // palavra (18/09/2026). "Aquisicao de Moveis, Eletrodomesticos, Eletronicos e
 // brinquedos", "motocicleta, bicicleta eletrica e refrigerador frost free" e
@@ -486,7 +491,7 @@ const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motocicle
 // dizem que o edital inteiro e outra coisa (sucata, velorio, varricao urbana,
 // pecas de manutencao) seguem derrubando sempre. "trator" como comeco de
 // palavra, pelo mesmo motivo do veto-item.mjs ("extrator").
-const VETO_OBJ_SEMPRE = new Set(["sucata","velorio","locacao de estrutura","prestacao de servicos de manutencao","fornecimento de pecas","coletor de residuos","residuos organicos","rede de gases","manutencao de aparelhos","inversores de frequencia","inversor de frequencia","funilaria","servicos continuos de manutencao"]);
+const VETO_OBJ_SEMPRE = new Set(["sucata","velorio","locacao de estrutura","prestacao de servicos de manutencao","fornecimento de pecas","coletor de residuos","residuos organicos","rede de gases","manutencao de aparelhos","inversores de frequencia","inversor de frequencia","funilaria","servicos continuos de manutencao","locacao de bens"]);
 const OBJ_ELETRO = /eletrodomestic|eletroportat|linha branca/;
 const vetoDoObjeto = txt => {
   const v = VETO_OBJ.find(t => t === 'trator' ? /(?:^|[^a-z])trator/.test(txt) : txt.includes(t));
@@ -990,7 +995,10 @@ const VETO_BL_MEDICA = ['laboratoriais','eletronica de precisao',
   // 27/10/2026: a "balanca" da suspensao do carro ("Pivo Balanca Suspensao ...
   // Tipo Uso: Balanca Inferior, Aplicacao: Veiculo Chevrolet", Mogi das Cruzes/SP,
   // edital 90025, item 26; usuario: "nao cotamos")
-  'suspensao','pivo','balanca inferior','balanca superior','veicul','automotiv'];
+  'suspensao','pivo','balanca inferior','balanca superior','veicul','automotiv',
+  // e a analitica escrita como atributo do PNCP, "Balança, TIPO: Analítica, com quatro
+  // casas decimais, CAPACIDADE MÁXIMA: 220g" (UEM, Maringa/PR, edital 1583, item 2)
+  'tipo: analitica','casas decimais','uso: laboratorial'];
 
 // A mesa inox que nao e de cozinha (15/10/2026, na entrada da categoria MI): a de
 // hospital e de clinica — "MESA DE MAYO", "Mesa Ginecologica", "Mesa auxiliar

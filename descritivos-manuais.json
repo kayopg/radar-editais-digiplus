@@ -1716,11 +1716,53 @@
     "edital": "Maringa/PR, UEM, Edital 1583/2026",
     "conferido": "2026-10-27",
     "itens": {
+      "8": {
+        "qtd": 4,
+        "valor": 716.69,
+        "fonte": "Termo de referencia, \"1.2.2. Item 2:\" (o termo numera de outro jeito que o PNCP; o recorte misturava o objeto, a tabela dos anexos e o item vizinho); conferido em 27/10/2026",
+        "texto": "Fogão industrial (sem forno), 2 (duas) bocas, baixa pressão, gás GLP, estrutura em ferro fundido ou aço carbono de 1mm, com pintura epóxi eletrostática para alta temperatura, coletora de resíduos em aço inox, queimadores dupla ou tripla chama, com prateleira inferior. Medidas aprox. (A x L X P): 80 x 70 x 37 cm, aceitando variação de até 10%."
+      },
+      "9": {
+        "qtd": 1,
+        "valor": 8043.32,
+        "fonte": "Termo de referencia, \"1.2.1. Item 1:\" (o termo numera de outro jeito que o PNCP; o recorte misturava o objeto, a tabela dos anexos e o item vizinho); conferido em 27/10/2026",
+        "texto": "Forno, TIPO: Industrial, USO: Processamento de preparações em escala de treinamento, MATERIAL: Aço inoxidável, POTÊNCIA: 9853W, CORRENTE: 26,70A, MOTOR: 1/4CV, trifásico, TENSÃO: 220V, SISTEMA DE AQUECIMENTO: Elétrico, por convecção de ar forçado (turbo), CONTROLE: Digital de temperatura e tempo, SEGURANÇA: Sensor de proteção contra superaquecimento do motor, DIMENSÕES: Altura: 50,5cm, Largura: 67,5cm, Profundidade: 128,5cm (com variação de +/- 10%), CAPACIDADE: 5 esteiras, FAIXA DE TEMPERATURA: 0ºC a 230ºC, PESO: 50kg."
+      },
+      "10": {
+        "qtd": 4,
+        "valor": 834.55,
+        "fonte": "Termo de referencia, \"1.2.3. Item 3:\" (o termo numera de outro jeito que o PNCP; o recorte misturava o objeto, a tabela dos anexos e o item vizinho); conferido em 27/10/2026",
+        "texto": "Batedeira, TIPO: Planetária, MATERIAL: Aço inoxidável, POTÊNCIA MÍNIMA: 800W, com acessórios (batedor gancho ou espiral, batedor raquete e batedor globo), chassi em aço com pintura epóxi, tacho em aço inox. Multi velocidade com controle eletrônico. VOLTAGEM: Bivolt, CAPACIDADE MÍNIMA: 12 litros."
+      },
       "11": {
         "qtd": 4,
         "valor": 753.05,
-        "fonte": "Termo de referencia, \"1.2.4. Item 4: Liquidificador\" (o lote 11 do PNCP e o item 4 do termo; o recorte pegava a assinatura digital e o texto da autoclave); conferido em 27/10/2026",
-        "texto": "Liquidificador, USO: profissional, POTÊNCIA MÍNIMA: 1.200W, CAPACIDADE MÍNIMA DO COPO: 4 litros. Corpo em aço inox, lâminas em aço inox de alta durabilidade, motor de alta rotação, sistema antivibratório e base emborrachada. Mínimo 3 velocidades com função pulsar. UNID. DE MEDIDA: Unitário."
+        "fonte": "Termo de referencia, \"1.2.4. Item 4:\" (o termo numera de outro jeito que o PNCP; o recorte misturava o objeto, a tabela dos anexos e o item vizinho); conferido em 27/10/2026",
+        "texto": "Liquidificador, USO: profissional, POTÊNCIA MÍNIMA: 1.200W, CAPACIDADE MÍNIMA DO COPO: 4 litros. Corpo em aço inox, lâminas em aço inox de alta durabilidade, motor de alta rotação, sistema antivibratório e base emborrachada. Mínimo 3 velocidades com função pulsar."
+      },
+      "12": {
+        "qtd": 4,
+        "valor": 282.04,
+        "fonte": "Termo de referencia, \"1.2.5. Item 5:\" (o termo numera de outro jeito que o PNCP; o recorte misturava o objeto, a tabela dos anexos e o item vizinho); conferido em 27/10/2026",
+        "texto": "Mixer de imersão (de mão) TIPO: Elétrico, Profissional. POTÊNCIA MÍNIMA: 750W. VOLTAGEM: 127V. MATERIAL: Haste em aço inoxidável desmontável. DIMENSÃO: Altura: 39,5cm, Largura: 6,5cm, Comprimento: 6,5cm (variação de +/- 10%), CARACTERÍSTICAS ADICIONAIS: Acompanha copo medidor de 750 mL (mínimo) com tampa e acessório batedor de arame para emulsões, chave de segurança e função turbo."
+      },
+      "13": {
+        "qtd": 1,
+        "valor": 612.37,
+        "fonte": "Termo de referencia, \"1.2.6. Item 6:\" (o termo numera de outro jeito que o PNCP; o recorte misturava o objeto, a tabela dos anexos e o item vizinho); conferido em 27/10/2026",
+        "texto": "Balança Digital de Bancada portátil. USO: para pesar alimentos / cozinha. Capacidade de pesagem até 40Kg, sensibilidade de 2g, bivolt automático (127V - 220V) com bateria interna recarregável de 6V e duração de 44h. Dimensões aproximadas: 35 x 33 x 10 cm (L X P X A), aceitando variação de até 10%, com função tara."
+      },
+      "18": {
+        "qtd": 1,
+        "valor": 2376.88,
+        "fonte": "Termo de referencia, \"1.2.5 Item 5 -\" (o termo numera de outro jeito que o PNCP; o recorte misturava o objeto, a tabela dos anexos e o item vizinho); conferido em 27/10/2026",
+        "texto": "Geladeira / Refrigerador; tipo: 1 (uma) porta independente; Capacidade líquida aproximada: 240 litros; cor: branca; destinada ao armazenamento e conservação de reagentes, insumos, materiais e outros produtos compatíveis com refrigeração em ambiente laboratorial; deve possuir sistema de degelo automático (tipo frost free), controle de temperatura, prateleiras removíveis e eficiência energética compatível com a regulamentação vigente. Voltagem: 110V / 220V."
+      },
+      "19": {
+        "qtd": 1,
+        "valor": 3473.93,
+        "fonte": "Termo de referencia, \"1.2.6 Item 6 -\" (o termo numera de outro jeito que o PNCP; o recorte misturava o objeto, a tabela dos anexos e o item vizinho); conferido em 27/10/2026",
+        "texto": "Freezer vertical: capacidade aproximada: 230 litros; sistema Frost Free; Cor: branca, destinado ao armazenamento e conservação de amostras, reagentes, insumos e demais materiais que necessitem de congelamento em ambiente laboratorial. Deve possuir controle de temperatura, sistema de degelo automático, tipo frost free, compartimentos internos com prateleiras e/ou gavetas removíveis, boa eficiência energética e funcionamento contínuo. Voltagem: 110 V."
       }
     }
   },
@@ -1775,6 +1817,258 @@
         "valor": 0,
         "fonte": "Especificacao tecnica (SEI/PMSP), linha \"ITEM 12 Ventilador de Coluna\" ate o lote 3; o recorte comecava em \"Coluna\"; conferido em 27/10/2026",
         "texto": "VENTILADOR TORRE (PEDESTAL): Altura mínima de 1,5 metros, dispositivo de inclinação, com 3 pás ou mais, com diâmetro de 40cm, sistema de oscilação, múltiplas velocidades e grade de proteção com malha fina para segurança, selo INMETRO e etiqueta nacional de eficiência energética, cordão de alimentação de no mínimo 1 metro e plugue de 10A. Possuir manual de instruções em língua portuguesa, disponível preferencialmente em formato digital/online. Assistência técnica na região metropolitana de São Paulo."
+      }
+    }
+  },
+  "18715409000150/2026/134": {
+    "edital": "Santa Luzia/MG, Aviso de Contratacao Direta 72/2026",
+    "conferido": "2026-10-27",
+    "itens": {
+      "3": {
+        "qtd": 1,
+        "valor": 1639.99,
+        "fonte": "Termo de referencia, Anexo I, \"ITEM 3 – BEBEDOURO INDUSTRIAL\" (a tabela do item 1 so remete ao anexo); conferido em 27/10/2026",
+        "texto": "BEBEDOURO INDUSTRIAL Capacidade: Reservatório interno com capacidade de 25 (vinte e cinco) litros. Tipo de Equipamento: Bebedouro industrial com sistema de refrigeração elétrica por compressor hermético, com gás refrigerante ecológico (livre de CFC) e termostato com controle ajustável de temperatura. Sistema de Abastecimento: O equipamento deverá ser apto para captação direta de água proveniente da rede pública de abastecimento, com funcionamento adequado sob pressão hidráulica padrão urbana. A alimentação ocorrerá por meio de ponto hidráulico previamente disponibilizado pela unidade requisitante. Sistema de Filtragem: Deverá possuir sistema de filtragem compatível com água potável proveniente diretamente da rede pública, com elemento filtrante substituível, adequado para retenção de partículas e impurezas, próprio para uso coletivo e compatível com funcionamento sob pressão da rede. Torneiras: Duas (02) torneiras distintas, sendo: · Uma (01) para fornecimento de água natural; · Uma (01) para fornecimento de água gelada. As torneiras deverão ser confeccionadas em material resistente à corrosão, de fácil acionamento e higienização. Material da Estrutura: Estrutura externa em aço inoxidável ou material equivalente, atóxico, resistente à corrosão e de fácil limpeza. Mangueira e Conexão: Deverá acompanhar mangueira atóxica para ligação ao ponto hidráulico disponibilizado, com as seguintes características mínimas: · Comprimento mínimo de 1,5 (um vírgula cinco) metros; · Diâmetro compatível com conexão padrão ½ (meia polegada); · Material flexível e resistente à pressão da rede pública urbana; · Fornecimento dos adaptadores e conexões necessários para a ligação básica ao ponto de água existente. Fica esclarecido que eventuais adequações estruturais ou intervenções na rede hidráulica da edificação não integram o objeto da presente contratação. Componentes Adicionais · Bandeja coletora removível para gotas; · Base estável ou pés antiderrapantes; · Funcionamento contínuo e silencioso, adequado ao uso coletivo. Eficiência e Segurança: O equipamento deverá atender às normas técnicas brasileiras aplicáveis à segurança elétrica e ao contato com água potável, especialmente aquelas expedidas pela Associação Brasileira de Normas Técnicas (ABNT) e demais órgãos competentes, quando aplicável. Poderá ser solicitada comprovação de conformidade com as normas pertinentes, por meio de documentação técnica do fabricante ou certificação reconhecida pelos órgãos competentes. Garantia: Garantia mínima de 12 (doze) meses contra defeitos de fabricação, com assistência técnica e substituição de peças sem ônus para a Administração. Documentação Técnica: · Manual de instruções em língua portuguesa; · Certificado de garantia; · Especificação técnica do fabricante."
+      },
+      "4": {
+        "qtd": 2,
+        "valor": 3136.01,
+        "fonte": "Termo de referencia, Anexo I, \"ITEM 4 – APARELHO DE AR-CONDICIONADO SPLIT HI-WALL – 18.000 BTUS\" (o recorte pegava a linha da mesa de reuniao); conferido em 27/10/2026",
+        "texto": "APARELHO DE AR-CONDICIONADO SPLIT HI-WALL – 18.000 BTUS Tipo do Equipamento: Aparelho de ar-condicionado tipo Split Hi-Wall. Capacidade de Refrigeração: 18.000 (dezoito mil) BTUs/h. Ciclo de Operação: Frio. Tecnologia: Convencional ou Inverter. Alimentação Elétrica: Compatível com a rede elétrica da unidade requisitante (127 V ou 220 V), conforme definido pela Administração no momento da aquisição. Eficiência Energética: Classificação de eficiência energética compatível com os padrões vigentes do INMETRO à época do fornecimento. Componentes Mínimos: · Unidade evaporadora; · Unidade condensadora; · Controle remoto sem fio; · Manual de instruções em língua portuguesa. Garantia: Garantia mínima de 12 (doze) meses contra defeitos de fabricação. Documentação Técnica: O equipamento deverá ser acompanhado de: · Manual de instruções em língua portuguesa; · Certificado de garantia; · Demais documentos técnicos fornecidos pelo fabricante. Normas Técnicas: O equipamento deverá atender às normas técnicas e de segurança vigentes aplicáveis, bem como possuir certificação do INMETRO, quando exigível."
+      }
+    }
+  },
+  "46352746000165/2026/510": {
+    "edital": "Braganca Paulista/SP, Aviso de Contratacao Direta 140/2026",
+    "conferido": "2026-10-27",
+    "itens": {
+      "1": {
+        "qtd": 1,
+        "valor": 2029,
+        "fonte": "Termo de referencia, \"B) ESPECIFICACOES MINIMAS\", \"Fogão 5 bocas\" (o recorte pegava a reserva de dotacao; acentos e cabecalho da folha arrumados); conferido em 27/10/2026",
+        "texto": "Fogão 5 bocas: Quantidade de queimadores: 5 (cinco) bocas; funcionamento a gás, compatível com GLP, admitindo-se equipamento com possibilidade de conversão para gás natural; largura máxima: 80 cm, considerando o espaço disponível para instalação; acendimento automático; alimentação elétrica bivolt, para os componentes elétricos do equipamento; classificação de eficiência energética A, conforme classificação aplicável ao produto; queimadores com diferentes níveis de potência, devendo possuir ao menos 1 (um) queimador de maior potência, com dupla chama, tripla chama, multichama, turbo chama ou tecnologia de desempenho equivalente; mesa confeccionada em aço inoxidável, vidro temperado ou material de resistência e durabilidade equivalentes, adequado às temperaturas de operação do equipamento e que possibilite fácil higienização; trempes/grades robustas, preferencialmente individuais, confeccionadas em ferro fundido, proporcionando estabilidade adequada às panelas; botões/manípulos removíveis, de modo a facilitar a higienização; forno integrado com capacidade mínima de 96 litros; forno com sistema de segurança contra vazamento de gás, mediante válvula de segurança, sistema corta-gás ou tecnologia equivalente que interrompa o fornecimento de gás em caso de apagamento acidental da chama; iluminação interna do forno; forno dotado de revestimento interno esmaltado, de baixa aderência ou tecnologia equivalente destinada a facilitar a limpeza; porta do forno com visor em vidro resistente a altas temperaturas, permitindo a visualização dos alimentos durante o preparo; vidro interno da porta do forno removível, vedado ou dotado de solução equivalente que facilite a limpeza; mínimo de 2 (duas) prateleiras/grades no forno, ajustáveis, deslizantes, autodeslizantes ou de sistema equivalente; puxador da porta do forno confeccionado em material resistente às condições normais de utilização; pés resistentes e que proporcionem adequada estabilidade ao equipamento, admitindo-se pés niveladores; certificação, registro ou selo de conformidade perante o INMETRO, quando exigível pela regulamentação aplicável; plugue e cabo de alimentação em conformidade com as normas técnicas brasileiras aplica veis; produto acompanhado de todos os componentes e acessórios indispensáveis ao seu perfeito funcionamento; manual de instruções em língua portuguesa; garantia mínima de 12 (doze) meses, contados do recebimento definitivo do equipamento; disponibilidade de assistência técnica no território nacional."
+      },
+      "2": {
+        "qtd": 2,
+        "valor": 1430.96,
+        "fonte": "Termo de referencia, \"B) ESPECIFICACOES MINIMAS\", \"FRIGOBAR\" (o recorte juntava o fogao e o cabecalho da folha); conferido em 27/10/2026",
+        "texto": "Frigobar Capacidade: 120 L, Tensão Alimentação: 127 V, Cor: Preta, Características Adicionais: Prateleiras Removíveis/Gavetas/Etiqueta de consumo \"A\"."
+      },
+      "3": {
+        "qtd": 1,
+        "valor": 850,
+        "fonte": "Termo de referencia, \"B) ESPECIFICACOES MINIMAS\", \"Forno Micro-ondas\" (o recorte so tinha o nome e o cabecalho da folha); conferido em 27/10/2026",
+        "texto": "Forno Micro-ondas Material: Aço Inoxidável, Capacidade: 36 L, Potência: 1600 W, Voltagem: 110 V, Cor: Prata E Preto, Funções: Conforme Modelo, Tratamento Superficial: Espelhado, Características Adicionais: Com Prato Giratório"
+      }
+    }
+  },
+  "20920567000193/2026/236": {
+    "edital": "Bambui/MG, Edital 42/2026",
+    "conferido": "2026-10-27",
+    "itens": {
+      "1": {
+        "qtd": 105,
+        "valor": 0,
+        "fonte": "Termo de referencia, tabela do item 1, linha \"01 und 105\" (o recorte pegava o paragrafo do objeto); conferido em 27/10/2026",
+        "texto": "Ventilador de Parede 60cm, com a cor Preta, com mínimo de 6 pás, potência mínima de 200W na tensão 127/220V. Com controle de parede para velocidade, progressiva, grade de proteção normatizadas removível (com presilhas de travamento entre as grades frontal e traseira ), oscilação horizontal automática."
+      }
+    }
+  },
+  "25437484000161/2027/6": {
+    "edital": "Uberaba/MG, Edital 159/2027",
+    "conferido": "2026-10-27",
+    "itens": {
+      "12": {
+        "qtd": 1,
+        "valor": 5325.34,
+        "fonte": "Termo de referencia, linha do item 12 \"FORNO CONVECTOR DIGITAL\" (o recorte comecava em \"CM, DIMENSÕES DAS PEDRAS\"); conferido em 27/10/2026",
+        "texto": "FORNO CONVECTOR DIGITAL COM AS SEGUINTES ESPECIFICAÇÕES MÍNIMAS: COM VAPOR, 3 PEDRAS, CONTROLE DIGITAL PRECISO DE TEMPO E TEMPERATURA, IMPRESCINDÍVEL CHEGAR A 250ºC, SISTEMA DE COCÇÃO POR CONVECÇÃO DE AR FORÇADO, COM VAPOR, CONSTRUÍDO EM AÇO INOXIDÁVEL DE ALTA DURABILIDADE (EX: AISI 430), ASSADEIRAS EM ALUMÍNIO, SUPORTES DA CÂMARA DE COCÇÃO DESMONTÁVEIS, MANGUEIRA PARA ENGATE NA REDE HIDRÁULICA, 3 PEDRAS ESPECIAIS PARA ALTAS TEMPERATURAS, PRESSÃO ENTRADA DE ÁGUA: 0,8-2 (KGF/CM²), CONEXÕES DE ENTRADA DE ÁGUA: 3/4 (BSP), CORRENTE: 12 A, FREQUÊNCIA: 60 HZ, POTÊNCIA INSTALADA: 2,7 KW, CONSUMO MÉDIO ENERGIA: 0,66 KWH, TENSÃO: 220V, DISTÂNCIA ENTRE AS PEDRAS: 12 CM, DIMENSÕES DAS PEDRAS (AXLXP): ALTURA: 2 CM X LARGURA: 35 CM X PROFUNDIDADE: 33 CM, DIMENSÕES DO FORNO (AXLXP): ALTURA: 51 CM x LARGURA: 59 CM X PROFUNDIDADE: 65 CM."
+      }
+    }
+  },
+  "77001311000108/2026/635": {
+    "edital": "Castro/PR, Edital 157/2026",
+    "conferido": "2026-10-27",
+    "itens": {
+      "217": {
+        "qtd": 18,
+        "valor": 278.21,
+        "fonte": "Edital, tabela de itens, linha 217 (o recorte pegava a tabela de demanda, com as siglas das secretarias); conferido em 27/10/2026",
+        "texto": "VENTILADOR DE PAREDE OSCILANTE, VELOCIDADES: REGULÁVEIS, POTÊNCIA: 1/4CV - 200 W, DIÂMETRO DA GRADE 60 CM, GRADE SEGURA; COM PINTURA EPÓXI NA COR PRETO, RPM: 1300 MÁXIMA, VOLTAGEM: BIVOLT, GARANTIA MÍNIMA DE 1 ANO."
+      }
+    }
+  },
+  "76178011000128/2026/115": {
+    "edital": "Pinhao/PR, Edital 53/2026",
+    "conferido": "2026-10-27",
+    "itens": {
+      "7": {
+        "qtd": 3,
+        "valor": 240.5,
+        "fonte": "Edital, tabela de itens, item 7, com a continuacao da folha seguinte (o recorte parava em \"RECURSOS ADICIONAIS: O SISTEMA\"); conferido em 27/10/2026",
+        "texto": "CAFETEIRA ELÉTRICA – CAPACIDADE MÍNIMA 40 XÍCARAS • TIPO: CAFETEIRA ELÉTRICA DE GRANDE CAPACIDADE, PARA USO INSTITUCIONAL; • CAPACIDADE MÍNIMA: 40 XÍCARAS (APROXIMADAMENTE MINIMA 1,6 LITROS); • MATERIAL DA JARRA: VIDRO RESISTENTE A ALTAS TEMPERATURAS, COM ALÇA ERGONÔMICA E TAMPA; • TAMPA E BASE: CONFECCIONADAS EM MATERIAL TERMORRESISTENTE E DE FÁ-CIL HIGIENIZAÇÃO; • COR: PADRÃO NEUTRO (PRETA, INOX OU SIMILAR); • VOLTAGEM: BIVOLT AUTOMÁTICO OU CONFORME ESPECIFICAÇÃO DA SECRETARIA MUNICIPAL DE SAÚDE; • CONSUMO: BAIXO CONSUMO DE ENERGIA ELÉTRICA, COM EFICIÊNCIA COMPATÍVEL COM USO CONTÍNUO; • RECURSOS ADICIONAIS: O SISTEMA DE AQUECIMENTO AUTOMÁTICO E PLACA DE AQUECIMENTO PARA MANTER O CAFÉ QUENTE APÓS O PREPARO; O FILTRO PERMANENTE OU COMPATÍVEL COM FILTROS DE PAPEL DESCARTÁVEIS; O INDICADOR DE NÍVEL DE ÁGUA VISÍVEL; O DISPOSITIVO CORTA-PINGOS PARA RETIRADA DA JARRA DURANTE O PREPARO; • BASE: ANTIDERRAPANTE E ESTÁVEL; • POTÊNCIA MÍNIMA: 800 W; • GARANTIA MÍNIMA: 12 MESES CONTRA DEFEITOS DE FABRICAÇÃO."
+      },
+      "15": {
+        "qtd": 1,
+        "valor": 1767.83,
+        "fonte": "Edital, tabela de itens, item 15, com a continuacao da folha seguinte (o recorte parava em \"ELIMINA FIAPOS: SIM, ATRAVÉS DE\"); conferido em 27/10/2026",
+        "texto": "MÁQUINA DE LAVAR ROUPAS – CAPACIDADE 9 KG – COR BRANCA • CAPACIDADE: 9 KG DE ROUPAS • ACESSO AO CESTO: SUPERIOR • ÁGUA QUENTE: NÃO • ENXÁGUES: 5 • CENTRIFUGAÇÃO: SIM • DISPENSER PARA SABÃO: SIM • DISPENSER PARA AMACIANTE: SIM • DISPENSER PARA ALVEJANTE: SIM • ELIMINA FIAPOS: SIM, ATRAVÉS DE FILTRO • NÍVEIS DE ÁGUA: AUTOMÁTICO • PROGRAMAS DE LAVAGEM: ACIMA DE 10 MOVIMENTOS DE LAVAGEM • CARACTERÍSTICAS GERAIS: O DESIGN MODERNO E EXCLUSIVO O CICLO TIRA-MANCHAS CAPAZ DE REMOVER MAIS DE 40 TIPOS DE MANCHAS, INCLUINDO GORDURA E CANETINHA O SENSORES INTELIGENTES QUE AJUSTAM AUTOMATICAMENTE O NÍVEL DE ÁGUA DE ACORDO COM A QUANTIDADE DE ROUPAS EM CADA CICLO, PROPORCIONANDO ECONOMIA DE ATÉ 25% DE ÁGUA O 4 NÍVEIS DE ÁGUA DISPONÍVEIS • GARANTIA MÍNIMA: 12 (DOZE) MESES CONTRA DEFEITOS DE FABRICAÇÃO."
+      }
+    }
+  },
+  "00508903000188/2026/2109": {
+    "edital": "Goiania/GO, Justica Federal, Edital 73/2026",
+    "conferido": "2026-10-27",
+    "itens": {
+      "1": {
+        "qtd": 5,
+        "valor": 2434.87,
+        "fonte": "Termo de referencia, tabela 1.1, coluna \"Descrição dos Materiais\" (o recorte misturava a coluna da unidade requisitante e o rodape do SEI); conferido em 27/10/2026",
+        "texto": "Geladeira/Refrigerador Duplex, Frost Free, Cor Branca 260 L, 220 Volts"
+      },
+      "2": {
+        "qtd": 5,
+        "valor": 3322.24,
+        "fonte": "Termo de referencia, tabela 1.1, coluna \"Descrição dos Materiais\" (o recorte misturava a coluna da unidade requisitante e o rodape do SEI); conferido em 27/10/2026",
+        "texto": "Geladeira/Refrigerador Frost Free Duplex Branco aproximadamente 450L, 220 Volts"
+      },
+      "3": {
+        "qtd": 6,
+        "valor": 951.34,
+        "fonte": "Termo de referencia, tabela 1.1, coluna \"Descrição dos Materiais\" (o recorte misturava a coluna da unidade requisitante e o rodape do SEI); conferido em 27/10/2026",
+        "texto": "Frigobar 120 L, Cor Branca, 220 Volts"
+      },
+      "4": {
+        "qtd": 20,
+        "valor": 620.66,
+        "fonte": "Termo de referencia, tabela 1.1, coluna \"Descrição dos Materiais\" (o recorte misturava a coluna da unidade requisitante e o rodape do SEI); conferido em 27/10/2026",
+        "texto": "Micro-ondas 32L, Cor Branca, 220 Volts."
+      },
+      "5": {
+        "qtd": 3,
+        "valor": 1162.84,
+        "fonte": "Termo de referencia, tabela 1.1, coluna \"Descrição dos Materiais\" (o recorte misturava a coluna da unidade requisitante e o rodape do SEI); conferido em 27/10/2026",
+        "texto": "Fogão 5 chamas (bocas) elétrico, 220 Volts, Tradicional (de Piso), Cor Branca; Potência total: 2500 W - ótima para aquecimento rápido e eficiente (1250 W por bocas); - Controle: Botões de ajuste com níveis de potência; - Configuração independente: Permite regular cada boca separadamente; Panela: Compatível com todo tipo de panela (não precisa ser específica)"
+      },
+      "6": {
+        "qtd": 30,
+        "valor": 717.06,
+        "fonte": "Termo de referencia, tabela 1.1, coluna \"Descrição dos Materiais\" (o recorte misturava a coluna da unidade requisitante e o rodape do SEI); conferido em 27/10/2026",
+        "texto": "Purificador de água Refrigerada - Cor Branca - 220v"
+      },
+      "7": {
+        "qtd": 50,
+        "valor": 159,
+        "fonte": "Termo de referencia, tabela 1.1, coluna \"Descrição dos Materiais\" (o recorte misturava a coluna da unidade requisitante e o rodape do SEI); conferido em 27/10/2026",
+        "texto": "Umidificador, Capacidade de 4 a 4,8L, 220 volts, Cor Branca"
+      },
+      "8": {
+        "qtd": 1,
+        "valor": 4281.36,
+        "fonte": "Termo de referencia, tabela 1.1, coluna \"Descrição dos Materiais\" (o recorte misturava a coluna da unidade requisitante e o rodape do SEI); conferido em 27/10/2026",
+        "texto": "Cafeteira Elétrica Profissional - Capacidade - 40 até 60 Litros; Bojo Inoxidável; Corpo em Aço Inoxidável; Resistências Blindadas; Registros Manuais para Entrada e Saída de água; Termostato para Controle de Temperatura; Varetas para Limpeza das Torneiras; Torneira Horizontal; Tensão Elétrica - 220 Volts; Consumo - 6000 a 7000w; Peso - 23 até 30 Kg; Altura - 70 até 85 cm; Largura - 40 até 80 cm; Comprimento - 35 até 85 cm. Devem Ser Fornecidos Coadores Que Sejam Compatíveis com a Cafeteira, para Cada Unidade é Necessário Uma Quantia de 15 (quinze) Coadores."
+      },
+      "9": {
+        "qtd": 3,
+        "valor": 526.08,
+        "fonte": "Termo de referencia, tabela 1.1, coluna \"Descrição dos Materiais\" (o recorte misturava a coluna da unidade requisitante e o rodape do SEI); conferido em 27/10/2026",
+        "texto": "Tanquinho de Lavar Roupas, Capacidade de 10Kg, Cor Branca, 220Volts"
+      },
+      "10": {
+        "qtd": 1,
+        "valor": 1904.6,
+        "fonte": "Termo de referencia, tabela 1.1, coluna \"Descrição dos Materiais\" (o recorte misturava a coluna da unidade requisitante e o rodape do SEI); conferido em 27/10/2026",
+        "texto": "Máquina de Lavar Roupas, Capacidade de 10 A 12KG, 220Volts, Cor Branca, 220 Volts"
+      }
+    }
+  },
+  "87297271000139/2026/145": {
+    "edital": "Arroio do Meio/RS, Edital 56/2026",
+    "conferido": "2026-10-27",
+    "itens": {
+      "4": {
+        "qtd": 1,
+        "valor": 2576.89,
+        "fonte": "Termo de referencia, tabela 1.1, item 4 (o recorte terminava com a clausula dos encargos fiscais); conferido em 27/10/2026",
+        "texto": "Batedeira profissional ou semiprofissional de uso institucional, com capacidade mínima de 5 litros, motor com potência compatível com o preparo de massas e outras preparações culinárias, tigela em aço inoxidável, estrutura resistente, controle de velocidades, sistema de fixação seguro da tigela, proteção contra respingos e acessórios adequados para diferentes preparações, incluindo batedor para massas leves e claras e acessório para massas de maior consistência, conforme a capacidade do equipamento. Deverá possuir estabilidade durante o funcionamento, ser de fácil higienização, apresentar tensão compatível com a rede elétrica local, garantia mínima de 12 meses, contados do recebimento definitivo do produto."
+      }
+    }
+  },
+  "88073291000199/2026/340": {
+    "edital": "Bage/RS, Edital 100/2026",
+    "conferido": "2026-10-27",
+    "itens": {
+      "6": {
+        "qtd": 3,
+        "valor": 4500,
+        "fonte": "Termo de referencia, item 2 da tabela (item 6 do PNCP), com a continuacao da folha seguinte (o recorte parava em \"filtro de ar removível\"); conferido em 27/10/2026",
+        "texto": "Ar-condicionado tipo Split Hi-Wall, capacidade de refrigeração de 24.000 BTU/h, ciclo quente e frio, tensão de alimentação 220 V, frequência 60 Hz, com tecnologia inverter, classificação de eficiência energética mínima classe A, conforme regulamentação vigente. Equipamento composto por unidade evaporadora e unidade condensadora, com controle remoto, funções de refrigeração, aquecimento, ventilação e desumidificação, filtro de ar removível e lavável, serpentina com proteção anticorrosiva ou material compatível com as condições de uso, utilizando fluido refrigerante permitido pela legislação vigente, com a instalação inclusa. Unidade 7 R$ 2.500,00 R$ 17.500,00 2 Ar-condicionado tipo Split Hi-Wall, capacidade de refrigeração de 24.000 BTU/h, ciclo quente e frio, tensão de alimentação 220 V, frequência 60 Hz, com tecnologia inverter, classificação de eficiência energética mínima classe A, conforme regulamentação vigente. Equipamento composto por unidade evaporadora e unidade condensadora, com controle remoto, funções de refrigeração, aquecimento, ventilação e desumidificação, filtro de ar removível Unidade 3 R$ 4.500,00 R$ 13.500,00 PREFEITURA DE BAGÉ – SEFAZ – PE 0100/2026 – Anexo I – Termo de Referência Página 2 e lavável, serpentina com proteção anticorrosiva ou material compatível com as condições de uso, utilizando fluido refrigerante permitido pela legislação vigente, com instalação inclusa."
+      }
+    }
+  },
+  "79151312000156/2026/791": {
+    "edital": "Maringa/PR, UEM, Edital 239/2026",
+    "conferido": "2026-10-27",
+    "itens": {
+      "8": {
+        "qtd": 4,
+        "valor": 716.69,
+        "fonte": "Termo de referencia, \"1.2.2. Item 2:\" (o termo numera de outro jeito que o PNCP; o recorte misturava o objeto, a tabela dos anexos e o item vizinho); conferido em 27/10/2026",
+        "texto": "Fogão industrial (sem forno), 2 (duas) bocas, baixa pressão, gás GLP, estrutura em ferro fundido ou aço carbono de 1mm, com pintura epóxi eletrostática para alta temperatura, coletora de resíduos em aço inox, queimadores dupla ou tripla chama, com prateleira inferior. Medidas aprox. (A x L X P): 80 x 70 x 37 cm, aceitando variação de até 10%."
+      },
+      "9": {
+        "qtd": 1,
+        "valor": 8043.32,
+        "fonte": "Termo de referencia, \"1.2.1. Item 1:\" (o termo numera de outro jeito que o PNCP; o recorte misturava o objeto, a tabela dos anexos e o item vizinho); conferido em 27/10/2026",
+        "texto": "Forno, TIPO: Industrial, USO: Processamento de preparações em escala de treinamento, MATERIAL: Aço inoxidável, POTÊNCIA: 9853W, CORRENTE: 26,70A, MOTOR: 1/4CV, trifásico, TENSÃO: 220V, SISTEMA DE AQUECIMENTO: Elétrico, por convecção de ar forçado (turbo), CONTROLE: Digital de temperatura e tempo, SEGURANÇA: Sensor de proteção contra superaquecimento do motor, DIMENSÕES: Altura: 50,5cm, Largura: 67,5cm, Profundidade: 128,5cm (com variação de +/- 10%), CAPACIDADE: 5 esteiras, FAIXA DE TEMPERATURA: 0ºC a 230ºC, PESO: 50kg."
+      },
+      "10": {
+        "qtd": 4,
+        "valor": 834.55,
+        "fonte": "Termo de referencia, \"1.2.3. Item 3:\" (o termo numera de outro jeito que o PNCP; o recorte misturava o objeto, a tabela dos anexos e o item vizinho); conferido em 27/10/2026",
+        "texto": "Batedeira, TIPO: Planetária, MATERIAL: Aço inoxidável, POTÊNCIA MÍNIMA: 800W, com acessórios (batedor gancho ou espiral, batedor raquete e batedor globo), chassi em aço com pintura epóxi, tacho em aço inox. Multi velocidade com controle eletrônico. VOLTAGEM: Bivolt, CAPACIDADE MÍNIMA: 12 litros."
+      },
+      "11": {
+        "qtd": 4,
+        "valor": 753.05,
+        "fonte": "Termo de referencia, \"1.2.4. Item 4:\" (o termo numera de outro jeito que o PNCP; o recorte misturava o objeto, a tabela dos anexos e o item vizinho); conferido em 27/10/2026",
+        "texto": "Liquidificador, USO: profissional, POTÊNCIA MÍNIMA: 1.200W, CAPACIDADE MÍNIMA DO COPO: 4 litros. Corpo em aço inox, lâminas em aço inox de alta durabilidade, motor de alta rotação, sistema antivibratório e base emborrachada. Mínimo 3 velocidades com função pulsar."
+      },
+      "12": {
+        "qtd": 4,
+        "valor": 282.04,
+        "fonte": "Termo de referencia, \"1.2.5. Item 5:\" (o termo numera de outro jeito que o PNCP; o recorte misturava o objeto, a tabela dos anexos e o item vizinho); conferido em 27/10/2026",
+        "texto": "Mixer de imersão (de mão) TIPO: Elétrico, Profissional. POTÊNCIA MÍNIMA: 750W. VOLTAGEM: 127V. MATERIAL: Haste em aço inoxidável desmontável. DIMENSÃO: Altura: 39,5cm, Largura: 6,5cm, Comprimento: 6,5cm (variação de +/- 10%), CARACTERÍSTICAS ADICIONAIS: Acompanha copo medidor de 750 mL (mínimo) com tampa e acessório batedor de arame para emulsões, chave de segurança e função turbo."
+      },
+      "13": {
+        "qtd": 1,
+        "valor": 612.37,
+        "fonte": "Termo de referencia, \"1.2.6. Item 6:\" (o termo numera de outro jeito que o PNCP; o recorte misturava o objeto, a tabela dos anexos e o item vizinho); conferido em 27/10/2026",
+        "texto": "Balança Digital de Bancada portátil. USO: para pesar alimentos / cozinha. Capacidade de pesagem até 40Kg, sensibilidade de 2g, bivolt automático (127V - 220V) com bateria interna recarregável de 6V e duração de 44h. Dimensões aproximadas: 35 x 33 x 10 cm (L X P X A), aceitando variação de até 10%, com função tara."
+      },
+      "18": {
+        "qtd": 1,
+        "valor": 2376.88,
+        "fonte": "Termo de referencia, \"1.2.5 Item 5 -\" (o termo numera de outro jeito que o PNCP; o recorte misturava o objeto, a tabela dos anexos e o item vizinho); conferido em 27/10/2026",
+        "texto": "Geladeira / Refrigerador; tipo: 1 (uma) porta independente; Capacidade líquida aproximada: 240 litros; cor: branca; destinada ao armazenamento e conservação de reagentes, insumos, materiais e outros produtos compatíveis com refrigeração em ambiente laboratorial; deve possuir sistema de degelo automático (tipo frost free), controle de temperatura, prateleiras removíveis e eficiência energética compatível com a regulamentação vigente. Voltagem: 110V / 220V."
+      },
+      "19": {
+        "qtd": 1,
+        "valor": 3473.93,
+        "fonte": "Termo de referencia, \"1.2.6 Item 6 -\" (o termo numera de outro jeito que o PNCP; o recorte misturava o objeto, a tabela dos anexos e o item vizinho); conferido em 27/10/2026",
+        "texto": "Freezer vertical: capacidade aproximada: 230 litros; sistema Frost Free; Cor: branca, destinado ao armazenamento e conservação de amostras, reagentes, insumos e demais materiais que necessitem de congelamento em ambiente laboratorial. Deve possuir controle de temperatura, sistema de degelo automático, tipo frost free, compartimentos internos com prateleiras e/ou gavetas removíveis, boa eficiência energética e funcionamento contínuo. Voltagem: 110 V."
+      }
+    }
+  },
+  "01611339000197/2026/182": {
+    "edital": "Balneario Pinhal/RS, Edital 38/2026",
+    "conferido": "2026-10-27",
+    "itens": {
+      "4": {
+        "qtd": 9,
+        "valor": 1516.33,
+        "fonte": "Termo de referencia, tabela do item 1, linha \"04 Balança digital 40kg Unidade 9\" (o recorte levava a unidade, a quantidade e o \"2.\" da secao seguinte); conferido em 27/10/2026",
+        "texto": "Balança digital 40kg"
       }
     }
   }

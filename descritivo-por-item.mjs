@@ -3661,7 +3661,12 @@ const PRECOS_DEPOIS = /^(?:\s+(?:R\s?\$\s*)?\d{1,3}(?:\.?\d{3})*\s?,\s?\d{2}(?!\
 // III) 379929 ASPIRADOR...", Santa Maria/RS, edital 25/2026)
 const ANTES_DO_NUMERO = /^(?:(?:\d{5,7}|LOTE\s+\d{1,3}|ME\s?\/\s?EPP|EXCLUSIVO|COTA\s+(?:PRINCIPAL|RESERVADA)|AMPLA(?:\s+CONCORR[ÊE]NCIA)?|\(BENEF[ÍI]CIO\s+TIPO\s+[IVX]+\)|\*?AC)\s+)*/i;
 const CABECALHO_ANTES = /(?:ITEM|VALOR\s+TOTAL|VALOR\s+UNIT[ÁA]RIO|\(R\$\)|REFER[ÊE]NCIA\)|QUANT\S*|QTDE?\.?|UNID\.?|MEDIDA|M[ÁA]X\.?)\s*$/i;
-const JUSTIFICATIVA_NO_LUGAR = /^\(?[^()]{3,60}\s-\s\d{1,4}\s*UN\)\s*:|^.{0,160}?\b(?:Dimensionad[oa] para|Quantidade estipulada para|Quantitativo dimensionado para)\b|^Item\s+\d{1,3}\s*[–-]\s*[^;()]{3,60}\((?:ampla concorr[eê]ncia|exclusiv[oa][^)]{0,30})\)\s*[;.]?\s*(?:e\s+)?(?:\d{1,2}\.){2,}/i;
+// (e o despacho que autoriza a compra, "(um) Refrigerador para atender demandas da
+// hospedaria ... III - DA JUSTIFICATIVA DA CONTRATAÇÃO Autorizo o início dos
+// procedimentos" (IAC, Campinas/SP, dispensa 64), e o sumario do edital, "DESCRIÇÃO
+// DOS FORNECIMENTOS..........10 6. CONDIÇÕES DE PARTICIPAÇÃO" (Codevasf, Brasilia/DF,
+// edital 85), 27/10/2026)
+const JUSTIFICATIVA_NO_LUGAR = /^\(?[^()]{3,60}\s-\s\d{1,4}\s*UN\)\s*:|^.{0,160}?\b(?:Dimensionad[oa] para|Quantidade estipulada para|Quantitativo dimensionado para)\b|^Item\s+\d{1,3}\s*[–-]\s*[^;()]{3,60}\((?:ampla concorr[eê]ncia|exclusiv[oa][^)]{0,30})\)\s*[;.]?\s*(?:e\s+)?(?:\d{1,2}\.){2,}|^.{0,400}?\bDA\s+JUSTIFICATIVA\s+DA\s+(?:CONTRATA|AQUISI)|^.{0,400}?\bAutorizo\s+o\s+in[íi]cio\s+dos\s+procedimentos|\.{12,}\s*\d{1,3}\s+\d{1,2}\.\s/i;
 const LIXO_DE_LINHA = /As\s+quantidades\s+foram\s+definidas|JUSTIFICATIVA\s+D[AO]\s|FUNDAMENTA[ÇC][ÃA]O\s+E\s+DESCRI|Lan[çc]ado\s+por:|Metodologia\s+Menor\s+Valor|Menor\s+Valor\s+Valor\s+Estimado/i;
 function linhaPelaCauda(plano, caudas, it, timbres) {
   const n = +it[0], q = Math.round(+it[2] || 0);
@@ -4468,7 +4473,15 @@ for (const e of dados.editais) {
       // assinou antes: "TAMANHO Noll =b5bc0e0e-06de-4724-b15b-7cd12f49f54d PÁG. 17
       // estado do Paraná DOS ANÉIS" (Ibipora/PR, edital 72)
       .replace(/(?:\s\p{Lu}\p{Ll}{1,20})?\s+=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?:\s+P[ÁA]G\.?\s*\d{1,3})?(?:\s+estado\s+d[eo]\s+\p{L}+(?:\s+do\s+Sul)?)?/gu, '')
-      .replace(/\s+(?:UNID|UND|UN|Un|UNIDADE)\.?\s+\d{1,5}(?:[.,]\d{1,4})?(?:\s+(?:LOTE|N[ÃA]O))?\s*$/, '')
+      // e o carimbo de fonte sem mapa, que o PDF entrega embaralhado no meio e no
+      // fim: "prateleiras tm OQ qC RMOQWKOO qC UMOTUKOO 0800-043 0061 internas",
+      // "... em português tm OQ qC UWUKWR qC PMRVRKUU OV", "jc EG g9 HCLIHAEH g9
+      // LCIMKAEK g9 GMCNKIAFG 0800-043 0061 1.2" (Siqueira Campos/PR, PE 53, 27/10/2026)
+      // (no lugar dele, o ponto que a frase nao tinha: "... em português tm OQ qC ...
+      // OU Lavadora de alta pressão" vira "... em português. Lavadora", e o corte do
+      // item seguinte nao leva a frase inteira por ela estar sem ponto)
+      .replace(/\s[a-z]{2}\s+[A-Z]{2}\s+[a-z][A-Z0-9]\s+[A-Z]{4,12}(?:\s+[a-z][A-Z0-9]\s+[A-Z]{4,12})+(?:\s+[A-Z]{2}(?=\s|$))?(?:\s+0800-\d{3}\s+\d{4})?(?:\s+\d{1,2}\.\d{1,2}(?=\s*$))?/g,
+        (m, off, s) => !/\p{Ll}$/u.test(s.slice(0, off)) ? ' ' : /^\s*$/.test(s.slice(off + m.length)) ? '.' : /^\s*\p{Lu}/u.test(s.slice(off + m.length)) ? '. ' : ' ')      .replace(/\s+(?:UNID|UND|UN|Un|UNIDADE)\.?\s+\d{1,5}(?:[.,]\d{1,4})?(?:\s+(?:LOTE|N[ÃA]O))?\s*$/, '')
       .replace(/\s+R\$\s*\d{1,3}(?:\.\d{3})*,\d{2}(?:\s+\d{1,4})?\s*$/, '')
       // e a virada de folha seguida do cabecalho do orgao e de uma clausula do
       // edital, no lugar da continuacao: "... quadro de portas ‖‖ ESTADO DE SANTA
@@ -4488,6 +4501,13 @@ for (const e of dados.editais) {
       .replace(/\s\d{2}\/\d{2}\/\d{4},\s\d{2}:\d{2}\sSEI\/[A-Z]{2,8}\s-\s\d{5,12}\s-\s[^]{0,80}?https?:\/\/\S+(?:\s\d{1,3}\/\d{1,3})?/g, ' ')
       .replace(/\s+(?:LOTE\s+\d{1,3}\s+)?ITEM(?:\s+\d{1,3}\s+[A-ZÀ-Ú][^.]{0,120})?$/, '')
       .replace(/\s+Descri[çc][ãa]o$/, '')
+      // a planilha de proposta da Saude de Sao Paulo: "Fogão 4 bocas – Branco – com
+      // acendimento automático – Cap. 50 L 07 (Unid.) Valor que será considerado
+      // para fins de negociação no sistema." (dispensa 1026, 27/10/2026); e a secao
+      // seguinte no fim, "... oscilação horizontal automática. 2. JUSTIFICATIVA"
+      // (Bambui/MG, edital 42)
+      .replace(/\s+\d{1,5}\s+\((?:Unid|Un|Unidade|P[çc]|Cx|Kit)\.?\)\s+Valor que ser[áa] considerado[^]*$/i, '')
+      .replace(/\s+\d{1,2}(?:\.\d{1,2})?\.?\s+(?:DA\s+)?JUSTIFICATIVA(?:\s+DA\s+CONTRATA[ÇC][ÃA]O)?$/, '')
       .replace(/([.;])\s+[A-ZÀ-Ú]{1,3}$/, '$1')
       // e a letra que abre a frase seguinte, colada no ponto: "...ficha tecnica
       // oficial do fabricante.O" (Januaria/MG, "O licitante vencedor devera...")
@@ -4566,9 +4586,14 @@ for (const e of dados.editais) {
     // VOLTAGEM 220V UNID 4.0000 R$ 3.333,44 R$ 13.333,76 LOTE" (Rio Branco do
     // Ivai/PR, item 50); e o "1 ME 1132305206" (quantidade, cota e codigo) com o
     // item seguinte depois, do edital escaneado de Betim/MG (edital 32), 27/10/2026
-    it[6] = it[6].replace(/\s+(?:UNID|UND|UN|Un|UNIDADE)\.?\s+\d{1,5}(?:[.,]\d{1,4})?(?:\s+(?:LOTE|N[ÃA]O))?\s*$/, '')
+    // (e o numero da secao seguinte, "Balança digital 40kg Unidade 9 2." de
+    // "Unidade 9 R$ 1.516,33 2. Fundamentação", Balneario Pinhal/RS, edital 38; e o
+    // comeco da linha seguinte com a cota, "... VOLTAGEM: 220 V. 200 EXCLUSIVOS
+    // ME/EPP/MEI 4", Castro/PR, edital 157, itens 199 e 200, 27/10/2026)
+    it[6] = it[6].replace(/\s+(?:UNID|UND|UN|Un|Unidade|UNIDADE)\.?\s+\d{1,5}(?:[.,]\d{1,4})?(?:\s+(?:LOTE|N[ÃA]O|\d{1,2}\.))?\s*$/, '')
       .replace(/\s\d{1,5}\s+(?:ME|EPP|ME\/EPP|AMPLA)\s+\d{6,12}(?:\s[^]*)?$/, '')
-      .replace(/\s\d{1,5}\s+(?:ME|EPP|ME\/EPP|AMPLA)\s*$/, '');
+      .replace(/\s\d{1,5}\s+(?:ME|EPP|ME\/EPP|AMPLA)\s*$/, '')
+      .replace(/\s\d{1,5}\s+(?:EXCLUSIVOS?\s+ME\/EPP(?:\/MEI)?|COTA\s+(?:ME\/EPP(?:\/MEI)?|RESERVADA|PRINCIPAL)|AMPLA\s+CONCORR[ÊE]NCIA)(?:\s+\d{1,6}(?:[.,]\d{1,3})?)?\s*$/, '');
     // O comeco da linha seguinte que sobra no fim: "...COR BRANCA 35" (o
     // numero do item 35 em Tuneiras do Oeste/PR) e "...garantia mínima de 12
     // meses. 0045 81754" (numero e codigo em Senador Firmino/MG), 22/09/2026.

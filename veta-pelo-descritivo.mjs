@@ -60,7 +60,9 @@ const VETO = {
   // maxima aceitavel de 0,5°C", DMAE de Porto Alegre/RS, 06/10/2026)
   // (e o "Banho maria Beads, 5L" de laboratorio, de microesferas no lugar da
   // agua, R$ 18 mil: UEM, Maringa/PR, edital 236, item 1, 20/10/2026)
-  CC: ['banho maria de laboratorio', 'banho-maria de laboratorio', 'aplicacoes laboratoriais', 'uso laboratorial', 'pid fuzzy', 'precisao de controle', 'calibracao', 'variacao maxima aceitavel', 'beads'],
+  CC: ['banho maria de laboratorio', 'banho-maria de laboratorio', 'aplicacoes laboratoriais', 'uso laboratorial', 'pid fuzzy', 'precisao de controle', 'calibracao', 'variacao maxima aceitavel', 'beads',
+    // (e o atributo do PNCP, "Banho-maria, USO: Laboratorial", UEM, Maringa/PR, edital 1583, item 15, 27/10/2026)
+    'uso: laboratorial'],
   // (e o purificador de osmose reversa de laboratorio: "água com elevado grau de
   // pureza ... atendendo as exigências laboratoriais ... substituição do uso de
   // destiladores", FMRP-USP, Ribeirao Preto/SP, edital 186, item 5, 21/10/2026)
