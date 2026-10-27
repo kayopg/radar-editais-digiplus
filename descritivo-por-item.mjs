@@ -4475,9 +4475,29 @@ for (const e of dados.editais) {
       // CATARINA Câmara de Vereadores de Itajaí ... Página 13. FORMAS E CRITÉRIOS DE
       // SELEÇÃO DO FORNECEDOR 13.1. ..." (Itajai/SC, edital 6)
       .replace(/\s*‖‖(?:(?!‖‖)[^]){0,500}?\b\d{1,2}\.\s+[A-ZÀ-ÚÇ]{4,}(?:\s+[A-ZÀ-ÚÇ]{1,}){2,}[^]*$/, '')
+      // e no fim: a numeracao do subitem seguinte, "Voltagem: 110 V; 1.2.7 Item 7"
+      // (Maringa/PR, edital 239), e a silaba que abre o rodape, "... garantia minima
+      // de 12 meses. DA" (Chapadao do Ceu/GO, edital 95), 27/10/2026
+      .replace(/\s+\d{1,2}(?:\.\d{1,2}){1,3}\.?\s+Item\s+\d{1,3}\s*$/, '')
+      .replace(/([.;])\s+[A-ZÀ-Ú]{1,3}$/, '$1')
       // e a letra que abre a frase seguinte, colada no ponto: "...ficha tecnica
       // oficial do fabricante.O" (Januaria/MG, "O licitante vencedor devera...")
       .replace(/([.;])\s?[A-ZÀ-Ú]$/, '$1');
+    // E as letras de fonte sem mapa no fim, que o PDF entrega embaralhadas: "...
+    // manual de instruções em português tm OQ qC SURKVX qC XQVKTW OU" (Siqueira
+    // Campos/PR, PE 53, item 5). Quatro palavras curtas ou mais no fim, das quais
+    // pelo menos duas sem cara de palavra (minuscula seguida de maiuscula, ou
+    // quatro maiusculas sem vogal), 27/10/2026.
+    {
+      const m = /(?:\s+[A-Za-z]{1,7}){4,}$/.exec(it[6]);
+      if (m) {
+        const toks = m[0].trim().split(/\s+/);
+        const estranhas = toks.filter(w => /^[a-z]+[A-Z]/.test(w) || (/^[A-Z]{4,}$/.test(w) && (w.match(/[AEIOU]/g) || []).length <= 1)).length;
+        // (fecha a frase: sem o ponto, o corte de frase aberta la adiante levava
+        // junto o "Produto novo, de primeiro uso, ... manual em português")
+        if (estranhas >= 2) it[6] = it[6].slice(0, m.index).trim().replace(/([^.;!?)])$/, '$1.');
+      }
+    }
     // O item seguinte inteiro colado no fim (22/10/2026): as colunas da linha e o
     // numero do proximo item, "... Meses. Unidade 327808 1 4 Micro-ondas Micro-ondas
     // com Capacidade..." (Sao Paulo/SP, contratacao 158), "... Nacional. 308879
