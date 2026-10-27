@@ -4441,6 +4441,40 @@ for (const e of dados.editais) {
       .replace(/\s+(?:UND|UN|und)\s+\d{1,5}\s+Emenda\s+Municipal\b.*$/s, '')
       .replace(/\s\d{1,5}\s+\((?:[a-zà-ú]+\s?){1,8}\)\s+R\$\s+R\$(?:\s+\d{1,3}(?=\s))?/g, ' ')
       .replace(/\s+(?:TOTAL:\s*R\$\s*)?(?:Havendo diverg[êe]ncia no descritivo|DADOS BANC[ÁA]RIOS PARA PAGAMENTO)[^]*$/i, '')
+      // e as colunas da linha que o leitor do PDF intercalou no texto (27/10/2026,
+      // "tem muitos editais com numeros perdidos nos descritivos"): a unidade e a
+      // quantidade no meio do nome, "LIQUIDIFICADOR UNIDADE 01 INDUSTRIAL" (Nova
+      // Tebas/PR), "BALANÇA PEDIÁTRICA DIGITAL. UN 8 BALANÇA..." (Presidente
+      // Olegario/MG), "VENTILADOR DE COLUNA DE 50 CM Un 10,0000 Especificação:"
+      // (Manhumirim/MG), "2 TORNEIRAS UND 14 IAGUA" (Betim/MG), "estrutura UNIDADE
+      // 7,00 NÃO DA compacta" (Engenheiro Navarro/MG)
+      .replace(/\s(?:UNIDADE|Unidade|UNID|Unid|UND|Und|UN|Un)\.?\s+\d{1,5}(?:[.,]\d{1,4})?(?:\s+N[ÃA]O(?:\s+DA)?)?\s+(?=[A-ZÀ-Ú]{3,}|[A-ZÀ-Ú][a-zà-úç]{2,}|[a-zà-ú]{3,}\s(?![\d]))(?!(?:V|W|HZ|BTU|KG|L|ML|CM|MM)\b)/g, ' ')
+      // o cabecalho da folha seguinte no meio: "unidade 1 3/23 1243 - TERMO DE
+      // REFERÊNCIA - ANEXO I - PREGÃO ELETRÔNICO - ... - APROVADO AD Item Descrição
+      // Unid. Quant." (Areado/MG, edital 30)
+      .replace(/\s(?:unidade|UNIDADE|Unidade|UN|UND)\s+\d{1,5}\s+\d{1,3}\/\d{1,3}\s+\d{3,6}\s+-\s+TERMO DE REFER[ÊE]NCIA\b[^]{0,400}?\bItem\s+Descri[çc][ãa]o\s+Unid\.?\s+Quant\.?\s/g, ' ')
+      // os totais e a clausula seguinte no fim: "... COR PRETA R$ 6.802,00 17"
+      // (Cocal do Sul/SC), "Monofásico TOTAL 53 R$ 598.675,97 Caso haja..."
+      // (Paranavai/PR, edital 59), "... nacional. 1 4.266,67 4.266,67 7. DA
+      // SUBCONTRATAÇÃO" (Ramilandia/PR), "... 1 Und Valor total R$ 25.395,20 Lote 02 –
+      // ..." (Ipe/RS), "UND 50,00 ///// 204,00 219,87 ..." (pesquisa de precos,
+      // Campo Alegre de Goias/GO), "VOLTAGEM 220V UNID 4.0000 LOTE" (Rio Branco do
+      // Ivai/PR) e "UNIDADE 5,00 NÃO" (Engenheiro Navarro/MG)
+      .replace(/\s+TOTAL\s+\d{1,5}\s+R\$\s*[\d.]+,\d{2}[^]*$/, '')
+      .replace(/\s+\d{1,5}\s+(?:Und|UND|UN|Un|Unid\.?)\s+Valor\s+total\s+R\$[^]*$/i, '')
+      .replace(/\s+\d{1,5}\s+\d{1,3}(?:\.\d{3})*,\d{2}\s+\d{1,3}(?:\.\d{3})*,\d{2}\s+\d{1,2}\.\s+[A-ZÀ-Ú]{2,}[^]*$/, '')
+      .replace(/\s+(?:UND|UN|Und)\s+\d{1,5},\d{2}\s+\/{3,}[^]*$/, '')
+      // o carimbo da assinatura digital no meio do texto, com o sobrenome de quem
+      // assinou antes: "TAMANHO Noll =b5bc0e0e-06de-4724-b15b-7cd12f49f54d PÁG. 17
+      // estado do Paraná DOS ANÉIS" (Ibipora/PR, edital 72)
+      .replace(/(?:\s\p{Lu}\p{Ll}{1,20})?\s+=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?:\s+P[ÁA]G\.?\s*\d{1,3})?(?:\s+estado\s+d[eo]\s+\p{L}+(?:\s+do\s+Sul)?)?/gu, '')
+      .replace(/\s+(?:UNID|UND|UN|Un|UNIDADE)\.?\s+\d{1,5}(?:[.,]\d{1,4})?(?:\s+(?:LOTE|N[ÃA]O))?\s*$/, '')
+      .replace(/\s+R\$\s*\d{1,3}(?:\.\d{3})*,\d{2}(?:\s+\d{1,4})?\s*$/, '')
+      // e a virada de folha seguida do cabecalho do orgao e de uma clausula do
+      // edital, no lugar da continuacao: "... quadro de portas ‖‖ ESTADO DE SANTA
+      // CATARINA Câmara de Vereadores de Itajaí ... Página 13. FORMAS E CRITÉRIOS DE
+      // SELEÇÃO DO FORNECEDOR 13.1. ..." (Itajai/SC, edital 6)
+      .replace(/\s*‖‖(?:(?!‖‖)[^]){0,500}?\b\d{1,2}\.\s+[A-ZÀ-ÚÇ]{4,}(?:\s+[A-ZÀ-ÚÇ]{1,}){2,}[^]*$/, '')
       // e a letra que abre a frase seguinte, colada no ponto: "...ficha tecnica
       // oficial do fabricante.O" (Januaria/MG, "O licitante vencedor devera...")
       .replace(/([.;])\s?[A-ZÀ-Ú]$/, '$1');
@@ -4485,8 +4519,18 @@ for (const e of dados.editais) {
       // no fim, leva junto o numero do item seguinte ou da folha ("... classe
       // A. 2.112,17 R$ 6.336,51 9. 2", Vista Alegre/RS)
       it[6] = it[6].replace(new RegExp(par + '[\\s\\d.]*$', 'u'), '')
-        .replace(new RegExp(par + '(?:\\s+\\d{1,3}(?=\\s+\\p{Ll}))?(?=\\s)', 'u'), '');
+        .replace(new RegExp(par + '(?:\\s+\\d{1,3}(?=\\s+\\p{Ll}))?(?=\\s)', 'u'), '')
+        // e o preco sozinho no meio da frase, entre duas palavras minusculas: "com
+        // 1.092,00 painel em policarbonato" (Sapiranga/RS, edital 74, item 3), 27/10/2026
+        .replace(new RegExp('(?<=\\p{Ll}[,;]?\\s)' + brl.replace(/\./g, '\\.') + '\\s(?=\\p{Ll})', 'u'), '');
     }
+    // a unidade e a quantidade que so ficam no fim depois de o preco sair: "...
+    // VOLTAGEM 220V UNID 4.0000 R$ 3.333,44 R$ 13.333,76 LOTE" (Rio Branco do
+    // Ivai/PR, item 50); e o "1 ME 1132305206" (quantidade, cota e codigo) com o
+    // item seguinte depois, do edital escaneado de Betim/MG (edital 32), 27/10/2026
+    it[6] = it[6].replace(/\s+(?:UNID|UND|UN|Un|UNIDADE)\.?\s+\d{1,5}(?:[.,]\d{1,4})?(?:\s+(?:LOTE|N[ÃA]O))?\s*$/, '')
+      .replace(/\s\d{1,5}\s+(?:ME|EPP|ME\/EPP|AMPLA)\s+\d{6,12}(?:\s[^]*)?$/, '')
+      .replace(/\s\d{1,5}\s+(?:ME|EPP|ME\/EPP|AMPLA)\s*$/, '');
     // O comeco da linha seguinte que sobra no fim: "...COR BRANCA 35" (o
     // numero do item 35 em Tuneiras do Oeste/PR) e "...garantia mínima de 12
     // meses. 0045 81754" (numero e codigo em Senador Firmino/MG), 22/09/2026.
