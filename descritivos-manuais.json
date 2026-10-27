@@ -1759,5 +1759,23 @@
         "texto": "BALANÇA DIGITAL DE PLATAFORMA, 500 KG. Requisitos mínimos Balança eletrônica digital de plataforma para piso, nova e sem uso, capacidade máxima de pesagem mínima de 500 kg, divisão/resolução de 100 g ou melhor, sem coluna ou pedestal. Plataforma robusta, com área útil compatível com a pesagem de cargas de até 500 kg, com dimensões mínimas aproximadas de 50 × 70 cm, construída em aço carbono com tratamento anticorrosivo e pintura de alta resistência, aço inoxidável ou material de desempenho equivalente ou superior. Indicador digital separado da plataforma, permitindo posicionamento em bancada, parede ou suporte equivalente. Deve possuir, no mínimo, funções de zero e tara. Alimentação 110/220 V ou bivolt automático, 60 Hz, podendo possuir bateria interna recarregável. Equipamento deverá atender aos requisitos metrológicos aplicáveis e possuir aprovação/homologação do INMETRO quando exigível. Fornecimento completo e pronto para uso, incluindo indicador, cabos, fonte de alimentação e demais componentes indispensáveis ao funcionamento. Garantia mínima de 12 meses. Modelo de referência: Micheletti MIC-500L 500 kg × 100 g, ou equivalente técnico de igual ou superior desempenho. • Referência de qualidade e desempenho: Micheletti MIC-500L, 500 kg × 100 g, plataforma 60 × 80 cm, ou equivalente/similar de igual ou superior qualidade que atenda a todos os requisitos mínimos deste item. A referência não constitui exigência de marca ou modelo."
       }
     }
+  },
+  "08082743000160/2026/62": {
+    "edital": "Sao Paulo/SP, Secretaria Municipal da Pessoa com Deficiencia, Edital 71/2026",
+    "conferido": "2026-10-27",
+    "itens": {
+      "8": {
+        "qtd": 1,
+        "valor": 0,
+        "fonte": "Especificacao tecnica (SEI/PMSP), linha \"ITEM 8 Cafeteira eletrica\" ate o item 9; o recorte so trazia \"Cafeteira eletrica 640833\"; conferido em 27/10/2026",
+        "texto": "CAFETEIRA ELÉTRICA Capacidade: 1,1 L, para 32 cafés, acompanha colher dosadora Filtro permanente e porta filtro removível, placa de aquecimento, mantém o café aquecido após o preparo, sistema corta-pingos Botão luminoso liga/desliga Descrição CATMAT: Cafeteira Elétrica Material: Inox Capacidade: 1,1 L Voltagem: 110/220 V Potência: 700 W"
+      },
+      "12": {
+        "qtd": 3,
+        "valor": 0,
+        "fonte": "Especificacao tecnica (SEI/PMSP), linha \"ITEM 12 Ventilador de Coluna\" ate o lote 3; o recorte comecava em \"Coluna\"; conferido em 27/10/2026",
+        "texto": "VENTILADOR TORRE (PEDESTAL): Altura mínima de 1,5 metros, dispositivo de inclinação, com 3 pás ou mais, com diâmetro de 40cm, sistema de oscilação, múltiplas velocidades e grade de proteção com malha fina para segurança, selo INMETRO e etiqueta nacional de eficiência energética, cordão de alimentação de no mínimo 1 metro e plugue de 10A. Possuir manual de instruções em língua portuguesa, disponível preferencialmente em formato digital/online. Assistência técnica na região metropolitana de São Paulo."
+      }
+    }
   }
 }

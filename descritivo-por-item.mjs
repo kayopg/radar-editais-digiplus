@@ -4479,6 +4479,15 @@ for (const e of dados.editais) {
       // (Maringa/PR, edital 239), e a silaba que abre o rodape, "... garantia minima
       // de 12 meses. DA" (Chapadao do Ceu/GO, edital 95), 27/10/2026
       .replace(/\s+\d{1,2}(?:\.\d{1,2}){1,3}\.?\s+Item\s+\d{1,3}\s*$/, '')
+      // a tabela "LOTE N ITEM n Nome NOME: especificacao" da Prefeitura de Sao
+      // Paulo (Pessoa com Deficiencia, edital 71, 27/10/2026): o comeco da linha
+      // seguinte no fim, "... São Paulo. LOTE 3 ITEM", "... Manual de instruções
+      // ITEM", "... ITEM 5 Telefone APARELHO DE TELEFONE:", "... Descrição", e o
+      // rodape do SEI no meio, "22/10/2026, 07:58 SEI/PMSP - 167398818 -
+      // Especificação Técnica https://sei.prefeitura.sp.gov.br/... 2/9"
+      .replace(/\s\d{2}\/\d{2}\/\d{4},\s\d{2}:\d{2}\sSEI\/[A-Z]{2,8}\s-\s\d{5,12}\s-\s[^]{0,80}?https?:\/\/\S+(?:\s\d{1,3}\/\d{1,3})?/g, ' ')
+      .replace(/\s+(?:LOTE\s+\d{1,3}\s+)?ITEM(?:\s+\d{1,3}\s+[A-ZÀ-Ú][^.]{0,120})?$/, '')
+      .replace(/\s+Descri[çc][ãa]o$/, '')
       .replace(/([.;])\s+[A-ZÀ-Ú]{1,3}$/, '$1')
       // e a letra que abre a frase seguinte, colada no ponto: "...ficha tecnica
       // oficial do fabricante.O" (Januaria/MG, "O licitante vencedor devera...")
@@ -4497,6 +4506,15 @@ for (const e of dados.editais) {
         // junto o "Produto novo, de primeiro uso, ... manual em português")
         if (estranhas >= 2) it[6] = it[6].slice(0, m.index).trim().replace(/([^.;!?)])$/, '$1.');
       }
+    }
+    // O nome curto da coluna na frente do nome da especificacao, que repete a
+    // primeira palavra: "Bebedouro BEBEDOURO: Gabinete em aço inox...", "Geladeira
+    // GELADEIRA: Duplex...", "Ventilador de Coluna VENTILADOR TORRE (PEDESTAL):..."
+    // (Sao Paulo/SP, Pessoa com Deficiencia, edital 71, 27/10/2026). Fica o da
+    // especificacao.
+    {
+      const m = /^([A-ZÀ-Ú][a-zà-úç]+(?:\s+[A-ZÀ-Ú]?[a-zà-úç]+){0,3})\s+([A-ZÀ-ÚÇ]{3,})\b/.exec(it[6]);
+      if (m && normIgual(m[1].split(/\s+/)[0]) === normIgual(m[2]) && it[6].length - m[1].length >= 60) it[6] = it[6].slice(m[1].length).trim();
     }
     // O item seguinte inteiro colado no fim (22/10/2026): as colunas da linha e o
     // numero do proximo item, "... Meses. Unidade 327808 1 4 Micro-ondas Micro-ondas
