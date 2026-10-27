@@ -319,6 +319,24 @@ const rePrecoDe = v => {
 // escolhidas, o teto DESTE edital sobe ate ela entrar, com a folha seguinte
 // (onde a celula continua), no maximo 600 mil. Os outros editais nao mudam.
 const TETO_DO_ITEM = 600000;
+
+// A folha b continua a tabela da folha a? No alto de b (depois do timbre, nos
+// primeiros 500 caracteres) tem de haver um cabecalho de tabela de itens que a
+// tambem traz: "Item Qtde. UN Descrição Material" (Camara de Itajai/SC, edital
+// 6/2026). Vale o trecho mais longo, a partir do "Item", que esta nas duas.
+const NUMERO_DA_FOLHA = /\b(?:p[áa]gina|p[áa]g\.?|fls?\.?|folha)\s*\d{1,4}(?:\s*(?:de|\/)\s*\d{1,4})?/gi;
+function continuaTabela(a, b) {
+  const x = String(a || '').replace(NUMERO_DA_FOLHA, ' ').replace(/\s+/g, ' ').trim();
+  const y = String(b || '').replace(NUMERO_DA_FOLHA, ' ').replace(/\s+/g, ' ').trim();
+  for (const m of y.slice(0, 500).matchAll(/\bitem\b/gi)) {
+    let k = 4;
+    while (m.index + k < y.length && k < 120 && x.includes(y.slice(m.index, m.index + k + 1))) k++;
+    const cab = y.slice(m.index, m.index + k);
+    if (cab.length >= 20 && /^item\b[^.;:]{0,40}?(?:descri|especifica|qtd|quant|unid)/i.test(cab)) return true;
+  }
+  return false;
+}
+
 function limitaSemPerderItem(secoes, e) {
   const curto = limita(secoes);
   if (!curto.some(s => s.cortado)) return curto;
@@ -551,6 +569,18 @@ async function extraiSecoes(e, planilhas) {
       // linha abre sem o nome.
       const vizinhas = new Set();
       for (const i of base) { vizinhas.add(i); if (i > 0) vizinhas.add(i - 1); if (i + 1 < paginas.length) vizinhas.add(i + 1); }
+      // E a TABELA que segue nas folhas seguintes, com o cabecalho repetido no alto
+      // de cada uma ("Item Qtde. UN Descrição Material"): entra folha a folha
+      // enquanto a seguinte abrir com o mesmo cabecalho. Na Camara de Itajai/SC
+      // (edital 6/2026, 27/10/2026) o PNCP descreve os itens pelo catalogo
+      // ("Refrigerador Duplex capacidade refrigeração: 450..."), nenhuma folha casava
+      // com essas palavras, e da tabela das paginas 24 a 28 so a 24 entrava, como
+      // vizinha do termo de referencia: os itens 2 a 8 ficavam so com o nome do PNCP.
+      const antesDaTabela = vizinhas.size;
+      for (const i of [...vizinhas].sort((a, b) => a - b)) {
+        for (let k = i; k + 1 < paginas.length && k - i < 40 && !vizinhas.has(k + 1) && continuaTabela(paginas[k], paginas[k + 1]); k++) vizinhas.add(k + 1);
+      }
+      if (process.env.DEPURA_WORD && vizinhas.size > antesDaTabela) console.log(`  tabela continua: ${e[C.municipio]}/${e[C.uf]} ${e[C.path]} · ${vizinhas.size - antesDaTabela} folha(s) a mais`);
       const quais = [...vizinhas].sort((a, b) => a - b);
       return { fonte: 'PDF', paginas: quais.length, total: paginas.length,
                cobertura: +cobre.toFixed(2), ilegiveis: perdidas || undefined,
