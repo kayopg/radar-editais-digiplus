@@ -662,7 +662,8 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // Arvorezinha/RS e outra maquina e continua.
 "churrasqueira","moedor de cafe","moinho de cafe",
 // enceradeira/lustradeira de piso nao e cotada (decisao do usuario em
-// 23/09/2026). A camara fria, perguntada junto, FICA.
+// 23/09/2026). A camara fria, perguntada junto, ficava — ate 27/10/2026, quando o
+// usuario mandou tirar ("camara frigorifica ... nao cotamos", ver o fim do VETO_ITEM).
 "enceradeira","lustradeira",
 // e, na mesma conversa: aquecimento de agua (aquecedor de agua, boiler,
 // aquecedor solar, aquecedor de passagem — o aquecedor de AMBIENTE continua);
@@ -819,7 +820,14 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // e a torneira (usuario, 22/10/2026: "torneira nao cotamos"): "TORNEIRA PARA TANQUE E
 // MAQUINA DE LAVAR – DE PAREDE" (Campos Novos/SC, PE 62/2026, item 254) entrava pela
 // maquina de lavar. So na frente (VETO_SO_NA_FRENTE): "BEBEDOURO INDUSTRIAL 4 TORNEIRAS" fica
-"torneira"];
+"torneira",
+// e o estabilizador de tensao (usuario, 27/10/2026: "esse estabilizador nao cotamos";
+// "ESTABILIZADOR DE TENSAO DESTINADO A PROTECAO DE REFRIGERADORES", Panambi/RS, PCE
+// 160, entrava pelos refrigeradores) e a camara fria/frigorifica, de montar em
+// alvenaria (Pelotas/RS, edital 514; Tucunduva/RS, edital 28, 4,30 x 4,60 m). O estabilizador so
+// na frente; a camara em qualquer lugar (ela e termo da categoria RF, e o veto so na
+// frente nao vale para o proprio produto). Muda a decisao de 23/09/2026 ("a camara fria fica").
+"estabilizador","camara frigorifica","camara fria","camaras frias","camara de resfriamento","camara de congelamento","camara de refrigeracao"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
@@ -876,7 +884,7 @@ const VETO_SO_NA_FRENTE = ["gas liquefeito","botijoes","carga de gas","gas de co
 // academia, que vetava em qualquer ponto e derrubava a "Batedeira planetária,
 // potência mínima de 700W ... movimentos planetários" de batedor eliptico
 // (Rancho Alegre/PR, edital 38, item 19, 20/10/2026): so na frente.
-"correia","eliptico","apartamento","marmita","termostato","torneira",
+"correia","eliptico","apartamento","marmita","termostato","torneira","estabilizador",
 // e o ventilador centrifugo de processo ("Ventilador Centrífugo com pás voltadas
 // para trás tipo Limit load ... Vazão m³/h: 5.058; Pressão", Tres Passos/RS,
 // edital 184, 20/10/2026): equipamento de ventilacao industrial, como o exaustor

@@ -261,7 +261,7 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    Condicionado"; a amassadeira "com transmissão por correia" fica), o ar-condicionado que exige Wi-Fi (usuário, 22/10/2026, que escolheu tirar: "SMART COM CONEXÃO WI-FI", UTFPR
    de Cornélio Procópio/PR; o "Wi-Fi opcional" e o "com ou sem Wi-Fi" ficam; em edital por lote fica em cinza),
    a torneira na frente do nome ("TORNEIRA PARA TANQUE E MÁQUINA DE LAVAR", Campos Novos/SC, 22/10/2026; o
-   "BEBEDOURO INDUSTRIAL 4 TORNEIRAS" fica), a passadeira a vapor (22/10/2026), a bancada ou mesa com pia (23/10/2026: "bancada com pia não cotamos", Goioerê/PR; a mesa de trabalho "com cuba", sem pia, fica), o item comprado em horas
+   "BEBEDOURO INDUSTRIAL 4 TORNEIRAS" fica), a passadeira a vapor (22/10/2026), o estabilizador de tensão (27/10/2026, Panambi/RS: entrava pelos "refrigeradores" que ele protege), a câmara fria ou frigorífica, de montar em alvenaria (27/10/2026, Pelotas/RS e Tucunduva/RS — muda a decisão de 23/09, quando ela ficava), o utensílio que só cita o aparelho como uso, "podendo ser usado em lava louças e microondas" (canecas, potes, pratos e xícaras de Carazinho/RS, 27/10/2026), a bancada ou mesa com pia (23/10/2026: "bancada com pia não cotamos", Goioerê/PR; a mesa de trabalho "com cuba", sem pia, fica), o item comprado em horas
    (serviço: as "BALANÇAS mecânicas", 100 horas de manutenção, Lunardelli/PR) e o contrato de "serviços
    contínuos de manutenção" pelo objeto, o termostato de ar-condicionado, peça (Embrapa,
    Brasília/DF, edital 10, 21/10/2026: entrava pelo "Split" do fim do nome; só na frente do produto),

@@ -460,6 +460,10 @@ for (const e of dados.editais) {
       // (antropométricas)", 100 Horas, e a manutencao de balancas do contrato de
       // manutencao do parque de equipamentos (Lunardelli/PR, edital 34, 22/10/2026)
       || (/^horas?\b/i.test(String(it[4] || '').trim()) && 'item em horas (servico)')
+      // o item que nem o nome nem o edital chamam por produto do radar, so por uso:
+      // "CANECA ... PODENDO SER USADO EM LAVA LOUÇAS E MICROONDAS" (Carazinho/RS,
+      // PCE 44, 27/10/2026). A varredura ja nao o pega; aqui sai o que entrou antes.
+      || (!termoMaisCedo(norm(it[3])) && !termoMaisCedo(d) && 'nenhum produto do radar, so o uso')
       || (it[0] === 'CL' && AR_CONDICIONADO.test(norm(it[3]) + ' ' + d.slice(0, 300)) && pedeWifi(d + ' ' + norm(it[3])) && 'ar-condicionado com Wi-Fi')
       // o "UMIDIFICADOR" sem mais nada no edital de oxigenio medicinal e o frasco
       // do fluxometro, nao o umidificador de ambiente (Campina da Lagoa/PR,
