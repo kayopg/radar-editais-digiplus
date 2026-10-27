@@ -157,13 +157,13 @@ body.revelando .hero .kpi:nth-child(3){animation-delay:.76s}
 body.revelando .hero .kpi:nth-child(4){animation-delay:.84s}
 body.revelando .hero .kpi:nth-child(5){animation-delay:.92s}
 body.revelando .controls{animation:sobe .6s cubic-bezier(.2,.8,.2,1) .8s both}
-body.revelando .vistas{animation:sobe .6s cubic-bezier(.2,.8,.2,1) .9s both}
+body.revelando .vistas-linha{animation:sobe .6s cubic-bezier(.2,.8,.2,1) .9s both}
 body.revelando #list{animation:sobe .7s cubic-bezier(.2,.8,.2,1) 1s both}
 @keyframes surge{from{opacity:0;transform:translateY(-18px) scale(.985)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){
   .entrada::before{animation:none}
   .porta,.porta .logo,.porta > :not(.logo),.entrada.saindo,.entrada.saindo .porta,
-  body.revelando .hero,body.revelando .hero .kpi,body.revelando .controls,body.revelando .vistas,body.revelando #list{animation:none}
+  body.revelando .hero,body.revelando .hero .kpi,body.revelando .controls,body.revelando .vistas-linha,body.revelando #list{animation:none}
 }
 @media(max-width:560px){.hero{padding:20px 18px}.logo{width:72px;height:72px}.marca{gap:12px}.kpi .n{font-size:25px}}
 
@@ -280,12 +280,17 @@ button.btn{font-family:inherit;cursor:pointer}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 @media(prefers-reduced-motion:reduce){.empty.carregando::after{opacity:1}}
 [hidden]{display:none!important}
-/* ---------- Lista | Agenda */
-.vistas{display:flex;gap:6px;margin:0 0 14px}
-.vistas button{font:inherit;font-size:13px;font-weight:700;padding:8px 18px;border-radius:99px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink2);cursor:pointer;transition:border-color .15s,background .15s,color .15s}
-.vistas button:hover{border-color:var(--brand);color:var(--brand-ink)}
+/* ---------- Lista | Agenda | Catálogo (o Catálogo é um link: abre o Gerador de
+   Catálogo, que roda em outro servidor, numa aba nova do navegador) */
+.vistas-linha{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 14px}
+.vistas{display:flex;gap:6px}
+.vistas button,.vistas-link{font:inherit;font-size:13px;font-weight:700;padding:8px 18px;border-radius:99px;border:1.5px solid var(--line);background:var(--panel);color:var(--ink2);cursor:pointer;transition:border-color .15s,background .15s,color .15s}
+.vistas-link{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.vistas-link svg{width:12px;height:12px;flex:none}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.vistas button:hover,.vistas-link:hover{border-color:var(--brand);color:var(--brand-ink)}
 .vistas button[aria-selected="true"]{background:var(--brand);border-color:var(--brand);color:#fff;box-shadow:0 4px 12px rgba(31,95,191,.28)}
-.vistas button:focus-visible,.ag-nav button:focus-visible,.ag-ev:focus-visible,.ag-nota button:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+.vistas button:focus-visible,.vistas-link:focus-visible,.ag-nav button:focus-visible,.ag-ev:focus-visible,.ag-nota button:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
 .ag-topo{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-bottom:10px}
 .ag-mes{font-family:var(--display);font-style:italic;font-weight:800;font-size:24px;line-height:1.1;color:var(--ink);margin:0 auto 0 0}
 .ag-mes small{display:block;font-family:var(--text);font-style:normal;font-weight:600;font-size:12.5px;color:var(--ink2);text-transform:none;margin-top:2px}
@@ -424,9 +429,12 @@ button.btn{font-family:inherit;cursor:pointer}
   <div class="crow"><span class="clabel">Preço</span><div id="pr" style="display:flex;flex-wrap:wrap;gap:6px"></div><span class="count" id="count" style="margin-left:auto"></span></div>
 </div>
 
-<div class="vistas" role="tablist" aria-label="Como ver os editais">
-  <button type="button" role="tab" id="vLista" aria-selected="true" aria-controls="list">Lista</button>
-  <button type="button" role="tab" id="vAgenda" aria-selected="false" aria-controls="painelAgenda">Agenda</button>
+<div class="vistas-linha">
+  <div class="vistas" role="tablist" aria-label="Como ver os editais">
+    <button type="button" role="tab" id="vLista" aria-selected="true" aria-controls="list">Lista</button>
+    <button type="button" role="tab" id="vAgenda" aria-selected="false" aria-controls="painelAgenda">Agenda</button>
+  </div>
+  <a class="vistas-link" id="vCatalogo" href="https://gerador-catalogo.onrender.com" target="_blank" rel="noopener" title="Abre o Gerador de Catálogo numa aba nova (mesmo usuário e senha do Radar)">Catálogo<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2h5.5v5.5M10 2 2.5 9.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sr">(abre numa aba nova)</span></a>
 </div>
 
 <div id="painelAgenda" role="tabpanel" aria-labelledby="vAgenda" hidden></div>
