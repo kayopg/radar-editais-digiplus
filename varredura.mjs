@@ -467,7 +467,16 @@ const VETO_OBJ = ["veiculo","picape","caminhao","onibus","ambulancia","motocicle
 // e os servicos continuos de manutencao (Lunardelli/PR, edital 34/2026, 22/10/2026:
 // "prestacao de servicos continuos de manutencao preventiva e corretiva ... para o
 // parque de equipamentos medicos", com 100 horas de manutencao de balancas como item)
-"servicos continuos de manutencao"];
+"servicos continuos de manutencao",
+// e a compra de pneus e pecas de viatura (usuario, 27/10/2026: "nao cotamos", sobre
+// o "Pivo Balanca Suspensao ... Veiculo Chevrolet Modelo S-10" da Policia Militar,
+// Mogi das Cruzes/SP, edital 90025, "Aquisicao de pneus e pecas para a motomec").
+// So "pneus": "motomec" pegaria "ferramentas motomecanizadas" (Braco do Norte/SC,
+// com a lavadora de alta pressao)
+"pneus",
+// e a compra de viatura (Rio das Pedras/SP, edital 38, "AQUISICAO DE (02) DUAS VIATURAS
+// AUTOMOTIVAS, TIPO SUV", 27/10/2026, com o carro entrando pelo ar-condicionado)
+"viatura"];
 // 5.2c — o objeto que TAMBEM compra eletrodomestico nao cai inteiro por uma
 // palavra (18/09/2026). "Aquisicao de Moveis, Eletrodomesticos, Eletronicos e
 // brinquedos", "motocicleta, bicicleta eletrica e refrigerador frost free" e
@@ -827,7 +836,15 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // alvenaria (Pelotas/RS, edital 514; Tucunduva/RS, edital 28, 4,30 x 4,60 m). O estabilizador so
 // na frente; a camara em qualquer lugar (ela e termo da categoria RF, e o veto so na
 // frente nao vale para o proprio produto). Muda a decisao de 23/09/2026 ("a camara fria fica").
-"estabilizador","camara frigorifica","camara fria","camaras frias","camara de resfriamento","camara de congelamento","camara de refrigeracao"];
+"estabilizador","camara frigorifica","camara fria","camaras frias","camara de resfriamento","camara de congelamento","camara de refrigeracao",
+// 27/10/2026, na revisao da lista: o kit de instalacao vendido sozinho ("KIT P/ INSTALAR
+// DE AR CONDICIONADO. Suporte 450mm Fita de PVC ... Tubo de Cobre", Itacurubi/RS, edital
+// 36, item 1) e o carro com ar-condicionado ("Automovel caracteristicas adicionais: 0 km,
+// ar condicionado", Rio das Pedras/SP, edital 38, viaturas). So na frente
+// (VETO_SO_NA_FRENTE): o "bebedouro ... + kit de instalacao" e o "ar condicionado ...
+// com kit de instalacao incluido" ficam. "automotiv" nao: o frigobar de Uberlandia pede
+// "pintura automotiva".
+"kit p/ instalar","kit para instalar","kit de instalacao","kit instalacao","kit para instalacao","kit p/ instalacao","automovel","automoveis","viatura"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
@@ -885,6 +902,7 @@ const VETO_SO_NA_FRENTE = ["gas liquefeito","botijoes","carga de gas","gas de co
 // potência mínima de 700W ... movimentos planetários" de batedor eliptico
 // (Rancho Alegre/PR, edital 38, item 19, 20/10/2026): so na frente.
 "correia","eliptico","apartamento","marmita","termostato","torneira","estabilizador",
+"kit p/ instalar","kit para instalar","kit de instalacao","kit instalacao","kit para instalacao","kit p/ instalacao","automovel","automoveis","viatura",
 // e o ventilador centrifugo de processo ("Ventilador Centrífugo com pás voltadas
 // para trás tipo Limit load ... Vazão m³/h: 5.058; Pressão", Tres Passos/RS,
 // edital 184, 20/10/2026): equipamento de ventilacao industrial, como o exaustor
@@ -968,7 +986,11 @@ const VETO_BL_MEDICA = ['laboratoriais','eletronica de precisao',
   // utilizacao para ... analises laboratoriais", e fica.
   'atividades laboratoriais','uso laboratorial','uso em laboratorio','para laboratorio','pesagem de amostras','materiais e amostras',
   // 15/10/2026: a veterinaria do canil (Castro/PR, edital 149, item 86)
-  'veterinari'];
+  'veterinari',
+  // 27/10/2026: a "balanca" da suspensao do carro ("Pivo Balanca Suspensao ...
+  // Tipo Uso: Balanca Inferior, Aplicacao: Veiculo Chevrolet", Mogi das Cruzes/SP,
+  // edital 90025, item 26; usuario: "nao cotamos")
+  'suspensao','pivo','balanca inferior','balanca superior','veicul','automotiv'];
 
 // A mesa inox que nao e de cozinha (15/10/2026, na entrada da categoria MI): a de
 // hospital e de clinica — "MESA DE MAYO", "Mesa Ginecologica", "Mesa auxiliar

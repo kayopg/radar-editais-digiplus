@@ -413,6 +413,48 @@ export function lotesPorSecaoComItem(itens, texto) {
   return res;
 }
 
+// O CABECALHO DA TABELA COM O GRUPO NA FRENTE, sem titulo, e os itens avulsos
+// entre os grupos: "Grupo 1 ITEM DESCRICAO CATMAT/CATSER UNIDADE QUANTIDADE 1 Rede
+// Pesca ... Itens Avulsos ITEM DESCRICAO UNIDADE QUANTIDADE 21 Aerador de Pas ...
+// Grupo 3 ITEM DESCRICAO ..." (Codevasf, Brasilia/DF, edital 85/2026, "6 (seis)
+// grupos e 12 (doze) itens avulsos", 27/10/2026). Cada secao vai do primeiro item
+// dela ate o primeiro da seguinte; o avulso fica com o lote 0. A folha pode cair
+// entre o cabecalho e o primeiro item (o "e-DOC ... Territorial 6" do grupo 3):
+// vale o primeiro numero seguido de palavra. A tabela aparece mais de uma vez (o
+// termo de referencia e a planilha de precos) e uma copia pode pular grupos
+// (Brasilia/DF, edital 68): vale a primeira vez de cada grupo. Os grupos tem de
+// vir todos, de 1 em diante, e o primeiro item tem de crescer com o grupo.
+export function lotesPeloCabecalhoDoGrupo(itens, texto) {
+  const t = String(texto);
+  const doGrupo = new Map(), avulsos = new Set();
+  const RE = /\b(?:GRUPO|Grupo|LOTE|Lote)\s+0*(\d{1,3})\s+(?:[\d.]{1,7}\s+)?ITEM\s+(?:CATMAT\s+)?DESCRI[ÇC][ÃA]O\b|\b(?:ITENS\s+AVULSOS|Itens\s+Avulsos)\s+(?:[\d.]{1,7}\s+)?ITEM\s+(?:CATMAT\s+)?DESCRI[ÇC][ÃA]O\b/g;
+  for (const m of t.matchAll(RE)) {
+    const n = /\s0*(\d{1,3})\s+(?:\d{5,7}\s+)?(?=[A-ZÀ-Ú][a-zà-úç]|[A-ZÀ-Ú]{3})/.exec(t.slice(m.index + m[0].length, m.index + m[0].length + 900));
+    if (!n) continue;
+    if (!m[1]) avulsos.add(+n[1]);
+    else if (!doGrupo.has(+m[1])) doGrupo.set(+m[1], +n[1]);
+  }
+  const gs = [...doGrupo.keys()].sort((a, b) => a - b);
+  if (gs.length < 2) return null;
+  for (let k = 0; k < gs.length; k++) if (gs[k] !== k + 1 || (k && doGrupo.get(gs[k]) <= doGrupo.get(gs[k - 1]))) return null;
+  const secoes = new Map(gs.map(g => [doGrupo.get(g), g]));
+  for (const f of avulsos) if (secoes.has(f)) return null; else secoes.set(f, 0);
+  const ordem = [...secoes.keys()].sort((a, b) => a - b);
+  const res = new Map();
+  for (const x of itens) {
+    let s = null;
+    for (const f of ordem) if (f <= x.n) s = f;
+    if (s === null) return null;
+    res.set(x.n, secoes.get(s));
+  }
+  // e a conta tem de bater com a que o edital declara: "distribuidos em 6 (seis)
+  // grupos e 12 (doze) itens avulsos". Brasilia/DF, edital 65 ("18 grupos e 9
+  // itens"), poe o item avulso entre os grupos sem cabecalho, e ele cairia no grupo
+  const decl = /\b(\d{1,3})\s*\([^)]{2,25}\)\s+grupos(?:\s+e\s+(\d{1,3})\s*\([^)]{2,25}\)\s+itens)?/i.exec(t);
+  if (decl && (gs.length !== +decl[1] || [...res.values()].filter(g => g === 0).length !== (+decl[2] || 0))) return null;
+  return res;
+}
+
 // A LINHA "LOTE N ITEM NOME", com o item recomecando em 1 a cada lote: "LOTE 1
 // 1 ARADO ALEIRADOR DE DISCO, com uma estrutura reforcada... LOTE 2 1 ARADO
 // SUBSOLADOR..." (Mondai/SC, pregao 65/2026, 35 lotes). O lote com mais de um

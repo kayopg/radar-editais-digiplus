@@ -3,7 +3,7 @@
 // Uso: node testa-lotes.mjs   (sai com codigo 1 se algum caso falhar)
 import { lotesPelaTabelaDeGrupo, vendaPorLote, lotesPeloRotulo, lotesPelaColunaDoLote, lotesPelaLinhaComLote, lotesPorFaixa, lotesPorSecao,
   totaisPorLote, lotesPelosTotais, lotesLoteUnico, lotesPelaTabelaLoteItem, lotesPeloTextoDoItem, lotesPorFaixaDeItens, lotesPorSecaoComItem,
-  lotesPelaLinhaLoteNome, lotesUmItemPorLote, lotesPelaTabelaLoteItemNome } from './lotes.mjs';
+  lotesPelaLinhaLoteNome, lotesUmItemPorLote, lotesPelaTabelaLoteItemNome, lotesPeloCabecalhoDoGrupo } from './lotes.mjs';
 
 // beneficio e quantidade de cada item, na ordem
 const itens = (...b) => b.map(([benef, qtd], k) => ({ n: k + 1, benef, qtd }));
@@ -76,6 +76,11 @@ const CASOS = [
   // os "ITENS NAO AGRUPADOS" do fim nao sao do ultimo grupo (Pelotas/RS)
   ['secoes "GRUPO N - TITULO ITEM DESCRICAO n" e os nao agrupados (Pelotas)', lotesPorSecaoComItem([1, 2, 3, 4, 5].map(n => ({ n })),
     'GRUPO 2 - MESAS ITEM DESCRIÇÃO 2 MESA DE TRABALHO GRUPO 3 - BEBEDOUROS ITEM DESCRIÇÃO 3 BEBEDOURO TIPO PRESSAO 4 BEBEDOURO DE GARRAFAO ITENS NÃO AGRUPADOS E ACESSÓRIOS ITEM DESCRIÇÃO 5 AQUECEDOR'), '1:1 2:2 3:3 4:3 5:0'],
+  // "Grupo N ITEM DESCRICAO", a folha antes do primeiro item e os avulsos entre os grupos (Codevasf, Brasilia/DF, edital 85)
+  ['cabecalho "Grupo N ITEM DESCRICAO" e itens avulsos (Codevasf 85)', lotesPeloCabecalhoDoGrupo([1, 2, 3, 4, 5, 6].map(n => ({ n })),
+    'distribuídos em 2 (dois) grupos e 2 (dois) itens avulsos Grupo 1 ITEM DESCRIÇÃO CATMAT/CATSER UNIDADE QUANTIDADE 1 Rede Pesca und 199 2 Balança und 1 Itens Avulsos ITEM DESCRIÇÃO UNIDADE QUANTIDADE 3 Aerador und 9 Grupo 2 ITEM DESCRIÇÃO UNIDADE QUANTIDADE e-DOC A55A Territorial 6 4 Rede Pesca und 9 5 Balança und 1 Itens Avulsos ITEM DESCRIÇÃO UNIDADE QUANTIDADE 6 Aerador'), '1:1 2:1 3:0 4:2 5:2 6:0'],
+  ['grupos com o avulso sem cabecalho recusa (Codevasf 65)', lotesPeloCabecalhoDoGrupo([1, 2, 3].map(n => ({ n })),
+    'distribuídos em 2 (dois) grupos e 1 (um) itens Grupo 1 10 ITEM CATMAT DESCRIÇÃO UNIDADE 1 614017 Ralador Grupo 2 1 ITEM CATMAT DESCRIÇÃO 2 614017 Ralador 3 Maquinas'), null],
   // "LOTE N 1 NOME", o lote de varios itens e o numero da folha no meio (Mondai/SC)
   ['linha "LOTE N 1 NOME" e "k NOME" (Mondai)', lotesPelaLinhaLoteNome([{ n: 1, rot: 'ARADO ALEIRADOR DE DISCO' }, { n: 2, rot: 'GUINDASTE (CANIVETE) ARTICULADO' }, { n: 3, rot: 'CACAMBA BASCULANTE PARA CAMINHAO' }, { n: 4, rot: 'TRITURADOR PARA CAMA DE AVIARIO' }],
     'LOTE 1 1 ARADO ALEIRADOR DE DISCO, com estrutura UN 05 R$ 7.952,19 LOTE 2 1 GUINDASTE (CANIVETE) ARTICULADO UN 1 2 CACAMBA BASCULANTE PARA CAMINHAO UN 1 LOTE 3 49 1 TRITURADOR PARA CAMA DE AVIARIO'), '1:1 2:2 3:2 4:3'],

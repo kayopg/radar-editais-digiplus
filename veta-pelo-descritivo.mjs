@@ -24,7 +24,8 @@ import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassade
 import { limpaTextoPncp } from './texto-pncp.mjs';
 import { marcaCotas } from './cota.mjs';
 import { vendaPorLote, totaisPorLote, lotesPelosTotais, lotesPelaTabelaDeGrupo, lotesPeloRotulo, lotesPelaColunaDoLote, lotesPelaLinhaComLote, lotesPorFaixa, lotesPorSecao,
-  lotesLoteUnico, lotesPelaTabelaLoteItem, lotesPeloTextoDoItem, lotesPorFaixaDeItens, lotesPorSecaoComItem, lotesPelaLinhaLoteNome, lotesUmItemPorLote, lotesPelaTabelaLoteItemNome } from './lotes.mjs';
+  lotesLoteUnico, lotesPelaTabelaLoteItem, lotesPeloTextoDoItem, lotesPorFaixaDeItens, lotesPorSecaoComItem, lotesPelaLinhaLoteNome, lotesUmItemPorLote, lotesPelaTabelaLoteItemNome,
+  lotesPeloCabecalhoDoGrupo } from './lotes.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const arqDados = path.join(DIR, 'docs', 'dados.json');
@@ -547,6 +548,8 @@ for (const e of ficam) {
     // (e as formas de 21/10/2026: o texto do proprio item, as faixas de itens do
     // grupo, as secoes com o primeiro item, a tabela "LOTE ITEM" e o lote unico)
     || lotesPeloTextoDoItem(todos) || lotesPorFaixaDeItens(todos, texto) || lotesPorSecaoComItem(todos, texto)
+    // (e o cabecalho "Grupo N ITEM DESCRICAO" com os itens avulsos, da Codevasf, 27/10/2026)
+    || lotesPeloCabecalhoDoGrupo(todos, texto)
     || lotesPelaTabelaLoteItem(todos, texto) || lotesPelaTabelaLoteItemNome(todos, texto) || lotesPelaLinhaLoteNome(todos, texto) || lotesUmItemPorLote(todos, texto)
     || lotesLoteUnico(todos, texto);
   let entram, cod;
