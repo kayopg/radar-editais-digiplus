@@ -3667,6 +3667,12 @@ const CABECALHO_ANTES = /(?:ITEM|VALOR\s+TOTAL|VALOR\s+UNIT[ÁA]RIO|\(R\$\)|REFE
 // DOS FORNECIMENTOS..........10 6. CONDIÇÕES DE PARTICIPAÇÃO" (Codevasf, Brasilia/DF,
 // edital 85), 27/10/2026)
 const JUSTIFICATIVA_NO_LUGAR = /^\(?[^()]{3,60}\s-\s\d{1,4}\s*UN\)\s*:|^.{0,160}?\b(?:Dimensionad[oa] para|Quantidade estipulada para|Quantitativo dimensionado para)\b|^Item\s+\d{1,3}\s*[–-]\s*[^;()]{3,60}\((?:ampla concorr[eê]ncia|exclusiv[oa][^)]{0,30})\)\s*[;.]?\s*(?:e\s+)?(?:\d{1,2}\.){2,}|^.{0,400}?\bDA\s+JUSTIFICATIVA\s+DA\s+(?:CONTRATA|AQUISI)|^.{0,400}?\bAutorizo\s+o\s+in[íi]cio\s+dos\s+procedimentos|\.{12,}\s*\d{1,3}\s+\d{1,2}\.\s/i;
+// A LINHA DA TABELA DE PRECOS do estudo tecnico no lugar do descritivo: so o nome,
+// a quantidade, o preco unitario e o total, e depois nada ou o capitulo seguinte do
+// estudo — "Cadeira de rodas 10 559,33 5.593,30 8. Estimativa do Valor da
+// Contratação Valor (R$): 134.938,87 A estimativa total..." (Ubiratã/PR, edital
+// 206, item 10, 28/10/2026). A especificacao ficou nas folhas que nao foram lidas.
+const LINHA_DE_PRECO = /^[^:;•]{3,80}?\s\d{1,6}\s+(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}\s+(?:R\$\s*)?\d{1,3}(?:\.\d{3})*,\d{2}(?:\s+\d{1,2}(?:\.\d{1,2})?\.?\s+(?:D[AOE]S?\s+)?(?:Estimativa|Justificativa|Fundamenta|Requisitos|Crit[ée]rios|Obriga[çc]|Pagamento|Vig[êe]ncia|Demonstrativo|Adequa[çc][ãa]o|Levantamento|Descri[çc][ãa]o\s+da\s+solu|Prazo|San[çc][õo]es|Dota[çc][ãa]o)[^]*)?\.?$/i;
 const LIXO_DE_LINHA = /As\s+quantidades\s+foram\s+definidas|JUSTIFICATIVA\s+D[AO]\s|FUNDAMENTA[ÇC][ÃA]O\s+E\s+DESCRI|Lan[çc]ado\s+por:|Metodologia\s+Menor\s+Valor|Menor\s+Valor\s+Valor\s+Estimado/i;
 function linhaPelaCauda(plano, caudas, it, timbres) {
   const n = +it[0], q = Math.round(+it[2] || 0);
@@ -4061,7 +4067,7 @@ try { manuais = JSON.parse(fs.readFileSync(path.join(DIR, 'descritivos-manuais.j
 
 const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v.secoes || []).map(s => s.texto)));
 
-let itensDentroDeOutro = 0, descricaoDepoisDoPreco = 0, continuacoesDaFolha = 0, seguintesCortados = 0, comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, sobrasTiradas = 0, linhasPeloPreco = 0, linhasCompletadas = 0, restosPelaCopia = 0;
+let itensDentroDeOutro = 0, linhasDePreco = 0, descricaoDepoisDoPreco = 0, continuacoesDaFolha = 0, seguintesCortados = 0, comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, sobrasTiradas = 0, linhasPeloPreco = 0, linhasCompletadas = 0, restosPelaCopia = 0;
 
 // UM EDITAL, sobre o texto que vier: o termo de referencia sozinho ou o edital
 // inteiro (ver o laco logo abaixo). As etapas que olham o edital inteiro e o
@@ -6813,6 +6819,11 @@ function recortaEdital(e, v, secoes) {
     }
   }
 
+  // E a linha da tabela de precos que ficou no lugar do descritivo (ver
+  // LINHA_DE_PRECO): o item fica com o texto do PNCP, com o aviso (etapasFinais).
+  for (const it of v.itens) {
+    if (it[6] && !it[9] && LINHA_DE_PRECO.test(it[6])) { it[6] = ''; linhasDePreco++; }
+  }
 }
 
 function etapasFinais(e, v, secoes) {
@@ -6935,4 +6946,5 @@ console.log(`${seguintesCortados} descritivo(s) que levavam o item seguinte inte
 console.log(`${continuacoesDaFolha} descritivo(s) completados com a continuacao depois da virada de folha`);
 console.log(`${descricaoDepoisDoPreco} descritivo(s) da tabela com a descricao depois do preco`);
 console.log(`${itensDentroDeOutro} descritivo(s) com o texto de outro item (cortado ou tirado)`);
+console.log(`${linhasDePreco} descritivo(s) que eram so a linha da tabela de precos (fica o texto do PNCP)`);
 console.log(`docs/descritivos.json: ${(fs.statSync(arquivo).size / 1024).toFixed(0)} KB`);

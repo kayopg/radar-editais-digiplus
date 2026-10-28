@@ -214,8 +214,9 @@ const PISO_ITEM = 150;
 // (30/09/2026) — o piso fica, e o cooktop barato aparece com o preco em "Demais
 // itens do edital", no resumo.
 // A muleta tambem (28/10/2026, na entrada da categoria MO): o par sai por menos de
-// R$ 150 e e produto da linha nova.
-const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira','sanduicheira','grill','waffle','wafleira','muleta'];
+// R$ 150 e e produto da linha nova. E o andador, que sai por R$ 120 a R$ 145 no
+// catalogo (Herveiras/RS, Florianopolis/SC, Palmeira das Missoes/RS, 28/10/2026).
+const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira','sanduicheira','grill','waffle','wafleira','muleta','andador'];
 
 // 5.4c - volume salva o item de preco quase no piso (decisao do usuario em
 // 18/09/2026): acima de R$ 140 e com mais de 10 unidades, o item fica. A
