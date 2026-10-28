@@ -101,6 +101,11 @@ export const LINHAS_DE_05_10 = {
   SP: new Set([...INDUSTRIAIS, 'micro-ondas', 'ventilador']),
 };
 export const LINHAS_DA_UF = { MT: new Set() };
+// O item da MOBILIDADE (categoria MO, 28/10/2026) comeca pelo produto: muleta,
+// andador, cadeira de rodas, cadeira de banho, ou o catalogo sem preposicao
+// ("Cadeira Rodas", "Cadeira Banho"). Quem so cita a cadeira ("Almofada para
+// cadeira de rodas", "Mesa acessível para cadeira de rodas") nao e da categoria.
+export const MO_NA_FRENTE = /^[^a-z]*(?:(?:aquisicao|fornecimento|compra) de |item \d+\s*[-–:]?\s*)?(?:par de |kit |jogo de )?(?:muletas?|andador|cadeiras? (?:de |para )?(?:rodas?|banho))/;
 // o que conta como refrigeracao nessas UFs
 const REFRIGERACAO = /^(?:refrigerador|geladeira|frigobar|freezer|congelador|conservadora)$/;
 

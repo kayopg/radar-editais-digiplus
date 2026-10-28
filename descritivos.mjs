@@ -454,9 +454,9 @@ async function extraiSecoes(e, planilhas) {
   // PNCP diz 'Termo de Referência' mesmo quando o nome nao diz)
   const semSublinhado = x => String(x || '').replace(/[_]+/g, ' ');
   const ehArquivoTR = (nome, tipo) => classe(semSublinhado(nome), '') === 'tr' || classe(semSublinhado(tipo), '') === 'tr';
-  for (const c of ordem.slice(0, 8)) {
+  for (const c of ordem.slice(0, +process.env.ARQUIVOS_MAX || 8)) {
     let f;
-    try { f = await fontesDe(c, tropecos); } catch (err) { tropecos.push(err.message); continue; }
+    try { f = await fontesDe(c, tropecos, +process.env.PDFS_DO_ZIP || 3); } catch (err) { tropecos.push(err.message); continue; }
     planilhas.push(...(f.planilhas || []));
     for (const p of f.pdfs) {
       try {

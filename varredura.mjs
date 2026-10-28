@@ -11,7 +11,7 @@ import { analisaExigencias } from './exigencias.mjs';
 import { devedorDe } from './devedores.mjs';
 import { linkDoPortal, ehComprasGov, montaLinkComprasGov } from './participar.mjs';
 import { portalOk, plataformaDoEdital, linkDaCasa } from './plataforma.mjs';
-import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, chaleiraDeFogao, lavaLoucas, criaCotaNaUf } from './veto-item.mjs';
+import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, chaleiraDeFogao, lavaLoucas, criaCotaNaUf, MO_NA_FRENTE } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 import { escolheEdital, daListaDoPncp, medidaPeloPncp } from './versao-do-edital.mjs';
 
@@ -46,7 +46,10 @@ const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira",
 "lavadora de alta pressao",
 // 15/10/2026: a mesa inox entrou (usuario, "Mesa Inox agora e um item que cotamos
 // tambem")
-"mesa inox","mesa aco inox"];
+"mesa inox","mesa aco inox",
+// 28/10/2026: mobilidade (usuario, "tambem estamos cotando agora: Muletas. Andador.
+// Cadeira de rodas. Cadeira de Banho")
+"muleta","andador","cadeira de rodas","cadeira de banho"];
 // DF entrou em 05/10/2026 e MT saiu em 06/10/2026 ("MT nao cotamos mais nada").
 // Fora de RS, SC e PR cada UF tem as suas linhas de produto (LINHAS_DA_UF, no
 // veto-item.mjs). O veta-pelo-descritivo.mjs le esta lista e tira da lista ja
@@ -171,6 +174,13 @@ const CAT = [
   // (LINHAS_DA_UF, veto-item.mjs). A mesa de hospital, de clinica e de
   // laboratorio sai pelo VETO_MI.
   ["MI",["mesa inox","mesa de inox","mesa em inox","mesa aco inox","mesa de aco inox","mesa em aco inox"]],
+  // MO (mobilidade) entrou em 28/10/2026: "tambem estamos cotando agora: Muletas.
+  // Andador. Cadeira de rodas. Cadeira de Banho". Com a grafia do catalogo do PNCP,
+  // que tira a preposicao ("Cadeira Rodas material: aço", "Cadeira Banho"). O item
+  // tem de COMECAR pelo produto (MO_NA_FRENTE): "Almofada para cadeira de rodas",
+  // "Mesa acessível para cadeira de rodas" e "Plataforma elevatória para cadeira
+  // de rodas" so citam a cadeira.
+  ["MO",["muleta","andador","cadeira de roda","cadeiras de roda","cadeira roda","cadeira de banho","cadeiras de banho","cadeira para banho","cadeira banho"]],
   ["LD",["lousa digital","lousa interativa","lousa eletronica","quadro interativo","painel interativo","tela interativa"]],
   // GE entrou em 01/09/2026: gerador nao e climatizacao nem cozinha, e virava
   // "Outros" — categoria que a pagina mostra como se fosse sobra.
@@ -203,7 +213,9 @@ const PISO_ITEM = 150;
 // O cooktop nao: o usuario pediu a isencao e voltou atras no mesmo dia
 // (30/09/2026) — o piso fica, e o cooktop barato aparece com o preco em "Demais
 // itens do edital", no resumo.
-const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira','sanduicheira','grill','waffle','wafleira'];
+// A muleta tambem (28/10/2026, na entrada da categoria MO): o par sai por menos de
+// R$ 150 e e produto da linha nova.
+const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira','sanduicheira','grill','waffle','wafleira','muleta'];
 
 // 5.4c - volume salva o item de preco quase no piso (decisao do usuario em
 // 18/09/2026): acima de R$ 140 e com mais de 10 unidades, o item fica. A
@@ -1280,7 +1292,9 @@ const itemVivo = s => !/anulado|cancelado|deserto|fracassado|revogado/.test(norm
 // "veicul" tira o aparelho de carro (geladeira, ar de veiculo), mas a lavadora
 // de alta pressao, que voltou em 08/10/2026, se descreve "para limpeza de
 // pisos, paredes, areas externas, VEICULOS" (Bonito/MS): em "Para lavar" nao veta.
-const VETO_FORA_DE = { projetor: 'LD', 'em mdf': 'CL', 'de mdf': 'CL', veicul: 'LV' };
+// (e a fisioterapia, que tira o aparelho de clinica mas e o uso do andador e da
+// muleta: "andador articulado ... indicado para fisioterapia", 28/10/2026)
+const VETO_FORA_DE = { projetor: 'LD', 'em mdf': 'CL', 'de mdf': 'CL', veicul: 'LV', fisioterapia: 'MO' };
 const vetoDoItem = criaVetoItem({ VETO_ITEM, VETO_SO_NA_FRENTE, VETO_FORA_DE, RE_VAN, posicaoDoTermo });
 const temVeto = (d, cat) => !!vetoDoItem(d, cat);
 
@@ -1342,6 +1356,7 @@ for (const o of cands) {
     if (cat === 'RF' && VETO_RF_CIENT.some(v => d.includes(v))) { vCient++; continue; }
     if (cat === 'BL' && VETO_BL_MEDICA.some(v => d.includes(v))) continue;
     if (cat === 'MI' && VETO_MI.some(v => d.includes(v))) continue;
+    if (cat === 'MO' && !MO_NA_FRENTE.test(d)) continue;
     if (cat === 'LV' && lavaLoucas(d)) continue;
     if (cat === 'OT' && VETO_OT_HALOGENO.some(v => d.includes(v))) continue;
     if (cat === 'OT' && VETO_OT_ANIMAIS.some(v => d.includes(v))) continue;

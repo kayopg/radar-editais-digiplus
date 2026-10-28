@@ -20,7 +20,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, chaleiraDeFogao, lavaLoucas, criaCotaNaUf } from './veto-item.mjs';
+import { criaVetoItem, criaPosicaoDoTermo, OBJ_CONDICIONAL, instalavel, amassadeiraRapida, chaleiraDeFogao, lavaLoucas, criaCotaNaUf, MO_NA_FRENTE } from './veto-item.mjs';
 import { limpaTextoPncp } from './texto-pncp.mjs';
 import { marcaCotas } from './cota.mjs';
 import { vendaPorLote, totaisPorLote, lotesPelosTotais, lotesPelaTabelaDeGrupo, lotesPeloRotulo, lotesPelaColunaDoLote, lotesPelaLinhaComLote, lotesPorFaixa, lotesPorSecao,
@@ -128,7 +128,7 @@ const pedeWifi = t => WIFI.test(t) && !WIFI_OPCIONAL.test(t);
 const VETO_OBJ_SEMPRE = JSON.parse((fonte.match(/const VETO_OBJ_SEMPRE = new Set\((\[[^\]]*\])\)/) || [, '[]'])[1]);
 const VETO_ITEM = lista('VETO_ITEM'), VETO_RF_CIENT = lista('VETO_RF_CIENT');
 const RE_VAN = /(^|[^a-z])vans?([^a-z]|$)/;       // o mesmo do varredura.mjs
-const VETO_FORA_DE = { projetor: 'LD', 'em mdf': 'CL', 'de mdf': 'CL', veicul: 'LV' };  // idem
+const VETO_FORA_DE = { projetor: 'LD', 'em mdf': 'CL', 'de mdf': 'CL', veicul: 'LV', fisioterapia: 'MO' };  // idem
 // A tabela de categorias e o limite de posicao do termo, tambem do varredura.mjs:
 // a categoria e a do termo que aparece primeiro, e termo muito para o fim da
 // descricao nao e o produto (ver TERMO_LONGE la).
@@ -452,6 +452,8 @@ for (const e of dados.editais) {
       // "Banqueta ergonomica giratoria" no edital, pelo numero e pelo preco
       // (15/10/2026)
       || (it[0] === 'MI' && !/(?:^|[^a-z])(?:mesa|bancada)/.test(d.slice(0, 200)) && 'o edital descreve outro movel, nao uma mesa')
+      // (e a mobilidade, que tem de comecar pelo produto: 28/10/2026)
+      || (it[0] === 'MO' && !MO_NA_FRENTE.test(norm(it[3])) && !MO_NA_FRENTE.test(d) && 'outro produto que so cita muleta, andador ou cadeira')
       // e a lava-loucas em QUALQUER categoria, quando o texto do edital abre com
       // ela: o item 39 do CEFET-MG (Belo Horizonte, edital 335) e "Balanca
       // Eletronica ... capacidade pesagem: 500" no PNCP e "FORNECIMENTO E

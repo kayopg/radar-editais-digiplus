@@ -1,7 +1,8 @@
 # Radar de Editais — Digiplus
 
 Monitoramento diário de licitações públicas abertas no [PNCP](https://pncp.gov.br) com itens
-de linha branca, climatização, cocção, lavanderia, eletroportáteis e mesa inox — filtradas para
+de linha branca, climatização, cocção, lavanderia, eletroportáteis, mesa inox e mobilidade (muleta,
+andador, cadeira de rodas e cadeira de banho) — filtradas para
 **fornecimento**: fora do RS e de SC, sem exigência de instalação ou montagem; em todo lugar,
 sem manutenção.
 
@@ -332,6 +333,14 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    (Palmeira das Missões/RS), que é a de pesar paciente. Na mesma conversa
    entrou o extrator pelo nome do catálogo ("Aparelho Extração Suco") e saiu a lavadora de
    louças, que o catálogo chama de "Máquina Lavar Louças" e entrava pela máquina de roupa.
+   A **mobilidade** entrou em 28/10/2026 ("também estamos cotando agora: Muletas. Andador.
+   Cadeira de rodas. Cadeira de Banho"), categoria MO ("Mobilidade"), em todas as UFs: os
+   quatro produtos com e sem a preposição do catálogo do PNCP ("Cadeira Rodas", "Cadeira
+   Banho"), e só quando o item COMEÇA pelo produto (`MO_NA_FRENTE`, no veto-item.mjs) —
+   "Almofada para cadeira de rodas", "Mesa acessível para cadeira de rodas", "Plataforma
+   elevatória para cadeira de rodas" e "Pneu para cadeira de rodas" ficam fora. A muleta não
+   tem o piso de R$ 150 (o par sai por menos), e a "fisioterapia", que tira o aparelho de
+   clínica, não vale contra o andador e a muleta.
    A **mesa inox** entrou em 15/10/2026 ("Mesa Inox agora é um item que cotamos também"),
    categoria MI ("Mesas inox"), em todas as UFs, e só a de inox ("apenas cotamos mesas em
    INOX, demais mesas não queremos"): a descrição que COMEÇA por "mesa" e fala
