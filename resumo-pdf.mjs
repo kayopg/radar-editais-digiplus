@@ -266,7 +266,7 @@ export async function anexaOficial(doc, r, opts = {}) {
 
 // Edital primeiro, termo de referencia depois, o resto por ultimo: e a ordem em
 // que as paginas precisam aparecer para a capa sair certa.
-function classe(nome, tipo) {
+export function classe(nome, tipo) {
   const s = normSimples(nome) + ' ' + normSimples(tipo);
   if (/edital|aviso de contratacao/.test(s)) return 'edital';
   // "TR984767_000186_2026.pdf": TR do Compras.gov com a UASG colada (Leopoldina/MG, 29/09/2026)

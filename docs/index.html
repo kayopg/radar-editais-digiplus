@@ -245,6 +245,10 @@ tr.lotecab td{padding:12px 8px 5px;font-size:11px;font-weight:800;letter-spacing
 .imais{background:none;border:0;padding:4px 0 0;color:var(--brand-ink);font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .imais:hover{text-decoration:underline}
 .isem{font-size:12px;color:var(--ink3);font-style:italic}
+/* o texto que veio do PNCP, nao de arquivo do edital (usuario, 27/10/2026: "coloque o
+   texto do PNCP com o seguinte aviso destacado") */
+.idesc.pncp{border-color:var(--warn);background:var(--warn-soft)}
+.irotulo.ipncp{color:var(--warn);font-size:11px;letter-spacing:.02em;text-transform:none}
 .links{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px}
 .btn{font-size:12.5px;font-weight:700;text-decoration:none;padding:8px 15px;border-radius:10px;background:var(--btn);color:#fff;border:1.5px solid var(--btn);transition:transform .15s,box-shadow .15s,background .15s}
 .btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(31,95,191,.3)}
@@ -763,6 +767,7 @@ document.addEventListener("click", function(ev){
   abreFora(b.getAttribute("data-fora"), b);
 });
 
+var AVISO_PNCP = "Texto do PNCP, conferir no arquivo do Termo de Referência";
 function abreCard(card){
   card.classList.toggle("open");
   if(!card.classList.contains("open") || card.dataset.desc) return;
@@ -781,7 +786,10 @@ function abreCard(card){
       var inum = o && o.noEdital && el.parentNode.querySelector(".inum");
       if(inum) inum.textContent = inum.textContent.replace(/^Item (\d+)/, "Item $1 (no edital: " + o.noEdital + ")");
       if(!t){ el.innerHTML = '<span class="isem">Sem descritivo no texto do edital — confira o arquivo oficial.</span>'; return; }
-      el.innerHTML = '<span class="irotulo">' + (o.catalogo ? 'Descrição do catálogo do PNCP' : 'Descritivo do edital') + '</span><span class="itexto">' + esc(t) + '</span>'
+      // (o texto do PNCP vem com o aviso destacado: 27/10/2026, "sempre pegue o
+      // descritivo do arquivo de termo de referencia, nunca pegue no site")
+      if(o.catalogo) el.classList.add("pncp");
+      el.innerHTML = (o.catalogo ? '<span class="irotulo ipncp">' + AVISO_PNCP + '</span>' : '<span class="irotulo">Descritivo do edital</span>') + '<span class="itexto">' + esc(t) + '</span>'
         + (t.length > 320 ? '<button type="button" class="imais" onclick="this.parentNode.classList.toggle(\'inteiro\');this.textContent=this.parentNode.classList.contains(\'inteiro\')?\'ver menos\':\'ver completo\'">ver completo</button>' : '');
       if(t.length > 320) el.classList.add("longo");
     });
@@ -1109,9 +1117,10 @@ function secao(doc, titulo){
 var DESC_ATUAL = null;
 function indexaDescritivos(r, base){
   var d = base && base.editais ? base.editais[r[7]] : null;
-  var porNum = {}, porDesc = {}, loteNum = {}, numEdital = {};
+  var porNum = {}, porDesc = {}, loteNum = {}, numEdital = {}, doPncp = {};
   if(d && d.itens) d.itens.forEach(function(x){
     if(x[6]){ porNum[x[0]] = x[6]; porDesc[umaLinha(x[1]).toLowerCase()] = x[6]; }
+    if(x[9]) doPncp[x[0]] = true;
     if(x[7]) loteNum[x[0]] = { lote:x[7], item:x[8] || null };
     if(x[10]) numEdital[x[0]] = x[10];
   });
@@ -1119,7 +1128,7 @@ function indexaDescritivos(r, base){
   // artefato (que so encurta o texto dos itens que nao cotamos). O d.total do
   // descritivos.json e o numero de PAGINAS do PDF lido — no site, o resumo de
   // Joinville/SC dizia "o edital tem 74 itens" para um edital de 47 (08/10/2026).
-  DESC_ATUAL = { porNum:porNum, porDesc:porDesc, loteNum:loteNum, numEdital:numEdital,
+  DESC_ATUAL = { porNum:porNum, porDesc:porDesc, loteNum:loteNum, numEdital:numEdital, doPncp:doPncp,
                  total: d && d.itens ? d.itens.length : 0,
                  outros: resumeOutros(r, d) };
 }
@@ -1232,6 +1241,9 @@ function rotuloNaTabela(it){
 
 // Casa pelo número do item; o descritivo serve de reserva porque o número nem
 // sempre existe no dados.json antigo.
+function textoDoPncp(it){
+  return !descritivoDoItem(null, it) || !!(DESC_ATUAL && DESC_ATUAL.doPncp[it[5]]);
+}
 function descritivoDoItem(r, it){
   if(!DESC_ATUAL) return "";
   return DESC_ATUAL.porNum[it[5]] || DESC_ATUAL.porDesc[umaLinha(it[3]).toLowerCase()] || "";
@@ -1372,12 +1384,17 @@ async function montaResumo(r){
                cotaItem(it) || "—",
                DO_LOTE[it[0]] ? "Não cotamos · " + umaLinha(it[3])
                               : (function(t){
+                                  // o texto do PNCP sai com o aviso (27/10/2026), e a linha
+                                  // inteira ganha o fundo de aviso quando so tem ele
                                   var p = descricaoDoPortal(t, it[3]);
-                                  return umaLinha(t || it[3]) + (p ? " — Descrição no portal: " + p : "");
+                                  return (textoDoPncp(it) ? AVISO_PNCP + ": " : "") + umaLinha(t || it[3])
+                                    + (p ? " — " + AVISO_PNCP + ": " + p : "");
                                 })(descritivoDoItem(r, it)) ];
     }),
     { tam:8, estilo: function(k){
-        return DO_LOTE[ordenados[k][0]] ? { cor:[0.42,0.42,0.42], fundo:[0.955,0.955,0.955] } : null;
+        var it = ordenados[k];
+        if(DO_LOTE[it[0]]) return { cor:[0.42,0.42,0.42], fundo:[0.955,0.955,0.955] };
+        return textoDoPncp(it) ? { fundo:[0.988,0.945,0.871] } : null;
       } });
 
   doc.espaco(6);

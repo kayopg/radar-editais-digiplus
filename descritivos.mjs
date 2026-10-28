@@ -22,7 +22,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { textoDasPaginas, escolhePaginas, textoUtil, coberturaItens, CABECALHOS } from './paginas-uteis.mjs';
-import { arquivosPublicados, fontesDe, buscaTodosItens } from './resumo-pdf.mjs';
+import { arquivosPublicados, fontesDe, buscaTodosItens, classe } from './resumo-pdf.mjs';
 import { textoDocx, textoDoc, abreZip } from './arquivo-oficial.mjs';
 import { ehPlataformaComAnexos, anexosDaPlataforma } from './anexos-plataforma.mjs';
 import { createRequire } from 'node:module';
@@ -213,7 +213,9 @@ function rotuloDaPagina(texto, i, sel) {
 // para a pagina publicada, entao ela nao aparece para ninguem.
 export const PULO_DE_PAGINA = '‖‖';
 
-function secoesPorPagina(paginas, quais, sel) {
+// trDaPagina[i]: a pagina i veio de um arquivo de termo de referencia; a secao
+// com essas paginas leva "tr: true" (ver extraiSecoes).
+function secoesPorPagina(paginas, quais, sel, trDaPagina = []) {
   const secoes = [];
   let anterior = null;
   for (const i of quais) {
@@ -222,11 +224,12 @@ function secoesPorPagina(paginas, quais, sel) {
     if (anterior !== null && i !== anterior + 1) t = PULO_DE_PAGINA + ' ' + t;
     anterior = i;
     const rotulo = rotuloDaPagina(paginas[i], i, sel);
+    const tr = !!trDaPagina[i];
     const ultima = secoes[secoes.length - 1];
     // Paginas seguidas com o mesmo papel viram uma secao so, para nao repetir
     // "TERMO DE REFERENCIA" doze vezes no PDF.
-    if (ultima && ultima.rotulo === rotulo) ultima.texto += ' ' + t;
-    else secoes.push({ rotulo, texto: t });
+    if (ultima && ultima.rotulo === rotulo && !!ultima.tr === tr) ultima.texto += ' ' + t;
+    else secoes.push({ rotulo, texto: t, ...(tr ? { tr: true } : {}) });
   }
   // Secao curta demais e descartada, e com ela sai um pedaco do texto: a
   // seguinte ja nao continua a anterior, entao leva a marca.
@@ -297,7 +300,7 @@ function limita(secoes, teto = TETO) {
     if (s.texto.length <= sobra) { saida.push(s); usado += s.texto.length; continue; }
     const corte = s.texto.slice(0, sobra);
     const fim = corte.lastIndexOf(' ');
-    saida.push({ rotulo: s.rotulo, texto: corte.slice(0, fim > 0 ? fim : corte.length), cortado: true });
+    saida.push({ rotulo: s.rotulo, texto: corte.slice(0, fim > 0 ? fim : corte.length), cortado: true, ...(s.tr ? { tr: true } : {}) });
     usado = teto;
   }
   return saida;
@@ -438,12 +441,30 @@ async function extraiSecoes(e, planilhas) {
   const ehTR = a => /termo|referencia|refer[eê]ncia|anexo|especifica|memorial|planilha/i.test(String(a.titulo || ''));
   const ordem = [...cands.filter(ehTR), ...cands.filter(a => !ehTR(a))];
   const paginasDeTexto = [];
+  // DE QUE ARQUIVO veio cada pagina, e se ele e o termo de referencia (usuario,
+  // 27/10/2026: "sempre pegue o descritivo do arquivo de termo de referencia,
+  // nunca pegue no site, e sim nos arquivos"). O recorte procura o item primeiro
+  // nas secoes marcadas "tr" e so depois no resto (descritivo-por-item.mjs).
+  // Pelo nome do arquivo, com a mesma regra da ordem do pacote (classe, no
+  // resumo-pdf.mjs): "Termo de Referência", "TR984767_000186_2026.pdf",
+  // "Especificações", "Memorial descritivo". (Ler mais arquivos — doze, e oito PDFs
+  // de cada zip — fica para depois de medir, so nos editais que tem mais que isso.)
+  const trDaPagina = [], trDoTexto = [];
+  // (o nome vem com sublinhado, 'SEI_26096378_Termo_de_Referencia.pdf', e o tipo do
+  // PNCP diz 'Termo de Referência' mesmo quando o nome nao diz)
+  const semSublinhado = x => String(x || '').replace(/[_]+/g, ' ');
+  const ehArquivoTR = (nome, tipo) => classe(semSublinhado(nome), '') === 'tr' || classe(semSublinhado(tipo), '') === 'tr';
   for (const c of ordem.slice(0, 8)) {
     let f;
     try { f = await fontesDe(c, tropecos); } catch (err) { tropecos.push(err.message); continue; }
     planilhas.push(...(f.planilhas || []));
     for (const p of f.pdfs) {
-      try { paginas = paginas.concat(await textoDasPaginas(await LE.abre(p.bytes))); }
+      try {
+        const novas = await textoDasPaginas(await LE.abre(p.bytes));
+        paginas = paginas.concat(novas);
+        const tr = ehArquivoTR(p.nome || c.titulo, p.zip ? p.tipo : c.tipo);
+        for (let k = 0; k < novas.length; k++) trDaPagina.push(tr);
+      }
       catch (err) { tropecos.push(err.message); }
     }
     // ODT e HTML (o edital e o termo de referencia de Caxias do Sul/RS, o edital
@@ -451,7 +472,11 @@ async function extraiSecoes(e, planilhas) {
     // passam pela mesma selecao das paginas de PDF. Vao DEPOIS dos PDFs: o
     // edital em HTML de Londrina vinha no primeiro zip, e o cabecalho dele virou
     // a celula do item 1, que abre o lote 1 da tabela em PDF.
-    for (const x of f.textos || []) paginasDeTexto.push(...emPaginas(x.texto));
+    for (const x of f.textos || []) {
+      const novas = emPaginas(x.texto);
+      paginasDeTexto.push(...novas);
+      for (let k = 0; k < novas.length; k++) trDoTexto.push(ehArquivoTR(x.nome || c.titulo, c.tipo));
+    }
     if (f.textos && f.textos.length && !f.pdfs.length) continue;
     if (!textoWord && f.texto) {
       try {
@@ -471,6 +496,7 @@ async function extraiSecoes(e, planilhas) {
     }
   }
   paginas = paginas.concat(paginasDeTexto);
+  trDaPagina.push(...trDoTexto);
 
   // O que o PNCP nao tem, a plataforma da disputa pode ter. Em Serrana/SP o
   // PNCP trazia so o corpo do edital, e todos os itens diziam "conforme termo
@@ -479,7 +505,11 @@ async function extraiSecoes(e, planilhas) {
   const link = e[C.linkPortal];
   if (link && ehPlataformaComAnexos(link) && coberturaItens(e, paginas, paginas.map((_, i) => i)) < 0.6) {
     for (const a of await anexosDaPlataforma(link, tropecos)) {
-      try { paginas = paginas.concat(await textoDasPaginas(await LE.abre(a.bytes))); }
+      try {
+        const novas = await textoDasPaginas(await LE.abre(a.bytes));
+        paginas = paginas.concat(novas);
+        for (let k = 0; k < novas.length; k++) trDaPagina.push(ehArquivoTR(a.nome, ''));
+      }
       catch (err) { tropecos.push(err.message); }
     }
   }
@@ -584,7 +614,7 @@ async function extraiSecoes(e, planilhas) {
       const quais = [...vizinhas].sort((a, b) => a - b);
       return { fonte: 'PDF', paginas: quais.length, total: paginas.length,
                cobertura: +cobre.toFixed(2), ilegiveis: perdidas || undefined,
-               secoes: limitaSemPerderItem(secoesPorPagina(paginas, quais, sel), e) };
+               secoes: limitaSemPerderItem(secoesPorPagina(paginas, quais, sel, trDaPagina), e) };
     }
   }
 

@@ -4063,13 +4063,12 @@ const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v
 
 let itensDentroDeOutro = 0, descricaoDepoisDoPreco = 0, continuacoesDaFolha = 0, seguintesCortados = 0, comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, sobrasTiradas = 0, linhasPeloPreco = 0, linhasCompletadas = 0, restosPelaCopia = 0;
 
-for (const e of dados.editais) {
-  const v = base.editais[e[C.path]];
-  if (!v || !v.itens) continue;
-
-  const secoes = (v.secoes || []).map(s => s.texto).join('  ');
+// UM EDITAL, sobre o texto que vier: o termo de referencia sozinho ou o edital
+// inteiro (ver o laco logo abaixo). As etapas que olham o edital inteiro e o
+// rotulo do PNCP ficam em etapasFinais(), que roda uma vez so.
+function recortaEdital(e, v, secoes) {
   let secoesPlano = null;
-  if (!secoes) { semTexto++; continue; }
+  if (!secoes) { semTexto++; return; }
   comTexto++;
 
   // Rodando de novo sobre um arquivo ja recortado, o descritivo que veio do
@@ -4940,7 +4939,7 @@ for (const e of dados.editais) {
   // cima resolve outro caso: quando o descritivo e um pedaco final do ROTULO do
   // PNCP; esta aqui olha o texto do edital.
   {
-    const corpo = (v.secoes || []).map(s => s.texto).join('  ');
+    const corpo = secoes;
     const FRONTEIRA = /\b\d{5,9}\b|R\$\s*[\d.,]+/g;
     // SO NOS ITENS DO RADAR. Sem esta trava a regra mexeu em tres mesas de
     // Jambeiro/SP, cujo descritivo estava certo, e colou na frente texto de
@@ -5476,7 +5475,7 @@ for (const e of dados.editais) {
   // O rodape e o timbre da folha, que entram no meio do descritivo quando o
   // item atravessa a quebra de pagina (ver achaRodape e achaTimbre).
   {
-    const corpo = (v.secoes || []).map(s => s.texto).join('  ');
+    const corpo = secoes;
     const r = achaRodape(corpo);
     if (r) for (const it of v.itens) if (it[6]) it[6] = tiraRodapeRepetido(it[6], r, it[2]);
     const t = achaTimbre(corpo);
@@ -6814,6 +6813,9 @@ for (const e of dados.editais) {
     }
   }
 
+}
+
+function etapasFinais(e, v, secoes) {
   // E, por fim, o item que o edital nao especifica em lugar nenhum: se o
   // proprio rotulo ja serve, ele vira o descritivo — marcado no indice 9, para
   // o card nao anunciar como "Descritivo do edital" o que veio do catalogo.
@@ -6885,10 +6887,46 @@ for (const e of dados.editais) {
   }
 }
 
+// O TERMO DE REFERENCIA PRIMEIRO (usuario, 27/10/2026: "sempre que for do gov ou
+// de qualquer outro portal, voce junte os arquivos que estiverem disponibilizados,
+// e sempre pegue o descritivo do arquivo de termo de referencia, nunca pegue no
+// site, e sim nos arquivos"). O descritivos.mjs marca com "tr" as secoes que
+// vieram do arquivo do termo de referencia. O recorte passa primeiro so nelas; o
+// item que nao sair dali passa pelo edital inteiro (os outros arquivos); o que
+// nao sair de nenhum fica com o texto do PNCP, que o site mostra com o aviso
+// "Texto do PNCP, conferir no arquivo do Termo de Referência" (etapasFinais).
+// Ligado com TR_PRIMEIRO=1 enquanto e medido contra o recorte de antes (28/10/2026).
+const TR_PRIMEIRO = process.env.TR_PRIMEIRO === '1';
+let doTermo = 0, doResto = 0;
+for (const e of dados.editais) {
+  const v = base.editais[e[C.path]];
+  if (!v || !v.itens) continue;
+  const todas = (v.secoes || []).map(s => s.texto).join('  ');
+  const soTR = (v.secoes || []).filter(s => s.tr).map(s => s.texto).join('  ');
+  if (TR_PRIMEIRO && soTR && soTR.length < todas.length) {
+    const original = JSON.parse(JSON.stringify(v.itens));
+    recortaEdital(e, v, soTR);
+    const faltam = v.itens.map((it, i) => (it[6] ? -1 : i)).filter(i => i >= 0);
+    doTermo += v.itens.length - faltam.length;
+    if (faltam.length) {
+      const resto = { ...v, itens: original };
+      recortaEdital(e, resto, todas);
+      for (const i of faltam) {
+        const de = resto.itens[i], it = v.itens[i];
+        if (!de || !de[6]) continue;
+        it[6] = de[6]; doResto++;
+        if (!it[7] && de[7]) { it[7] = de[7]; it[8] = de[8]; }
+      }
+    }
+  } else recortaEdital(e, v, todas);
+  if (todas) etapasFinais(e, v, todas);
+}
+
 fs.writeFileSync(arquivo, JSON.stringify(base), 'utf8');
 console.log(`${comTexto} edital(is) com texto de secao · ${semTexto} sem`);
 console.log(`${itensRicos} de ${itensTotal} itens ganharam descritivo completo`);
 console.log(`${doCatalogo} itens sem especificacao no edital ficaram com o rotulo do catalogo`);
+console.log(`termo de referencia primeiro: ${doTermo} item(ns) recortados so do termo, ${doResto} do resto dos arquivos`);
 console.log(cabecasRecuperadas + " descritivo(s) tiveram o nome do produto recuperado na frente");
 console.log(linhasTrocadas + " descritivo(s) trocados pelo texto da propria linha, que vinha logo depois");
 console.log(habilitacaoTirada + " descritivo(s) que eram texto de habilitacao sairam · " + sobrasTiradas + " sobra(s) do item anterior trocadas pelo rotulo");
