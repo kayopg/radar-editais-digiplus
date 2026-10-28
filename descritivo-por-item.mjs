@@ -6907,7 +6907,39 @@ function etapasFinais(e, v, secoes) {
 // nao sair de nenhum fica com o texto do PNCP, que o site mostra com o aviso
 // "Texto do PNCP, conferir no arquivo do Termo de Referência" (etapasFinais).
 // Ligado com TR_PRIMEIRO=1 enquanto e medido contra o recorte de antes (28/10/2026).
-const TR_PRIMEIRO = process.env.TR_PRIMEIRO === '1';
+// O recorte roda no texto de todos os arquivos (como antes) e so nas secoes do
+// termo de referencia, e fica o do termo, menos quando (medido na lista de
+// 28/10/2026, 52 itens do radar mudando):
+// - o do termo e o COMECO do outro: o termo acabou na virada da folha e o texto
+//   seguiu em outro arquivo ("...Funções integradas de", Campo Grande/MS, edital
+//   40, item 4; "...(ou conforme", Araraquara/SP, edital 7, item 8);
+// - o do termo so acrescenta uns caracteres ao outro ("...12 meses 325312",
+//   Brasilia/DF, edital 68, item 50) ou difere so nos numeros (o numero da folha
+//   no meio, "removíveis e 11 reguláveis", Sao Paulo/SP, edital 63, item 1);
+// - o do termo abre com o numero de OUTRO item ("3 BEBEDOURO INDUSTRIAL..." no
+//   item 2 de Uberaba/MG, edital 251) ou e a exigencia de habilitacao ("COIFA -
+//   Apresentar, a documentação de responsabilidade técnica... ART", Balsa
+//   Nova/PR, dispensa 22, item 5).
+// O que se ganha: a especificacao do termo no lugar do texto do catalogo do PNCP
+// repetido na tabela do edital (Florianopolis/SC, edital 37, itens 3 a 9), do
+// "CONFORME TERMO DE REFERÊNCIA - CATMAT" (Santa Maria/RS, edital 140) e da
+// justificativa da potencia da lavadora (Montenegro/RS, edital 50).
+// TR_PRIMEIRO=0 desliga.
+const TR_PRIMEIRO = process.env.TR_PRIMEIRO !== '0';
+const soLetras = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+const HABILITACAO_NO_TERMO = /^.{0,120}?\b(?:Apresentar,?\s+(?:a\s+)?documenta[çc][ãa]o|Comprovar\s+(?:a\s+)?capacidade\s+t[ée]cnica|Atestado\s+de\s+capacidade|Anota[çc][ãa]o\s+de\s+Responsabilidade\s+T[ée]cnica)/i;
+function ficaODoTermo(it, doTermo) {
+  const a = String(it[6] || ''), b = String(doTermo[6] || '');
+  if (!b) return false;
+  if (!a) return true;
+  const na = soLetras(a), nb = soLetras(b);
+  if (na.startsWith(nb.slice(0, Math.max(0, nb.length - 10)))) return false;
+  if (nb.startsWith(na.slice(0, Math.max(0, na.length - 10)))) return nb.length - na.length >= 40;
+  if (na.replace(/\d+/g, '') === nb.replace(/\d+/g, '')) return false;
+  const n = /^(\d{1,3})\s+\p{Lu}/u.exec(b);
+  if (n && +n[1] !== +it[0]) return false;
+  return !HABILITACAO_NO_TERMO.test(b);
+}
 let doTermo = 0, doResto = 0;
 for (const e of dados.editais) {
   const v = base.editais[e[C.path]];
@@ -6915,20 +6947,16 @@ for (const e of dados.editais) {
   const todas = (v.secoes || []).map(s => s.texto).join('  ');
   const soTR = (v.secoes || []).filter(s => s.tr).map(s => s.texto).join('  ');
   if (TR_PRIMEIRO && soTR && soTR.length < todas.length) {
-    const original = JSON.parse(JSON.stringify(v.itens));
-    recortaEdital(e, v, soTR);
-    const faltam = v.itens.map((it, i) => (it[6] ? -1 : i)).filter(i => i >= 0);
-    doTermo += v.itens.length - faltam.length;
-    if (faltam.length) {
-      const resto = { ...v, itens: original };
-      recortaEdital(e, resto, todas);
-      for (const i of faltam) {
-        const de = resto.itens[i], it = v.itens[i];
-        if (!de || !de[6]) continue;
-        it[6] = de[6]; doResto++;
-        if (!it[7] && de[7]) { it[7] = de[7]; it[8] = de[8]; }
-      }
-    }
+    const termo = { ...v, itens: JSON.parse(JSON.stringify(v.itens)) };
+    recortaEdital(e, v, todas);
+    recortaEdital(e, termo, soTR);
+    v.itens.forEach((it, i) => {
+      const de = termo.itens[i];
+      if (de && de[6] && de[6] === it[6]) { doTermo++; return; }
+      if (!de || !ficaODoTermo(it, de)) { if (it[6]) doResto++; return; }
+      it[6] = de[6]; doTermo++;
+      if (!it[7] && de[7]) { it[7] = de[7]; it[8] = de[8]; }
+    });
   } else recortaEdital(e, v, todas);
   if (todas) etapasFinais(e, v, todas);
 }
@@ -6937,7 +6965,7 @@ fs.writeFileSync(arquivo, JSON.stringify(base), 'utf8');
 console.log(`${comTexto} edital(is) com texto de secao · ${semTexto} sem`);
 console.log(`${itensRicos} de ${itensTotal} itens ganharam descritivo completo`);
 console.log(`${doCatalogo} itens sem especificacao no edital ficaram com o rotulo do catalogo`);
-console.log(`termo de referencia primeiro: ${doTermo} item(ns) recortados so do termo, ${doResto} do resto dos arquivos`);
+console.log(`termo de referencia primeiro: ${doTermo} item(ns) com o texto do termo, ${doResto} com o de todos os arquivos`);
 console.log(cabecasRecuperadas + " descritivo(s) tiveram o nome do produto recuperado na frente");
 console.log(linhasTrocadas + " descritivo(s) trocados pelo texto da propria linha, que vinha logo depois");
 console.log(habilitacaoTirada + " descritivo(s) que eram texto de habilitacao sairam · " + sobrasTiradas + " sobra(s) do item anterior trocadas pelo rotulo");

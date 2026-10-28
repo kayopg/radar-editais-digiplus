@@ -262,7 +262,7 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    Condicionado"; a amassadeira "com transmissão por correia" fica), o ar-condicionado que exige Wi-Fi (usuário, 22/10/2026, que escolheu tirar: "SMART COM CONEXÃO WI-FI", UTFPR
    de Cornélio Procópio/PR; o "Wi-Fi opcional" e o "com ou sem Wi-Fi" ficam; em edital por lote fica em cinza),
    a torneira na frente do nome ("TORNEIRA PARA TANQUE E MÁQUINA DE LAVAR", Campos Novos/SC, 22/10/2026; o
-   "BEBEDOURO INDUSTRIAL 4 TORNEIRAS" fica), a passadeira a vapor (22/10/2026), o estabilizador de tensão (27/10/2026, Panambi/RS: entrava pelos "refrigeradores" que ele protege), a câmara fria ou frigorífica, de montar em alvenaria (27/10/2026, Pelotas/RS e Tucunduva/RS — muda a decisão de 23/09, quando ela ficava), o utensílio que só cita o aparelho como uso, "podendo ser usado em lava louças e microondas" (canecas, potes, pratos e xícaras de Carazinho/RS, 27/10/2026), a bancada ou mesa com pia (23/10/2026: "bancada com pia não cotamos", Goioerê/PR; a mesa de trabalho "com cuba", sem pia, fica), o item comprado em horas
+   "BEBEDOURO INDUSTRIAL 4 TORNEIRAS" fica), a passadeira a vapor (22/10/2026), o estabilizador de tensão (27/10/2026, Panambi/RS: entrava pelos "refrigeradores" que ele protege), o utensílio que só cita o aparelho como uso, "podendo ser usado em lava louças e microondas" (canecas, potes, pratos e xícaras de Carazinho/RS, 27/10/2026), a bancada ou mesa com pia (23/10/2026: "bancada com pia não cotamos", Goioerê/PR; a mesa de trabalho "com cuba", sem pia, fica), o item comprado em horas
    (serviço: as "BALANÇAS mecânicas", 100 horas de manutenção, Lunardelli/PR) e o contrato de "serviços
    contínuos de manutenção" pelo objeto, o termostato de ar-condicionado, peça (Embrapa,
    Brasília/DF, edital 10, 21/10/2026: entrava pelo "Split" do fim do nome; só na frente do produto),
@@ -339,8 +339,11 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    Banho"), e só quando o item COMEÇA pelo produto (`MO_NA_FRENTE`, no veto-item.mjs) —
    "Almofada para cadeira de rodas", "Mesa acessível para cadeira de rodas", "Plataforma
    elevatória para cadeira de rodas" e "Pneu para cadeira de rodas" ficam fora. A muleta não
-   tem o piso de R$ 150 (o par sai por menos), e a "fisioterapia", que tira o aparelho de
-   clínica, não vale contra o andador e a muleta.
+   tem o piso de R$ 150 (o par sai por menos), nem o andador (R$ 120 a R$ 145 no catálogo), e
+   a "fisioterapia", que tira o aparelho de clínica, não vale contra o andador e a muleta.
+   No mesmo dia voltou a **câmara fria** ("câmara fria pode adicionar nos itens que cotamos
+   também"; tinha saído em 27/10) e entrou a **despolpadeira** de frutas, na categoria dos
+   eletroportáteis ("despoupadeira também").
    A **mesa inox** entrou em 15/10/2026 ("Mesa Inox agora é um item que cotamos também"),
    categoria MI ("Mesas inox"), em todas as UFs, e só a de inox ("apenas cotamos mesas em
    INOX, demais mesas não queremos"): a descrição que COMEÇA por "mesa" e fala
@@ -379,7 +382,7 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    os dois: "8 (no edital: 9)" — Paranaguá/PR numera o bebedouro de 9 no termo de
    referência e de 8 na relação de itens, que é a da disputa.
 4. **Piso de preço unitário** de R$ 150 — equipamento de verdade custa. Chaleira elétrica,
-   cafeteira, sanduicheira, grill e máquina de waffle não têm piso. O volume também salva o
+   cafeteira, sanduicheira, grill, máquina de waffle, muleta e andador não têm piso. O volume também salva o
    item: acima de R$ 140 com mais de 10 unidades, ou acima de R$ 100 com mais de 25 unidades
    (08/10/2026), ele fica. A chaleira de alumínio, de fogão, é panela e sai pelo veto, não
    pelo piso — a "industrial" também, quando é de alumínio e não é elétrica. Itens com valor

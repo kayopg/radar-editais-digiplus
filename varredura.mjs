@@ -49,7 +49,10 @@ const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira",
 "mesa inox","mesa aco inox",
 // 28/10/2026: mobilidade (usuario, "tambem estamos cotando agora: Muletas. Andador.
 // Cadeira de rodas. Cadeira de Banho")
-"muleta","andador","cadeira de rodas","cadeira de banho"];
+"muleta","andador","cadeira de rodas","cadeira de banho",
+// 28/10/2026: a camara fria de volta e a despolpadeira de frutas (usuario, "camara
+// fria pode adicionar nos itens que cotamos tambem, e despoupadeira tambem")
+"camara frigorifica","despolpadeira"];
 // DF entrou em 05/10/2026 e MT saiu em 06/10/2026 ("MT nao cotamos mais nada").
 // Fora de RS, SC e PR cada UF tem as suas linhas de produto (LINHAS_DA_UF, no
 // veto-item.mjs). O veta-pelo-descritivo.mjs le esta lista e tira da lista ja
@@ -60,7 +63,7 @@ const CAT = [
   // O balcao saiu em 24/09/2026, a pedido do usuario: nem o refrigerado nem o
   // termico. O "Balcao Conservacao Alimento ... componentes: pasta fria", nome
   // do catalogo do PNCP para o balcao refrigerado, sai junto.
-  ["RF",["refrigerador","geladeira","frigobar","freezer","congelador","conservadora","camara fria","camara frigorifica","expositor refrigerado","cervejeira","resfriador"]],
+  ["RF",["refrigerador","geladeira","frigobar","freezer","congelador","conservadora","camara fria","camaras frias","camara frigorifica","camaras frigorificas","expositor refrigerado","cervejeira","resfriador"]],
   // "PURIFICADOR/FILTRO DE AGUA INSTALACAO: PAREDE OU BANCADA" (Pedras de Maria da Cruz/MG, 29/09/2026)
   ["BB",["bebedouro","purificador de agua","purificador/filtro de agua","refresqueira","suqueira","refresqueira industrial"]],
   // "buffet termico" fica e "balcao termico" sai, por decisao do usuario em
@@ -117,7 +120,9 @@ const CAT = [
     "cafeteira","chaleira","sanduicheira","torradeira","air fryer","airfryer","aspirador de po","aspirador po","aspirador de agua","aspirador agua","grill eletrico","grill",
     // Maquina de waffle: a Digiplus cota (usuario, 28/09/2026). Pelo nome do
     // APARELHO, e nao "waffle" solto, que pegaria o biscoito da merenda.
-    "maquina de waffle","maquina de fazer waffle","maquina para waffle","maquina waffle","maquina de waffles","waffleira","wafleira"]],
+    "maquina de waffle","maquina de fazer waffle","maquina para waffle","maquina waffle","maquina de waffles","waffleira","wafleira",
+    // a despolpadeira de frutas (usuario, 28/10/2026: "despoupadeira tambem")
+    "despolpadeira","despolpadora"]],
   // O catalogo do PNCP chama a maquina de lavar de "Maquina Lavar Roupa", SEM o
   // "de", e a secadora de "Maquina Secar Roupa" — e a tabela so tinha "maquina
   // de lavar" e "lavadora de roupa". Na lista de 28/09/2026 ficaram fora onze
@@ -689,8 +694,9 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // Arvorezinha/RS e outra maquina e continua.
 "churrasqueira","moedor de cafe","moinho de cafe",
 // enceradeira/lustradeira de piso nao e cotada (decisao do usuario em
-// 23/09/2026). A camara fria, perguntada junto, ficava — ate 27/10/2026, quando o
-// usuario mandou tirar ("camara frigorifica ... nao cotamos", ver o fim do VETO_ITEM).
+// 23/09/2026). A camara fria, perguntada junto, ficava; saiu em 27/10/2026
+// ("camara frigorifica ... nao cotamos") e voltou em 28/10/2026 ("camara fria pode
+// adicionar nos itens que cotamos tambem").
 "enceradeira","lustradeira",
 // e, na mesma conversa: aquecimento de agua (aquecedor de agua, boiler,
 // aquecedor solar, aquecedor de passagem — o aquecedor de AMBIENTE continua);
@@ -850,11 +856,10 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 "torneira",
 // e o estabilizador de tensao (usuario, 27/10/2026: "esse estabilizador nao cotamos";
 // "ESTABILIZADOR DE TENSAO DESTINADO A PROTECAO DE REFRIGERADORES", Panambi/RS, PCE
-// 160, entrava pelos refrigeradores) e a camara fria/frigorifica, de montar em
-// alvenaria (Pelotas/RS, edital 514; Tucunduva/RS, edital 28, 4,30 x 4,60 m). O estabilizador so
-// na frente; a camara em qualquer lugar (ela e termo da categoria RF, e o veto so na
-// frente nao vale para o proprio produto). Muda a decisao de 23/09/2026 ("a camara fria fica").
-"estabilizador","camara frigorifica","camara fria","camaras frias","camara de resfriamento","camara de congelamento","camara de refrigeracao",
+// 160, entrava pelos refrigeradores). So na frente. A camara fria/frigorifica saiu junto
+// (Pelotas/RS, edital 514; Tucunduva/RS, edital 28) e voltou no dia seguinte (usuario,
+// 28/10/2026: "camara fria pode adicionar nos itens que cotamos tambem").
+"estabilizador",
 // 27/10/2026, na revisao da lista: o kit de instalacao vendido sozinho ("KIT P/ INSTALAR
 // DE AR CONDICIONADO. Suporte 450mm Fita de PVC ... Tubo de Cobre", Itacurubi/RS, edital
 // 36, item 1) e o carro com ar-condicionado ("Automovel caracteristicas adicionais: 0 km,
