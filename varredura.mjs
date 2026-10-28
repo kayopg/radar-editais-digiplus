@@ -762,6 +762,9 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // montado com fusivel ultra rapido soft. Start ... disjuntor de comando e
 // ventilador" (Vicentinopolis/GO), painel eletrico de bomba.
 "bebedouro pet","bebedouro para pet","bebedouro para animais","bebedouro para caes","bebedouro canino","bebedouro dog",
+// 28/10/2026: "Comedouro/bebedouro veterinario em aluminio" (Dom Pedrito/RS, edital 148,
+// item 7; usuario: "bebedouro veterinario nao cotamos"). O comedouro e sempre de animal.
+"comedouro","bebedouro veterinario","bebedouros veterinarios",
 "painel montado","painel eletrico","quadro de comando","soft start","soft. start",
 // 14/10/2026: o BUFFET entrou com qualquer nome (CAT, CC). Saem o movel de sala
 // ("Aparador buffet", o buffet de madeira, MDF ou MDP) e a comida de evento
