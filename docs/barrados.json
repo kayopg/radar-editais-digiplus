@@ -1,36 +1,6 @@
 {
- "varredura": "2026-10-27",
+ "varredura": "2026-10-28",
  "editais": [
-  {
-   "path": "05012896000142/2026/1117",
-   "municipio": "Campo Mourão",
-   "uf": "PR",
-   "edital": "Edital nº 1495/2026",
-   "objeto": "A presente licitação tem por objeto aquisição de materiais, insumos e equipamentos para o Laboratório de Águas e para atender às necessidades da UNESPAR Campus ",
-   "exige": [
-    "Amostra"
-   ],
-   "trechos": {
-    "Amostra": [
-     "lucoronidase (caracteristica de e. coli). dispensado em doses individuais (que devem apresentar identificacao de lote e validade). formulacao unica, em po ou pulverizada, pronta para uso em 100 ml de amostra (sem necessidade de diluicao da amostra com o substrato em banho maria). deve acompanhar comparador colorimetrico e comprovacao que atende o metodo 9223-b do standard methods for examination o"
-    ]
-   }
-  },
-  {
-   "path": "05012896000142/2026/1124",
-   "municipio": "Paranavaí",
-   "uf": "PR",
-   "edital": "Edital nº 44/2026",
-   "objeto": "A presente licitação tem por objeto aquisição de materiais, insumos e equipamentos para o Laboratório de Águas e para atender às necessidades da UNESPAR – Campu",
-   "exige": [
-    "Amostra"
-   ],
-   "trechos": {
-    "Amostra": [
-     "lucoronidase (caracteristica de e. coli). dispensado em doses individuais (que devem apresentar identificacao de lote e validade). formulacao unica, em po ou pulverizada, pronta para uso em 100 ml de amostra (sem necessidade de diluicao da amostra com o substrato em banho maria). deve acompanhar comparador colorimetrico e comprovacao que atende o metodo 9223-b do standard methods for examination o"
-    ]
-   }
-  },
   {
    "path": "47842836000105/2026/185",
    "municipio": "Fernandópolis",
@@ -47,6 +17,58 @@
     ],
     "Garantia contratual": [
      "am no codigo de defesa do consumidor (lei nº 8.078/90), aplicando-se o prazo legal de 90 (noventa) dias para bens duraveis, nao havendo necessidade tecnica ou economica que justifique a exigencia de garantia contratual adicional para este objeto. 3.6. indicacao de marca para esta contratacao nao sera indicada marca especifica, porquanto a utilizacao de marcas, modelos ou tipos especificos nao se e"
+    ]
+   }
+  },
+  {
+   "path": "17744434000107/2026/177",
+   "municipio": "Rio Pomba",
+   "uf": "MG",
+   "edital": "Edital nº 228/2026",
+   "objeto": "[Portal de Compras Públicas] - Fornecimento de materiais, insumos, equipamentos e utensílios médico-hospitalares.",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "uto na execucao do servico:6 4.3. na presente contratacao, considerando a simplicidade no fornecimento dos itens, nao houve necessidade da vedacao de utilizacao de marcas ou produtos. da exigencia de amostra e/ou folheto tecnico6 4.4. na presente contratacao, considerando a simplicidade no fornecimento dos itens, nao houve necessidade da apresentacao de amostra e/ou folheto tecnico dos itens ofert",
+     "cao de marcas ou produtos. da exigencia de amostra e/ou folheto tecnico6 4.4. na presente contratacao, considerando a simplicidade no fornecimento dos itens, nao houve necessidade da apresentacao de amostra e/ou folheto tecnico dos itens ofertados. subcontratacao6 4.5. nao e admitida a subcontratacao do objeto contratual. garantia da contratacao6 4.6. nao havera exigencia da garantia da contrataca"
+    ]
+   }
+  },
+  {
+   "path": "11463194000188/2026/73",
+   "municipio": "Ivolândia",
+   "uf": "GO",
+   "edital": "Edital nº 25/2026",
+   "objeto": "PROCEDIMENTO LICITATÓRIO NA MODALIDADE PREGÃO ELETRÔNICO N° 025/2026, REFERENTE A REGISTRO DE PREÇOS PARA A FUTURA E EVENTUAL AQUISIÇÃO DE MEDICAMENTOS E CORREL",
+   "exige": [
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Garantia contratual": [
+     " tecnicas ou recomendacoes, editadas na forma da lgpd. 10.12. os contratos e convenios de que trata o § 1º do art. 26 da lgpd deverao ser comunicados a autoridade nacional. clausula decima primeira – garantia de execucao 11.1. a contratacao conta com garantia de execucao, nos moldes do art. 96 da lei nº 14.133, de 2021, na modalidade concorrencia publica, em valor correspondente a 5% do valor tota",
+     "pd. 10.12. os contratos e convenios de que trata o § 1º do art. 26 da lgpd deverao ser comunicados a autoridade nacional. clausula decima primeira – garantia de execucao 11.1. a contratacao conta com garantia de execucao, nos moldes do art. 96 da lei nº 14.133, de 2021, na modalidade concorrencia publica, em valor correspondente a 5% do valor total do contrato. 11.2. o contratado apresentara, no p"
+    ]
+   }
+  },
+  {
+   "path": "46374500000194/2026/8870",
+   "municipio": "São Paulo",
+   "uf": "SP",
+   "edital": "Aviso de Contratação Direta nº 1026/2026",
+   "objeto": "Aquisição de Fogões",
+   "exige": [
+    "Amostra",
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Amostra": [
+     "e classificacao. 6.15. havendo necessidade, a sessao sera suspensa, informando-se no “chat” a nova data e horario para a sua continuidade. 6.16. caso seja estabelecida a exigencia de [apresentacao de amostra(s)] / [execucao de prova de conceito] na documentacao que integra este aviso como anexo considerando o objeto do procedimento, por ocasiao do julgamento das propostas, sera exigido do forneced",
+     "ndo necessidade, a sessao sera suspensa, informando-se no “chat” a nova data e horario para a sua continuidade. 6.16. caso seja estabelecida a exigencia de [apresentacao de amostra(s)] / [execucao de prova de conceito] na documentacao que integra este aviso como anexo considerando o objeto do procedimento, por ocasiao do julgamento das propostas, sera exigido do fornecedor classificado em primeiro"
+    ],
+    "Garantia contratual": [
+     "s condicoes de acionamento da garantia e os canais de atendimento deverao ser informados na documentacao fornecida com os equipamentos. 3 de 9 4.5.4. a garantia dos equipamentos nao se confunde com a garantia de execucao contratual prevista na lei federal nº 14.133/2021. 4.6. sustentabilidade e eficiencia 4.6.1. os equipamentos deverao observar os requisitos de eficiencia energetica e de seguranca"
     ]
    }
   },
@@ -78,21 +100,6 @@
    "trechos": {
     "Garantia contratual": [
      "te prejuizo ao erario decorrente de inexecucao contratual e impossibilidade de ressarcimento. baixo medio aceitavel listas de verificacao (checklist) para formalizacao dos contratos e apresentacao de garantia contratual, de modo que o servidor responsavel tenha um referencial claro para atuar na fase da referida formalizacao. o setor de contabilidade ou a assessoria juridica identificam que o cont"
-    ]
-   }
-  },
-  {
-   "path": "46611117000102/2026/43",
-   "municipio": "Urânia",
-   "uf": "SP",
-   "edital": "Edital nº 027/2026",
-   "objeto": "CONTRATAÇÃO DE EMPRESA ESPECIALIZADA PARA AQUISIÇÃO DE EQUIPAMENTOS E MATERIAIS PERMANENTES DESTINADOS ÀS UNIDADES BÁSICAS DE SAÚDE ESF I E ESF III DO MUNICÍPIO",
-   "exige": [
-    "Garantia contratual"
-   ],
-   "trechos": {
-    "Garantia contratual": [
-     "urania secretaria municipal de contratos, convenios e parcerias endereco: avenida brasil, nº 390 - paco municipal - centro - 15760-045 telefone: (17) 3634-9020 | email: licitacao2@urania.sp.gov.br 7. garantia contratual: 7.1. a garantia contratual dos equipamentos e materiais permanentes devera observar as disposicoes previstas neste termo de referencia, nas normas do fabricante, na lei federal nº"
     ]
    }
   },
@@ -144,6 +151,21 @@
    }
   },
   {
+   "path": "76208479000118/2026/163",
+   "municipio": "Assis Chateaubriand",
+   "uf": "PR",
+   "edital": "Edital nº 36 | Processo 11656/2026",
+   "objeto": "Aquisicao de aparelhos de ar condicionado cortinas de ar exaustores climatizadores evaporativos e equipamentos correlatos de climatizacao com instalacao quando ",
+   "exige": [
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Garantia contratual": [
+     "ao futura de equipamentos, a possibilidade de surgimento de novos espacos de atendimento aos municipes e a conveniencia de aquisicao parcelada ao longo da vigencia da ata. 5.16. quanto a exigencia de garantia da contratacao prevista nos arts. 96 e seguintes da lei federal nº 14.133/2021, entende-se que, para o presente objeto, nao se mostra necessaria sua previsao, considerando a natureza comum do"
+    ]
+   }
+  },
+  {
    "path": "75771253000168/2026/331",
    "municipio": "Apucarana",
    "uf": "PR",
@@ -172,6 +194,22 @@
     "Amostra": [
      "o objeto, podera ser colhida a manifestacao escrita do setor requisitante do objeto ou da area especializada no objeto. 6.15. caso o item 6 da parte i e o termo de referencia exijam a apresentacao de amostra(s) considerando o objeto da licitacao, o licitante classificado em primeiro lugar devera apresenta-la(s), conforme procedimento disciplinado no termo de referencia, sob pena de nao aceitacao d",
      " sao jose da bela vista sao paulo 21 rua major joao soares, nº 1.236 – centro – cep: 14.440-005 telefone (16) 3142-8101 - e-mail: licitacao@sjbelavista.sp.gov.br – site: saojosedabelavista.sp.gov.br prova de conceito. 7. da fase de habilitacao 7.1. os documentos que serao exigidos para fins de habilitacao estao especificados no item “forma e criterios de selecao do fornecedor” do termo de referenc"
+    ]
+   }
+  },
+  {
+   "path": "01763614000198/2026/101",
+   "municipio": "Campo Alegre de Goiás",
+   "uf": "GO",
+   "edital": "Edital nº 42/2026",
+   "objeto": "AQUISIÇÃO DOS ITENS REMANESCENTES DE PROCEDIMENTOS LICITATÓRIOS ANTERIORES QUE RESULTARAM FRACASSADOS, COMPREENDENDO GÊNEROS ALIMENTÍCIOS, ALIMENTOS PRONTOS, UT",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "tacao, na sede da prefeitura municipal do municipio de campo alegre de goias, ou encaminhar para o e-mail: licitacoes@campoalegre.go.gov.br, codigo de rastreamento, comprovando que, no tempo habil, a amostra foi enviada, sob pena de desclassificacao. 7.11.1. enquanto nao expirado o prazo de entrega, o licitante podera substituir ou efetuar ajustes e modificacoes na amostra apresentada. 7.11.2. a a",
+     "provando que, no tempo habil, a amostra foi enviada, sob pena de desclassificacao. 7.11.1. enquanto nao expirado o prazo de entrega, o licitante podera substituir ou efetuar ajustes e modificacoes na amostra apresentada. 7.11.2. a amostra, caso seja pedida, devera ser acompanhada do protocolo de entrega de amostra, o qual sera subscrito pelo servidor indicado e juntado aos autos do processo; 7.11."
     ]
    }
   },
@@ -271,6 +309,22 @@
    }
   },
   {
+   "path": "76206473000101/2026/227",
+   "municipio": "Céu Azul",
+   "uf": "PR",
+   "edital": "Edital nº PCE 74/2026",
+   "objeto": "Registro de Preços para futura e eventual aquisição de mobiliário, eletrodomésticos, eletroeletrônicos, equipamentos de informática, equipamentos audiovisuais, ",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "tabelecidas neste termo de referencia. 9. da apresentacao de amostras para o item nº 52 devera ser apresentada amostra conforme com as especificacoes do item 9.13 a 9.18 do edital. da apresentacao da amostra e comprovacao da qualidade do produto entrega da amostra: a) a empresa classificada em primeiro lugar, apos a etapa de lances do lote e verificacao da existencia do beneficio da lei complement",
+     " de amostras para o item nº 52 devera ser apresentada amostra conforme com as especificacoes do item 9.13 a 9.18 do edital. da apresentacao da amostra e comprovacao da qualidade do produto entrega da amostra: a) a empresa classificada em primeiro lugar, apos a etapa de lances do lote e verificacao da existencia do beneficio da lei complementar 123/06, durante a fase de aceitacao da proposta e ante"
+    ]
+   }
+  },
+  {
    "path": "77857183000190/2026/333",
    "municipio": "Guaíra",
    "uf": "PR",
@@ -282,6 +336,22 @@
    "trechos": {
     "Amostra": [
      "or meio de mensagem no sistema eletronico. 4.4. havendo o aceite da proposta quanto ao valor, o interessado classificado provisoriamente em primeiro lugar devera apresentar o comprovante de envio da amostra, no prazo de 02 (dois) dias uteis, apos a solicitacao. 4.5. poderao ser exigidas amostras de todos os itens de modo a elucidar eventuais duvidas quanto a qualidade do material. 4.6. as amostras"
+    ]
+   }
+  },
+  {
+   "path": "15389596000130/2026/141",
+   "municipio": "Costa Rica",
+   "uf": "MS",
+   "edital": "Edital nº 43/2026",
+   "objeto": "[Portal de Compras Públicas] - aquisição de mobiliários em geral, eletrodomésticos, climatização, itens de decoração e ambientação, equipamentos audiovisuais e ",
+   "exige": [
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Garantia contratual": [
+     " instrucao, certificados de garantia e demais documentos exigidos pelo fabricante. 3.10.7. os produtos deverao possuir garantia minima exigida prevista na legislacao vigente, sem prejuizo de eventual garantia contratual superior ofertada pelo fabricante. 3.10.8. durante o periodo de garantia, a contratada devera providenciar reparo, substituicao ou assistencia tecnica dos itens defeituosos, sem cu",
+     " instrucao, certificados de garantia e demais documentos exigidos pelo fabricante. 4.12.7. os produtos deverao possuir garantia minima exigida prevista na legislacao vigente, sem prejuizo de eventual garantia contratual superior ofertada pelo fabricante. 4.12.8. durante o periodo de garantia, a contratada devera providenciar reparo, substituicao ou assistencia tecnica dos itens defeituosos, sem cu"
     ]
    }
   },
@@ -302,6 +372,22 @@
    }
   },
   {
+   "path": "18291351000164/2026/279",
+   "municipio": "Divinópolis",
+   "uf": "MG",
+   "edital": "Edital nº 138/2026",
+   "objeto": "REGISTRO DE PREÇOS PARA FUTURAS AQUISIÇÕES DE EQUIPAMENTOS MÉDICOVETERINÁRIOS E BENS DE APOIO, DESTINADOS À IMPLANTAÇÃO, ESTRUTURAÇÃO E AO ADEQUADO FUNCIONAMENT",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "o em primeiro lugar devera apresenta-la, conforme disciplinado no termo de referencia, sob pena de nao aceitacao da proposta. 7.14 – os interessados a acompanharem a analise e julgamento tecnico das amostras deverao se manifestar, apos a convocacao, na fase de julgamento tecnico, via chat da plataforma eletronica onde acontecera o certame. 7.15 – os resultados das avaliacoes serao divulgados por m",
+     "o do desenvolvimento nacional sustentavel e a lei n° 12.305/2010 que institui a politica de residuos solidos, no que couber. 11.6.1 - os interessados a acompanharem a analise e julgamento tecnico das amostras deverao se manifestar, apos a convocacao, na fase de julgamento tecnico, via chat da plataforma eletronica onde acontecera o certame. 11.6 – podera ser requisitada amostra de quaisquer dos it"
+    ]
+   }
+  },
+  {
    "path": "76958974000144/2026/44",
    "municipio": "Sabáudia",
    "uf": "PR",
@@ -318,6 +404,57 @@
     ],
     "Garantia contratual": [
      " manutencao das atividades do ensino especial 369 - 4.4.90.52.00.00.00.00 - equipamentos e material permanente 00104.00104.01.01.00.00.1.500.1001 - educacao / 25% sobre impostos 9. clausula nona - da garantia de execucao 9.1. nao havera a exigencia de garantia de execucao para a presente contratacao. 10. clausula decima - das obrigacoes da contratante 10.1. cumprir todos os compromissos financeiro"
+    ]
+   }
+  },
+  {
+   "path": "83169623000110/2026/579",
+   "municipio": "Joinville",
+   "uf": "SC",
+   "edital": "Edital nº 85/2026",
+   "objeto": "Aquisição de Equipamentos e Materiais Hospitalares",
+   "exige": [
+    "Amostra",
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Amostra": [
+     " conectado; suporte para deteccao de marcapasso; data e hora do exame; exportacao de relatorios em formatos: pdf, jpg (caso seja necessario software especifico o mesmo devera ser fornecido); modo de amostra para iniciar a gravacao assim que a arritmia for detectada; display lcd sensivel ao toque com dimensao de pelo menos 7” que possibilite minimamente a pre-visualizacao do exame e indicacao do po",
+     " conectado; suporte para deteccao de marcapasso; data e hora do exame; exportacao de relatorios em formatos: pdf, jpg (caso seja necessario software especifico o mesmo devera ser fornecido); modo de amostra para iniciar a gravacao assim que a arritmia for detectada; display lcd sensivel ao toque com dimensao de pelo menos 7” que possibilite minimamente a pre-visualizacao do exame e indicacao do po"
+    ],
+    "Garantia contratual": [
+     " / telefone: (47) 3441-6633 5.4 - condicoes de garantia 5.4.1 - os produtos deverao ter garantia legal - conforme do codigo de defesa do consumidor, entretanto, caso o fabricante dos produtos conceda garantia contratual, esta deve ser somada ao prazo da garantia legal. 5.4.2 - quando o conserto for considerado inviavel, a contratada fornecera laudo tecnico detalhando os motivos que inviabilizam o ",
+     "as devidas justificativas. 3.1 - condicoes de garantia: 3.1.1 - os produtos deverao ter garantia legal - conforme do codigo de defesa do consumidor, entretanto, caso o fabricante dos produtos conceda garantia contratual, esta deve ser somada ao prazo da garantia legal. 3.1.2 - quando o conserto for considerado inviavel, a contratada fornecera laudo tecnico detalhando os motivos que inviabilizam o "
+    ]
+   }
+  },
+  {
+   "path": "76290709000130/2026/315",
+   "municipio": "Assaí",
+   "uf": "PR",
+   "edital": "Edital nº 105/2026",
+   "objeto": "O objeto da presente licitação é a escolha da proposta mais vantajosa para a AQUISIÇÃO DE EQUIPAMENTOS, MATERIAIS E RECURSOS TECNOLÓGICOS DESTINADOS À ESTRUTURA",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     " optico ativo, em construcao de fibra optica hibrida, tecnicamente adequado a transmissao em lance unico de 15 metros, devendo suportar resolucao minima de 3840 × 2160 pixels (4k) a taxa de 60 hz com amostragem de cor 4:4:4, admitindo-se suporte a resolucoes superiores, e possuir largura de banda minima de 18 gbps, correspondente ao padrao hdmi 2.0 high speed, ou superior. devera permitir a transm"
+    ]
+   }
+  },
+  {
+   "path": "46374500000194/2026/9000",
+   "municipio": "Ribeirão Preto",
+   "uf": "SP",
+   "edital": "Edital nº 188/2026",
+   "objeto": "Aquisição de Equipamento em Cumprimento de Determinação Judicial",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "nto ao cumprimento das especificacoes do objeto, podera ser colhida a manifestacao escrita do setor requisitante ou da area especializada no objeto. 7.12. considerando a exigencia de apresentacao de amostra(s) na documentacao que integra este edital como anexo, por ocasiao do julgamento das propostas, sera exigido do licitante classificado em primeiro lugar a sua realizacao, conforme procedimento "
     ]
    }
   },
@@ -354,6 +491,67 @@
     ],
     "Garantia contratual": [
      "s tecnicas ou recomendacoes, editadas na forma da lgpd. 10.12 os contratos e convenios de que trata o § 1º do art. 26 da lgpd deverao ser comunicados a autoridade nacional. clausula decima primeira – garantia de execucao (art. 92, xii) 11.1.1 os prazos de garantia observarao o que consta da especificacao de cada item. em regra, a garantia minima sera de 12 (doze) meses, contada do primeiro dia uti"
+    ]
+   }
+  },
+  {
+   "path": "47970769000104/2026/544",
+   "municipio": "Franca",
+   "uf": "SP",
+   "edital": "Edital nº 237/2026",
+   "objeto": "[Portal de Compras Públicas] - REGISTRO DE PREÇOS PARA AQUISIÇÃO DE ELETROPORTÁTEIS – PARTE I, conforme condições, quantidades e exigências estabelecidas neste ",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "o objeto, podera ser colhida a manifestacao escrita do setor requisitante do objeto ou da area especializada no objeto. 6.15. caso o item 6 da parte i e o termo de referencia exijam a apresentacao de amostra(s) considerando o objeto da licitacao, o licitante classificado em primeiro lugar devera secretaria municipal de administracao pagina 25 de 53 apresenta-la(s), conforme procedimento disciplina",
+     " desclassificacao do licitante, o pregoeiro convocara o proximo licitante, obedecida a ordem de classificacao, sucessivamente, ate que um licitante cumpra os requisitos e funcionalidades previstas na prova de conceito. 7. da fase de habilitacao 7.1. os documentos que serao exigidos para fins de habilitacao estao especificados no item \"forma e criterios de selecao do fornecedor\" do termo de referen"
+    ]
+   }
+  },
+  {
+   "path": "02204196000161/2026/468",
+   "municipio": "Itumbiara",
+   "uf": "GO",
+   "edital": "Edital nº 39/2026",
+   "objeto": "AQUISIÇÃO DE EQUIPAMENTOS DESTINADOS A CANTINA, COM RECURSOS ORIUNDOS DE EMENDA PARLAMENTAR, NO ÂMBITO DO CONVÊNIO Nº 747.11/2026, CELEBRADO ENTRE O MUNICÍPIO D",
+   "exige": [
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Garantia contratual": [
+     "endo a contratada responsavel pela perfeita execucao do objeto, bem como por todos os encargos, obrigacoes trabalhistas, previdenciarias, fiscais e comerciais decorrentes da execucao contratual. 4.7. garantia da contratacao 4.7.1. a contratada devera garantir a qualidade e a seguranca dos objetos fornecidos contra defeitos de fabricacao, pelo prazo minimo de 12 (doze) meses, incluidos os 90 (noven"
+    ]
+   }
+  },
+  {
+   "path": "17744434000107/2026/185",
+   "municipio": "Rio Pomba",
+   "uf": "MG",
+   "edital": "Edital nº 242/2026",
+   "objeto": "[Portal de Compras Públicas] - Aquisição de equipamentos e materiais permanentes para unidade básica de saúde conforme Emenda Parlamentar n° 43020002 e Proposta",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "duto na execucao do servico: 4.3. na presente contratacao, considerando a simplicidade no fornecimento dos itens, nao houve necessidade da vedacao de utilizacao de marcas ou produtos. da exigencia de amostra e/ou folheto tecnico 4.4. as empresas participantes do processo licitatorio estao obrigadas a incluir folheto tecnico a proposta comercial para todos os itens, de forma a permitir a comparacao"
+    ]
+   }
+  },
+  {
+   "path": "75741363000187/2026/68",
+   "municipio": "Jardim Alegre",
+   "uf": "PR",
+   "edital": "Edital nº 056/2026",
+   "objeto": "Aquisição de materiais permanentes, compreendendo móveis, armários, mesas, cadeiras, eletrodomésticos e afins, para atender as necessidades das Secretarias Muni",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     " capacidade tecnica do fabricante ou licitante compativel com o item. e) apresentacao de catalogo tecnico oficial contendo marca, linha/modelo e codigos de certificacao do produto. f) apresentacao de amostra no prazo de ate 03 (tres) dias apos o certame, com garantia de assistencia tecnica em raio maximo de 300 km ou atendimento em ate 72 horas. garantia: minimo de 05 (cinco) anos contra defeitos "
     ]
    }
   },
