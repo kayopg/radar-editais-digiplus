@@ -3681,6 +3681,31 @@ const LINHA_DE_PRECO = /^[^:;•]{3,80}?\s\d{1,6}\s+(?:R\$\s*)?\d{1,3}(?:\.\d{3}
 // perdidas no meio do descritivo").
 const CODIGO_DO_LOTE_NA_FRENTE = /^0\d{3}\s+\d{1,4}\.\d{1,2}\.\d{1,6}\s+/;
 const PRECO_DO_LOTE_NO_FIM = /\s*PRE[ÇC]O\s+M[ÁA]XIMO\s+DO\s+LOTE(?:\s*:?\s*[\d.]+,\d{2})?(?:\s+Lote)?\s*$/i;
+// E as outras sobras de folha e de pesquisa de preco achadas na mesma revisao
+// (28/10/2026, "verifique nos demais editais se algo assim acontece tambem"):
+// - o cabecalho da folha da Codevasf no meio da frase, com o CATMAT e a quantidade
+//   da linha: "...mínimo 20 horas de 325312 unid. 2 Ministério da Integração e do
+//   Desenvolvimento Regional - MIDR Companhia ... Territorial 4 autonomia" (Brasilia/DF,
+//   editais 68 e 85);
+const CABECALHO_DA_CODEVASF = /(?:\s+\d{5,7})?\s+(?:unid|und)\.?\s+\d{1,5}(?:\s+e-DOC\s+[0-9A-F]{8}(?:\s+[0-9A-F]{8})?)*\s+Minist[ée]rio\s+da\s+Integra[çc][ãa]o\s+e\s+do\s+Desenvolvimento\s+Regional\s*-\s*MIDR\s+Companhia\s+de\s+Desenvolvimento\s+dos\s+Vales\s+do\s+S[ãa]o\s+Francisco\s+e\s+do\s+Parna[íi]ba(?:\s+[ÁA]rea\s+de\s+Revitaliza[çc][ãa]o\s+e\s+Desenvolvimento\s+Territorial)?(?:\s+\d{1,3}(?=\s|$))?/g;
+// - o fim que ja e a folha seguinte ou o mapa de precos: "EDITAL - PREGÃO ELETRÔNICO
+//   Nº 012/2026 Item Descrição..." (Aracitaba/MG), "autenticidade na deste documento.
+//   UNIVERSIDADE DE SÃO PAULO..." (Pirassununga/SP), "ORÇAMENTO R$ 1.327,91 R$
+//   168,16 MAPA DE FORMAÇÃO DE PREÇOS" e "Uni 3% 1 Protocolo 01-267788/2026"
+//   (Curitiba/PR, dispensa 120), "R$ ___ R$ ___" (Varginha/MG);
+const SOBRA_NO_FIM = /,?\s+(?:(?:A\s+)?autenticidade\s+(?:na\s+|d[ao]\s+)?deste\s+documento|EDITAL\s*[-–]\s*PREG[ÃA]O\s+ELETR[ÔO]NICO\s+N[º°o.]?\s*\d|OR[ÇC]AMENTO\s+R\$|Uni\s+\d{1,2}%\s+\d|Protocolo\s+\d{2}-\d{4,}|(?:R\$\s*_{2,}\s*)+$)/i;
+// - o link da loja da pesquisa de precos, e o item seguinte depois dele: "...a Partir
+//   Da Data de Entrega do Produto, https:// bfo4nbb/p/...&seller_id=magazineluiza..."
+//   (Mogi das Cruzes/SP, edital 36, item 5);
+const LINK_DE_LOJA = /,?\s*https?:\/\/\s?\S/;
+const RASTRO_DE_LOJA = /utm_|gclid|gad_source|seller_id|gbraid/;
+// - o CATMAT no titulo: "MULTIPROCESSADOR DE ALIMENTOS – CATMAT 452433 (Similar):"
+//   (Santa Maria/RS, edital 140).
+const CATMAT_NO_TITULO = /\s*[–-]\s*CATMAT\s*:?\s*\d{5,7}(?:\s*\(similar\))?(?=\s*:)/gi;
+// - e o codigo de seis digitos da coluna seguinte no fim: "...Garantia mínima de 12
+//   meses 325312" (Brasilia/DF, editais 68 e 85), "...a Contar Da Entrega 636278"
+//   (Mogi das Cruzes/SP, edital 36).
+const CODIGO_NO_FIM = /(?<=[\p{L}.)])\s+\d{6}$/u;
 const LIXO_DE_LINHA = /As\s+quantidades\s+foram\s+definidas|JUSTIFICATIVA\s+D[AO]\s|FUNDAMENTA[ÇC][ÃA]O\s+E\s+DESCRI|Lan[çc]ado\s+por:|Metodologia\s+Menor\s+Valor|Menor\s+Valor\s+Valor\s+Estimado/i;
 function linhaPelaCauda(plano, caudas, it, timbres) {
   const n = +it[0], q = Math.round(+it[2] || 0);
@@ -4075,7 +4100,7 @@ try { manuais = JSON.parse(fs.readFileSync(path.join(DIR, 'descritivos-manuais.j
 
 const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v.secoes || []).map(s => s.texto)));
 
-let itensDentroDeOutro = 0, linhasDePreco = 0, linhasDoLote = 0, descricaoDepoisDoPreco = 0, continuacoesDaFolha = 0, seguintesCortados = 0, comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, sobrasTiradas = 0, linhasPeloPreco = 0, linhasCompletadas = 0, restosPelaCopia = 0;
+let itensDentroDeOutro = 0, linhasDePreco = 0, linhasDoLote = 0, sobrasDeFolha = 0, descricaoDepoisDoPreco = 0, continuacoesDaFolha = 0, seguintesCortados = 0, comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, sobrasTiradas = 0, linhasPeloPreco = 0, linhasCompletadas = 0, restosPelaCopia = 0;
 
 // UM EDITAL, sobre o texto que vier: o termo de referencia sozinho ou o edital
 // inteiro (ver o laco logo abaixo). As etapas que olham o edital inteiro e o
@@ -6838,6 +6863,21 @@ function recortaEdital(e, v, secoes) {
     const t = it[6].replace(CODIGO_DO_LOTE_NA_FRENTE, '').replace(PRECO_DO_LOTE_NO_FIM, '');
     if (t !== it[6]) { it[6] = t; linhasDoLote++; }
   }
+  // E as sobras de folha e de pesquisa de preco (ver CABECALHO_DA_CODEVASF): o
+  // fim so sai quando o que vem depois e curto, que folha nova no meio da
+  // especificacao nao pode levar o resto dela.
+  for (const it of v.itens) {
+    if (!it[6] || it[9]) continue;
+    let t = it[6].replace(CABECALHO_DA_CODEVASF, ' ').replace(CATMAT_NO_TITULO, '');
+    const fim = SOBRA_NO_FIM.exec(t);
+    if (fim && fim.index > 30 && t.length - fim.index <= 600) t = t.slice(0, fim.index);
+    const link = LINK_DE_LOJA.exec(t);
+    if (link && link.index > 30 && RASTRO_DE_LOJA.test(t.slice(link.index, link.index + 600))) t = t.slice(0, link.index);
+    t = t.replace(CODIGO_NO_FIM, '');
+    if (t === it[6]) continue;
+    it[6] = t.replace(/\s+/g, ' ').replace(/[\s,;:–-]+$/, '').trim();
+    sobrasDeFolha++;
+  }
 }
 
 function etapasFinais(e, v, secoes) {
@@ -6990,4 +7030,5 @@ console.log(`${descricaoDepoisDoPreco} descritivo(s) da tabela com a descricao d
 console.log(`${itensDentroDeOutro} descritivo(s) com o texto de outro item (cortado ou tirado)`);
 console.log(`${linhasDePreco} descritivo(s) que eram so a linha da tabela de precos (fica o texto do PNCP)`);
 console.log(`${linhasDoLote} descritivo(s) sem o codigo e o preco maximo da linha do lote`);
+console.log(`${sobrasDeFolha} descritivo(s) sem sobra de folha, de mapa de precos ou de link de loja`);
 console.log(`docs/descritivos.json: ${(fs.statSync(arquivo).size / 1024).toFixed(0)} KB`);
