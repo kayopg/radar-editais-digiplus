@@ -53,6 +53,12 @@ const NEGA = [
   // garantia" (Assis Chateaubriand/PR), "nao se faz necessaria" (Londrina/PR)
   'nao exigencia', 'nao ha necessidade', 'nao havera necessidade', 'nao serao necessari',
   'nao ser viavel', 'ausencia de exigencia', 'nao se faz necessari',
+  // "16. garantia contratual 16.1. esta secretaria NAO EXIGE garantia contratual"
+  // (Cajamar/SP, edital 75, 29/10/2026)
+  'nao exige ',
+  // "11.1. fica a empresa contratada dispensada da apresentacao de garantia
+  // contratual" (Cascavel/PR, edital 82, 29/10/2026)
+  'dispensada da apresentacao', 'dispensado da apresentacao', 'dispensada da garantia',
 ];
 
 // E estes confirmam que esta sendo pedido de verdade.
@@ -170,6 +176,9 @@ const CONDICIONAL = [
   'nao puder ser aferid', 'nao puder ser suficientemente aferid', 'amostra enviada',
   'amostras enviadas', 'analisado a necessidade', 'analisada a necessidade',
   'avaliada a necessidade', 'em caso de haver',
+  // e os de 29/10/2026: Palotina/PR (edital 125) e Vera Cruz/RS (PCE 84)
+  'eventual necessidade', 'caso seja necessari', 'amostra(s) apresentada(s)', 'amostras apresentadas',
+  'amostra apresentada',
 ];
 // O verbo de faculdade com coisa no meio: "8.10.12.1. PODERA, no que couber, SER
 // EXIGIDO do licitante vencedor ... a apresentacao de amostras" (Borrazopolis/PR,
@@ -178,7 +187,8 @@ const FACULDADE = /\bpoder(?:a|ao)\b[^.;]{0,40}?\b(?:ser\s+)?(?:solicit|exigi|re
 // A amostra que pode ser trocada por documento (ver amostraOuDocumento, em julga)
 // (nas duas ordens e com o "(s)": "o(s) laudo(s) tecnico(s) e/ou amostra(s)
 // e/ou informacoes tecnicas devera(ao) estar identificado(s)", Goiania/GO)
-const AMOSTRA_OU_DOCUMENTO = /amostras?(?:\(s\))?\s*,?\s*(?:e\/ou|ou)\s+(?:o\s+|os\s+|a\s+|as\s+|o\(s\)\s+|a\(s\)\s+)?(?:laudos?|catalogos?|fichas?|folders?|prospectos?|informac|documenta|declarac)|(?:laudos?|catalogos?|fichas?|informac\w*|documenta\w*)(?:\(s\))?(?:\s+tecnic\w*(?:\(s\))?)?\s*,?\s*e\/ou\s+(?:a\s+|as\s+|a\(s\)\s+)?amostras?/;
+// (e "amostras fisicas ou por catalogo", Sao Paulo/SP, Secretaria da Saude, edital 34, 29/10/2026)
+const AMOSTRA_OU_DOCUMENTO = /amostras?(?:\s+fisicas?)?(?:\(s\))?\s*,?\s*(?:e\/ou|ou)\s+(?:por\s+|o\s+|os\s+|a\s+|as\s+|o\(s\)\s+|a\(s\)\s+)?(?:laudos?|catalogos?|fichas?|folders?|prospectos?|informac|documenta|declarac)|(?:laudos?|catalogos?|fichas?|informac\w*|documenta\w*)(?:\(s\))?(?:\s+tecnic\w*(?:\(s\))?)?\s*,?\s*e\/ou\s+(?:a\s+|as\s+|a\(s\)\s+)?amostras?/;
 // A negacao escrita no meio da clausula, com o artigo: "nao havera A exigencia".
 const NEGA_RE = /nao\s+(?:havera|sera|serao|devera|deverao)\s+(?:a\s+|o\s+)?(?:exigid|exigencia|adotad|solicitad|necessari|obrigatori)/;
 // O que fica de uma secao quando se tira o que ela NEGA: o "nao sera exigida a
@@ -294,6 +304,15 @@ function julga(texto, pos, termo, chave) {
       || /^[^.;]{0,60}(?:garantia tecnica|contra defeitos|defeitos de fabricacao)/.test(depois)
       || /(?:periodo|prazo)s? de\s*$/.test(ctx.slice(Math.max(0, rel - 40), rel))
       || /garantia (?:legal|do fabricante)[^.;]{0,20}$/.test(ctx.slice(Math.max(0, rel - 60), rel))
+      // "caso o FABRICANTE dos produtos CONCEDA garantia contratual, esta deve ser
+      // somada ao prazo da garantia legal" (Joinville/SC, edital 61, 29/10/2026)
+      || /fabricante[^.;]{0,40}\bconced\w*\s*$/.test(ctx.slice(Math.max(0, rel - 80), rel))
+      // "garantia contratual COMPLEMENTAR DE 9 (NOVE) MESES" (Palotina/PR, edital 125)
+      || /^\s*(?:[a-z]+\s+){0,2}de\s+\d+\s*(?:\([a-z ]+\)\s*)?(?:meses|anos|dias)\b/.test(depois)
+      // o TITULO cuja clausula e a garantia dos bens: "7. garantia contratual: 7.1. a
+      // garantia contratual dos equipamentos e materiais permanentes devera observar
+      // ... as normas do fabricante" (Urania/SP, edital 27, 29/10/2026)
+      || /^\s*:?\s*(?:\d{1,2}(?:\.\d{1,2}){1,3}\.?\s+)?(?:a\s+)?garantia(?:\s+contratual)?\s+d[oa]s?\s+(?:bens|produtos|materia(?:l|is)|equipamentos|itens)\b/.test(depois)
       // o titulo "13. DA GARANTIA DE EXECUCAO. 13.1. a contratada devera fornecer
       // garantia minima de 12 (doze) meses para todos os itens, exceto os itens
       // 16 e 19 que e de no minimo 90 dias" (Ivoti/RS, 07/10/2026): prazo em
@@ -327,8 +346,11 @@ function julga(texto, pos, termo, chave) {
   // provisoriamente em primeiro lugar, apresentar amostra, e/ou laudo(s)
   // tecnico(s) e/ou informacoes tecnicas em relacao ao item" (Goiania/GO,
   // edital 115, 09/10/2026)
+  // (e no titulo sem numero, "da exigencia de amostras 4.1. havendo o aceite da proposta
+  // ..., o interessado ... devera apresentar amostras fisicas ou por catalogo", Sao
+  // Paulo/SP, Secretaria da Saude, edital 34, 29/10/2026: a clausula que ele abre)
   const amostraOuDocumento = chave === 'amostra'
-    && AMOSTRA_OU_DOCUMENTO.test(ctx.slice(Math.max(0, rel - 60), rel + termo.length + 80));
+    && AMOSTRA_OU_DOCUMENTO.test(ctx.slice(Math.max(0, rel - 60), rel + termo.length + (/^s?\s*\d{1,2}(?:\.\d{1,2}){1,3}\.?/.test(aposTermo) ? 260 : 80)));
   // E a REMISSAO ao termo de referencia: "5.10. serao exigidas apresentacao de
   // amostras nos termos do item 4.15 e seus subitens constantes do anexo i –
   // termo de referencia" (Sant'Ana do Livramento/RS). Quem decide e a secao do

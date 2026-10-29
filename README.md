@@ -440,6 +440,13 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    na frase e só quando a frase não nomeia um produto cotado (o edital por lote numera
    diferente do PNCP); sem número, a exigência vale para o edital inteiro. Esses ficam na
    lista e aparecem em `docs/barrados.json`, em "ignorados", com o trecho.
+   Em 29/10/2026, 7 dos 10 barrados novos eram engano e passam a ficar: "esta secretaria não
+   exige garantia contratual" (Cajamar/SP), "fica a empresa contratada dispensada da
+   apresentação de garantia" (Cascavel/PR), o título "garantia contratual" cuja cláusula é
+   a garantia dos equipamentos (Urânia/SP), a garantia que o fabricante conceder e a
+   garantia complementar de 9 meses (Joinville/SC, Palotina/PR), a "eventual necessidade"
+   de amostra e a amostra já apresentada (Palotina/PR, Vera Cruz/RS) e as "amostras físicas
+   ou por catálogo" das cadeiras de rodas da Secretaria da Saúde de São Paulo.
 
 ## Ressalvas
 

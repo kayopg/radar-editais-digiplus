@@ -3695,7 +3695,14 @@ const CABECALHO_DA_CODEVASF = /(?:\s+\d{5,7})?\s+(?:unid|und)\.?\s+\d{1,5}(?:\s+
 //   (Curitiba/PR, dispensa 120), "R$ ___ R$ ___" (Varginha/MG);
 // (e o "MARCA: MODELO: Valor da proposta por extenso" do modelo de proposta,
 // Areiopolis/SP, edital 30, item 10)
-const SOBRA_NO_FIM = /,?\s+(?:(?:A\s+)?autenticidade\s+(?:na\s+|d[ao]\s+)?deste\s+documento|EDITAL\s*[-–]\s*PREG[ÃA]O\s+ELETR[ÔO]NICO\s+N[º°o.]?\s*\d|OR[ÇC]AMENTO\s+R\$|Uni\s+\d{1,2}%\s+\d|Protocolo\s+\d{2}-\d{4,}|MARCA:\s*MODELO:|(?:R\$\s*_{2,}\s*)+$)/i;
+// (e, na lista de 29/10/2026: a coluna "Valor de Referência" vazia no fim, Sertao/RS,
+// edital 33; a clausula "Eventual divergência entre este termo de referência e o
+// sistema eletrônico...", Candoi/PR, edital 40, item 37; o codigo das colunas
+// "ContabilizaSP Compras.gov.br", "...retrátil Contabiliza 3061450 Compras", Sao Jose do
+// Rio Preto/SP, edital 193; e a unidade e as quantidades da linha seguidas da clausula
+// de entrega, "...REGISTRO ANVISA. UN 01 03 A entrega dos produtos deverá ser feita...",
+// Eugenio de Castro/RS, edital 24, item 5)
+const SOBRA_NO_FIM = /,?\s+(?:(?:A\s+)?autenticidade\s+(?:na\s+|d[ao]\s+)?deste\s+documento|EDITAL\s*[-–]\s*PREG[ÃA]O\s+ELETR[ÔO]NICO\s+N[º°o.]?\s*\d|OR[ÇC]AMENTO\s+R\$|Uni\s+\d{1,2}%\s+\d|Protocolo\s+\d{2}-\d{4,}|MARCA:\s*MODELO:|(?:R\$\s*_{2,}\s*)+$|Valor\s+de\s+Refer[êe]ncia:?\s*$|(?:Eventual|Havendo)\s+diverg[êe]ncia\s+entre\s+(?:este|o)\s|Contabiliza\s+\d{6,8}\b|(?:OBS\.?\s*[-–:]?\s+)?(?:(?:UN|UND|UNID|UNIDADE)\s+\d{1,4}(?:\s+\d{1,4})?\s+)?A\s+entrega\s+d[oa]s?\s+(?:produtos?|bens|equipamentos?|itens|materiais)\s+dever[áa])/i;
 // - e o que o modelo de proposta e o cabecalho da folha deixam no meio: as colunas de
 //   preco vazias "R$ R$" (Areiopolis/SP, edital 30, item 10, na virada da folha) e a
 //   quantidade "2,0000 Un" com o CEP do cabecalho, "16.015-920" (Aracatuba/SP, edital 84,
@@ -3712,7 +3719,81 @@ const CATMAT_NO_TITULO = /\s*[–-]\s*CATMAT\s*:?\s*\d{5,7}(?:\s*\(similar\))?(?
 // - e o codigo de seis digitos da coluna seguinte no fim: "...Garantia mínima de 12
 //   meses 325312" (Brasilia/DF, editais 68 e 85), "...a Contar Da Entrega 636278"
 //   (Mogi das Cruzes/SP, edital 36).
-const CODIGO_NO_FIM = /(?<=[\p{L}.)])\s+\d{6}$/u;
+// (e o de sete, da coluna ContabilizaSP dos termos da Secretaria da Saude de SP:
+// "...Apoio Laterais Tronc; Adaptações: 6416144", Sorocaba/SP, edital 138, 29/10/2026)
+const CODIGO_NO_FIM = /(?<=[\p{L}.):])\s+\d{6,7}$/u;
+// E as achadas na revisao da lista de 29/10/2026 (49 editais novos):
+// - o telefone do rodape no meio da frase: "ESTRUTURA EMAÇO (55) 3335-1145 CARBONO"
+//   (Eugenio de Castro/RS, edital 24), "assegurada pelo (43)3461.8000 fornecedor"
+//   (Faxinal/PR, dispensa 25), "desde ‘’’ : 0800 443-1221 que atendidas" (Santo
+//   Antonio do Caiua/PR, PE 22);
+const TELEFONE_NO_MEIO = /\s+(?:[‘’'"`]{2,}\s*:\s*)?(?:\(\d{2}\)\s?\d{4,5}[-.\s]?\d{4}|0800[\s-]?\d{3}[\s-]?\d{4})(?=\s)/g;
+// - o cabecalho "Anexo I – Termo de Referência" com o numero da folha no meio da
+//   celula, e a unidade e a quantidade da linha antes dele: "...confeccionados em PAR
+//   20 Anexo I – Termo de Referência 15 polipropileno" (Santana de Parnaiba/SP, edital
+//   188); seguido do numero, do codigo e do nome da linha seguinte, ele e o fim do item:
+//   "...Altura total 1,00m Anexo I - Termo de Referência 5 14 4262335 Cadeira de rodas
+//   Obeso..." (Santana de Parnaiba/SP, edital 131, item 8);
+const ANEXO_DO_TERMO_E_LINHA_SEGUINTE = /\s+Anexo\s+I+\s*[-–]\s*Termo\s+de\s+Refer[êe]ncia\s+\d{1,3}\s+\d{1,3}\s+\d{5,7}\s+\p{Lu}[^]*$/u;
+const ANEXO_DO_TERMO = /(?:\s+(?:PAR|PARES|UN|UND|UNID|UNIDADE|Unidade)\.?\s+\d{1,5})?\s+Anexo\s+I+\s*[-–]\s*Termo\s+de\s+Refer[êe]ncia(?:\s+\d{1,3})?(?=\s|$)/g;
+// - o lixo da fonte do PDF: "apoios para braços DE ib f8EBHHJ@KK f8EBHHJ@KK e pés"
+//   (Arroio do Padre/RS, PE 61, item 12);
+const LIXO_DA_FONTE = /\s+(?:[A-Z]{2}\s+ib\s+)?(?:[a-z]\d[A-Z]{3,8}@[A-Z]{2}(?=\s|$)\s*)+/g;
+// - o CATMAT e o codigo interno da coluna ao lado, no meio da frase e no fim: "Tipo
+//   Pneu 627814 4076 Traseiro: C/ 3 Rodas" e "Tipo Grill - 1097" (Sao Jeronimo/RS,
+//   edital 77, itens 13 e 20);
+const CATMAT_E_CODIGO_NO_MEIO = /\s\d{6}\s+\d{3,5}(?=\s+\p{Lu}\p{Ll}+:)/gu;
+const CATMAT_E_CODIGO_NO_FIM = /\s+(?:\d{6}|[-–])\s+\d{3,5}$/;
+// - o fim do endereco do site com o numero da folha: "...EM ALUMÍNIO; / 27 FREIOS
+//   BILATERAIS" (Colorado/PR, edital 30, item 28);
+// (so depois do ponto e virgula: "40 M.C.A. / 4 KGF/CM²" e especificacao, Curitiba/PR)
+const BARRA_E_FOLHA = /(?<=;)\s+\/\s+\d{1,3}(?=\s)/g;
+// - a linha do quadro de quantidades no fim: "...01 ANO DE GARANTIA. UNI 3 VALOR
+//   TOTAL" (Lindoeste/PR, PE 68), "...ajuste. 01 Total" (Goiania/GO, TJGO, edital
+//   123771, itens 69 e 71);
+const QUADRO_NO_FIM = /\s+(?:(?:UNI|UN|UND|UNID)\.?\s+\d{1,5}\s+VALOR\s+(?:TOTAL|UNIT[ÁA]RIO)|\d{1,3}\s+Total)\s*$/;
+// - o cabecalho da tabela no fim, com o titulo da secao antes dele: "...Garantia
+//   mínima de 12 meses 4.1.2 - Itens a serem adquiridos para secretaria de saúde com
+//   verba da portaria SES 1284/2025. ITEM QUANT UN DESCRIÇÃO Valor unitário de
+//   referência (R$) Valor total (R$)" (Vale do Sol/RS, edital 33, item 9);
+const CABECALHO_NO_FIM = /\s+(?:\d+(?:\.\d+){1,3}\s*[-–]?\s+[^.]{5,200}\.\s+)?ITEM\s+(?:QUANT|QTDE?|UNID|UN|DESCRI)[^]{0,200}$/;
+// - e o fim da tabela no modelo de proposta, que pode vir comprido: "...220V MONOFÁSICO
+//   - Total Geral: R$ Valor total por extenso: O proponente declara que dispõe de
+//   estoques..." (Guidoval/MG, dispensa 137, item 2).
+const FIM_DE_PROPOSTA = /\s*[-–]?\s*Total\s+Geral:\s*R\$|\s+Valor\s+total\s+por\s+extenso:|\s+O\s+proponente\s+declara\s/i;
+// O preco unitario e o total do proprio item, no meio ou no fim, com o que a folha
+// deixa depois deles (o codigo de autenticidade, o numero da folha ou o do item
+// seguinte): "...Garantia mínima de 12 meses 1.354,00 10.832,00 9." e "...escamoteáveis;
+// 1.703,93 3.407,86 /dJ0O5 10 - Apoio de pés..." (Vale do Sol/RS, edital 33, itens 8 e 9).
+const precoBr = n => { const [i, c] = (+n).toFixed(2).split('.'); return i.replace(/\B(?=(\d{3})+(?!\d))/g, '\\.?') + ',' + c; };
+const precoETotalDoItem = it => +it[4] > 0 && +it[2] > 0
+  ? new RegExp('\\s+(?:R\\$\\s*)?' + precoBr(it[4]) + '\\s+(?:R\\$\\s*)?' + precoBr(Math.round(+it[4] * +it[2] * 100) / 100) + '(?:\\s+\\/\\w{4,8})?(?:\\s+\\d{1,3}\\.?)?(?=\\s|$)', 'g')
+  : null;
+// A unidade, a quantidade e a coluna "Anvisa" (S/N) da linha, com o cabecalho da folha
+// seguinte quando vem no meio, e o titulo do grupo seguinte no fim: "...Cadeira de rodas
+// para obeso: UN 13.080 S Item Descrição técnica mínima Un. Qtd. estimada Vl. unit. ref.
+// (R$) Vl. total est. (R$) Anvi sa capacidade mínima..." e "...antes da aquisição. UN
+// 1.090 N GRUPO 7 — HIGIENIZAÇÃO E ACESSÓRIOS" (Cravinhos/SP, consorcio, edital 10).
+const colunasDaLinhaComAnvisa = it => +it[2] > 0
+  ? new RegExp('\\s+UN\\s+' + String(Math.round(+it[2])).replace(/\B(?=(\d{3})+(?!\d))/g, '\\.?') + '\\s+[SN](?:\\s+Item\\s+Descri[çc][ãa]o[^]{0,160}?\\(R\\$\\)\\s+Anvi\\s?sa|\\s+GRUPO\\s+\\d+\\s+[—–-][^a-z]*$)?(?=\\s|$)', 'g')
+  : null;
+// O cabecalho da prefeitura no meio da especificacao, que o timbre tirou pela metade:
+// "...Freios bilaterais com regulagem; Aro IO DE NOVO CABRAIS NOSSA MAIOR OBRA É O SER
+// HUMANO impulsor bilateral..." (Novo Cabrais/RS, edital 42, item 8). E a sequencia em
+// maiusculas com o nome do municipio, num descritivo escrito em minusculas.
+const cabecalhoComOMunicipio = nome => nome
+  ? new RegExp('\\s(?:[A-ZÀ-Ú]{1,}\\s+){0,4}' + municipioEmMaiusculas(nome) + '(?:\\s+[A-ZÀ-Ú]{1,}(?=\\s))*', 'g')
+  : null;
+// A JUSTIFICATIVA DA QUANTIDADE no lugar da especificacao: o termo repete o nome do
+// item numa tabela que da a quantidade e o porque dela, "Ar-condicionado split 24.000
+// BTU/h 2 Previsão de dois equipamentos para ambientes de maior área..." e "Máquina de
+// lavar roupas 1 Um equipamento para atendimento..." (Sapucaia do Sul/RS, edital 63,
+// 29/10/2026). A linha achada pelo numero e pelo preco fica no lugar.
+const JUSTIFICA_QUANTIDADE = /^.{3,150}?\s\d{1,4}\s+(?:Previs[ãa]o\s+de\s|(?:Um|Uma|Dois|Duas|Tr[êe]s|Quatro|Cinco|Seis|Sete|Oito|Nove|Dez|Onze|Doze)\s+(?:equipamentos?|unidades?|aparelhos?|conjuntos?)\b)/;
+// A pagina do PNCP impressa e juntada como arquivo do termo: "COIFA Exibir: 1-5 de 7
+// itens 1 Voltar Criado pela Lei nº 14.133/21, o Portal Nacional de Contratações
+// Públicas..." (Balsa Nova/PR, dispensa 22, item 5, 29/10/2026). Nao e especificacao.
+const PAGINA_DO_PNCP = /Exibir:\s*\d+\s*-\s*\d+\s+de\s+\d+\s+itens|Criado\s+pela\s+Lei\s+n[º°o]?\s*14\.133\/21,\s+o\s+Portal\s+Nacional/i;
 const LIXO_DE_LINHA = /As\s+quantidades\s+foram\s+definidas|JUSTIFICATIVA\s+D[AO]\s|FUNDAMENTA[ÇC][ÃA]O\s+E\s+DESCRI|Lan[çc]ado\s+por:|Metodologia\s+Menor\s+Valor|Menor\s+Valor\s+Valor\s+Estimado/i;
 function linhaPelaCauda(plano, caudas, it, timbres) {
   const n = +it[0], q = Math.round(+it[2] || 0);
@@ -4246,6 +4327,8 @@ function recortaEdital(e, v, secoes) {
       // litros, litros por dia, bocas, portas, cubas, kg) dizem que e outro
       // aparelho (usuario, 14/10/2026: "verifique novamente, edital por edital").
       if (linha === peloPreco && so(t).length >= 100 && numerosConflitam(it[6], t)) { linhasPeloPreco++; (it[6] = t, it.doPreco = linha === peloPreco); continue; }
+      // E a justificativa da quantidade no lugar da especificacao (ver JUSTIFICA_QUANTIDADE)
+      if (JUSTIFICA_QUANTIDADE.test(it[6]) && !JUSTIFICA_QUANTIDADE.test(t) && so(t).length >= 40) { linhasPeloPreco++; (it[6] = t, it.doPreco = linha === peloPreco); continue; }
       const a = so(it[6]), nv = so(t);
       if (nv.length > a.length * 1.1 && nv.includes(a.slice(0, 60)) && nv.includes(a.slice(-40))) { linhasCompletadas++; (it[6] = t, it.doPreco = linha === peloPreco); continue; }
       // e no lugar do atual que E a linha, mas com o fim do item anterior
@@ -6883,14 +6966,30 @@ function recortaEdital(e, v, secoes) {
   // E as sobras de folha e de pesquisa de preco (ver CABECALHO_DA_CODEVASF): o
   // fim so sai quando o que vem depois e curto, que folha nova no meio da
   // especificacao nao pode levar o resto dela.
+  const doMunicipio = cabecalhoComOMunicipio(e[C.municipio]);
   for (const it of v.itens) {
     if (!it[6] || it[9]) continue;
-    let t = it[6].replace(CABECALHO_DA_CODEVASF, ' ').replace(CATMAT_NO_TITULO, '').replace(SOBRA_NO_MEIO, ' ');
+    // (a pagina do PNCP impressa nao e especificacao: fica o texto do PNCP, com o aviso)
+    if (PAGINA_DO_PNCP.test(it[6])) { it[6] = ''; sobrasDeFolha++; continue; }
+    // (nem a exigencia de habilitacao, que o recorte de todos os arquivos tambem acha:
+    // "COIFA - Apresentar, a documentação de responsabilidade técnica...", Balsa Nova/PR)
+    if (HABILITACAO_NO_TERMO.test(it[6])) { it[6] = ''; habilitacaoTirada++; continue; }
+    let t = it[6].replace(CABECALHO_DA_CODEVASF, ' ').replace(CATMAT_NO_TITULO, '').replace(SOBRA_NO_MEIO, ' ')
+      .replace(ANEXO_DO_TERMO_E_LINHA_SEGUINTE, '').replace(ANEXO_DO_TERMO, ' ').replace(TELEFONE_NO_MEIO, ' ')
+      .replace(LIXO_DA_FONTE, ' ').replace(CATMAT_E_CODIGO_NO_MEIO, '').replace(BARRA_E_FOLHA, '');
+    for (const re of [precoETotalDoItem(it), colunasDaLinhaComAnvisa(it)]) if (re) t = t.replace(re, ' ');
+    // (com o nome e pelo menos mais quatro palavras: em "V - BARRETOS - CÓDIGO" e o nome so)
+    if (doMunicipio && (t.match(/[a-zà-ÿ]/g) || []).length > (t.match(/[A-ZÀ-Ú]/g) || []).length) t = t.replace(doMunicipio, m => m.trim().split(/\s+/).length >= 6 ? ' ' : m);
+    const proposta = FIM_DE_PROPOSTA.exec(t);
+    if (proposta && proposta.index > 30) t = t.slice(0, proposta.index);
     const fim = SOBRA_NO_FIM.exec(t);
     if (fim && fim.index > 30 && t.length - fim.index <= 600) t = t.slice(0, fim.index);
     const link = LINK_DE_LOJA.exec(t);
     if (link && link.index > 30 && RASTRO_DE_LOJA.test(t.slice(link.index, link.index + 600))) t = t.slice(0, link.index);
-    t = t.replace(CODIGO_NO_FIM, '');
+    t = t.trim().replace(CODIGO_NO_FIM, '').replace(CATMAT_E_CODIGO_NO_FIM, '').replace(QUADRO_NO_FIM, '').replace(CABECALHO_NO_FIM, '');
+    // O "PAR" que o corte tomou pela coluna da unidade: "2 PAR DE MULETAS CANADENSES:"
+    // virava "DE MULETAS CANADENSES:" (Cajati/SP, PE 82, itens 2 e 7, 29/10/2026)
+    if (/^D[EOA]\s/i.test(t) && /^PAR\s+D[EOA]\s/i.test(String(it[1]).trim())) t = (/^D[EOA]\s/.test(t) ? 'PAR ' : 'Par ') + t;
     if (t === it[6]) continue;
     it[6] = t.replace(/\s+/g, ' ').replace(/[\s,;:–-]+$/, '').trim();
     sobrasDeFolha++;
@@ -7017,7 +7116,7 @@ function etapasFinais(e, v, secoes) {
 // - o do termo abre com o numero de OUTRO item ("3 BEBEDOURO INDUSTRIAL..." no
 //   item 2 de Uberaba/MG, edital 251) ou e a exigencia de habilitacao ("COIFA -
 //   Apresentar, a documentação de responsabilidade técnica... ART", Balsa
-//   Nova/PR, dispensa 22, item 5).
+//   Nova/PR, dispensa 22, item 5) ou a pagina do PNCP impressa (ver PAGINA_DO_PNCP).
 // O que se ganha: a especificacao do termo no lugar do texto do catalogo do PNCP
 // repetido na tabela do edital (Florianopolis/SC, edital 37, itens 3 a 9), do
 // "CONFORME TERMO DE REFERÊNCIA - CATMAT" (Santa Maria/RS, edital 140) e da
@@ -7037,10 +7136,15 @@ function ficaODoTermo(it, doTermo) {
   if (na.replace(/\d+/g, '') === nb.replace(/\d+/g, '')) return false;
   const n = /^(\d{1,3})\s+\p{Lu}/u.exec(b);
   if (n && +n[1] !== +it[0]) return false;
-  return !HABILITACAO_NO_TERMO.test(b);
+  // (nem a pagina do PNCP impressa e juntada como termo, Balsa Nova/PR, 29/10/2026)
+  return !HABILITACAO_NO_TERMO.test(b) && !PAGINA_DO_PNCP.test(b);
 }
 let doTermo = 0, doResto = 0;
+// SO_EDITAL="caminho[,caminho...]" refaz o recorte so desses editais (para depurar;
+// os outros ficam como estao no arquivo)
+const SO_EDITAL = process.env.SO_EDITAL ? new Set(process.env.SO_EDITAL.split(',')) : null;
 for (const e of dados.editais) {
+  if (SO_EDITAL && !SO_EDITAL.has(e[C.path])) continue;
   const v = base.editais[e[C.path]];
   if (!v || !v.itens) continue;
   const todas = (v.secoes || []).map(s => s.texto).join('  ');
