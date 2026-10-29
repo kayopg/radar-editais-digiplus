@@ -62,7 +62,11 @@ const VETO = {
   // agua, R$ 18 mil: UEM, Maringa/PR, edital 236, item 1, 20/10/2026)
   CC: ['banho maria de laboratorio', 'banho-maria de laboratorio', 'aplicacoes laboratoriais', 'uso laboratorial', 'pid fuzzy', 'precisao de controle', 'calibracao', 'variacao maxima aceitavel', 'beads',
     // (e o atributo do PNCP, "Banho-maria, USO: Laboratorial", UEM, Maringa/PR, edital 1583, item 15, 27/10/2026)
-    'uso: laboratorial'],
+    'uso: laboratorial',
+    // (e o da Unioeste, "estabilidade em agitação de ± 2°C ... resistente a produtos
+    // químicos corrosivos", Toledo/PR, edital 20, item 2, e o de "tubos de ensaio" de
+    // Varginha/MG, PE 112, 28/10/2026)
+    'estabilidade em agitacao', 'produtos quimicos corrosivos', 'tubos de ensaio', 'tubo de ensaio'],
   // (e o purificador de osmose reversa de laboratorio: "água com elevado grau de
   // pureza ... atendendo as exigências laboratoriais ... substituição do uso de
   // destiladores", FMRP-USP, Ribeirao Preto/SP, edital 186, item 5, 21/10/2026)
@@ -180,7 +184,9 @@ const EXIGE_INSTALACAO = [
   // "APARELHO AR CONDICIONADO 9.000 BTUS – Tipo SPLIT HI WALL Aquisição e
   // Instalação" (Goiania/GO, edital 115, item 2, 13/10/2026)
   /aquisicao e instalacao/,
-  /instalacao (inclusa|incluida|inclusive)/,
+  // (e "Motor e instalação inclusos" das coifas de Balsa Nova/PR, dispensa 22,
+  // 28/10/2026; nao o "kit de instalacao incluso", que e acessorio do aparelho)
+  /(?<!(?:kit|acessorios?|materia(?:l|is)|suportes?|pecas?)(?: de| para)? )instalacao (?:inclus[ao]s?|incluid[ao]s?|inclusive)/,
   // (nao o "nao incluindo montagem, instalacao fisica" de Caraguatatuba/SP,
   // edital 32, item 1, 20/10/2026)
   /(?<!nao )(incluindo|inclusa|incluida|inclusive) (a )?instalacao/,
@@ -452,6 +458,11 @@ for (const e of dados.editais) {
       // "Banqueta ergonomica giratoria" no edital, pelo numero e pelo preco
       // (15/10/2026)
       || (it[0] === 'MI' && !/(?:^|[^a-z])(?:mesa|bancada)/.test(d.slice(0, 200)) && 'o edital descreve outro movel, nao uma mesa')
+      // e a balanca do catalogo que o edital descreve como outro produto: Campo Novo/RS
+      // (edital 40) cadastrou os 32 itens com o mesmo CATMAT de balanca, e na tabela do
+      // edital sao biombo, mesa ginecologica, rolo de pilates, tapete sensorial,
+      // fazendinha... (28/10/2026). Em 87 balancas da lista, todas citavam a balanca.
+      || (it[0] === 'BL' && !/balanca/.test(d) && 'o edital descreve outro produto, nao uma balanca')
       // (e a mobilidade, que tem de comecar pelo produto: 28/10/2026)
       || (it[0] === 'MO' && !MO_NA_FRENTE.test(norm(it[3])) && !MO_NA_FRENTE.test(d) && 'outro produto que so cita muleta, andador ou cadeira')
       // e a lava-loucas em QUALQUER categoria, quando o texto do edital abre com

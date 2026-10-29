@@ -3693,7 +3693,14 @@ const CABECALHO_DA_CODEVASF = /(?:\s+\d{5,7})?\s+(?:unid|und)\.?\s+\d{1,5}(?:\s+
 //   UNIVERSIDADE DE SÃO PAULO..." (Pirassununga/SP), "ORÇAMENTO R$ 1.327,91 R$
 //   168,16 MAPA DE FORMAÇÃO DE PREÇOS" e "Uni 3% 1 Protocolo 01-267788/2026"
 //   (Curitiba/PR, dispensa 120), "R$ ___ R$ ___" (Varginha/MG);
-const SOBRA_NO_FIM = /,?\s+(?:(?:A\s+)?autenticidade\s+(?:na\s+|d[ao]\s+)?deste\s+documento|EDITAL\s*[-–]\s*PREG[ÃA]O\s+ELETR[ÔO]NICO\s+N[º°o.]?\s*\d|OR[ÇC]AMENTO\s+R\$|Uni\s+\d{1,2}%\s+\d|Protocolo\s+\d{2}-\d{4,}|(?:R\$\s*_{2,}\s*)+$)/i;
+// (e o "MARCA: MODELO: Valor da proposta por extenso" do modelo de proposta,
+// Areiopolis/SP, edital 30, item 10)
+const SOBRA_NO_FIM = /,?\s+(?:(?:A\s+)?autenticidade\s+(?:na\s+|d[ao]\s+)?deste\s+documento|EDITAL\s*[-–]\s*PREG[ÃA]O\s+ELETR[ÔO]NICO\s+N[º°o.]?\s*\d|OR[ÇC]AMENTO\s+R\$|Uni\s+\d{1,2}%\s+\d|Protocolo\s+\d{2}-\d{4,}|MARCA:\s*MODELO:|(?:R\$\s*_{2,}\s*)+$)/i;
+// - e o que o modelo de proposta e o cabecalho da folha deixam no meio: as colunas de
+//   preco vazias "R$ R$" (Areiopolis/SP, edital 30, item 10, na virada da folha) e a
+//   quantidade "2,0000 Un" com o CEP do cabecalho, "16.015-920" (Aracatuba/SP, edital 84,
+//   item 57; a relacao de itens "N - CODIGO NOME QTD,0000 Un Caracteristicas:")
+const SOBRA_NO_MEIO = /\s+R\$\s+R\$(?=\s)|\s+\d{1,3}(?:\.\d{3})*,0000\s+Un\b,?(?:\s+\d{2}\.\d{3}-\d{3})?(?=\s)/g;
 // - o link da loja da pesquisa de precos, e o item seguinte depois dele: "...a Partir
 //   Da Data de Entrega do Produto, https:// bfo4nbb/p/...&seller_id=magazineluiza..."
 //   (Mogi das Cruzes/SP, edital 36, item 5);
@@ -4100,7 +4107,7 @@ try { manuais = JSON.parse(fs.readFileSync(path.join(DIR, 'descritivos-manuais.j
 
 const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v.secoes || []).map(s => s.texto)));
 
-let itensDentroDeOutro = 0, linhasDePreco = 0, linhasDoLote = 0, sobrasDeFolha = 0, descricaoDepoisDoPreco = 0, continuacoesDaFolha = 0, seguintesCortados = 0, comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, sobrasTiradas = 0, linhasPeloPreco = 0, linhasCompletadas = 0, restosPelaCopia = 0;
+let itensDentroDeOutro = 0, rotulosNoEdital = 0, linhasDePreco = 0, linhasDoLote = 0, sobrasDeFolha = 0, descricaoDepoisDoPreco = 0, continuacoesDaFolha = 0, seguintesCortados = 0, comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, sobrasTiradas = 0, linhasPeloPreco = 0, linhasCompletadas = 0, restosPelaCopia = 0;
 
 // UM EDITAL, sobre o texto que vier: o termo de referencia sozinho ou o edital
 // inteiro (ver o laco logo abaixo). As etapas que olham o edital inteiro e o
@@ -6868,7 +6875,7 @@ function recortaEdital(e, v, secoes) {
   // especificacao nao pode levar o resto dela.
   for (const it of v.itens) {
     if (!it[6] || it[9]) continue;
-    let t = it[6].replace(CABECALHO_DA_CODEVASF, ' ').replace(CATMAT_NO_TITULO, '');
+    let t = it[6].replace(CABECALHO_DA_CODEVASF, ' ').replace(CATMAT_NO_TITULO, '').replace(SOBRA_NO_MEIO, ' ');
     const fim = SOBRA_NO_FIM.exec(t);
     if (fim && fim.index > 30 && t.length - fim.index <= 600) t = t.slice(0, fim.index);
     const link = LINK_DE_LOJA.exec(t);
@@ -6877,6 +6884,14 @@ function recortaEdital(e, v, secoes) {
     if (t === it[6]) continue;
     it[6] = t.replace(/\s+/g, ' ').replace(/[\s,;:–-]+$/, '').trim();
     sobrasDeFolha++;
+  }
+  // E o transcrito a mao que as limpezas de cima zeraram volta: o texto curto que nao
+  // cita produto da casa ("ROLO DE PILATES DIMENSÕES 90X15X15 CM.", Campo Novo/RS,
+  // edital 40, item 13, 28/10/2026) caia no nome do PNCP. O que elas so aparam fica
+  // aparado (o "11. CONDIÇÕES DE ENTREGA" de Ubirata/PR, o CATMAT de Santa Maria/RS).
+  for (const [n, m] of Object.entries((manuais[e[C.path]] || {}).itens || {})) {
+    const it = v.itens.find(x => x[0] == n);
+    if (it && !it[6] && +it[2] === m.qtd && Math.abs(+it[4] - m.valor) <= 0.005) it[6] = m.texto;
   }
 }
 
@@ -6891,6 +6906,7 @@ function etapasFinais(e, v, secoes) {
   // Araguaia/GO saiam do radar porque o edital so traz o nome. A exigencia de
   // rotulo rico (rotuloServeDeDescritivo) fica para os itens de fora do radar.
   const noRadar = new Set((e[C.itens] || []).filter(r => r[0] !== 'LT' && r[0] !== 'ED').map(r => String(r[5])));
+  let planoDoEdital = null;
   for (const it of v.itens) {
     if (it[6] || (!rotuloServeDeDescritivo(it[1]) && !noRadar.has(String(it[0])))) continue;
     // O PNCP as vezes escreve o nome duas vezes: "VENTILADOR DE PAREDE DE 60
@@ -6908,6 +6924,15 @@ function etapasFinais(e, v, secoes) {
       // e a virgula em que o PNCP cortou o texto: "...TIPO DE ÁGUA NATURAL,
       // FRIA E GELADA," (Santo Cristo/RS, item 1)
       .replace(/\s*[,;:]\s*$/, '');
+    // O nome que o orgao cadastrou no PNCP e que esta escrito, inteiro, no arquivo
+    // do edital nao e "texto do PNCP": e o texto do edital, e o aviso de conferir no
+    // termo de referencia sobra (28/10/2026, 8 dos 72 itens com o aviso: Osorio/RS,
+    // Palmeiras de Goias/GO, Tres de Maio/RS, Aracatuba/SP...).
+    const r = soLetrasEspaco(it[6]);
+    if (r.length >= 25) {
+      if (planoDoEdital === null) planoDoEdital = soLetrasEspaco(secoes);
+      if (planoDoEdital.includes(r)) { rotulosNoEdital++; continue; }
+    }
     it[9] = 1;
     doCatalogo++;
   }
@@ -6981,6 +7006,7 @@ function etapasFinais(e, v, secoes) {
 // TR_PRIMEIRO=0 desliga.
 const TR_PRIMEIRO = process.env.TR_PRIMEIRO !== '0';
 const soLetras = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '');
+const soLetrasEspaco = t => String(t || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 const HABILITACAO_NO_TERMO = /^.{0,120}?\b(?:Apresentar,?\s+(?:a\s+)?documenta[çc][ãa]o|Comprovar\s+(?:a\s+)?capacidade\s+t[ée]cnica|Atestado\s+de\s+capacidade|Anota[çc][ãa]o\s+de\s+Responsabilidade\s+T[ée]cnica)/i;
 function ficaODoTermo(it, doTermo) {
   const a = String(it[6] || ''), b = String(doTermo[6] || '');
@@ -7019,6 +7045,7 @@ fs.writeFileSync(arquivo, JSON.stringify(base), 'utf8');
 console.log(`${comTexto} edital(is) com texto de secao · ${semTexto} sem`);
 console.log(`${itensRicos} de ${itensTotal} itens ganharam descritivo completo`);
 console.log(`${doCatalogo} itens sem especificacao no edital ficaram com o rotulo do catalogo`);
+console.log(`${rotulosNoEdital} item(ns) com o nome do PNCP escrito inteiro no edital (sem o aviso)`);
 console.log(`termo de referencia primeiro: ${doTermo} item(ns) com o texto do termo, ${doResto} com o de todos os arquivos`);
 console.log(cabecasRecuperadas + " descritivo(s) tiveram o nome do produto recuperado na frente");
 console.log(linhasTrocadas + " descritivo(s) trocados pelo texto da propria linha, que vinha logo depois");

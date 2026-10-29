@@ -131,7 +131,9 @@ const CAT = [
   // Paraiso/PR, Renascenca/PR...), fora os editais que so compravam isso e nem
   // chegavam. "Lavadora automatica/semiautomatica" e o jeito da prefeitura de
   // escrever o mesmo. A de piso continua vetada (VETO_ITEM).
-  ["LV",["lavadora de roupa","maquina de lavar","secadora","lava e seca","lava-e-seca","centrifuga de roupa","calandra","tanquinho","lavadora extratora",
+  // (e "Lavadora, de roupas, 15 kg", com a virgula do cadastro da Prefeitura de
+  // Curitiba, SGP 71.01.12.58847-6: dispensa 120, item 3, 28/10/2026)
+  ["LV",["lavadora de roupa","lavadora, de roupa","maquina de lavar","secadora","lava e seca","lava-e-seca","centrifuga de roupa","calandra","tanquinho","lavadora extratora",
     "maquina lavar","maquina secar","maquina lavadora","lavadora automatica","lavadora semiautomatica","lavadora semi automatica","lavadora semi-automatica",
     // "Lavadoura", com o "u", e como o usuario escreve (lista de 14/10/2026) e
     // como algumas prefeituras escrevem tambem (ver o lava-jato abaixo).
@@ -645,6 +647,10 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // (IF Sul de Minas, cilindro de gas).
 "suporte para freezer","suportes para freezer","gas refrigeracao",
 "protese","jateamento","agitacao de agua","aplicacao: laboratorio","uso laboratorial",
+// 28/10/2026, na revisao da lista: o banho-maria de laboratorio no plural ("COMPATIVEL COM
+// ATE 100 TUBOS DE ENSAIO", Varginha/MG, PE 112) e o da Unioeste ("estabilidade em
+// agitacao de ± 2°C", "resistente a produtos quimicos corrosivos", Toledo/PR, edital 20)
+"tubos de ensaio","estabilidade em agitacao","produtos quimicos corrosivos",
 // 18/09/2026: com "umidificador" na busca vem o umidificador de OXIGENIO, de
 // hospital ("Umidificador para O2", "Material Gasoterapia modelo: umidificador",
 // "Umidificador de ar comprimido"), que nao e o umidificador de ambiente da casa.
