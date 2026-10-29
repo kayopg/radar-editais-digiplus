@@ -3738,6 +3738,11 @@ const ANEXO_DO_TERMO_E_LINHA_SEGUINTE = /\s+Anexo\s+I+\s*[-–]\s*Termo\s+de\s+R
 const ANEXO_DO_TERMO = /(?:\s+(?:PAR|PARES|UN|UND|UNID|UNIDADE|Unidade)\.?\s+\d{1,5})?\s+Anexo\s+I+\s*[-–]\s*Termo\s+de\s+Refer[êe]ncia(?:\s+\d{1,3})?(?=\s|$)/g;
 // - o lixo da fonte do PDF: "apoios para braços DE ib f8EBHHJ@KK f8EBHHJ@KK e pés"
 //   (Arroio do Padre/RS, PE 61, item 12);
+// - o cabecalho da folha do sistema da Abase no meio da celula: "...MEDIDOR EXTERNO DO
+//   NÍVEL DE Usuário/Matricula: MARCIANE ... - Sistema de Compras e Licitações - 3 Doutor
+//   Maurício Cardoso - RS SISTEMA DE COMPRAS E LICITAÇÕES EDITAL - (PCE) PREGÃO
+//   ELETRÔNICO LEI 14.133/21 ÓLEO DA BOMBA" (Doutor Mauricio Cardoso/RS, editais 43 e 46);
+const CABECALHO_DA_ABASE = /\s*Usu[áa]rio\/Matr[íi]cula:[^]{0,300}?SISTEMA\s+DE\s+COMPRAS\s+E\s+LICITA[ÇC][ÕO]ES\s+EDITAL\s*-\s*\([A-Z]{2,4}\)\s*PREG[ÃA]O\s+ELETR[ÔO]NICO\s+LEI\s+14\.133\/21/g;
 const LIXO_DA_FONTE = /\s+(?:[A-Z]{2}\s+ib\s+)?(?:[a-z]\d[A-Z]{3,8}@[A-Z]{2}(?=\s|$)\s*)+/g;
 // - o CATMAT e o codigo interno da coluna ao lado, no meio da frase e no fim: "Tipo
 //   Pneu 627814 4076 Traseiro: C/ 3 Rodas" e "Tipo Grill - 1097" (Sao Jeronimo/RS,
@@ -5405,6 +5410,7 @@ function recortaEdital(e, v, secoes) {
       for (let i = 0; i + 6 <= w.length; i++) { const k = w.slice(i, i + 6).join(' '); conta.set(k, (conta.get(k) || 0) + 1); }
       return (repetidas = new Set([...conta].filter(([k, c]) => c >= 4 && k.length >= 25).map(([k]) => k)));
     };
+    let compacto = null;
     for (let i = 0; i < ord.length; i++) {
       const it = ord[i], prox = ord[i + 1];
       if (!radar.has(it[0]) || !it[6] || it[9] || !(+it[4] > 0)) continue;
@@ -5421,8 +5427,21 @@ function recortaEdital(e, v, secoes) {
       // DEPURA_FOLHA="caminho#numero" mostra por onde a costura deste item passou
       const dbg = process.env.DEPURA_FOLHA === e[C.path] + '#' + it[0] ? (...a) => console.error('FOLHA', ...a) : () => {};
       dbg('fim do descritivo', JSON.stringify(fimN), planoN.indexOf(fimN));
-      for (let k = planoN.indexOf(fimN); k >= 0 && !junta; k = planoN.indexOf(fimN, k + 1)) {
-        const trecho = plano.slice(k + fimN.length, k + fimN.length + 3500);
+      // onde o fim do descritivo acaba no texto: igual, ou so pelas letras e numeros,
+      // que a limpeza poe espaco depois dos dois-pontos e junta a palavra partida — o
+      // fogao de Pinhao/PR (edital 53, item 12) fica "ACABAMENTO DO FORNO: LIMPA" e o
+      // edital tem "FORNO:LIMPA", "DU- PLA" (usuario, 29/10/2026: "descritivo cortado")
+      const fins = [];
+      for (let k = planoN.indexOf(fimN); k >= 0; k = planoN.indexOf(fimN, k + 1)) fins.push(k + fimN.length);
+      if (!fins.length) {
+        if (!compacto) { compacto = { s: '', pos: [] }; for (let q = 0; q < planoN.length; q++) if (/[a-z0-9]/.test(planoN[q])) { compacto.s += planoN[q]; compacto.pos.push(q); } }
+        const fimC = fimN.replace(/[^a-z0-9]/g, '');
+        if (fimC.length >= 20) for (let k = compacto.s.indexOf(fimC); k >= 0; k = compacto.s.indexOf(fimC, k + 1)) fins.push(compacto.pos[k + fimC.length - 1] + 1);
+        dbg('pelas letras', JSON.stringify(fimC), fins);
+      }
+      for (const ondeAcaba of fins) {
+        if (junta) break;
+        const trecho = plano.slice(ondeAcaba, ondeAcaba + 3500);
         // 1. o resto da linha de cima e as colunas, com o preco deste item
         const mp = rePreco.exec(trecho);
         if (!mp || mp.index > 260) continue;
@@ -5482,7 +5501,14 @@ function recortaEdital(e, v, secoes) {
         // (o "65" que sobra do "Página 22 de 65" antes do "- " fica de fora)
         const w0 = /^\d{1,3}$/.test(ws[0] || '') && /^[-–•]$/.test(ws[1] || '') ? 1 : 0;
         const listaNova = !q && /^[-–•]$/.test(ws[w0] || '') && (String(it[6]).match(/[;:]\s*[-–•]\s/g) || []).length >= 2;
+        // (e o descritivo todo em maiusculas, que continua em maiusculas depois do
+        // numero da folha: "...ACABAMENTO DO FORNO:LIMPA 01 UND R$ 820,20 [folha] 35
+        // FÁCIL BOTÃO REMOVÍVEL:SIM ..." — Pinhao/PR, edital 53, item 12, 29/10/2026)
+        const w1 = /^\d{1,3}$/.test(ws[0] || '') ? 1 : 0;
+        const maiusculaNova = !q && !listaNova && !/[a-zà-ÿ]{2,}/.test(String(it[6])) && /^\p{Lu}{2,}/u.test(ws[w1] || '')
+          && !/^(?:ITEM|ITENS|LOTE|QUANT|QTD|UNID|DESCRI|ESPECIFICA|VALOR|C[ÓO]DIGO)/.test(ws[w1] || '');
         if (listaNova) q = w0;
+        else if (maiusculaNova) q = w1;
         else {
           while (q < ws.length && q < 200 && (!/[a-zà-ÿ]/.test(ws[q]) || /^(?:de|e)$/.test(ws[q]))) q++;
           if (q >= ws.length || !(/^[a-zà-ÿ]{2,}/.test(ws[q]) || (listaAberta && /^\p{Lu}[a-zà-ÿ]{2,}/u.test(ws[q])))) continue;
@@ -5498,7 +5524,8 @@ function recortaEdital(e, v, secoes) {
           const nome5 = letras(prox[1]).slice(0, 5);
           // (com a cota entre o numero e o nome: "02 Exclusiva ME/EPP AUTOCLAVE",
           // Caraguatatuba/SP, edital 32)
-          for (const m of cont.matchAll(new RegExp('\\s0*' + prox[0] + '\\s+(?:\\d{1,6}(?:,\\d{1,4})?\\s+)?(?:' + UNIDADE + '\\.?\\s+)?(?:\\d{4,7}\\s+)?(?:(?:Exclusiv[ao]|EXCLUSIV[AO])\\s+(?:para\\s+)?ME\\s*\\/\\s*EPP\\s+|(?:Ampla|AMPLA)\\s+(?:Concorr[êe]ncia\\s+|CONCORR[ÊE]NCIA\\s+)?)?', 'g'))) {
+          // (e com o ponto depois do numero, "13. LANTERNA DE CABEÇA", Pinhao/PR)
+          for (const m of cont.matchAll(new RegExp('\\s0*' + prox[0] + '\\.?\\s+(?:\\d{1,6}(?:,\\d{1,4})?\\s+)?(?:' + UNIDADE + '\\.?\\s+)?(?:\\d{4,7}\\s+)?(?:(?:Exclusiv[ao]|EXCLUSIV[AO])\\s+(?:para\\s+)?ME\\s*\\/\\s*EPP\\s+|(?:Ampla|AMPLA)\\s+(?:Concorr[êe]ncia\\s+|CONCORR[ÊE]NCIA\\s+)?)?', 'g'))) {
             if (nome5.length === 5 && letras(cont.slice(m.index + m[0].length, m.index + m[0].length + 30)).startsWith(nome5)) { fim = m.index; break; }
           }
         }
@@ -5509,6 +5536,17 @@ function recortaEdital(e, v, secoes) {
         if (fim < 0 && prox) {
           const m = new RegExp('\\s0*' + prox[0] + '\\s+\\d{4,7}\\s+(?=\\p{Lu}{3,})', 'u').exec(cont);
           if (m) fim = m.index;
+        }
+        // (e o numero do seguinte com o nome em maiusculas, sem codigo, quando o
+        // edital chama o produto de outro jeito que o PNCP: "...Garantia minima de 12
+        // (doze) meses. 6 BALANÇA ANTROPOMETRICA INFANTIL" — o PNCP diz "Dispositivo P/
+        // Medidas Antropométricas", Itabirito/MG, edital 1020, item 5 —, "...Garantia
+        // mínima de 12 meses. 31 UN LONGARINA 3 LUGARES" — o PNCP diz "Cadeira
+        // Escritório", Pinhalao/PR, edital 18, item 30, 29/10/2026. A continuacao tem de
+        // fechar em ponto logo antes, como a regra de baixo exige.)
+        if (fim < 0 && prox) {
+          const m = new RegExp('(?<=[.;)]\\s)0*' + prox[0] + '\\.?\\s+(?:\\d{1,6}(?:,\\d{1,4})?\\s+)?(?:' + UNIDADE + '\\.?\\s+)?\\p{Lu}{4,}\\b', 'u').exec(cont);
+          if (m) fim = m.index - 1;
         }
         const cl = /\s\d{1,2}(?:\.\d{1,2}){1,3}\.?\s+\p{Lu}/u.exec(cont);
         if (cl && (fim < 0 || cl.index < fim)) fim = cl.index;
@@ -6976,7 +7014,7 @@ function recortaEdital(e, v, secoes) {
     if (HABILITACAO_NO_TERMO.test(it[6])) { it[6] = ''; habilitacaoTirada++; continue; }
     let t = it[6].replace(CABECALHO_DA_CODEVASF, ' ').replace(CATMAT_NO_TITULO, '').replace(SOBRA_NO_MEIO, ' ')
       .replace(ANEXO_DO_TERMO_E_LINHA_SEGUINTE, '').replace(ANEXO_DO_TERMO, ' ').replace(TELEFONE_NO_MEIO, ' ')
-      .replace(LIXO_DA_FONTE, ' ').replace(CATMAT_E_CODIGO_NO_MEIO, '').replace(BARRA_E_FOLHA, '');
+      .replace(LIXO_DA_FONTE, ' ').replace(CATMAT_E_CODIGO_NO_MEIO, '').replace(BARRA_E_FOLHA, '').replace(CABECALHO_DA_ABASE, ' ');
     for (const re of [precoETotalDoItem(it), colunasDaLinhaComAnvisa(it)]) if (re) t = t.replace(re, ' ');
     // (com o nome e pelo menos mais quatro palavras: em "V - BARRETOS - CÓDIGO" e o nome so)
     if (doMunicipio && (t.match(/[a-zà-ÿ]/g) || []).length > (t.match(/[A-ZÀ-Ú]/g) || []).length) t = t.replace(doMunicipio, m => m.trim().split(/\s+/).length >= 6 ? ' ' : m);
@@ -6986,7 +7024,15 @@ function recortaEdital(e, v, secoes) {
     if (fim && fim.index > 30 && t.length - fim.index <= 600) t = t.slice(0, fim.index);
     const link = LINK_DE_LOJA.exec(t);
     if (link && link.index > 30 && RASTRO_DE_LOJA.test(t.slice(link.index, link.index + 600))) t = t.slice(0, link.index);
-    t = t.trim().replace(CODIGO_NO_FIM, '').replace(CATMAT_E_CODIGO_NO_FIM, '').replace(QUADRO_NO_FIM, '').replace(CABECALHO_NO_FIM, '');
+    t = t.trim().replace(CODIGO_NO_FIM, '').replace(CATMAT_E_CODIGO_NO_FIM, '').replace(QUADRO_NO_FIM, '').replace(CABECALHO_NO_FIM, '')
+      // a clausula de comprovacao que comeca no fim e o corte deixou pela metade: "...pelo
+      // fabricante ou fornecedor. Para fins de comprovação das características técnicas"
+      // (Catas Altas/MG, edital 103, item 12, 29/10/2026)
+      .replace(/(?<=[.;])\s+Para\s+fins\s+de\s+comprova[çc][ãa]o\b[^.;]*$/i, '')
+      // e o parentese que a coluna seguinte deixou aberto: "...manual de instrução em
+      // Português (BR" (Dourados/MS, edital 8, item 5) — so a sigla curta: o "(ALTA" de
+      // Palmeira das Missoes/RS e o comeco de "(ALTA ROTAÇÃO)", nao uma palavra inteira
+      .replace(/(\(\s?[A-Za-zÀ-ú]{2,3})$/, '$1)');
     // O "PAR" que o corte tomou pela coluna da unidade: "2 PAR DE MULETAS CANADENSES:"
     // virava "DE MULETAS CANADENSES:" (Cajati/SP, PE 82, itens 2 e 7, 29/10/2026)
     if (/^D[EOA]\s/i.test(t) && /^PAR\s+D[EOA]\s/i.test(String(it[1]).trim())) t = (/^D[EOA]\s/.test(t) ? 'PAR ' : 'Par ') + t;
