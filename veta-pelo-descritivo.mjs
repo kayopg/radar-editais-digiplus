@@ -187,6 +187,10 @@ const EXIGE_INSTALACAO = [
   // (e "Motor e instalação inclusos" das coifas de Balsa Nova/PR, dispensa 22,
   // 28/10/2026; nao o "kit de instalacao incluso", que e acessorio do aparelho)
   /(?<!(?:kit|acessorios?|materia(?:l|is)|suportes?|pecas?)(?: de| para)? )instalacao (?:inclus[ao]s?|incluid[ao]s?|inclusive)/,
+  // "...filtro de ar removível e lavável, com instalação e funcionamento conforme
+  // especificações do fabricante" (Urania/SP, edital 27, item 11; usuario, 29/10/2026:
+  // "urania/sp pede instalação entao pode tirar")
+  /com (?:a )?instalacao e (?:o )?funcionamento/,
   // (nao o "nao incluindo montagem, instalacao fisica" de Caraguatatuba/SP,
   // edital 32, item 1, 20/10/2026)
   /(?<!nao )(incluindo|inclusa|incluida|inclusive) (a )?instalacao/,

@@ -1,5 +1,5 @@
 {
-  "_leia": "Descritivos transcritos a mao do edital, para itens cuja tabela nenhuma regra do descritivo-por-item.mjs le com seguranca (texto de OCR com as colunas de preco no meio da celula, descricao antes do numero). Cada entrada guarda a quantidade e o preco unitario do PNCP conferidos na transcricao: se o orgao mudar o item, a entrada deixa de valer sozinha. Erros de OCR corrigidos na transcricao ('lli' -> 'III', 'INMÊTRO' -> 'INMETRO', 'MiNIMO' -> 'MÍNIMO'); o resto e o texto do edital. Sai quando o edital sai do radar.",
+  "_leia": "Descritivos transcritos a mao do edital, para itens cuja tabela nenhuma regra do descritivo-por-item.mjs le com seguranca (texto de OCR com as colunas de preco no meio da celula, descricao antes do numero). Cada entrada guarda a quantidade e o preco unitario do PNCP conferidos na transcricao: se o orgao mudar o item, a entrada deixa de valer sozinha. Erros de OCR corrigidos na transcricao ('lli' -> 'III', 'INMÊTRO' -> 'INMETRO', 'MiNIMO' -> 'MÍNIMO'); o resto e o texto do edital. Sai quando o edital sai do radar. Em \"avisos\" (numero do item: motivo) o item fica com o texto do edital, mas o card mostra o mesmo aviso do texto do PNCP, \"conferir no arquivo do Termo de Referencia\" — para o edital que se contradiz (29/10/2026).",
   "76208867000107/2026/485": {
     "edital": "Cascavel/PR, Pregao Eletronico 69/2026 (EDITAL COMPLETO GOV.pdf)",
     "conferido": "2026-09-18",
@@ -2268,6 +2268,14 @@
         "fonte": "Relacao de itens, linha 108; o \"60 C\" e do proprio edital (o catalogo corta o \"CM\"), e o \"de 17\" que vinha depois era da folha \"7 de 17\" (28/10/2026)",
         "texto": "Ventilador Tipo: Parede, Potência Motor: 140 W, Tensão Alimentação: 127/220 V, Características Adicionais: Grade Proteção Material: Grade Aço Carbono, Diâmetro: 60 C"
       }
+    }
+  },
+  "25769548000121/2026/230": {
+    "edital": "Uberlândia/MG (DMAE), Aviso de Contratação Direta 202/2026",
+    "conferido": "2026-10-29",
+    "itens": {},
+    "avisos": {
+      "1": "A tabela do termo chama o item de \"AR CONDICIONADO SPLIT PISO- TETO 48.000 BTUs\" e a especificação de \"AR CONDICIONADO SPLIT HI-WALL 48.000 BTUs\"; o PNCP diz piso-teto (usuario, 29/10/2026: \"deixe o mesmo aviso de quando o descritivo e do pncp\")"
     }
   }
 }

@@ -4107,7 +4107,7 @@ try { manuais = JSON.parse(fs.readFileSync(path.join(DIR, 'descritivos-manuais.j
 
 const revisaOrtografia = criaRevisor(Object.values(base.editais).flatMap(v => (v.secoes || []).map(s => s.texto)));
 
-let itensDentroDeOutro = 0, rotulosNoEdital = 0, linhasDePreco = 0, linhasDoLote = 0, sobrasDeFolha = 0, descricaoDepoisDoPreco = 0, continuacoesDaFolha = 0, seguintesCortados = 0, comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, sobrasTiradas = 0, linhasPeloPreco = 0, linhasCompletadas = 0, restosPelaCopia = 0;
+let itensDentroDeOutro = 0, avisosPedidos = 0, rotulosNoEdital = 0, linhasDePreco = 0, linhasDoLote = 0, sobrasDeFolha = 0, descricaoDepoisDoPreco = 0, continuacoesDaFolha = 0, seguintesCortados = 0, comTexto = 0, semTexto = 0, itensTotal = 0, itensRicos = 0, doCatalogo = 0, cabecasRecuperadas = 0, linhasTrocadas = 0, habilitacaoTirada = 0, sobrasTiradas = 0, linhasPeloPreco = 0, linhasCompletadas = 0, restosPelaCopia = 0;
 
 // UM EDITAL, sobre o texto que vier: o termo de referencia sozinho ou o edital
 // inteiro (ver o laco logo abaixo). As etapas que olham o edital inteiro e o
@@ -5392,8 +5392,18 @@ function recortaEdital(e, v, secoes) {
         while (q < ws.length && q < 150 && coberto(q)) q++;
         dbg('cabecalho repetido', q, JSON.stringify(ws.slice(0, q + 3).join(' ')));
         if (q && !MARCA_DE_TIMBRE.test(ws.slice(0, q).join(' '))) continue;
-        while (q < ws.length && q < 200 && (!/[a-zà-ÿ]/.test(ws[q]) || /^(?:de|e)$/.test(ws[q]))) q++;
-        if (q >= ws.length || !(/^[a-zà-ÿ]{2,}/.test(ws[q]) || (listaAberta && /^\p{Lu}[a-zà-ÿ]{2,}/u.test(ws[q])))) continue;
+        // (e a lista em "- " que segue na folha nova com o proximo "- ": "...- 01 (um)
+        // bocal para cantos e frestas; Unid. 24 R$ 364,67 [folha] - 01 (uma) mangueira
+        // flexível; Especificações Elétricas: ..." — Sao Francisco de Assis/RS, edital
+        // 52, item 14, 29/10/2026)
+        // (o "65" que sobra do "Página 22 de 65" antes do "- " fica de fora)
+        const w0 = /^\d{1,3}$/.test(ws[0] || '') && /^[-–•]$/.test(ws[1] || '') ? 1 : 0;
+        const listaNova = !q && /^[-–•]$/.test(ws[w0] || '') && (String(it[6]).match(/[;:]\s*[-–•]\s/g) || []).length >= 2;
+        if (listaNova) q = w0;
+        else {
+          while (q < ws.length && q < 200 && (!/[a-zà-ÿ]/.test(ws[q]) || /^(?:de|e)$/.test(ws[q]))) q++;
+          if (q >= ws.length || !(/^[a-zà-ÿ]{2,}/.test(ws[q]) || (listaAberta && /^\p{Lu}[a-zà-ÿ]{2,}/u.test(ws[q])))) continue;
+        }
         // sem marca da folha nem cabecalho repetido, o que fica entre as
         // colunas e a continuacao nao pode ter palavra minuscula (o timbre ja
         // saiu inteiro)
@@ -5441,7 +5451,7 @@ function recortaEdital(e, v, secoes) {
           || (!/[.;)!]$/.test(pedaco) && !fimTitulo)) continue;
         junta = (solto ? solto + ' ' : '') + pedaco;
       }
-      if (junta) { it[6] = String(it[6]).trim() + ' ' + junta; continuacoesDaFolha++; }
+      if (junta) { const base = String(it[6]).trim(); it[6] = /^[;:,.]/.test(junta) ? base + junta : base + ' ' + junta; continuacoesDaFolha++; }
     }
   }
 
@@ -6936,6 +6946,15 @@ function etapasFinais(e, v, secoes) {
     it[9] = 1;
     doCatalogo++;
   }
+  // E o aviso pedido num item que tem o texto do edital, mas em que o edital se
+  // contradiz ("avisos" no descritivos-manuais.json): o card mostra o mesmo aviso do
+  // texto do PNCP. Uberlandia/MG (dispensa 202, item 1) e "SPLIT PISO-TETO" na tabela e
+  // "SPLIT HI-WALL" na especificacao (usuario, 29/10/2026: "deixe o mesmo aviso de
+  // quando o descritivo e do pncp").
+  for (const n of Object.keys((manuais[e[C.path]] || {}).avisos || {})) {
+    const it = v.itens.find(x => x[0] == n);
+    if (it && it[6] && !it[9]) { it[9] = 1; avisosPedidos++; }
+  }
 
   // A NOMENCLATURA DE LOTE DO EQUIPLANO/BLL (usuario, 20/10/2026: "este edital
   // esta por lote, e voce colocou os itens sem ordem e fora do lote"):
@@ -7046,6 +7065,7 @@ console.log(`${comTexto} edital(is) com texto de secao · ${semTexto} sem`);
 console.log(`${itensRicos} de ${itensTotal} itens ganharam descritivo completo`);
 console.log(`${doCatalogo} itens sem especificacao no edital ficaram com o rotulo do catalogo`);
 console.log(`${rotulosNoEdital} item(ns) com o nome do PNCP escrito inteiro no edital (sem o aviso)`);
+console.log(`${avisosPedidos} item(ns) com o aviso de conferir no termo de referencia a pedido (descritivos-manuais.json, "avisos")`);
 console.log(`termo de referencia primeiro: ${doTermo} item(ns) com o texto do termo, ${doResto} com o de todos os arquivos`);
 console.log(cabecasRecuperadas + " descritivo(s) tiveram o nome do produto recuperado na frente");
 console.log(linhasTrocadas + " descritivo(s) trocados pelo texto da propria linha, que vinha logo depois");
