@@ -18,7 +18,7 @@ alguém: `node usuarios-site.mjs adicionar USUARIO "senha" "Nome"`, `remover USU
 `listar`, e commit do `docs/index.html`. É reconhecimento, não cofre: os dados continuam em
 arquivos públicos. O artefato não tem a tela.
 
-Estados atendidos: PR, RS, SP, MG, DF e SC (MS e GO saíram em 30/10/2026, a pedido do usuário; MT saiu em 06/10/2026: a
+Estados atendidos: PR, RS, SP, MG e SC (MS, GO e DF saíram em 30/10/2026, a pedido do usuário; MT saiu em 06/10/2026: a
 Digiplus não cota mais nada lá). Desde 20/10/2026 todos eles cotam tudo o que o radar
 pega — o usuário, vendo secadora, refrigerador, multiprocessador, micro-ondas e mixer
 cortados em SP e MG: "cotar tudo em todos". A instalação continua só em RS e SC
