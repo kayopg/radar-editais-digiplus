@@ -317,7 +317,10 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    serra circular e a cozinha infantil de brinquedo. E o item de buffet que é serviço
    sai sozinho, sem marcar o edital inteiro como de serviço.
    As **balanças** saíram em 23/09/2026 e voltaram em 14/10/2026 ("Balanças também
-   cotamos"). Desde 21/10/2026 a balança de PESAR PESSOAS também entra, em todos os editais
+   cotamos"). **Desde 30/10/2026 estão SUSPENSAS** (usuário: "pode retirar as balanças por
+   enquanto, pois como estamos sem fornecedor, não vamos cotar temporariamente"): a linha
+   da categoria BL está comentada no `varredura.mjs`, e as regras abaixo continuam no código
+   para quando voltar. Desde 21/10/2026 a balança de PESAR PESSOAS também entra, em todos os editais
    (o usuário, sobre a infantil, a adulta com régua antropométrica e a de obesos de Fênix/PR:
    "algumas balanças ficaram de fora deste edital"; e, perguntado, "em todos os editais"):
    saíram dos vetos a antropométrica, a pediátrica e de bebê, a de obesos, a de

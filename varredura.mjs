@@ -169,7 +169,12 @@ const CAT = [
   // da balanca de pesar gente, de bebe e de laboratorio (VETO_BL_MEDICA), que
   // foram decisoes do usuario antes de a categoria sair. Linha so de RS, SC e
   // PR (LINHAS_DA_UF, veto-item.mjs).
-  ["BL",["balanca","balanca comercial","balanca industrial","balanca digital","balanca de plataforma","balanca eletronica"]],
+  // SUSPENSA em 30/10/2026, por tempo indeterminado (usuario: "pode retirar as
+  // balancas por enquanto, pois como estamos sem fornecedor, nao vamos cotar
+  // temporariamente"). O veta-pelo-descritivo.mjs tira do dados.json o item de
+  // categoria que nao existe. Para voltar, descomentar a linha abaixo: os termos, o
+  // VETO_BL_MEDICA e as linhas por UF continuam no lugar.
+  // ["BL",["balanca","balanca comercial","balanca industrial","balanca digital","balanca de plataforma","balanca eletronica"]],
   // MI (mesa inox) entrou em 15/10/2026: "Mesa Inox agora e um item que cotamos
   // tambem". A categoria nao sai destes termos, e sim de a descricao COMECAR por
   // "mesa" e falar em inox logo adiante (criaPosicaoDoTermo, veto-item.mjs): o
