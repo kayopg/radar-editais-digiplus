@@ -57,7 +57,9 @@ const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira",
 // Fora de RS, SC e PR cada UF tem as suas linhas de produto (LINHAS_DA_UF, no
 // veto-item.mjs). O veta-pelo-descritivo.mjs le esta lista e tira da lista ja
 // publicada o edital de UF que sair dela.
-const UFS = ["PR","RS","SP","MG","GO","DF","MS","SC"];
+// MS saiu em 30/10/2026 (usuario: "Mato grosso do sul pode remover dos estados que
+// cotamos").
+const UFS = ["PR","RS","SP","MG","GO","DF","SC"];
 
 const CAT = [
   // O balcao saiu em 24/09/2026, a pedido do usuario: nem o refrigerado nem o
