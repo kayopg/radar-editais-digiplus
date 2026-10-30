@@ -240,6 +240,14 @@ const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira','sanduic
 const PISO_VOLUME = [[140, 10], [100, 25]];   // [preco acima de, unidades acima de]
 const salvoPeloVolume = (v, q) => PISO_VOLUME.some(([p, n]) => v > p && q > n);
 
+// 5.4d - fora de RS e SC, o item de R$ 150 a R$ 250 so entra com mais de 10 unidades
+// (usuario, 30/10/2026: "produtos fora de SC e RS, que sejam entre 150 e 250 reais,
+// coloque apenas quando for acima de 10 unidades"). [de, ate, unidades acima de]. O
+// veta-pelo-descritivo.mjs le a mesma faixa e aplica na lista ja publicada.
+const FAIXA_SO_COM_VOLUME = [150, 250, 10];
+const UFS_SEM_FAIXA = ['RS', 'SC'];
+const foraDaFaixa = (uf, v, q) => !UFS_SEM_FAIXA.includes(uf) && v >= FAIXA_SO_COM_VOLUME[0] && v <= FAIXA_SO_COM_VOLUME[1] && q <= FAIXA_SO_COM_VOLUME[2];
+
 // 5.6 - piso do edital inteiro. Compra de troco (uma chaleira, um liquidificador)
 // nao vale a viagem. Valor ZERO e orcamento sigiloso e fica: nao se sabe o tamanho,
 // e pode ser grande (decisao do usuario em 31/08/2026).
@@ -1403,6 +1411,8 @@ for (const o of cands) {
     if (!itemVivo(it.sit)) { vCancel++; continue; }
     const v = +it.v || 0;
     if (v > 0 && v < PISO_ITEM && !SEM_PISO.some(p => d.includes(p)) && !salvoPeloVolume(v, +it.q || 0)) continue;
+    // e fora de RS e SC, de R$ 150 a R$ 250 so com mais de 10 unidades (ver FAIXA_SO_COM_VOLUME)
+    if (v > 0 && foraDaFaixa(o.uf, v, +it.q || 0)) continue;
     // a categoria suspensa conta para o piso e nao entra (ver CATEGORIAS_SUSPENSAS)
     if (CATEGORIAS_SUSPENSAS.includes(cat)) { valSuspenso += Math.round(+it.q || 0) * v; continue; }
     // Posicoes 0-3 sao as antigas; 4 e 5 vieram com o resumo mais completo
