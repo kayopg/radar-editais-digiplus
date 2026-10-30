@@ -443,11 +443,11 @@ for (const e of dados.editais) {
       console.log(`categoria ${it[0]} suspensa · ${nome} · item ${it[5]}: ${String(it[3]).replace(/\s+/g, ' ').slice(0, 80)}`);
       return false;
     }
-    // Fora de RS e SC, o item de R$ 150 a R$ 250 so fica com mais de 10 unidades
+    // Fora de RS e SC, o item de R$ 150 a R$ 300 so fica com 10 unidades ou mais
     // (varredura.mjs, FAIXA_SO_COM_VOLUME; usuario, 30/10/2026)
-    if (!UFS_SEM_FAIXA.includes(e[C.uf]) && +it[2] >= FAIXA[0] && +it[2] <= FAIXA[1] && +it[1] <= FAIXA[2]) {
+    if (!UFS_SEM_FAIXA.includes(e[C.uf]) && +it[2] >= FAIXA[0] && +it[2] <= FAIXA[1] && +it[1] < FAIXA[2]) {
       tirados++;
-      console.log(`veta "R$ ${FAIXA[0]} a ${FAIXA[1]} com ate ${FAIXA[2]} unidades fora de RS e SC" · ${it[0]} · ${nome} · item ${it[5]}: ${it[1]} x R$ ${it[2]} ${String(it[3]).replace(/\s+/g, ' ').slice(0, 60)}`);
+      console.log(`veta "R$ ${FAIXA[0]} a ${FAIXA[1]} com menos de ${FAIXA[2]} unidades fora de RS e SC" · ${it[0]} · ${nome} · item ${it[5]}: ${it[1]} x R$ ${it[2]} ${String(it[3]).replace(/\s+/g, ' ').slice(0, 60)}`);
       return false;
     }
     const x = (v.itens || []).find(y => y[0] == it[5]);
