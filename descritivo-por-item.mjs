@@ -5433,7 +5433,14 @@ function recortaEdital(e, v, secoes) {
       // terminou, e o que vem depois da folha e outra coisa (13/10/2026: em
       // Tupancireta, Planalto, Inhumas e Guarapuava a "continuacao" era o
       // item seguinte). O numero de lista no fim ("...quadrada 8.") nao fecha.
-      if (/[.;!?)]\s*$/.test(String(it[6]).trim().replace(/\s\d{1,2}\.$/, ''))) continue;
+      // (O que fecha em PONTO passa, com travas: a frase seguinte da folha nova, em
+      // maiuscula, que nao e o nome de item nenhum, que termina no nome do item seguinte
+      // e que nao cita produto da casa — "...carambolas em poliestireno resistente. Und 1
+      // R$ 388,00 [folha] Deve acompanhar 2 carambolas, ... Produto novo. QM Impressora
+      // multifuncional..." (Altonia/PR, edital 52, item 1; usuario, 30/10/2026: "descritivos
+      // cortados").)
+      const fechou = /[.;!?)]\s*$/.test(String(it[6]).trim().replace(/\s\d{1,2}\.$/, ''));
+      if (fechou && !/\.\s*$/.test(String(it[6]).trim())) continue;
       const fimN = normIgual(String(it[6]).replace(/\s+/g, ' ')).slice(-40);
       if (fimN.length < 25) continue;
       const [pInt, pCent] = (+it[4]).toFixed(2).split('.');
@@ -5522,7 +5529,14 @@ function recortaEdital(e, v, secoes) {
         const w1 = /^\d{1,3}$/.test(ws[0] || '') ? 1 : 0;
         const maiusculaNova = !q && !listaNova && !/[a-zà-ÿ]{2,}/.test(String(it[6])) && /^\p{Lu}{2,}/u.test(ws[w1] || '')
           && !/^(?:ITEM|ITENS|LOTE|QUANT|QTD|UNID|DESCRI|ESPECIFICA|VALOR|C[ÓO]DIGO)/.test(ws[w1] || '');
-        if (listaNova) q = w0;
+        if (fechou) {
+          // (o ponto que sobra do fim do rodape, "...para verificar a autenticidade.", fica de fora)
+          const p0 = /^[.;:|‖]+$/.test(ws[0] || '') ? 1 : 0;
+          if (q || !/^\p{Lu}\p{Ll}{2,}$/u.test(ws[p0] || '')) continue;
+          const inicio = letras(ws.slice(p0, p0 + 8).join(' '));
+          if (v.itens.some(x => { const r = letras(limpaTextoPncp(x[1])).slice(0, 10); return r.length >= 6 && inicio.startsWith(r); })) continue;
+          q = p0;
+        } else if (listaNova) q = w0;
         else if (maiusculaNova) q = w1;
         else {
           while (q < ws.length && q < 200 && (!/[a-zà-ÿ]/.test(ws[q]) || /^(?:de|e)$/.test(ws[q]))) q++;
@@ -5563,6 +5577,15 @@ function recortaEdital(e, v, secoes) {
           const m = new RegExp('(?<=[.;)]\\s)0*' + prox[0] + '\\.?\\s+(?:\\d{1,6}(?:,\\d{1,4})?\\s+)?(?:' + UNIDADE + '\\.?\\s+)?\\p{Lu}{4,}\\b', 'u').exec(cont);
           if (m) fim = m.index - 1;
         }
+        // (e, na que fechou em ponto, a frase que termina antes do nome do seguinte, com
+        // ate tres letras soltas no meio: "...Produto novo. QM Impressora multifuncional")
+        if (fim < 0 && prox && fechou) {
+          const nome = letras(limpaTextoPncp(prox[1]).split(/\s+/)[0] || '');
+          if (nome.length >= 5) for (const m of cont.matchAll(/[.;]\s+(?:\S{1,3}\s+)?/g)) {
+            if (letras(cont.slice(m.index + m[0].length, m.index + m[0].length + 30)).startsWith(nome)) { fim = m.index + 1; break; }
+          }
+        }
+        const pelaProx = fim >= 0;
         const cl = /\s\d{1,2}(?:\.\d{1,2}){1,3}\.?\s+\p{Lu}/u.exec(cont);
         if (cl && (fim < 0 || cl.index < fim)) fim = cl.index;
         // (e o titulo da secao seguinte: "...Certificado pelo INMETRO 3 – DA
@@ -5571,6 +5594,7 @@ function recortaEdital(e, v, secoes) {
         const fimTitulo = !!tit && (fim < 0 || tit.index < fim);
         if (fimTitulo) fim = tit.index;
         if (fim < 10 || fim > 1500) continue;
+        if (fechou && (!pelaProx || fim > 400 || termoDaCategoria(normIgual(cont.slice(0, fim))) !== -1)) continue;
         dbg('fim', fim, JSON.stringify(cont.slice(0, 300)));
         let pedaco = cont.slice(0, fim).trim();
         // e as colunas da linha, se a continuacao as traz no fim

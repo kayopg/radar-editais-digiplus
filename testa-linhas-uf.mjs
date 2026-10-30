@@ -9,10 +9,6 @@ import { criaPosicaoDoTermo, criaCotaNaUf, LINHAS_DE_05_10 } from './veto-item.m
 const fonte = fs.readFileSync('varredura.mjs', 'utf8');
 const iCat = fonte.indexOf('const CAT = [');
 const CAT = eval(fonte.slice(iCat, fonte.indexOf('\n];', iCat) + 3).replace('const CAT = ', ''));
-// A categoria BL (balancas) esta suspensa desde 30/10/2026, com a linha comentada no
-// varredura.mjs; a tabela por UF continua valendo para quando ela voltar, entao o teste
-// a confere com a linha comentada.
-if (!CAT.some(([c]) => c === 'BL')) { const m = fonte.match(/\/\/\s*(\["BL",\[[^\]]*\]\])/); if (m) CAT.push(eval(m[1])); }
 const norm = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ');
 const cotaAntes = criaCotaNaUf(criaPosicaoDoTermo(CAT), LINHAS_DE_05_10);
 const cotaAgora = criaCotaNaUf(criaPosicaoDoTermo(CAT));

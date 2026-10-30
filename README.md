@@ -318,9 +318,12 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    sai sozinho, sem marcar o edital inteiro como de serviço.
    As **balanças** saíram em 23/09/2026 e voltaram em 14/10/2026 ("Balanças também
    cotamos"). **Desde 30/10/2026 estão SUSPENSAS** (usuário: "pode retirar as balanças por
-   enquanto, pois como estamos sem fornecedor, não vamos cotar temporariamente"): a linha
-   da categoria BL está comentada no `varredura.mjs`, e as regras abaixo continuam no código
-   para quando voltar. Desde 21/10/2026 a balança de PESAR PESSOAS também entra, em todos os editais
+   enquanto, pois como estamos sem fornecedor, não vamos cotar temporariamente"): a categoria
+   BL está em `CATEGORIAS_SUSPENSAS` no `varredura.mjs` — continua sendo reconhecida, o item
+   não entra na lista e o valor dele CONTA para o piso do edital, para que só a balança saia
+   e não o edital com os outros itens (no mesmo dia, quando a dispensa 120 de Curitiba/PR
+   saiu inteira com a lavadora e o liquidificador: "itens que cotamos também foram
+   retirados"). Para voltar, tirar BL da lista. Desde 21/10/2026 a balança de PESAR PESSOAS também entra, em todos os editais
    (o usuário, sobre a infantil, a adulta com régua antropométrica e a de obesos de Fênix/PR:
    "algumas balanças ficaram de fora deste edital"; e, perguntado, "em todos os editais"):
    saíram dos vetos a antropométrica, a pediátrica e de bebê, a de obesos, a de

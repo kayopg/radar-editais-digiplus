@@ -138,6 +138,9 @@ const VETO_FORA_DE = { projetor: 'LD', 'em mdf': 'CL', 'de mdf': 'CL', veicul: '
 // descricao nao e o produto (ver TERMO_LONGE la).
 const blocoCat = fonte.slice(fonte.indexOf('const CAT = ['), fonte.indexOf('\n];', fonte.indexOf('const CAT = [')) + 3);
 const CAT = eval(blocoCat.replace('const CAT = ', ''));
+// As categorias suspensas (varredura.mjs, CATEGORIAS_SUSPENSAS): o item sai e o valor
+// dele conta para o piso do edital (as balancas, 30/10/2026)
+const SUSPENSAS = lista('CATEGORIAS_SUSPENSAS');
 const TERMO_LONGE = Number((fonte.match(/const TERMO_LONGE = (\d+)/) || [])[1]) || 400;
 // o termo citado como uso de outro produto nao conta (ver veto-item.mjs)
 const termoMaisCedo = criaPosicaoDoTermo(CAT);
@@ -431,7 +434,13 @@ for (const e of dados.editais) {
     && (v.itens || []).some(x => ITEM_DE_INSTALACAO.test(norm(x[1])));
   const instalaNoObjeto = !UF_INSTALA.has(e[C.uf]) && /instalacao|montagem/.test(objN)
     && (OBJ_CONDICIONAL.test(objN) || (/mobiliario|moveis/.test(objN) && /eletrodomestic|eletroportat/.test(objN)));
+  let valSuspenso = 0;
   const itens = e[C.itens].filter(it => {
+    if (SUSPENSAS.includes(it[0])) {
+      foraDeCategoria++; valSuspenso += it[1] * it[2];
+      console.log(`categoria ${it[0]} suspensa · ${nome} · item ${it[5]}: ${String(it[3]).replace(/\s+/g, ' ').slice(0, 80)}`);
+      return false;
+    }
     const x = (v.itens || []).find(y => y[0] == it[5]);
     const d = norm(x && x[6]);
     // Categoria que saiu do radar — BL, as balancas, em 23/09/2026. O item
@@ -501,7 +510,7 @@ for (const e of dados.editais) {
   if (itens.length === e[C.itens].length) { ficam.push(e); continue; }
   const qtd = itens.reduce((s, x) => s + x[1], 0);
   const val = Math.round(itens.reduce((s, x) => s + x[1] * x[2], 0));
-  if (!itens.length || (val > 0 && val <= PISO_EDITAL)) {
+  if (!itens.length || (val > 0 && val + valSuspenso <= PISO_EDITAL)) {
     editaisFora++;
     console.log(`  sai o edital ${nome}: ${itens.length ? 'R$ ' + val + ' fica abaixo do piso' : 'sem item'}`);
     continue;

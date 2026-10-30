@@ -169,12 +169,8 @@ const CAT = [
   // da balanca de pesar gente, de bebe e de laboratorio (VETO_BL_MEDICA), que
   // foram decisoes do usuario antes de a categoria sair. Linha so de RS, SC e
   // PR (LINHAS_DA_UF, veto-item.mjs).
-  // SUSPENSA em 30/10/2026, por tempo indeterminado (usuario: "pode retirar as
-  // balancas por enquanto, pois como estamos sem fornecedor, nao vamos cotar
-  // temporariamente"). O veta-pelo-descritivo.mjs tira do dados.json o item de
-  // categoria que nao existe. Para voltar, descomentar a linha abaixo: os termos, o
-  // VETO_BL_MEDICA e as linhas por UF continuam no lugar.
-  // ["BL",["balanca","balanca comercial","balanca industrial","balanca digital","balanca de plataforma","balanca eletronica"]],
+  // SUSPENSA em 30/10/2026 (CATEGORIAS_SUSPENSAS, abaixo).
+  ["BL",["balanca","balanca comercial","balanca industrial","balanca digital","balanca de plataforma","balanca eletronica"]],
   // MI (mesa inox) entrou em 15/10/2026: "Mesa Inox agora e um item que cotamos
   // tambem". A categoria nao sai destes termos, e sim de a descricao COMECAR por
   // "mesa" e falar em inox logo adiante (criaPosicaoDoTermo, veto-item.mjs): o
@@ -246,6 +242,16 @@ const salvoPeloVolume = (v, q) => PISO_VOLUME.some(([p, n]) => v > p && q > n);
 // nao vale a viagem. Valor ZERO e orcamento sigiloso e fica: nao se sabe o tamanho,
 // e pode ser grande (decisao do usuario em 31/08/2026).
 const PISO_EDITAL = 4000;
+
+// 5.7 - categorias SUSPENSAS: continuam sendo reconhecidas (termos, vetos, linhas por
+// UF), mas o item nao entra na lista — e o valor dele conta para o piso do edital, para
+// que so ele saia, e nao o edital com os outros itens que se cotam. As balancas desde
+// 30/10/2026 (usuario: "pode retirar as balancas por enquanto, pois como estamos sem
+// fornecedor, nao vamos cotar temporariamente"; e logo depois, quando a dispensa 120 de
+// Curitiba/PR saiu inteira, com a lavadora e o liquidificador, por ficar abaixo do piso:
+// "itens que cotamos tambem foram retirados, como maquina de lavar roupas"). Para voltar
+// a cotar, tirar a categoria daqui.
+const CATEGORIAS_SUSPENSAS = ['BL'];
 
 // 5.0 — modalidade. Ids conferidos na API em 31/08/2026:
 //   1 Leilao-Eletronico | 4 Concorrencia-Eletronica | 6 Pregao-Eletronico
@@ -881,7 +887,11 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // (VETO_SO_NA_FRENTE): o "bebedouro ... + kit de instalacao" e o "ar condicionado ...
 // com kit de instalacao incluido" ficam. "automotiv" nao: o frigobar de Uberlandia pede
 // "pintura automotiva".
-"kit p/ instalar","kit para instalar","kit de instalacao","kit instalacao","kit para instalacao","kit p/ instalacao","automovel","automoveis","viatura"];
+"kit p/ instalar","kit para instalar","kit de instalacao","kit instalacao","kit para instalacao","kit p/ instalacao","automovel","automoveis","viatura",
+// 30/10/2026: o prato de louca que so cita o micro-ondas ("PRATO – NA COR BRANCA, FUNDO,
+// DE PORCELANA. VAI AO MICROONDAS E AO FREEZER", Doutor Mauricio Cardoso/RS, edital 48,
+// item 66; usuario: "prato nao cotamos"). So na frente: o "prato giratorio" do forno fica.
+"prato","pratos"];
 
 // 5.3e - termos de PECA ou ACESSORIO: so vetam quando vem antes do termo da
 // categoria, isto e, quando sao o nome do produto (ver veto-item.mjs). Os outros
@@ -943,7 +953,11 @@ const VETO_SO_NA_FRENTE = ["gas liquefeito","botijoes","carga de gas","gas de co
 // e o ventilador centrifugo de processo ("Ventilador Centrífugo com pás voltadas
 // para trás tipo Limit load ... Vazão m³/h: 5.058; Pressão", Tres Passos/RS,
 // edital 184, 20/10/2026): equipamento de ventilacao industrial, como o exaustor
-"ventilador centrifugo","ventiladores centrifugos"];
+"ventilador centrifugo","ventiladores centrifugos",
+// 30/10/2026: o prato de louca que so cita o micro-ondas ("PRATO – NA COR BRANCA, FUNDO,
+// DE PORCELANA. VAI AO MICROONDAS E AO FREEZER", Doutor Mauricio Cardoso/RS, edital 48,
+// item 66; usuario: "prato nao cotamos"). So na frente: o "prato giratorio" do forno fica.
+"prato","pratos"];
 
 const RE_VAN = new RegExp('(^|[^a-z])vans?([^a-z]|$)');
 
@@ -1371,6 +1385,7 @@ for (const o of cands) {
   if (servico) { st.itemServ++; continue; }
 
   const keep = [];
+  let valSuspenso = 0;
   for (const [cat, it, d] of interesse) {
     if (temVeto(d, cat)) continue;
     if (cat === 'RF' && VETO_RF_CIENT.some(v => d.includes(v))) { vCient++; continue; }
@@ -1386,6 +1401,8 @@ for (const o of cands) {
     if (!itemVivo(it.sit)) { vCancel++; continue; }
     const v = +it.v || 0;
     if (v > 0 && v < PISO_ITEM && !SEM_PISO.some(p => d.includes(p)) && !salvoPeloVolume(v, +it.q || 0)) continue;
+    // a categoria suspensa conta para o piso e nao entra (ver CATEGORIAS_SUSPENSAS)
+    if (CATEGORIAS_SUSPENSAS.includes(cat)) { valSuspenso += Math.round(+it.q || 0) * v; continue; }
     // Posicoes 0-3 sao as antigas; 4 e 5 vieram com o resumo mais completo
     // (01/09/2026) e 6 logo depois. Acrescente sempre no fim: a pagina le por indice.
     //
@@ -1400,7 +1417,8 @@ for (const o of cands) {
 
   const qtd = keep.reduce((s, x) => s + x[1], 0);
   const val = Math.round(keep.reduce((s, x) => s + x[1] * x[2], 0));
-  if (val > 0 && val <= PISO_EDITAL) { vPiso++; continue; }
+  // (com o valor dos itens de categoria suspensa, que nao entram mas contam)
+  if (val > 0 && val + valSuspenso <= PISO_EDITAL) { vPiso++; continue; }
   bruto.push({
     mun: limpa(o.municipio_nome), uf: o.uf, org: limpa(o.orgao_nome), ed: limpa(o.title),
     // cabecalho padrao do edital: objeto e o que faltava, e e o campo mais importante
