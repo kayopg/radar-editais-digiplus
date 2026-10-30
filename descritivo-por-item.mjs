@@ -3789,6 +3789,21 @@ const colunasDaLinhaComAnvisa = it => +it[2] > 0
 const cabecalhoComOMunicipio = nome => nome
   ? new RegExp('\\s(?:[A-ZÀ-Ú]{1,}\\s+){0,4}' + municipioEmMaiusculas(nome) + '(?:\\s+[A-ZÀ-Ú]{1,}(?=\\s))*', 'g')
   : null;
+// A LIGADURA "ti"/"fi" que a leitura do PDF perdeu, com o caractere de substituicao no
+// lugar: "LAVADORA ALTA PRESSÃO - �po: Monofásico", "con�das no Termo de Referência"
+// (Brasilia/DF, edital 17, itens 1, 2 e 6, 30/10/2026 — e o artefato recusa a pagina com
+// esse caractere). Volta a ligadura que forma uma palavra escrita inteira em algum edital
+// ("contidas", "físicas" — a mais frequente no vocabulario dos editais, o mesmo da
+// palavra partida); sem nenhuma, "ti", a mais comum. Maiuscula no comeco da frase.
+const consertaLigadura = t => !t.includes('�') ? t : t.replace(/[A-Za-zÀ-ÿ]*�[A-Za-zÀ-ÿ�]*/g, (w, k, s) => {
+  const freq = x => vocabulario.get(x.toLowerCase()) || 0;
+  const opcoes = LIGADURAS.map(l => w.replace(/�/g, l)).filter(x => freq(x) > 0).sort((a, b) => freq(b) - freq(a));
+  let c = opcoes[0] || w.replace(/�/g, 'ti');
+  const letras = w.replace(/�/g, '');
+  if (letras && letras === letras.toUpperCase()) c = c.toUpperCase();
+  else if (w[0] === '�' && (k === 0 || /[-–.:;]\s*$/.test(s.slice(Math.max(0, k - 3), k)))) c = c[0].toUpperCase() + c.slice(1);
+  return c;
+}).replace(/�/g, '');
 // A JUSTIFICATIVA DA QUANTIDADE no lugar da especificacao: o termo repete o nome do
 // item numa tabela que da a quantidade e o porque dela, "Ar-condicionado split 24.000
 // BTU/h 2 Previsão de dois equipamentos para ambientes de maior área..." e "Máquina de
@@ -7012,7 +7027,7 @@ function recortaEdital(e, v, secoes) {
     // (nem a exigencia de habilitacao, que o recorte de todos os arquivos tambem acha:
     // "COIFA - Apresentar, a documentação de responsabilidade técnica...", Balsa Nova/PR)
     if (HABILITACAO_NO_TERMO.test(it[6])) { it[6] = ''; habilitacaoTirada++; continue; }
-    let t = it[6].replace(CABECALHO_DA_CODEVASF, ' ').replace(CATMAT_NO_TITULO, '').replace(SOBRA_NO_MEIO, ' ')
+    let t = consertaLigadura(it[6]).replace(CABECALHO_DA_CODEVASF, ' ').replace(CATMAT_NO_TITULO, '').replace(SOBRA_NO_MEIO, ' ')
       .replace(ANEXO_DO_TERMO_E_LINHA_SEGUINTE, '').replace(ANEXO_DO_TERMO, ' ').replace(TELEFONE_NO_MEIO, ' ')
       .replace(LIXO_DA_FONTE, ' ').replace(CATMAT_E_CODIGO_NO_MEIO, '').replace(BARRA_E_FOLHA, '').replace(CABECALHO_DA_ABASE, ' ');
     for (const re of [precoETotalDoItem(it), colunasDaLinhaComAnvisa(it)]) if (re) t = t.replace(re, ' ');
