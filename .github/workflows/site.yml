@@ -28,6 +28,7 @@ on:
       - 'site.mjs'
       - 'pagina-abertura.mjs'
       - 'edital-pdf.mjs'
+      - 'arquivos-do-portal.json'
       - 'originais.mjs'
       - 'pdf-do-documento.mjs'
       - '.github/workflows/site.yml'
