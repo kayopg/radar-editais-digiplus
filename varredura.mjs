@@ -246,7 +246,10 @@ const salvoPeloVolume = (v, q) => PISO_VOLUME.some(([p, n]) => v > p && q > n);
 // quantidade minima de 10, se aplica para produtos entre 150 e 300 reais").
 // [de, ate, unidades no minimo]. O veta-pelo-descritivo.mjs le a mesma faixa e aplica na
 // lista ja publicada.
-const FAIXA_SO_COM_VOLUME = [150, 300, 10];
+// Desde 03/11/2026 a faixa comeca no primeiro centavo: o item sem piso (muleta, andador,
+// cafeteira, sanduicheira, chaleira) abaixo de R$ 150 tambem so entra com 10 unidades fora
+// de RS e SC (usuario, perguntado se valia para eles: "sim"). O valor zero (sigiloso) fica.
+const FAIXA_SO_COM_VOLUME = [0.01, 300, 10];
 const UFS_SEM_FAIXA = ['RS', 'SC'];
 const foraDaFaixa = (uf, v, q) => !UFS_SEM_FAIXA.includes(uf) && v >= FAIXA_SO_COM_VOLUME[0] && v <= FAIXA_SO_COM_VOLUME[1] && q < FAIXA_SO_COM_VOLUME[2];
 
@@ -1413,7 +1416,7 @@ for (const o of cands) {
     if (!itemVivo(it.sit)) { vCancel++; continue; }
     const v = +it.v || 0;
     if (v > 0 && v < PISO_ITEM && !SEM_PISO.some(p => d.includes(p)) && !salvoPeloVolume(v, +it.q || 0)) continue;
-    // e fora de RS e SC, de R$ 150 a R$ 300 so com 10 unidades ou mais (ver FAIXA_SO_COM_VOLUME)
+    // e fora de RS e SC, ate R$ 300 so com 10 unidades ou mais (ver FAIXA_SO_COM_VOLUME)
     if (v > 0 && foraDaFaixa(o.uf, v, +it.q || 0)) continue;
     // a categoria suspensa conta para o piso e nao entra (ver CATEGORIAS_SUSPENSAS)
     if (CATEGORIAS_SUSPENSAS.includes(cat)) { valSuspenso += Math.round(+it.q || 0) * v; continue; }

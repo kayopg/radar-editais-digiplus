@@ -443,7 +443,7 @@ for (const e of dados.editais) {
       console.log(`categoria ${it[0]} suspensa · ${nome} · item ${it[5]}: ${String(it[3]).replace(/\s+/g, ' ').slice(0, 80)}`);
       return false;
     }
-    // Fora de RS e SC, o item de R$ 150 a R$ 300 so fica com 10 unidades ou mais
+    // Fora de RS e SC, o item ate R$ 300 so fica com 10 unidades ou mais (o sigiloso, zero, fica)
     // (varredura.mjs, FAIXA_SO_COM_VOLUME; usuario, 30/10/2026)
     if (!UFS_SEM_FAIXA.includes(e[C.uf]) && +it[2] >= FAIXA[0] && +it[2] <= FAIXA[1] && +it[1] < FAIXA[2]) {
       tirados++;

@@ -392,7 +392,9 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    item: acima de R$ 140 com mais de 10 unidades, ou acima de R$ 100 com mais de 25 unidades
    (08/10/2026), ele fica. **Fora de RS e SC**, o item de R$ 150 a R$ 300 só entra com pelo
    menos 10 unidades (`FAIXA_SO_COM_VOLUME`; usuário, 30/10/2026: "a quantidade mínima de 10,
-   se aplica para produtos entre 150 e 300 reais") — vale
+   se aplica para produtos entre 150 e 300 reais"); desde 03/11/2026, também os itens sem
+   piso abaixo de R$ 150 (muleta, andador, cafeteira, sanduicheira, chaleira) — o sigiloso
+   (valor zero) fica — vale
    também para os itens sem piso, quando caem nessa faixa. A chaleira de alumínio, de fogão, é panela e sai pelo veto, não
    pelo piso — a "industrial" também, quando é de alumínio e não é elétrica. Itens com valor
    **zero** são mantidos: é orçamento sigiloso, e a página mostra "sigiloso", nunca "R$ 0".
