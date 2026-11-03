@@ -384,7 +384,8 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    Morrinhos/GO), a marmita "apta para freezer e micro-ondas" (Diorama/GO), a chapa
    bifeteira que o catálogo chama de fogão (Cornélio Procópio/PR) e o purificador de osmose
    reversa de laboratório (FMRP-USP, Ribeirão Preto/SP). Em 03/11/2026 saem o
-   descristalizador de mel "tipo banho-maria" (Guaraciaba/SC) e o banho-maria de
+   descristalizador de mel "tipo banho-maria" (Guaraciaba/SC), a mesa desoperculadora de
+   mel (Mondaí/SC; usuário: "não cotamos essa mesa") e o banho-maria de
    laboratório pelo campo do catálogo, "componentes: com tampa cônica" (UFCSPA, Porto
    Alegre/RS; Unifal, Alfenas/MG).
    E quando a tabela do edital numera a linha diferente do PNCP, o resumo e o card mostram

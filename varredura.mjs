@@ -1080,7 +1080,11 @@ const VETO_MI = ['mayo','ginecolog','hospitalar','hospital','cirurgic','instrume
   // e a bancada/mesa com PIA (usuario, 23/10/2026: "bancada com pia nao cotamos"; Goioere/PR,
   // edital 27, itens 58 e 59, "TAMPO/BANCADA DE PIA EM ACO INOX COM 01 CUBA"). A mesa de
   // trabalho "com cuba", sem pia, continua (15/10/2026). Com espaco ou sinal em volta: "copia" nao.
-  ' pia ',' pia,',' pia.',' pia/','/pia ',' pias ','pia em aco','pia inox','pia de aco','tampo de pia','bancada de pia'];
+  ' pia ',' pia,',' pia.',' pia/','/pia ',' pias ','pia em aco','pia inox','pia de aco','tampo de pia','bancada de pia',
+  // e a mesa desoperculadora de mel, de apicultura (usuario, 03/11/2026: "nao cotamos essa
+  // mesa"; Mondai/SC, PE 65, item 20, "MESA DESOPERCULADORA 32 QUADROS COM ABA E PENEIRA INOX
+  // 304", e Guaraciaba/SC, PCE 65, item 38)
+  'desopercul','apicola','apicultura'];
 // E a mesa de tampo de outro material, que so tem o pe ou a borda de inox. So no
 // texto do EDITAL (veta-pelo-descritivo.mjs), nao no nome do PNCP: o catalogo que o
 // orgao escolheu pode estar errado — o item 19 da UNILA (Foz do Iguacu/PR) e "Mesa
