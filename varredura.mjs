@@ -668,6 +668,12 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // com banho-maria e a envasadora com balanca, de mel, da associacao de
 // apicultores de Rosario do Sul/RS.
 "filme de pvc","filme pvc","papel filme","rolo plastico","homogeneizador","envasadora",
+// 03/11/2026, na revisao da lista: o descristalizador de mel "TIPO BANHO-MARIA -
+// CAPACIDADE PARA 1 BALDE ... ADEQUADO PARA USO APÍCOLA" (Guaraciaba/SC, PCE 65, item
+// 20), e o banho-maria de laboratorio pelo campo do catalogo, "componentes: com tampa
+// cônica" (UFCSPA, Porto Alegre/RS, edital 104, item 5; Unifal, Alfenas/MG, edital
+// 128, item 4, "equipamentos para os laboratorios de ensino")
+"descristalizador","tampa conica",
 // 17/09/2026: "Suportes para freezer medindo 740x710mm" (Triunfo/RS, movel de
 // cozinha) e "Gas Refrigeracao ... R 22, aplicacao: central ar condicionado"
 // (IF Sul de Minas, cilindro de gas).

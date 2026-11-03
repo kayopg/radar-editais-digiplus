@@ -1014,6 +1014,17 @@ const COSTURA_CABECALHO = new RegExp(COLUNAS_DA_LINHA + SOBRA_DA_FOLHA + '(?:\\s
 // garante que o miolo e cabecalho, e nao o item seguinte.
 const COSTURA_PAGINA = new RegExp(COLUNAS_DA_LINHA + '(?:\\s+[\\d-]{4,14})?\\s[^]{0,260}?P[áa]gina\\s+\\d{1,3}\\s*(?:\\||de|/)\\s*\\d{1,3}\\s+(?=[a-zà-ÿ])', 'gu');
 const CABECALHO_HASH = /\s*Documento assinado digitalmente\s*-\s*Por favor, verifique o HASH de autenticidade na p[áa]gina \d+ deste documento\.(?:\s*‖‖)?\s*(?:EDITAL\s*[-–]\s*)?PREG[ÃA]O ELETR[ÔO]NICO[\s\S]{0,400}?Lei n[ºo°] 14\.133, de 2021/g;
+// O rodape do Licita Facil que fecha cada folha dos anexos, com a unidade e a
+// quantidade da linha antes dele e o cabecalho da tabela depois, caindo no meio
+// da celula: "...com duas torneiras em alavanca, com grande vazao, totalmente
+// Unidade 2.870,68 6/35 508 - PLANILHA ORCAMENTARIA - PREGAO ELETR. - AQUISICAO E
+// SERVICOS - NLLC - RVA - Licita Facil desmontaveis, sendo uma para agua...", "...1
+// copo de liquidificador com UNID 5,0000 22/31 1164 - ETP - ESTUDO TECNICO
+// PRELIMINAR - ... - RVA - Licita Facil Item Descricao Unid. Quant. tampa, 1
+// lamina trituradora..." (Lima Duarte/MG, edital 63, 03/11/2026). Sai o bloco e
+// as pontas se emendam. (No modelo de proposta o cabecalho tem a coluna da marca:
+// "Item Descricao Unid. Quant. Marca Vlr. Unit. Vlr. Total".)
+const RODAPE_LICITA_FACIL = /\s(?:(?:UNID|Unidade|UNIDADE|UN|UND|CJ)\.?\s+[\d.]+,\d{2,4}(?:\s+[\d.]+,\d{2,4}){0,2}\s+)?\d{1,3}\/\d{1,3}\s+\d{2,6}\s+-\s+[^]{0,300}?\s-\s+Licita\s+F[áa]cil\b(?:\s+Item\s+Descri[çc][ãa]o\s+Unid\.\s+Quant\.(?:\s+Marca)?(?:\s+Vlr\.\s+Unit\.\s+Vlr\.\s+Total)?)?/g;
 
 // O QUE NAO E ESPECIFICACAO DENTRO DA CELULA, depois do corte.
 //
@@ -2649,7 +2660,7 @@ function descritivosPorItem(secoes, itens) {
     const fim = Math.min(proxima, pos + TETO_ITEM, secoes.length);
     // O cabecalho da AGU sai antes do timbre aprendido: ele vem em duas versoes,
     // o detector aprende as pontas de cada uma e deixaria o miolo para tras.
-    const cru = tiraTimbre(secoes.slice(pos, fim).replace(/\s+/g, ' ').replace(CABECALHO_AGU, ' ').replace(CABECALHO_HASH, ' ').trim(), timbres)
+    const cru = tiraTimbre(secoes.slice(pos, fim).replace(/\s+/g, ' ').replace(CABECALHO_AGU, ' ').replace(CABECALHO_HASH, ' ').replace(RODAPE_LICITA_FACIL, ' ').trim(), timbres)
       // A linha que a virada de folha partiu: as colunas de unidade, quantidade
       // e preco fecham a linha na folha de cima, e a celula continua na de
       // baixo depois do numero da folha e do cabecalho repetido da tabela.
@@ -3708,6 +3719,13 @@ const SOBRA_NO_FIM = /,?\s+(?:(?:A\s+)?autenticidade\s+(?:na\s+|d[ao]\s+)?deste\
 //   quantidade "2,0000 Un" com o CEP do cabecalho, "16.015-920" (Aracatuba/SP, edital 84,
 //   item 57; a relacao de itens "N - CODIGO NOME QTD,0000 Un Caracteristicas:")
 const SOBRA_NO_MEIO = /\s+R\$\s+R\$(?=\s)|\s+\d{1,3}(?:\.\d{3})*,0000\s+Un\b,?(?:\s+\d{2}\.\d{3}-\d{3})?(?=\s)/g;
+// - o titulo do grupo seguinte do termo, em caixa alta, com os requisitos gerais dele:
+//   "...desde que preservadas a capacidade, estabilidade, funcionalidade e desempenho
+//   exigidos. ITENS NÃO AGRUPADOS E ACESSÓRIOS Requisitos gerais, critérios de
+//   aceitabilidade e normas técnicas aplicáveis Os requisitos abaixo aplicam-se..."
+//   (IFSul, Pelotas/RS, edital 144, item 48, o ultimo do lote 13; 03/11/2026), com o
+//   numero do grupo na frente: "GRUPO 13 – BEBEDOUROS Requisitos gerais..."
+const REQUISITOS_DO_GRUPO = /\s+(?:GRUPO\s+\d+\s*[–-]\s*)?(?:[A-ZÀ-Ú]+\s+){1,8}Requisitos\s+gerais,\s+crit[ée]rios\s+de\s+aceitabilidade\b[\s\S]*$/;
 // - o link da loja da pesquisa de precos, e o item seguinte depois dele: "...a Partir
 //   Da Data de Entrega do Produto, https:// bfo4nbb/p/...&seller_id=magazineluiza..."
 //   (Mogi das Cruzes/SP, edital 36, item 5);
@@ -5765,6 +5783,13 @@ function recortaEdital(e, v, secoes) {
   // E as outras colunas que ficam no descritivo, reconhecidas pelo NUMERO e pela
   // QUANTIDADE do proprio item (29/09/2026, "preciso da descricao completa, nada
   // mais e nada menos"):
+  // (a coluna do local, que se repete na frente de varios itens, contada antes)
+  const LOCAL_NA_FRENTE = /^((?:\p{Lu}\p{Ll}+|d[aeo]s?|e)(?:\s+(?:\p{Lu}\p{Ll}+|d[aeo]s?|e)){0,3})\s+\d{6}\s+(?=\p{Lu})/u;
+  const locais = new Map();
+  for (const it of v.itens) {
+    const m = LOCAL_NA_FRENTE.exec(it[6] || '');
+    if (m) locais.set(m[1], (locais.get(m[1]) || 0) + 1);
+  }
   for (const it of v.itens) {
     if (!it[6]) continue;
     const n = +it[0], q = Math.round(+it[2] || 0);
@@ -6255,6 +6280,20 @@ function recortaEdital(e, v, secoes) {
       // (Juiz de Fora/MG, edital 093), "...SEM FIO - AR 5.456,3300 5.456,33
       // CONDICIONADO SPLIT" (Caarapó/MS, item 24)
       t = t.replace(/\s\d{1,3}(?:\.\d{3})*,\d{4}\s+\d{1,3}(?:\.\d{3})*,\d{2,4}(?=\s)/g, '');
+      // e a coluna do LOCAL de destino na frente, antes do CATMAT: "Complexo de
+      // Alimentos 632259 Batedeira planetária", "Complexo Ala Norte 414531 Banho
+      // maria digital" (UFCSPA, Porto Alegre/RS, edital 104). Sai quando nenhuma
+      // palavra da frente esta no rotulo do item, ou quando a mesma frente abre
+      // outros itens do edital e alguma palavra dela nao esta no rotulo
+      // ("Complexo de Alimentos" no "Processador Alimentos"): "Geladeira 291026
+      // Frost free" fica, e so o codigo sai, logo abaixo.
+      const local = LOCAL_NA_FRENTE.exec(t);
+      if (local) {
+        const doRotulo = new Set(palavrasDoItem(it[1]));
+        const pal = fatia(local[1]).filter(util).map(limpaNum);
+        const noRotulo = pal.filter(w => doRotulo.has(w)).length;
+        if (noRotulo < pal.length && (noRotulo === 0 || locais.get(local[1]) >= 2)) t = t.slice(local[0].length);
+      }
       // e o codigo do catalogo (CATMAT) que a coluna ao lado enfiou no meio da
       // frase: "Gás refrigerante 619108 R410a", "Unidade interna 453530
       // evaporadora", "INMETRO/PROCEL: A; 63899 Classificação" (Maria Helena/PR,
@@ -7053,7 +7092,7 @@ function recortaEdital(e, v, secoes) {
     if (HABILITACAO_NO_TERMO.test(it[6])) { it[6] = ''; habilitacaoTirada++; continue; }
     let t = consertaLigadura(it[6]).replace(CABECALHO_DA_CODEVASF, ' ').replace(CATMAT_NO_TITULO, '').replace(SOBRA_NO_MEIO, ' ')
       .replace(ANEXO_DO_TERMO_E_LINHA_SEGUINTE, '').replace(ANEXO_DO_TERMO, ' ').replace(TELEFONE_NO_MEIO, ' ')
-      .replace(LIXO_DA_FONTE, ' ').replace(CATMAT_E_CODIGO_NO_MEIO, '').replace(BARRA_E_FOLHA, '').replace(CABECALHO_DA_ABASE, ' ');
+      .replace(LIXO_DA_FONTE, ' ').replace(CATMAT_E_CODIGO_NO_MEIO, '').replace(BARRA_E_FOLHA, '').replace(CABECALHO_DA_ABASE, ' ').replace(RODAPE_LICITA_FACIL, ' ');
     for (const re of [precoETotalDoItem(it), colunasDaLinhaComAnvisa(it)]) if (re) t = t.replace(re, ' ');
     // (com o nome e pelo menos mais quatro palavras: em "V - BARRETOS - CÓDIGO" e o nome so)
     if (doMunicipio && (t.match(/[a-zà-ÿ]/g) || []).length > (t.match(/[A-ZÀ-Ú]/g) || []).length) t = t.replace(doMunicipio, m => m.trim().split(/\s+/).length >= 6 ? ' ' : m);
@@ -7061,6 +7100,8 @@ function recortaEdital(e, v, secoes) {
     if (proposta && proposta.index > 30) t = t.slice(0, proposta.index);
     const fim = SOBRA_NO_FIM.exec(t);
     if (fim && fim.index > 30 && t.length - fim.index <= 600) t = t.slice(0, fim.index);
+    const grupo = REQUISITOS_DO_GRUPO.exec(t);
+    if (grupo && grupo.index > 30) t = t.slice(0, grupo.index);
     const link = LINK_DE_LOJA.exec(t);
     if (link && link.index > 30 && RASTRO_DE_LOJA.test(t.slice(link.index, link.index + 600))) t = t.slice(0, link.index);
     t = t.trim().replace(CODIGO_NO_FIM, '').replace(CATMAT_E_CODIGO_NO_FIM, '').replace(QUADRO_NO_FIM, '').replace(CABECALHO_NO_FIM, '')
