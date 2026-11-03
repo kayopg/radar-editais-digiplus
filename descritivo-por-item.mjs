@@ -6274,6 +6274,15 @@ function recortaEdital(e, v, secoes) {
         const [ip, dp] = (+it[4]).toFixed(2).split('.');
         const valor = ip.replace(/\B(?=(\d{3})+$)/g, '.').replace(/\./g, '\\.?') + ',' + dp;
         t = t.replace(new RegExp('\\s*R\\$\\s?' + valor + '(?![\\d,])', 'g'), '');
+        // e a quantidade e o preco da linha sem o "R$", com o total e o numero da folha,
+        // onde a celula atravessa a virada e continua em minuscula: "...indicador luminoso
+        // de 9 182,50 Total item: 1.642,50 24 funcionamento, peso...", "...gabinete 1
+        // 2.475,68 26 lavável" (Nicolau Vergueiro/RS, edital 11; usuario, 03/11/2026: "os
+        // valores do produto perdidos no meio do edital")
+        if (q > 0) t = t.replace(new RegExp('\\s0*' + q + '\\s+' + valor + '(?:\\s+Total\\s+item:\\s*[\\d.]+,\\d{2})?(?:\\s+\\d{1,3})?(?=\\s+[a-zà-ÿ])', 'gu'), '');
+        // (com o "Total item:", a quantidade pode nao bater com a do PNCP: 3 no edital e 1 no
+        // PNCP no gaveteiro do item 5)
+        t = t.replace(new RegExp('\\s\\d{1,4}\\s+' + valor + '\\s+Total\\s+item:\\s*[\\d.]+,\\d{2}(?:\\s+\\d{1,3})?(?=\\s+[a-zà-ÿ])', 'gu'), '');
       }
       // e o preco unitario e o total, o primeiro com quatro casas, no meio da
       // frase: "...baixo nível de ruído, 1.890,0000 9.450,0000 tensão 220 V"
