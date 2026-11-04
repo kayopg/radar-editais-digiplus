@@ -63,7 +63,9 @@ const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLow
 // Nome que e so o codigo do procedimento: "PE251-26", "PE 0492026 itens de
 // cozinha", "PP_12-2026". Tem de COMECAR pelo codigo e ter numero logo depois,
 // para nao pegar "PE_ETP" ou "pesquisa".
-export const CODIGO_DO_PREGAO = /^(?:pe|pp|pregao|cc|tp|dl|ce|rp)\s*[-_.]?\s*n?[ºo°]?\s*\d{1,4}\s*[-_./]?\s*\d{2,4}(?!\d)/;
+// (e por extenso: "PREGÃO ELETRÔNICO Nº 044-2026 - AQUISIÇÃO DE MATERIAIS PERMANENTES",
+// Unai/MG, arquivos da BNC, 04/11/2026)
+export const CODIGO_DO_PREGAO = /^(?:pe|pp|pregao(?:\s+eletronico)?|cc|tp|dl|ce|rp)\s*[-_.]?\s*n?[ºo°]?\s*\d{1,4}\s*[-_./]?\s*\d{2,4}(?!\d)/;
 
 function nota(nome) {
   // So o nome do arquivo, sem a pasta: no zip de Brasilia/DF (pregao 107/2026)
@@ -116,6 +118,10 @@ export function parteDoPacote(nome) {
   if (/termo\s+(?:de\s+)?ref|(?:^|[^a-z])tr(?:[\s_.-]|\d{5})|projeto basico|especificac|esp\.? tecnica|descritiv|descricao detalhada|memorial|relacao d[oe]s? itens/.test(s)) return 1;
   if (/declarac|modelo|proposta|procurac|credenciamento|carta (?:de|para)|formulario/.test(s)) return 2;
   if (/(?:^|[^a-z])(?:decreto|portaria|parecer|matriz de risco|mapa de riscos?)(?:[^a-z]|$)/.test(s)) return 6;
+  // a resposta de esclarecimento ou de impugnacao fala "do edital" no nome e nao e
+  // ele: vai para o fim, com o resto ("RESPOSTA DE ESCLARECIMENTO E INFORMAÇÃO
+  // COMPLEMENTAR AO EDITAL PE 044-2026", Unai/MG, 04/11/2026)
+  if (/esclarecimento|impugnac/.test(s)) return 6;
   if (/edital|aviso de (?:licitacao|contratacao|dispensa)|^aviso(?:[^a-z]|$)|dispensa eletronica/.test(s)) return 0;
   // o nome so com o codigo do pregao e o edital, menos o anexo que tambem comeca
   // por ele: "PE 226-2026 - SRP - Anexo III - Protecao de Dados" (Florianopolis/SC)
@@ -375,7 +381,8 @@ const listaDeArquivos = async e => {
 };
 const nomeNoPacote = (titulo, tipo) => {
   const t = String(titulo).replace(/[\\/]+/g, '-').replace(/\.(?:pdf|docx?|odt|rtf|zip|rar|html?)$/i, '').trim() || 'documento';
-  if (parteDoPacote(t) !== 6 || /certid|comprovante|publicac|extrato/.test(norm(t))) return t;
+  // (o arquivo do portal nao tem tipo: sem ele, so o nome, e nao " - nome")
+  if (parteDoPacote(t) !== 6 || /certid|comprovante|publicac|extrato/.test(norm(t)) || !String(tipo).trim()) return t;
   return String(tipo).replace(/[\\/]+/g, '-').trim() + ' - ' + t;
 };
 const chaveDosArquivos = lista => (lista || []).map(f => f.seq).join(',');
