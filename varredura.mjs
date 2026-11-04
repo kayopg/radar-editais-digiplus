@@ -50,9 +50,9 @@ const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira",
 // 28/10/2026: mobilidade (usuario, "tambem estamos cotando agora: Muletas. Andador.
 // Cadeira de rodas. Cadeira de Banho")
 "muleta","andador","cadeira de rodas","cadeira de banho",
-// 28/10/2026: a camara fria de volta e a despolpadeira de frutas (usuario, "camara
-// fria pode adicionar nos itens que cotamos tambem, e despoupadeira tambem")
-"camara frigorifica","despolpadeira"];
+// 28/10/2026: a despolpadeira de frutas (usuario, "despoupadeira tambem"). A camara
+// frigorifica entrou no mesmo dia e saiu em 04/11/2026 ("camara fria nao cotamos")
+"despolpadeira"];
 // DF entrou em 05/10/2026 e MT saiu em 06/10/2026 ("MT nao cotamos mais nada").
 // Fora de RS, SC e PR cada UF tem as suas linhas de produto (LINHAS_DA_UF, no
 // veto-item.mjs). O veta-pelo-descritivo.mjs le esta lista e tira da lista ja
@@ -736,8 +736,9 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 "churrasqueira","moedor de cafe","moinho de cafe",
 // enceradeira/lustradeira de piso nao e cotada (decisao do usuario em
 // 23/09/2026). A camara fria, perguntada junto, ficava; saiu em 27/10/2026
-// ("camara frigorifica ... nao cotamos") e voltou em 28/10/2026 ("camara fria pode
-// adicionar nos itens que cotamos tambem").
+// ("camara frigorifica ... nao cotamos"), voltou em 28/10/2026 ("camara fria pode
+// adicionar nos itens que cotamos tambem") e saiu de novo em 04/11/2026 ("camara fria
+// nao cotamos"; ver o "estabilizador", mais abaixo).
 "enceradeira","lustradeira",
 // e, na mesma conversa: aquecimento de agua (aquecedor de agua, boiler,
 // aquecedor solar, aquecedor de passagem — o aquecedor de AMBIENTE continua);
@@ -901,9 +902,15 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // e o estabilizador de tensao (usuario, 27/10/2026: "esse estabilizador nao cotamos";
 // "ESTABILIZADOR DE TENSAO DESTINADO A PROTECAO DE REFRIGERADORES", Panambi/RS, PCE
 // 160, entrava pelos refrigeradores). So na frente. A camara fria/frigorifica saiu junto
-// (Pelotas/RS, edital 514; Tucunduva/RS, edital 28) e voltou no dia seguinte (usuario,
-// 28/10/2026: "camara fria pode adicionar nos itens que cotamos tambem").
-"estabilizador",
+// (Pelotas/RS, edital 514; Tucunduva/RS, edital 28), voltou no dia seguinte (usuario,
+// 28/10/2026: "camara fria pode adicionar nos itens que cotamos tambem") e saiu DE NOVO
+// em 04/11/2026 (usuario, sobre "Camara Fria - Geladeira Mini Camara 4 Portas Plus
+// Resfriados MC4P G2 220v", Sapucaia do Sul/RS, PE 257, item 21: "camara fria nao
+// cotamos"). Em qualquer lugar, como em 27/10 (ela e termo da categoria RF, e o veto so
+// na frente nao vale para o proprio produto), e com a mini camara, a geladeira comercial
+// de 4 portas que o mercado chama assim ("GELADEIRA COMERCIAL MINI CAMARA 4 PORTAS INOX",
+// Santa Monica/PR, edital 61, item 44).
+"estabilizador","camara frigorifica","camara fria","camaras frias","camara de resfriamento","camara de congelamento","camara de refrigeracao","mini camara","minicamara",
 // 27/10/2026, na revisao da lista: o kit de instalacao vendido sozinho ("KIT P/ INSTALAR
 // DE AR CONDICIONADO. Suporte 450mm Fita de PVC ... Tubo de Cobre", Itacurubi/RS, edital
 // 36, item 1) e o carro com ar-condicionado ("Automovel caracteristicas adicionais: 0 km,

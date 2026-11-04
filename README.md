@@ -349,7 +349,13 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    a "fisioterapia", que tira o aparelho de clínica, não vale contra o andador e a muleta.
    No mesmo dia voltou a **câmara fria** ("câmara fria pode adicionar nos itens que cotamos
    também"; tinha saído em 27/10) e entrou a **despolpadeira** de frutas, na categoria dos
-   eletroportáteis ("despoupadeira também").
+   eletroportáteis ("despoupadeira também"). A câmara fria **saiu de novo em 04/11/2026**
+   (usuário, sobre "Câmara Fria - Geladeira Mini Câmara 4 Portas Plus Resfriados MC4P G2
+   220v", Sapucaia do Sul/RS, PE 63, item 21: "câmara fria não cotamos"): fria, frigorífica,
+   de resfriamento, de congelamento e de refrigeração no VETO_ITEM, em qualquer lugar, e
+   também a **mini câmara** (a geladeira comercial de 4 portas que o mercado chama assim,
+   Santa Mônica/PR, edital 45, item 44). Na lista de 04/11 saíram 6 itens, e Pelotas/RS
+   (edital 514), que só tinha a câmara.
    A **mesa inox** entrou em 15/10/2026 ("Mesa Inox agora é um item que cotamos também"),
    categoria MI ("Mesas inox"), em todas as UFs, e só a de inox ("apenas cotamos mesas em
    INOX, demais mesas não queremos"): a descrição que COMEÇA por "mesa" e fala
