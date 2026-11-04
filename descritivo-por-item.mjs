@@ -4381,8 +4381,13 @@ function recortaEdital(e, v, secoes) {
       // (por extenso) 2) Prazo de" (Conceicao das Alagoas/MG, item 56), que a
       // regra da preposicao pendurada, adiante, cortava na ultima virgula —
       // "Tensão: 127V, 220" —, levando ", bivolt Velocidade regulável..." junto.
+      // (Nao quando depois das colunas vem a especificacao do proprio item: "Ar
+      // Condicionado SPLIT 9.000 BTUS Un 5,0000 Especificação: CONDICIONADOR DE AR
+      // SPLIT HI-WALL..." — Manhumirim/MG, edital 33, itens 15, 17 e 20; usuario,
+      // 04/11/2026: "esta com descritivos faltando".)
       const k = a.indexOf(nv);
-      if (k >= 0 && k < 40 && /^\s*(?:unidades?|unid|und|un|pc|pct|cx|kit)\s+\d/.test(a.slice(k + nv.length))) { linhasCompletadas++; (it[6] = t, it.doPreco = linha === peloPreco); }
+      if (k >= 0 && k < 40 && /^\s*(?:unidades?|unid|und|un|pc|pct|cx|kit)\s+\d/.test(a.slice(k + nv.length))
+        && !/^\s*(?:unidades?|unid|und|un|pc|pct|cx|kit)(?:\s+\d+)+\s+especifica/.test(a.slice(k + nv.length))) { linhasCompletadas++; (it[6] = t, it.doPreco = linha === peloPreco); }
     }
   }
 
