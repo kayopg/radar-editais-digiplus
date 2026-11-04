@@ -1578,7 +1578,13 @@ const RODAPE = [
   // folha e caem no meio da celula quando o item atravessa a virada. Nenhum
   // deles e descricao de produto, e nenhum fecha o item — o descritivo continua
   // logo depois. Por isso saem daqui, e nao viram fim de linha.
-  /\s*PREFEITURA\s+(?:MUNICIPAL\s+)?(?:D[EO]\s+)?[A-Z\u00c0-\u00da][A-Z\u00c0-\u00da' .]{2,32}/g,
+  // (o da prefeitura termina no fim de uma palavra: com o limite de letras, ele levava
+  // a primeira letra da linha seguinte e deixava "entro Administrativo Arthur Pedro
+  // M\u00fcller" no meio do ar-condicionado e do bebedouro de Port\u00e3o/RS, edital 74,
+  // 04/11/2026. O do estado NAO: em Ivoti/RS, edital 76, item 8, a celula continua
+  // depois de "ESTADO DO RIO GRANDE DO SUL Secretaria Municipal de Educa\u00e7\u00e3o de 1 ano."
+  // e e o "ecretaria" em minuscula que deixa a continuacao ser achada)
+  /\s*PREFEITURA\s+(?:MUNICIPAL\s+)?(?:D[EO]\s+)?[A-Z\u00c0-\u00da][A-Z\u00c0-\u00da' .]{2,32}(?<=[A-Z\u00c0-\u00da'.])(?![A-Za-z\u00c0-\u00ff])/g,
   /\s*(?:GOVERNO\s+DO\s+)?ESTADO\s+D[EO]\s+[A-Z\u00c0-\u00da][A-Z\u00c0-\u00da' .]{2,24}/g,
   /\s*CNPJ[:\s.]*[\d.\/-]{14,20}/gi,
   /\s*Fone[s:\s]*\(?\d{2}\)?[\d\s.-]{6,}/gi,
@@ -4218,6 +4224,10 @@ function tabelaBate(tabela, itens) {
 }
 
 // o nome do estado como os timbres de prefeitura escrevem
+// se o timbre "ESTADO DE ... MUNICIPIO DE <nome>" esta no texto do edital (por caminho)
+const timbreComMunicipio = new Map();
+// a segunda linha do timbre da prefeitura, que o edital repete em toda folha (por caminho)
+const caudaDoTimbre = new Map();
 const UF_POR_EXTENSO = { RS: 'Rio\\s+Grande\\s+do\\s+Sul', SC: 'Santa\\s+Catarina', PR: 'Paran[áa]', SP: 'S[ãa]o\\s+Paulo',
   MG: 'Minas\\s+Gerais', GO: 'Goi[áa]s', DF: 'Distrito\\s+Federal', MT: 'Mato\\s+Grosso', MS: 'Mato\\s+Grosso\\s+do\\s+Sul' };
 
@@ -5987,7 +5997,10 @@ function recortaEdital(e, v, secoes) {
       // cima ("Voltagem 110V 4 68682-1 40,00 UN Ventilador de coluna 50 cm",
       // Palmas/PR, edital 32, item 9)
       t = t.replace(/^ITEM\s+BEC:?\s*\d+\s+/i, '')
-        .replace(/^(?:Lote:\s*Lote\s+\d+\s+)?Item\s+(?:C[óo]digo\s+)?Nome\s+do\s+produto\/servi[çc]o.*?Pre[çc]o\s+m[áa]ximo\s+total\s+\d{1,3}\s+(?:\d{4,7}\s+)?/i, '')
+        // (e sem o "/serviço", com "Código do produto": "Item Código do produto
+        // Nome do produto Quantidade Unidade Preço máximo Preço máximo total 1
+        // 40488 AR CONDICIONADO...", Palmital/PR, edital 43, lotes 2 a 12, 04/11/2026)
+        .replace(/^(?:Lote:\s*Lote\s+\d+\s+)?Item\s+(?:C[óo]digo(?:\s+do\s+produto)?\s+)?Nome\s+do\s+produto(?:\/servi[çc]o)?\s.*?Pre[çc]o\s+m[áa]ximo\s+total\s+\d{1,3}\s+(?:\d{4,7}\s+)?/i, '')
         // (com o preco e o total, quando ainda estao ali: "Voltagem 110V
         // 637,6800 6.376,80 4 68682-1 40,00 UN Ventilador...")
         .replace(/^[^.]{0,60}?\s(?:\d{1,3}(?:\.\d{3})*,\d{2,4}\s+){0,2}\d{1,3}\s+\d{4,6}-\d\s+\d{1,5}(?:,\d{2})?\s+(?:UN|UND|UNID)\s+(?=\p{Lu})/u, '')
@@ -6288,6 +6301,10 @@ function recortaEdital(e, v, secoes) {
         // (com o "Total item:", a quantidade pode nao bater com a do PNCP: 3 no edital e 1 no
         // PNCP no gaveteiro do item 5)
         t = t.replace(new RegExp('\\s\\d{1,4}\\s+' + valor + '\\s+Total\\s+item:\\s*[\\d.]+,\\d{2}(?:\\s+\\d{1,3})?(?=\\s+[a-zà-ÿ])', 'gu'), '');
+        // e o preco sozinho entre duas palavras, onde a celula atravessou a folha e o
+        // rodape ja saiu: "...CONFORME SOLICITAÇÃO, JARRA COM 345,95 CAPACIDADE TOTAL
+        // MÍNIMA DE 3 LITROS" (Três Pontas/MG, PRE 100, item 2, 04/11/2026)
+        t = t.replace(new RegExp('(?<=\\p{L})\\s' + valor + '(?=\\s+\\p{L})', 'gu'), '');
       }
       // e o preco unitario e o total, o primeiro com quatro casas, no meio da
       // frase: "...baixo nível de ruído, 1.890,0000 9.450,0000 tensão 220 V"
@@ -6336,6 +6353,52 @@ function recortaEdital(e, v, secoes) {
         // secretaria Municipal de Educação 14" e "Garantia mínima und 01 MUNICÍPIO
         // DE IVOTI secretaria Municipal de Educação de 1 ano." (Ivoti/RS, 07/10/2026)
         t = t.replace(new RegExp('\\s+(?:und|unid|un)\\.?\\s+\\d{1,4}\\s+MUNIC[ÍI]PIO\\s+DE\\s+' + mun + '(?:\\s+secretaria\\s+municipal\\s+de\\s+\\p{L}+)?(?:\\s+\\d{1,3}(?=\\s*$))?', 'giu'), '');
+        // e o fim do timbre em maiusculas que o RODAPE cortou na metade: ele tira
+        // "ESTADO DE" e ate 24 letras, o que em "ESTADO DE SANTA CATARINA MUNICIPIO
+        // DE CHAPECÓ" para no MUNICIPIO e deixa "DE CHAPECÓ" no meio da frase:
+        // "capacidade mínima de DE CHAPECÓ 300 litros", "LAVADORA DE ROUPAS DE
+        // CHAPECÓ AUTOMÁTICA" (Chapecó/SC, edital 069 - FMS, itens 25, 27 e 35,
+        // 04/11/2026). So quando o timbre inteiro esta no texto do edital, com o
+        // nome em maiusculas e sem MUNICIPIO, PREFEITURA, CIDADE ou SEDE antes.
+        const MUN = nomeMun.toLocaleUpperCase('pt-BR'), MUN_SEM = normIgual(nomeMun).toUpperCase();
+        const munM = [...new Set([MUN, MUN_SEM])].map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+')).join('|');
+        if (!timbreComMunicipio.has(e[C.path])) {
+          const todo = (v.secoes || []).map(s => s.texto).join(' ');
+          timbreComMunicipio.set(e[C.path], new RegExp('ESTADO\\s+D[EO]\\s+(?:[A-ZÀ-Ú]+\\s+){1,4}?MUNIC[ÍI]PIO\\s+DE\\s+(?:' + munM + ')(?![A-ZÀ-Ú])', 'u').test(todo));
+        }
+        if (timbreComMunicipio.get(e[C.path]))
+          // (nem depois do pedaco de "MUNICIPIO" que o RODAPE deixa, "IO DE NOVO CABRAIS
+          // NOSSA MAIOR OBRA É O SER HUMANO": esse sai inteiro mais adiante — Novo
+          // Cabrais/RS, edital 42, item 8)
+          t = t.replace(new RegExp('(?<!(?:MUNIC[ÍI]PIO|PREFEITURA|MUNICIPAL|CIDADE|SEDE|COMARCA|munic[íi]pio|cidade|sede|\\s[A-ZÀ-Ú]{0,7}IO))\\s+DE\\s+(?:' + munM + ')(?=[\\s,.;:]|$)', 'gu'), '');
+        // e a segunda linha do timbre, que vem depois de "PREFEITURA MUNICIPAL DE
+        // <nome>" em toda folha e fica quando o RODAPE tira a primeira: "...com baixo
+        // consumo de energia 05 Centro Administrativo Arthur Pedro Müller (classificação
+        // “a”)" (Portão/RS, edital 74, itens 2 e 21, 04/11/2026). A linha e a que o
+        // proprio edital repete pelo menos 3 vezes depois do nome, com o numero da
+        // folha; sai com a quantidade e o preco da linha de cima, quando estao antes.
+        if (!caudaDoTimbre.has(e[C.path])) {
+          const todo = (v.secoes || []).map(s => s.texto).join(' ').replace(/\s+/g, ' ');
+          const cont = new Map();
+          for (const m of todo.matchAll(new RegExp('PREFEITURA\\s+MUNICIPAL\\s+DE\\s+(?:' + munM + ')\\s+((?:\\p{Lu}\\p{Ll}+|d[aeo]s?|e)(?:\\s+(?:\\p{Lu}\\p{Ll}+|d[aeo]s?|e)){1,6})\\s+\\d{1,3}(?=\\s)', 'gu')))
+            cont.set(m[1], (cont.get(m[1]) || 0) + 1);
+          const [cauda, vezes] = [...cont].sort((a, b) => b[1] - a[1])[0] || [];
+          caudaDoTimbre.set(e[C.path], vezes >= 3 && /^\p{Lu}/u.test(cauda) ? cauda : null);
+        }
+        // (e, no fim, a quantidade da coluna com zero na frente e o numero da secao
+        // seguinte: "...com apoio de pés ajustável. 02 5." — Portão/RS, edital 74,
+        // item 23, onde o termo emenda a tabela no "2. FUNDAMENTAÇÃO")
+        t = t.replace(/(?<=[.;])\s+0\d\s+\d{1,2}\.?\s*$/, '')
+          // (e o total do grupo e o titulo do grupo seguinte: "...manual de instruções
+          // em português Total Grupo I (R$) 2.275,10 GRUPO II - PURIFICADORES" —
+          // UNESP, Guaratinguetá/SP, contratação direta 134, item 1, 04/11/2026)
+          .replace(/\s+Total\s+(?:do\s+)?(?:Grupo|Lote)\s+(?:[IVXLC]+|\d{1,3})\s*\(R\$\)[\s\S]*$/i, '')
+          // (e a coluna da unidade na frente: "UNIDADE LIQUIDIFICADOR DOMÉSTICO ...",
+          // Três Pontas/MG, PRE 100, item 2, 04/11/2026)
+          .replace(/^(?:UNIDADES?|UNID\.?|UND)\s+(?=\p{Lu}{4})/u, '');
+        const cauda = caudaDoTimbre.get(e[C.path]);
+        if (cauda)
+          t = t.replace(new RegExp('(?:\\s+(?:un\\s+)?\\d{1,3}(?:\\s+[\\d.]+,\\d{2})?)?\\s+' + cauda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+') + '(?:\\s+\\d{1,3})?(?=\\s|$)', 'gu'), '');
       }
     }
     // O numero do CEP que o timbre da folha deixou para tras, sem o "CEP": "...

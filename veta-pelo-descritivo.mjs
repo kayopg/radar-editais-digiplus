@@ -96,7 +96,10 @@ const VETO = {
   // 22/09/2026).
   // (e o aparelho ALUGADO por diaria: "Bebedouro, tipo geladeira, para galao ...
   // unidade/diaria", Porto Alegre/RS, edital 340, locacao de estrutura de evento)
-  TODAS: ['longarina de espera', 'absorvedor de umidade', 'gel de silica', 'saco de absorcao', 'caixa de desumidificacao', 'unidade/diaria'],
+  // (e o kit de limpeza de piscina, com "aspirador" de piscina, que o catalogo chama de
+  // "Aspirador De Pó E Água": Unifal, Alfenas/MG, PE 137, item 70, 04/11/2026)
+  TODAS: ['longarina de espera', 'absorvedor de umidade', 'gel de silica', 'saco de absorcao', 'caixa de desumidificacao', 'unidade/diaria',
+    'manutencao para piscina', 'limpeza de piscina', 'aspirador de piscina', 'aspirador para piscina'],
 };
 // O descritivo que ABRE com produto que a Digiplus nao cota (regra 3c do
 // README; exaustor, coifa e depurador sairam em 23/09/2026, e a coifa voltou em
