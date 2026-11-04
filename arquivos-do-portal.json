@@ -37,5 +37,15 @@
       { "titulo": "TR 05.pdf", "url": "https://bnccompras.blob.core.windows.net/processfiles/b4a8b2d64ec44924bbc77cfb6fdda63e.pdf" },
       { "titulo": "TR 06.pdf", "url": "https://bnccompras.blob.core.windows.net/processfiles/cd740e8a16d140cabb7541136d6fe107.pdf" }
     ]
+  },
+  "88254875000160/2026/517": {
+    "edital": "Novo Hamburgo/RS, Pregão Eletrônico 123/2026 (mobiliário, equipamentos e materiais permanentes, UBS Jardim Mauá)",
+    "portal": "Portal de Compras Públicas",
+    "conferido": "2026-11-04",
+    "motivo": "o PNCP so traz o edital; o termo de referencia (Anexo I, 'disponivel para download no site') esta so no Portal de Compras Publicas, processo 521769 (usuario, 04/11/2026: \"neste edital tambem ficou faltando os outros arquivos em anexo\")",
+    "arquivos": [
+      { "titulo": "EDITAL2026123.pdf", "url": "https://arquivos.portaldecompraspublicas.com.br/v1/download/79ead125ee9445f503e2d136e99c8f9fa23488f297f164c4720f682e38e98676" },
+      { "titulo": "03. TR mobiliario Maua ajustado.pdf", "url": "https://arquivos.portaldecompraspublicas.com.br/v1/download/1d587d376e61951ee55aef6562aae76a2036a79cd94b59a66fe1c9a24f99a0f4" }
+    ]
   }
 }
