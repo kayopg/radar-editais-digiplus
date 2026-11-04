@@ -1,7 +1,7 @@
 # Radar de Editais — Digiplus
 
 Monitoramento diário de licitações públicas abertas no [PNCP](https://pncp.gov.br) com itens
-de linha branca, climatização, cocção, lavanderia, eletroportáteis, mesa inox e mobilidade (muleta,
+de linha branca, climatização, cocção, lavanderia, eletroportáteis, mesa inox (suspensa desde 04/11/2026) e mobilidade (muleta,
 andador, cadeira de rodas e cadeira de banho) — filtradas para
 **fornecimento**: fora do RS e de SC, sem exigência de instalação ou montagem; em todo lugar,
 sem manutenção.
@@ -367,6 +367,13 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    para buffet em Porto Alegre/RS (edital 333). Desde 20/10/2026 a **bancada** de inox também
    é mesa ("Bancada em inox, estrutura inteiramente em inox", Lucélia/SP; "Mesa Bancada Em
    Aço Inox", TRF3), com os mesmos vetos (a bancada de laboratório sai).
+   **Desde 04/11/2026 a mesa inox está SUSPENSA**, como as balanças (usuário, ao ver a mesa
+   auxiliar de Gravataí/RS, edital 251: "a gente não está cotando mesa inox lembra"; e,
+   perguntado se era só a hospitalar, "nenhuma mesa inox"): MI está em `CATEGORIAS_SUSPENSAS`,
+   o item não entra e o valor conta para o piso. Na lista de 03/11 saíram 13 mesas, e três
+   editais que só tinham mesa (Gravataí/RS 251, Imbaú/PR 94, Erechim/RS 192). Para voltar,
+   tirar MI da lista — e, nesse dia, o veto da auxiliar hospitalar precisa pegar também a
+   medida em metros ("0,40m x 0,40m x 0,80m", a de Gravataí, que passou).
    Na mesma data entraram a máquina **lava e seca** ("MAQUINA LAVA E SECA 11KG", Humaitá/RS;
    "LAVADORA LAVA E SECA AUTOMATICA ... 17KG", Assis Chateaubriand/PR) e o "Processador/
    **preparador de alimentos** modelo industrial" (Wenceslau Braz/PR), e o "elíptico" (o

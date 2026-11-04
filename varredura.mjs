@@ -183,6 +183,7 @@ const CAT = [
   // ficam para o objeto da compra (vetoDoObjeto). Linha de RS, SC e PR
   // (LINHAS_DA_UF, veto-item.mjs). A mesa de hospital, de clinica e de
   // laboratorio sai pelo VETO_MI.
+  // SUSPENSA em 04/11/2026 (CATEGORIAS_SUSPENSAS, abaixo).
   ["MI",["mesa inox","mesa de inox","mesa em inox","mesa aco inox","mesa de aco inox","mesa em aco inox"]],
   // MO (mobilidade) entrou em 28/10/2026: "tambem estamos cotando agora: Muletas.
   // Andador. Cadeira de rodas. Cadeira de Banho". Com a grafia do catalogo do PNCP,
@@ -265,8 +266,10 @@ const PISO_EDITAL = 4000;
 // fornecedor, nao vamos cotar temporariamente"; e logo depois, quando a dispensa 120 de
 // Curitiba/PR saiu inteira, com a lavadora e o liquidificador, por ficar abaixo do piso:
 // "itens que cotamos tambem foram retirados, como maquina de lavar roupas"). Para voltar
-// a cotar, tirar a categoria daqui.
-const CATEGORIAS_SUSPENSAS = ['BL'];
+// a cotar, tirar a categoria daqui. As mesas inox desde 04/11/2026 (usuario, ao ver
+// Gravatai/RS, edital 251, com so a mesa auxiliar inox: "a gente nao esta cotando mesa
+// inox lembra"; perguntado se era so a hospitalar: "nenhuma mesa inox").
+const CATEGORIAS_SUSPENSAS = ['BL', 'MI'];
 
 // 5.0 — modalidade. Ids conferidos na API em 31/08/2026:
 //   1 Leilao-Eletronico | 4 Concorrencia-Eletronica | 6 Pregao-Eletronico
