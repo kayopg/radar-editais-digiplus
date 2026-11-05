@@ -911,6 +911,11 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // de 4 portas que o mercado chama assim ("GELADEIRA COMERCIAL MINI CAMARA 4 PORTAS INOX",
 // Santa Monica/PR, edital 61, item 44).
 "estabilizador","camara frigorifica","camara fria","camaras frias","camara de resfriamento","camara de congelamento","camara de refrigeracao","mini camara","minicamara",
+// (lista de 05/11/2026) a peca do ar-condicionado: "Conjunto capacitor, para Ar Split, 30.000 BTUS"
+// (São José do Rio Preto/SP, contratacao direta 202, itens 7 e 8), e a cadeira que entrava pelo forno
+// da pintura: "CADEIRA FIXA TECIDO ... PINTURA ELETROSTÁTICA A PÓ EPÓXI E EM FORNO DE ALTA TEMPERATURA"
+// (Tamboara/PR, PE 079, item 24). So na frente: a cadeira de rodas e de banho comecam no proprio termo
+"capacitor","cadeira",
 // 27/10/2026, na revisao da lista: o kit de instalacao vendido sozinho ("KIT P/ INSTALAR
 // DE AR CONDICIONADO. Suporte 450mm Fita de PVC ... Tubo de Cobre", Itacurubi/RS, edital
 // 36, item 1) e o carro com ar-condicionado ("Automovel caracteristicas adicionais: 0 km,
@@ -946,7 +951,7 @@ const VETO_SO_NA_FRENTE = ["gas liquefeito","botijoes","carga de gas","gas de co
 "peca / acessorio","peca/acessorio","acessorio para equipamento","placa eletronica","compressor","separador de oleo",
 "resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico",
 "suporte dispenser","dispenser","escova","carrinho","carro material","carro balde","panela","frigideira","copos","jogo 12",
-"niple","kit registro","kit de limpeza","kit limpeza","conjunto para limpeza","coletor lixo","martelo","coador de pano","coador pano",
+"capacitor","cadeira","niple","kit registro","kit de limpeza","kit limpeza","conjunto para limpeza","coletor lixo","martelo","coador de pano","coador pano",
 "filtro ar condicionado","filtro de ar","controle de ventilador","controle universal","controle remoto universal",
 "controle remoto tipo:","chave controle","botijao de gas","pano multiuso","cabine","torneira de parede","torneira para pia",
 "tubo de ferro","tubo de cobre","tubo cobre","suporte para televis","suporte de televis","suporte de videocassete",

@@ -62,7 +62,8 @@ const iso = (a, m, d) => `${a}-${String(m).padStart(2, '0')}-${String(d).padStar
 
 // Datas de sessao no texto das primeiras paginas. publicado: dia em que o
 // edital saiu no PNCP (a sessao vem depois dele).
-export function datasDaSessao(texto, publicado) {
+// recuoDias: quantos dias antes da publicacao a sessao ainda vale (ver sessaoDoEdital).
+export function datasDaSessao(texto, publicado, recuoDias = 0) {
   const n = norm(texto);
   const chaves = [...n.matchAll(CHAVE)].map(m => m.index + m[0].length);
   const pub = publicado ? dia(publicado) : null;
@@ -90,7 +91,7 @@ export function datasDaSessao(texto, publicado) {
     if (OUTRA_COISA.test(n.slice(Math.max(k ?? 0, m.index - 60), m.index))) continue;
     const data = iso(ano, mes, d);
     // a sessao e depois da publicacao (o pregao pede 8 dias uteis) e nao muito
-    if (pub && (dia(data) < pub + 3 * 864e5 || dia(data) > pub + 200 * 864e5)) continue;
+    if (pub && (dia(data) < pub + (recuoDias ? -recuoDias : 3) * 864e5 || dia(data) > pub + 200 * 864e5)) continue;
     // a hora vem depois ("27/10/2026 HORARIO: 09 horas") ou antes ("as 09:00 do dia 25/08/2026")
     const h = n.slice(m.index + m[0].length, m.index + m[0].length + 40).match(/^\D{0,20}?(\d{1,2})\s*(?:h|:|horas)\s*(?:e\s*)?(\d{2})?/)
       || logoAntes.match(/(\d{1,2})\s*(?:h|:)\s*(\d{2})?\s*(?:h|hs|horas|min)?\s*(?:\([^)]*\)\s*)?(?:do dia|de|em|,)?\s*$/);
@@ -101,7 +102,12 @@ export function datasDaSessao(texto, publicado) {
 
 // A data mais citada (empate: a primeira), com a hora mais citada dela.
 export function sessaoDoEdital(texto, publicado) {
-  const ds = datasDaSessao(texto, publicado);
+  // O orgao que so publicou no PNCP depois de adiar: o edital original diz "Data da sessao:
+  // 22/10/2026", a publicacao no PNCP e de 30/10, junto com a retificacao que transferiu a
+  // sessao para 19/11 (Ivoti/RS, PE 76; usuario, 05/11/2026: "aqui marca que vai ser dia 19/11
+  // mas no edital esta 22/10"). Sem nenhuma data depois da publicacao, vale a de ate 60 dias antes.
+  let ds = datasDaSessao(texto, publicado);
+  if (!ds.length && publicado) ds = datasDaSessao(texto, publicado, 60);
   if (!ds.length) return null;
   const conta = new Map();
   for (const x of ds) conta.set(x.data, (conta.get(x.data) || 0) + 1);

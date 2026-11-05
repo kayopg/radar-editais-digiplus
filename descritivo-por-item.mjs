@@ -6395,7 +6395,30 @@ function recortaEdital(e, v, secoes) {
           .replace(/\s+Total\s+(?:do\s+)?(?:Grupo|Lote)\s+(?:[IVXLC]+|\d{1,3})\s*\(R\$\)[\s\S]*$/i, '')
           // (e a coluna da unidade na frente: "UNIDADE LIQUIDIFICADOR DOMÉSTICO ...",
           // Três Pontas/MG, PRE 100, item 2, 04/11/2026)
-          .replace(/^(?:UNIDADES?|UNID\.?|UND)\s+(?=\p{Lu}{4})/u, '');
+          .replace(/^(?:UNIDADES?|UNID\.?|UND)\s+(?=\p{Lu}{4})/u, '')
+          // (lista de 05/11/2026) o titulo do item seguinte do termo: "...tensão de 127 V.
+          // 1.3.56 ITEM 56" (Moreira Sales/PR, PE 34, itens 50, 51 e 57)
+          .replace(/\s*"?\s*\b\d\.\d{1,2}\.\d{1,3}\s+ITEM\s+\d{1,3}(?:\s*[-–]\s*"?)?\s*$/, '')
+          // o cabecalho do lote seguinte: "...Lote de itens: 10 ITEM Código PRODUTO/SERVIÇO
+          // UN QT" (Carambeí/PR, PCE 63)
+          .replace(/\s+Lote\s+de\s+itens:\s*\d+\s+ITEM\s+C[óo]digo\b[\s\S]*$/, '')
+          // as colunas de preco vazias: "...CONFORME TERMO DE REFERÊNCIA R$" (Dois Irmãos/RS)
+          .replace(/\s+R\$(?:\s*R\$)?\s*$/, '')
+          // as observacoes gerais de todos os itens depois do ultimo (Itanhandu/MG, item 26)
+          .replace(/\s+Observa[çc][õo]es\s+Gerais:\s+1\.\s[\s\S]*$/, '')
+          // e a coluna da unidade no fim: "...PARA TRITURAR GELO unidade" (Monte Azul/MG, PE 026)
+          // (no singular e sem numero antes: "caixa com 24 unidades", Cascavel/PR, fica)
+          .replace(/(?<!\bpor|\bcada|\bde|\d)\s+(?:unidade|und|unid\.?)\s*$/, '');
+        {
+          // a quantidade do proprio item depois da frase fechada ("...VIGENTE. 6", Unaí/MG,
+          // item 235), a unidade e a quantidade no meio ("...DE unidade 6,00 COBRE", Monte
+          // Azul/MG, item 141) e o numero e a quantidade do item seguinte, com a unidade "UM"
+          // ("...30CM. 10 12 UM", Itanhandu/MG, item 9)
+          const qtdItem = Math.round(+it[2] || 0);
+          if (qtdItem > 0) t = t.replace(new RegExp('(?<=[.;])\\s+0*' + qtdItem + '\\s*$'), '')
+            .replace(new RegExp('\\s+unidade\\s+0*' + qtdItem + ',00(?=\\s)', 'g'), '');
+          t = t.replace(new RegExp('\\s+0*' + (+it[0] + 1) + '\\s+\\d{1,4}\\s+UM\\s*$'), '');
+        }
         const cauda = caudaDoTimbre.get(e[C.path]);
         if (cauda)
           t = t.replace(new RegExp('(?:\\s+(?:un\\s+)?\\d{1,3}(?:\\s+[\\d.]+,\\d{2})?)?\\s+' + cauda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+') + '(?:\\s+\\d{1,3})?(?=\\s|$)', 'gu'), '');

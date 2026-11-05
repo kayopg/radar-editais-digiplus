@@ -510,6 +510,10 @@ for (const e of dados.editais) {
       // do fluxometro, nao o umidificador de ambiente (Campina da Lagoa/PR,
       // edital 108, item 6, 21/10/2026: "RECARGA DE OXIGENIO MEDICINAL COM
       // CILINDROS EM COMODATO")
+      // o purificador de osmose reversa no edital de equipamentos de laboratorio: "troca
+      // iônica", "6 estágios" (Salinas/MG, PE 37, itens 7 e 45, 05/11/2026; a mesma decisao
+      // da FMRP-USP, Ribeirao Preto/SP, 21/10/2026)
+      || (it[0] === 'BB' && /osmose/.test(d + ' ' + norm(it[3])) && /laborator/.test(objN) && 'osmose reversa de laboratorio')
       || (it[0] === 'CL' && /^[^a-z]*umidificador/.test(norm(it[3])) && /oxigenio|gasoterapia/.test(objN)
         && !/ambiente|umidificador de ar(?![a-z])/.test(d + ' ' + norm(it[3])) && 'umidificador do oxigenio medicinal')
       || (!cotaNaUf(e[C.uf], norm(it[3]), d) && 'linha que nao se cota em ' + e[C.uf])

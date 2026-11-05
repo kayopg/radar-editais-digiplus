@@ -66,6 +66,11 @@ export function marcaCotas(itens, corpo = '') {
     const a = cand[i], b = cand[j];
     const mesmoPreco = a.preco && b.preco ? Math.abs(a.preco - b.preco) <= 0.02 * Math.max(a.preco, b.preco)
       : a.p.join(' ') === b.p.join(' ');
+    // (o mesmo produto para cidades diferentes nao e cota: "Localidade: São Paulo..." e
+    // "Localidade: São José do Rio Preto/SP...", 22 e 2 refrigeradores de preco quase igual,
+    // São Paulo/SP, PE 140, itens 17 e 26, 05/11/2026)
+    const la = /^localidade: ([^.]+)\./.exec(norm(a.x[6])), lb = /^localidade: ([^.]+)\./.exec(norm(b.x[6]));
+    if (la && lb && la[1] !== lb[1]) continue;
     if (mesmoPreco && parecido(a.p, b.p)) { a.pares.push(b); b.pares.push(a); }
   }
   const falaNoCorpo = FALA_DE_COTA.test(corpo);
