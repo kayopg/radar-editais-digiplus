@@ -514,6 +514,11 @@ for (const e of dados.editais) {
       // iônica", "6 estágios" (Salinas/MG, PE 37, itens 7 e 45, 05/11/2026; a mesma decisao
       // da FMRP-USP, Ribeirao Preto/SP, 21/10/2026)
       || (it[0] === 'BB' && /osmose/.test(d + ' ' + norm(it[3])) && /laborator/.test(objN) && 'osmose reversa de laboratorio')
+      // o fancolete de agua gelada (usuario, 05/11/2026: "fancolete hidronico nem cotamos"; Salinas/MG, PE 37,
+      // item 9, "Ar Condicionado Modelo: Fancolete Hidrônico"). So pelo texto do edital (ou do PNCP, quando e
+      // o unico), e nao no split: o catalogo escreve "modelo: fancolete hidrônico" em split comum, e o edital
+      // pede "SPLIT INVERTER" (Boraceia/SP, edital 19, item 6; Pederneiras/SP, edital 50, item 2)
+      || (it[0] === 'CL' && /fancolete|fan[ -]?coil/.test(d) && !/split|hi[ -]?wall/.test(d) && 'fancolete')
       || (it[0] === 'CL' && /^[^a-z]*umidificador/.test(norm(it[3])) && /oxigenio|gasoterapia/.test(objN)
         && !/ambiente|umidificador de ar(?![a-z])/.test(d + ' ' + norm(it[3])) && 'umidificador do oxigenio medicinal')
       || (!cotaNaUf(e[C.uf], norm(it[3]), d) && 'linha que nao se cota em ' + e[C.uf])

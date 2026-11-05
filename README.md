@@ -406,7 +406,9 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    Em 05/11/2026 saem o capacitor do ar-condicionado (São José do Rio Preto/SP), a cadeira que
    entrava pelo "forno de alta temperatura" da pintura (Tamboara/PR) e o purificador de osmose
    reversa em edital de equipamentos de laboratório (Salinas/MG), e o tanque de resfriar leite
-   (Palmital/PR; usuário: "refrigerador de leite não cotamos").
+   (Palmital/PR; usuário: "refrigerador de leite não cotamos"), e o fancolete de água gelada
+   (Salinas/MG; usuário: "fancolete hidrônico nem cotamos"), este só pelo texto do edital: o
+   catálogo do PNCP escreve "modelo: fancolete hidrônico" em split comum (Boracéia/SP, Pederneiras/SP).
    E quando a tabela do edital numera a linha diferente do PNCP, o resumo e o card mostram
    os dois: "8 (no edital: 9)" — Paranaguá/PR numera o bebedouro de 9 no termo de
    referência e de 8 na relação de itens, que é a da disputa.
