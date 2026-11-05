@@ -405,7 +405,8 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    Alfenas/MG, PE 137, item 70): "kit limpeza", sem o "de", entra ao lado de "kit de limpeza".
    Em 05/11/2026 saem o capacitor do ar-condicionado (São José do Rio Preto/SP), a cadeira que
    entrava pelo "forno de alta temperatura" da pintura (Tamboara/PR) e o purificador de osmose
-   reversa em edital de equipamentos de laboratório (Salinas/MG).
+   reversa em edital de equipamentos de laboratório (Salinas/MG), e o tanque de resfriar leite
+   (Palmital/PR; usuário: "refrigerador de leite não cotamos").
    E quando a tabela do edital numera a linha diferente do PNCP, o resumo e o card mostram
    os dois: "8 (no edital: 9)" — Paranaguá/PR numera o bebedouro de 9 no termo de
    referência e de 8 na relação de itens, que é a da disputa.

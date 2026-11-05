@@ -916,6 +916,9 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // da pintura: "CADEIRA FIXA TECIDO ... PINTURA ELETROSTÁTICA A PÓ EPÓXI E EM FORNO DE ALTA TEMPERATURA"
 // (Tamboara/PR, PE 079, item 24). So na frente: a cadeira de rodas e de banho comecam no proprio termo
 "capacitor","cadeira",
+// e o tanque de resfriar leite (usuario, 05/11/2026: "refrigerador de leite nao cotamos"; Palmital/PR,
+// PE 43, lote 12, "RESFRIADOR DE LEITE COM CAPACIDADE MÍNIMA DE 500 LITROS, TIPO TANQUE")
+"resfriador de leite","refrigerador de leite","resfriador para leite","refrigerador para leite","tanque de leite","tanque resfriador",
 // 27/10/2026, na revisao da lista: o kit de instalacao vendido sozinho ("KIT P/ INSTALAR
 // DE AR CONDICIONADO. Suporte 450mm Fita de PVC ... Tubo de Cobre", Itacurubi/RS, edital
 // 36, item 1) e o carro com ar-condicionado ("Automovel caracteristicas adicionais: 0 km,
