@@ -2487,19 +2487,61 @@
   },
   "88185020000125/2026/257": {
     "edital": "Sapucaia do Sul/RS, Edital 63/2026",
-    "conferido": "2026-10-29",
+    "conferido": "2026-11-05",
     "itens": {
+      "17": {
+        "qtd": 2,
+        "valor": 835.18,
+        "fonte": "Termo de referência, tabela \"Descrição técnica revisada\", e Estudo Técnico Preliminar, \"Tabela de Itens\", item 17; 05/11/2026",
+        "texto": "Descrição técnica revisada (termo de referência): Micro-ondas, 31L cor branca ou inox, Potência 1150W, 220v. Descrição técnica anterior (ETP): Forno de micro-ondas com capacidade nominal mínima de 30 litros, potência de saída mínima de 900 W, painel de controle de fácil operação, temporizador, programas de aquecimento e descongelamento, interior de fácil higienização e alimentação elétrica compatível com a instalação."
+      },
+      "18": {
+        "qtd": 1,
+        "valor": 3233.33,
+        "fonte": "Termo de referência, tabela \"Descrição técnica revisada\", e Estudo Técnico Preliminar, \"Tabela de Itens\", item 18; 05/11/2026",
+        "texto": "Descrição técnica revisada (termo de referência): Batedeira Planetária Industrial, 12 litros, cor branca ou inox, bivolt ou 220v. Descrição técnica anterior (ETP): Batedeira planetária de uso profissional, capacidade nominal mínima de 12 litros, cuba removível em aço inoxidável ou material próprio para contato com alimentos, múltiplas velocidades, acessórios adequados às operações de mistura e sistema de proteção para reduzir riscos durante o uso. Alimentação elétrica compatível com a instalação."
+      },
       "19": {
         "qtd": 1,
         "valor": 702.79,
-        "fonte": "Termo de referencia, tabela de especificacao, item 19 \"Liquidificador industrial\"; 29/10/2026",
-        "texto": "Liquidificador industrial de baixa rotação, capacidade nominal mínima de 6 litros, copo em aço inoxidável ou material próprio para contato com alimentos, conjunto de lâminas adequado ao processamento previsto, base estável, proteção contra acionamento inseguro e componentes de fácil higienização. Alimentação elétrica compatível com a instalação."
+        "fonte": "Termo de referência, tabela \"Descrição técnica revisada\", e Estudo Técnico Preliminar, \"Tabela de Itens\", item 19; 05/11/2026",
+        "texto": "Descrição técnica revisada (termo de referência): Liquidificador Industrial, 6 Litros, aço Inox, bivolt ou 220v. Descrição técnica anterior (ETP): Liquidificador industrial de baixa rotação, capacidade nominal mínima de 6 litros, copo em aço inoxidável ou material próprio para contato com alimentos, conjunto de lâminas adequado ao processamento previsto, base estável, proteção contra acionamento inseguro e componentes de fácil higienização. Alimentação elétrica compatível com a instalação."
+      },
+      "20": {
+        "qtd": 1,
+        "valor": 785.95,
+        "fonte": "Termo de referência, tabela \"Descrição técnica revisada\", e Estudo Técnico Preliminar, \"Tabela de Itens\", item 20; 05/11/2026",
+        "texto": "Descrição técnica revisada (termo de referência): Cafeteira elétrica industrial, 2 Litros, bivolt ou 220v. Descrição técnica anterior (ETP): Cafeteira elétrica de uso institucional, capacidade nominal mínima de 2 litros, reservatório ou recipiente de preparo de fácil higienização, controle seguro de aquecimento, estrutura resistente e alimentação elétrica compatível com a instalação."
       },
       "21": {
         "qtd": 1,
         "valor": 6572.44,
         "fonte": "Termo de referencia, mapa de precos, item 21 \"Mini câmara fria\" (na tabela de especificacao o texto emenda o item 22); 29/10/2026",
         "texto": "Mini Câmara Fria Refrigerada, 4 Portas, 220 V: equipamento comercial vertical para conservação de alimentos resfriados, com capacidade aproximada de 744 litros, dimensões aproximadas de 2,00 m de altura × 1,08 m de largura × 0,60 m de profundidade, sistema de refrigeração por ar forçado, faixa de temperatura de 0 °C a 7 °C, controlador digital de temperatura, quatro portas com fechamento automático, prateleiras removíveis e reguláveis, isolamento térmico em poliuretano injetado e estrutura resistente à corrosão e de fácil higienização."
+      },
+      "27": {
+        "qtd": 4,
+        "valor": 636.65,
+        "fonte": "Termo de referência, tabela \"Descrição técnica revisada\", e Estudo Técnico Preliminar, \"Tabela de Itens\", item 27; 05/11/2026",
+        "texto": "Descrição técnica revisada (termo de referência): Cadeira de rodas AVD, aro de impulso: alumínio anodizado, capacidade máxima de 120 Kg, material do quadro: alumínio aeronáutico, opções de encosto: flexível, pedal: removível. Descrição técnica anterior (ETP): Cadeira de rodas manual, com estrutura em alumínio ou material equivalente de resistência comprovada, capacidade mínima de carga de 120 kg, rodas traseiras com aros de propulsão, assento e encosto resistentes e laváveis, apoios para braços e pés, freios bilaterais e sistema de dobragem. Os apoios para pés deverão ser removíveis ou rebatíveis."
+      },
+      "28": {
+        "qtd": 1,
+        "valor": 1135,
+        "fonte": "Termo de referência, tabela \"Descrição técnica revisada\", e Estudo Técnico Preliminar, \"Tabela de Itens\", item 28; 05/11/2026",
+        "texto": "Descrição técnica revisada (termo de referência): Cadeira de rodas para obeso - capacidade máxima de 150 Kg, assento 66 cm de largura, dobrável em duplo X; encosto e assento almofadado com almofada sobressalente de 5 cm; apoio de braço escamoteável; apoio de pés com regulagem de altura; faixa de panturrilha; freios bilaterais. Descrição técnica anterior (ETP): Cadeira de rodas manual reforçada, com capacidade mínima de carga de 150 kg e largura útil do assento de, no mínimo, 66 cm, estrutura reforçada, assento e encosto acolchoados e laváveis, apoios para braços escamoteáveis, apoios para pés com regulagem de altura, faixa de apoio para panturrilhas e freios bilaterais."
+      },
+      "29": {
+        "qtd": 4,
+        "valor": 122.85,
+        "fonte": "Termo de referência, tabela \"Descrição técnica revisada\", e Estudo Técnico Preliminar, \"Tabela de Itens\", item 29; 05/11/2026",
+        "texto": "Descrição técnica revisada (termo de referência): Andador dobrável alumínio D10 com capacidade máxima de 130Kg, estrutura em alumínio polido de alta resistência, não enferruja; dimensões mínimas: comprimento: 58,5 cm, largura: 52,5 cm e altura: 75 a 95 cm. Descrição técnica anterior (ETP): Andador para auxílio à marcha, com estrutura em alumínio ou material equivalente resistente à corrosão, capacidade mínima de carga de 130 kg, altura regulável entre aproximadamente 75 e 95 cm, empunhaduras ergonômicas, ponteiras antiderrapantes e sistema dobrável. As dimensões da base deverão assegurar estabilidade e circulação segura."
+      },
+      "30": {
+        "qtd": 1,
+        "valor": 209.95,
+        "fonte": "Termo de referência, tabela \"Descrição técnica revisada\", e Estudo Técnico Preliminar, \"Tabela de Itens\", item 30; 05/11/2026",
+        "texto": "Descrição técnica revisada (termo de referência): Andador com rodas em alumínio 2 em 1, (pode ser usado fixo ou articulado), dobrável em alumínio com duas rodas de 5″. Descrição técnica anterior (ETP): Andador com estrutura em alumínio ou material equivalente, sistema dobrável, altura ajustável, empunhaduras ergonômicas, duas rodas dianteiras com diâmetro aproximado de 5 polegadas e ponteiras traseiras antiderrapantes. Deverá permitir uso fixo ou articulado, conforme a configuração, e apresentar estabilidade adequada à marcha assistida."
       }
     }
   },
