@@ -439,6 +439,12 @@ for (const e of dados.editais) {
     && (v.itens || []).some(x => ITEM_DE_INSTALACAO.test(norm(x[1])));
   const instalaNoObjeto = !UF_INSTALA.has(e[C.uf]) && /instalacao|montagem/.test(objN)
     && (OBJ_CONDICIONAL.test(objN) || (/mobiliario|moveis/.test(objN) && /eletrodomestic|eletroportat/.test(objN)));
+  // O termo que define o objeto como compra COM instalacao, com o PNCP dizendo so "Aquisição de
+  // aparelho ar condicionado": "1.1. Aquisição com instalação de condicionadores de ar" (Lins/SP,
+  // edital 77, 06/11/2026). Fora do RS e de SC o aparelho que se instala sai; o resto do edital fica.
+  const compraComInstalacao = /aquisi[cç][aã]o (?:com|e) instala[cç][aã]o d[eoa]s?\s/.exec(textoEdital);
+  const instalaNoTermo = !UF_INSTALA.has(e[C.uf]) && !!compraComInstalacao
+    && !NAO_OBRIGA.test(textoEdital.slice(Math.max(0, compraComInstalacao.index - 110), compraComInstalacao.index + 130));
   let valSuspenso = 0;
   const itens = e[C.itens].filter(it => {
     if (SUSPENSAS.includes(it[0])) {
@@ -477,6 +483,7 @@ for (const e of dados.editais) {
       || (!UF_INSTALA.has(e[C.uf]) && exigeInstalacao(d))
       || (instalaNoObjeto && instalavel(norm(it[3]), it[0]) && 'instalacao quando necessaria, e o aparelho se instala')
       || (instalaNoLote && instalavel(norm(it[3]), it[0]) && 'instalacao em item do mesmo lote')
+      || (instalaNoTermo && instalavel(norm(it[3]), it[0]) && 'aquisicao com instalacao no termo')
       || (it[0] === 'PR' && amassadeiraRapida(d + ' ' + norm(it[3])) && 'amassadeira rapida')
       // a "mesa inox" do catalogo que o edital descreve como outro movel: o item 18
       // de Itaberai/GO e "Mesa material estrutura: aco inoxidavel..." no PNCP e

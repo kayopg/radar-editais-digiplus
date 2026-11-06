@@ -6408,7 +6408,21 @@ function recortaEdital(e, v, secoes) {
           .replace(/\s+Observa[çc][õo]es\s+Gerais:\s+1\.\s[\s\S]*$/, '')
           // e a coluna da unidade no fim: "...PARA TRITURAR GELO unidade" (Monte Azul/MG, PE 026)
           // (no singular e sem numero antes: "caixa com 24 unidades", Cascavel/PR, fica)
-          .replace(/(?<!\bpor|\bcada|\bde|\d)\s+(?:unidade|und|unid\.?)\s*$/, '');
+          .replace(/(?<!\bpor|\bcada|\bde|\d)\s+(?:unidade|und|unid\.?)\s*$/, '')
+          // (lista de 06/11/2026) "embalagem original do fabricante. ??" (Guarapuava/PR), "...
+          // unidade exclusiva ME /EPP" (Jaguariúna/SP), "TOTAL GERAL" (Itobi/SP), "Total Máximo do
+          // Lote" (Paranavaí/PR) e o timbre de São Marcos/RS ("– RS CENTRO ADM. MUN. PREF. MANOEL
+          // RAMOS DE CASTILHOS “DOE SANGUE...” : (54) 3291.9900")
+          .replace(/\s+\?\?\s*$/, '')
+          .replace(/\s+TOTAL\s+GERAL\s*$/, '')
+          .replace(/\s+Total\s+M[áa]ximo\s+do\s+Lote\s*$/, '')
+          // (o timbre cai no meio da frase, e o texto continua depois dele: so ele sai)
+          .replace(/\s*(?:[–-]\s*RS\s+)?CENTRO\s+ADM\.\s+MUN\.\s+PREF\.[^”]{0,80}”\s*:?\s*(?:\(\d{2}\)\s*[\d.\s-]{8,12}(?=\s|$))?(?:DATA\s*$)?/g, ' ')
+          .trim()
+          // e na frente, as colunas "Unidade 397100 03" (Charqueadas/RS) e o codigo "2053- "
+          // (São Marcos/RS, item 27)
+          .replace(/^Unidade\s+\d{4,7}\s+\d{1,4}\s+(?=\p{Lu})/u, '')
+          .replace(/^\d{3,5}-\s+(?=\p{Lu})/u, '');
         {
           // a quantidade do proprio item depois da frase fechada ("...VIGENTE. 6", Unaí/MG,
           // item 235), a unidade e a quantidade no meio ("...DE unidade 6,00 COBRE", Monte

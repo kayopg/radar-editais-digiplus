@@ -47,5 +47,21 @@
       { "titulo": "EDITAL2026123.pdf", "url": "https://arquivos.portaldecompraspublicas.com.br/v1/download/79ead125ee9445f503e2d136e99c8f9fa23488f297f164c4720f682e38e98676" },
       { "titulo": "03. TR mobiliario Maua ajustado.pdf", "url": "https://arquivos.portaldecompraspublicas.com.br/v1/download/1d587d376e61951ee55aef6562aae76a2036a79cd94b59a66fe1c9a24f99a0f4" }
     ]
+  },
+  "18125161000177/2026/102": {
+    "edital": "Unaí/MG, Pregão Eletrônico 044/2026 (PL-141/2026, republicado)",
+    "portal": "Bolsa Nacional De Compras - BNC",
+    "conferido": "2026-11-06",
+    "motivo": "o mesmo pregão do PNCP 97 (processo 141), republicado com a data de 17/11; os mesmos arquivos da BNC, sem os ETP e DFD, por causa do teto do PDF",
+    "arquivos": [
+      { "titulo": "PREGÃO ELETRÔNICO Nº 044-2026 - AQUISIÇÃO DE MATERIAIS PERMANENTES.pdf", "url": "https://bnccompras.blob.core.windows.net/processfiles/88471eb2554f4bb189d19cc96cca422f.pdf" },
+      { "titulo": "RESPOSTA DE ESCLARECIMENTO E INFORMAÇÃO COMPLEMENTAR AO EDITAL PE 044-2026.pdf", "url": "https://bnccompras.blob.core.windows.net/processfiles/9bb718f9746743dd8979211e12ba429e.pdf" },
+      { "titulo": "TR 01.pdf", "url": "https://bnccompras.blob.core.windows.net/processfiles/32142ee4d51d4b34a8fe0e981034437d.pdf" },
+      { "titulo": "TR 02.pdf", "url": "https://bnccompras.blob.core.windows.net/processfiles/80001bedf34149e4a31d409b8fb5e10c.pdf" },
+      { "titulo": "TR 03.pdf", "url": "https://bnccompras.blob.core.windows.net/processfiles/d8541d04a3384ff5b097f0008f60807b.pdf" },
+      { "titulo": "TR 04.pdf", "url": "https://bnccompras.blob.core.windows.net/processfiles/628d9d88f2104280aaec61831244a117.pdf" },
+      { "titulo": "TR 05.pdf", "url": "https://bnccompras.blob.core.windows.net/processfiles/b4a8b2d64ec44924bbc77cfb6fdda63e.pdf" },
+      { "titulo": "TR 06.pdf", "url": "https://bnccompras.blob.core.windows.net/processfiles/cd740e8a16d140cabb7541136d6fe107.pdf" }
+    ]
   }
 }
