@@ -66,11 +66,17 @@ const VETO = {
     // (e o da Unioeste, "estabilidade em agitação de ± 2°C ... resistente a produtos
     // químicos corrosivos", Toledo/PR, edital 20, item 2, e o de "tubos de ensaio" de
     // Varginha/MG, PE 112, 28/10/2026)
-    'estabilidade em agitacao', 'produtos quimicos corrosivos', 'tubos de ensaio', 'tubo de ensaio'],
+    'estabilidade em agitacao', 'produtos quimicos corrosivos', 'tubos de ensaio', 'tubo de ensaio',
+    // (e o modulo de apoio de pratos do buffet, sem aquecimento, que o catalogo chama de "Buffet ... pratos
+    // frios": "APOIO DE PRATOS E TALHERES 85CM NEW BUFFET INOX", IFSC, Florianópolis/SC, edital 203, item 1,
+    // 09/11/2026)
+    'apoio de pratos'],
   // (e o purificador de osmose reversa de laboratorio: "água com elevado grau de
   // pureza ... atendendo as exigências laboratoriais ... substituição do uso de
   // destiladores", FMRP-USP, Ribeirao Preto/SP, edital 186, item 5, 21/10/2026)
-  BB: ['laboratorial', 'laboratoriais', 'destiladores', 'elevado grau de pureza'],
+  // (e o de osmose reversa com eletrodeionizacao ou destilacao, de laboratorio e odontologia: Sarandi/PR,
+  // edital 90003, item 3, R$ 27 mil, 09/11/2026)
+  BB: ['laboratorial', 'laboratoriais', 'destiladores', 'elevado grau de pureza', 'eletrodeionizacao', 'destilacao'],
   CX: ['soldagem', 'fumaca de bancada'],
   // a balanca de pesar gente, de bebe e de laboratorio, a mesma lista do
   // varredura.mjs (a categoria voltou em 14/10/2026)
@@ -194,7 +200,12 @@ const EXIGE_INSTALACAO = [
   /aquisicao e instalacao/,
   // (e "Motor e instalação inclusos" das coifas de Balsa Nova/PR, dispensa 22,
   // 28/10/2026; nao o "kit de instalacao incluso", que e acessorio do aparelho)
-  /(?<!(?:kit|acessorios?|materia(?:l|is)|suportes?|pecas?)(?: de| para)? )instalacao (?:inclus[ao]s?|incluid[ao]s?|inclusive)/,
+  // (e com virgula: "Voltagem 220 Volts, com instalação, incluso material aproximadamente 10 metros de
+  // tubulação", Prudentópolis/PR, edital 157, item 1, 09/11/2026)
+  /(?<!(?:kit|acessorios?|materia(?:l|is)|suportes?|pecas?)(?: de| para)? )instalacao,? (?:inclus[ao]s?|incluid[ao]s?|inclusive)/,
+  // "A entrega e instalação devem ser realizadas no local indicado no empenho, incluindo todo o material
+  // necessário" (Prudentópolis/PR, edital 157, itens 2 a 4, 09/11/2026)
+  /entrega e (?:a )?instalacao (?:devem|deverao|deve|devera) ser (?:realizad|efetuad|feit)/,
   // "...filtro de ar removível e lavável, com instalação e funcionamento conforme
   // especificações do fabricante" (Urania/SP, edital 27, item 11; usuario, 29/10/2026:
   // "urania/sp pede instalação entao pode tirar")

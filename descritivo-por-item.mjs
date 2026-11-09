@@ -6416,6 +6416,13 @@ function recortaEdital(e, v, secoes) {
           .replace(/\s+\?\?\s*$/, '')
           .replace(/\s+TOTAL\s+GERAL\s*$/, '')
           .replace(/\s+Total\s+M[áa]ximo\s+do\s+Lote\s*$/, '')
+          // (lista de 09/11/2026) o modo de disputa da linha e o rodape do portal: "... Ampla concorrência
+          // Fechado A autenticidade do documento pode ser verificada..." (São Borja/RS, edital 63); as colunas
+          // "unid 1 150049 NÃO" e "unid 1 327793 10% Normal" antes do campus de entrega e o "LOTE/GRUPO 1:
+          // GRUPO" do fim (IFSC, Florianópolis/SC, edital 203)
+          .replace(/\s+(?:Ampla\s+concorr[êe]ncia|Exclusivo|Cota\s+reservada|Cota\s+principal)\s+(?:Fechado|Aberto)\b[\s\S]*$/, '')
+          .replace(/\s+(?:unid|Unid|UNID|UNIDADE|Um\.)\s+\d{1,4}\s+\d{5,7}\s+(?:N[ÃA]O|\d{1,2}%\s+Normal)(?:\s+[\d.]+,\d{1,2}(?:\s+[\d.]+,\d{1,2})?)?(?=\s|$)/, '')
+          .replace(/\s+LOTE\/GRUPO\s+\d{1,3}:\s+GRUPO\s*$/, '')
           // (o timbre cai no meio da frase, e o texto continua depois dele: so ele sai)
           .replace(/\s*(?:[–-]\s*RS\s+)?CENTRO\s+ADM\.\s+MUN\.\s+PREF\.[^”]{0,80}”\s*:?\s*(?:\(\d{2}\)\s*[\d.\s-]{8,12}(?=\s|$))?(?:DATA\s*$)?/g, ' ')
           .trim()

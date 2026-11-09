@@ -922,6 +922,11 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // e o controle do ventilador vendido sozinho (Araraquara/SP, contratacao direta 3923, item 3: "CONTROLE DO
 // VENTILADOR", "Controle Dimmer para ventilador de parede", 06/11/2026). So na frente
 "controle do ventilador","controle para ventilador","dimmer",
+// (lista de 09/11/2026) o switch de rede que entrava pelos ventiladores redundantes (Curitiba/PR, dispensa
+// 746), o ventilador centrifugo industrial "Limit Load" (São Paulo/SP, PE 58, R$ 590 mil), o jogo de cha de
+// porcelana e a suqueira de vidro (Ivorá/RS, itens 6 e 122), as cubas de buffet GN, o apoio de pratos do buffet
+// e o fatiador manual tipo mandoline (IFSC, Florianópolis/SC, edital 203). Os de frente, so na frente
+"switch","limit load","ventilador centrifugo","aparelho de cha","pe em vidro","cuba cuba","cubas buffet","cuba buffet","cuba gn","cubas gn","apoio de pratos","mandoline","fatiador manual",
 // 27/10/2026, na revisao da lista: o kit de instalacao vendido sozinho ("KIT P/ INSTALAR
 // DE AR CONDICIONADO. Suporte 450mm Fita de PVC ... Tubo de Cobre", Itacurubi/RS, edital
 // 36, item 1) e o carro com ar-condicionado ("Automovel caracteristicas adicionais: 0 km,
@@ -957,7 +962,7 @@ const VETO_SO_NA_FRENTE = ["gas liquefeito","botijoes","carga de gas","gas de co
 "peca / acessorio","peca/acessorio","acessorio para equipamento","placa eletronica","compressor","separador de oleo",
 "resfriador de liquido","condensador","termometro","isqueiro","acendedor","garrafa plastica","pote plastico",
 "suporte dispenser","dispenser","escova","carrinho","carro material","carro balde","panela","frigideira","copos","jogo 12",
-"controle do ventilador","controle para ventilador","dimmer","capacitor","cadeira","niple","kit registro","kit de limpeza","kit limpeza","conjunto para limpeza","coletor lixo","martelo","coador de pano","coador pano",
+"switch","ventilador centrifugo","aparelho de cha","cuba cuba","cubas buffet","cuba buffet","cuba gn","cubas gn","apoio de pratos","fatiador manual","controle do ventilador","controle para ventilador","dimmer","capacitor","cadeira","niple","kit registro","kit de limpeza","kit limpeza","conjunto para limpeza","coletor lixo","martelo","coador de pano","coador pano",
 "filtro ar condicionado","filtro de ar","controle de ventilador","controle universal","controle remoto universal",
 "controle remoto tipo:","chave controle","botijao de gas","pano multiuso","cabine","torneira de parede","torneira para pia",
 "tubo de ferro","tubo de cobre","tubo cobre","suporte para televis","suporte de televis","suporte de videocassete",
