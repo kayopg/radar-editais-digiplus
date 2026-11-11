@@ -417,6 +417,9 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    pratos e o fatiador manual tipo mandoline (IFSC, Florianópolis/SC), o purificador de eletrodeionização ou
    destilação (Sarandi/PR) e, fora do RS e de SC, o ar "com instalação, incluso material" e o de "A entrega e
    instalação devem ser realizadas" (Prudentópolis/PR).
+   Em 11/11/2026 sai a lavadora extratora industrial, de qualquer capacidade, também a conjugada com
+   secadora (usuário: "lavadora extratora industrial é produto que não cotamos"): Tunápolis/SC fica com
+   os lava-jatos e Cornélio Procópio/PR (edital 196) sai.
    E quando a tabela do edital numera a linha diferente do PNCP, o resumo e o card mostram
    os dois: "8 (no edital: 9)" — Paranaguá/PR numera o bebedouro de 9 no termo de
    referência e de 8 na relação de itens, que é a da disputa.

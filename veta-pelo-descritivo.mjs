@@ -90,7 +90,10 @@ const VETO = {
     // mas que o PNCP pode chamar de "Lavadora Alta Pressao": os itens 12 e 62 de
     // Paranavai/PR (edital 16) sao "Lavadora/secadora de piso (compacta) ...
     // Acionamento a bateria ... similar a marca Karcher" no edital (14/10/2026)
-    'secadora de piso', 'lavadora de piso', 'lavadora de pisos', 'lavadora/secadora de piso', 'automatica de piso'],
+    'secadora de piso', 'lavadora de piso', 'lavadora de pisos', 'lavadora/secadora de piso', 'automatica de piso',
+    // e a lavadora extratora industrial, que o PNCP pode chamar so de "lavadora de
+    // roupas" (usuario, 11/11/2026; Tunapolis/SC, edital 46, item 1)
+    'lavadora extratora', 'lavadoura extratora', 'lavadora-extratora', 'lavadora/extratora', 'lavadora e extratora', 'maquina extratora', 'extratora de roupa', 'extratora industrial'],
   // o aquecedor halogeno saiu do radar (usuario, 30/09/2026); a mesma lista do
   // varredura.mjs (VETO_OT_HALOGENO), so na categoria dele
   OT: ['halogen', 'alogen', ...lista('VETO_OT_ANIMAIS')],

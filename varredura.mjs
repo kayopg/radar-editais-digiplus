@@ -135,7 +135,8 @@ const CAT = [
   // escrever o mesmo. A de piso continua vetada (VETO_ITEM).
   // (e "Lavadora, de roupas, 15 kg", com a virgula do cadastro da Prefeitura de
   // Curitiba, SGP 71.01.12.58847-6: dispensa 120, item 3, 28/10/2026)
-  ["LV",["lavadora de roupa","lavadora, de roupa","maquina de lavar","secadora","lava e seca","lava-e-seca","centrifuga de roupa","calandra","tanquinho","lavadora extratora",
+  // (a "lavadora extratora" saiu daqui em 11/11/2026: e veto, ver o VETO_ITEM)
+  ["LV",["lavadora de roupa","lavadora, de roupa","maquina de lavar","secadora","lava e seca","lava-e-seca","centrifuga de roupa","calandra","tanquinho",
     "maquina lavar","maquina secar","maquina lavadora","lavadora automatica","lavadora semiautomatica","lavadora semi automatica","lavadora semi-automatica",
     // "Lavadoura", com o "u", e como o usuario escreve (lista de 14/10/2026) e
     // como algumas prefeituras escrevem tambem (ver o lava-jato abaixo).
@@ -783,6 +784,10 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // lavadora extratora hospitalar de 50 kg com barreira sanitaria (Sonora/MS,
 // decisao do usuario em 21/09/2026)
 "lavadora de roupas hospitalar","lavadora hospitalar","barreira sanitaria",
+// e a lavadora extratora industrial, de lavanderia, de qualquer tamanho (usuario,
+// 11/11/2026: "lavadora extratora industrial e produto que nao cotamos";
+// Tunapolis/SC, edital 46, item 1, 20 kg, R$ 62 mil)
+"lavadora extratora","lavadoura extratora","lavadora-extratora","lavadora/extratora","lavadora e extratora","maquina extratora","extratora de roupa","extratora industrial",
 // suqueira de vidro com torneira plastica e utensilio, nao refresqueira
 // eletrica (Porto Vitoria/PR, 22/09/2026)
 "suqueira de vidro",
