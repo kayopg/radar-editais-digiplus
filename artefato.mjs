@@ -13,6 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { limpaTextoPncp } from './texto-pncp.mjs';
+import { leIndice, bytesDoPdf, arquivoDoPdf } from './convertidos.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const doc = (...p) => fs.readFileSync(path.join(DIR, 'docs', ...p), 'utf8');
@@ -221,8 +222,14 @@ let partesCapas = [];
 // do usuario), e o teto agora e de 256 MB por versao, com 64 MB por publicacao —
 // a publicacao vai em mais de uma chamada ao mesmo artefato (ver README).
 const ORCAMENTO_EDITAIS_MB = 120;
-let editaisPdf = { editais: {} };
-try { editaisPdf = JSON.parse(doc('editais-pdf.json')); } catch { /* sem conversao nesta maquina */ }
+// (o indice em docs/editais-pdf.json e cada PDF em docs/editais-pdf/, desde 12/11/2026;
+// ver convertidos.mjs. O formato antigo, com o b64 no indice, ainda e lido)
+const DOCS = path.join(DIR, 'docs');
+const editaisPdf = leIndice(DOCS) || { editais: {} };
+const tamanhoDoPdf = (k, v) => {
+  if (v.b64) return Math.round(v.b64.length * 0.75);
+  try { return fs.statSync(arquivoDoPdf(DOCS, k)).size; } catch { return 0; }
+};
 const mapaEdital = {}, indiceEdital = {};
 let partesEditais = [];
 {
@@ -234,8 +241,9 @@ let partesEditais = [];
   const agora = Date.now();
   const noRadar = new Map(dados.editais.map(e => [e[iPath], Date.parse(e[iFecha]) || Infinity]));
   const todos = Object.entries(editaisPdf.editais || {})
-    .filter(([k, v]) => noRadar.has(k) && noRadar.get(k) > agora && v && v.b64)
-    .map(([k, v]) => [k, v, Math.round(v.b64.length * 0.75)])
+    .filter(([k, v]) => noRadar.has(k) && noRadar.get(k) > agora && v)
+    .map(([k, v]) => [k, v, tamanhoDoPdf(k, v)])
+    .filter(([, , bytes]) => bytes > 0)
     .sort((a, b) => a[2] - b[2]);
   let usado = 0, atual = null, fora = 0;
   for (const [k, v, bytes] of todos) {
@@ -248,7 +256,7 @@ let partesEditais = [];
       atual = { n: partesEditais.length + 1, editais: {}, tam: 0 };
       partesEditais.push(atual);
     }
-    atual.editais[k] = v.b64;
+    atual.editais[k] = v.b64 || bytesDoPdf(DOCS, k, v).toString('base64');
     atual.tam += naPagina; usado += naPagina;
     mapaEdital[k] = atual.n;
     indiceEdital[k] = { de: v.de, paginas: v.paginas, nome: v.nome, origem: v.origem, ...(v.partes ? { partes: v.partes } : {}),

@@ -27,6 +27,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { limpaTextoPncp } from './texto-pncp.mjs';
+import { leIndice, bytesDoPdf, gravaIndice } from './convertidos.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const DOCS = path.join(DIR, 'docs');
@@ -81,16 +82,17 @@ for (const [caminho, a] of Object.entries(aberturas.editais || {})) {
   capas++; mbCapas += txt.length / 1048576;
 }
 
-// os editais convertidos: o indice sem os bytes, e os bytes em .pdf
-const convertidos = le('editais-pdf.json') || { editais: {} };
+// os editais convertidos: o indice sem os bytes, e os bytes em .pdf (desde
+// 12/11/2026 cada um ja vem num arquivo, docs/editais-pdf/; ver convertidos.mjs)
+const convertidos = leIndice(DOCS) || { editais: {} };
 const indice = {};
 let pdfs = 0, mbPdfs = 0;
 for (const [caminho, p] of Object.entries(convertidos.editais || {})) {
-  if (!vivos.has(caminho)) { delete convertidos.editais[caminho]; continue; }
-  if (!p || !p.b64) continue;
-  const bytes = Buffer.from(p.b64, 'base64');
+  if (!vivos.has(caminho)) continue;
+  const bytes = bytesDoPdf(DOCS, caminho, p);
+  if (!bytes) continue;
   fs.writeFileSync(path.join(SAIDA, 'pdfs', arquivoDoEdital(caminho) + '.pdf'), bytes);
-  const { b64, ...resto } = p;
+  const { b64, bytes: _tam, ...resto } = p;
   indice[caminho] = resto;
   pdfs++; mbPdfs += bytes.length / 1048576;
 }
@@ -117,6 +119,6 @@ fs.writeFileSync(path.join(SAIDA, 'pdfs', 'indice.json'),
 
 // a poda dos dois arquivos guardados em cache pelo robô
 if (fs.existsSync(path.join(DOCS, 'aberturas.json'))) fs.writeFileSync(path.join(DOCS, 'aberturas.json'), JSON.stringify(aberturas), 'utf8');
-if (fs.existsSync(path.join(DOCS, 'editais-pdf.json'))) fs.writeFileSync(path.join(DOCS, 'editais-pdf.json'), JSON.stringify(convertidos), 'utf8');
+if (fs.existsSync(path.join(DOCS, 'editais-pdf.json'))) gravaIndice(DOCS, convertidos, vivos);
 
 console.log(`site em ${SAIDA}: ${dados.editais.length} editais · ${capas} folhas de abertura (${mbCapas.toFixed(1)} MB) · ${pdfs} editais convertidos (${mbPdfs.toFixed(1)} MB) · ${nOriginais} editais em PDF (${mbOriginais.toFixed(1)} MB)`);

@@ -22,8 +22,10 @@ import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import { abreZip, abreRar, extDe } from './arquivo-oficial.mjs';
 import { pdfDeDocumento, CONVERSIVEIS } from './pdf-do-documento.mjs';
+import { leIndice, gravaPdf, gravaIndice } from './convertidos.mjs';
 
 const DIR = path.dirname(fileURLToPath(import.meta.url));
+const DOCS = path.join(DIR, 'docs');
 const LE = createRequire(import.meta.url)(path.join(DIR, 'docs', 'pdf-le.js'));
 
 const arg = (n, p) => { const i = process.argv.indexOf(n); return i > 0 && process.argv[i + 1] ? process.argv[i + 1] : p; };
@@ -36,10 +38,9 @@ const TETO_MB = Number(arg('--teto', 6));
 
 const dados = JSON.parse(fs.readFileSync(path.join(DIR, 'docs', 'dados.json'), 'utf8'));
 const C = dados.colunas.reduce((o, n, i) => (o[n] = i, o), {});
-const arquivoSaida = path.join(DIR, 'docs', 'editais-pdf.json');
-
-let jaTem = {};
-try { jaTem = JSON.parse(fs.readFileSync(arquivoSaida, 'utf8')).editais || {}; } catch { /* primeira vez */ }
+// o indice em docs/editais-pdf.json e cada PDF em docs/editais-pdf/ (ver convertidos.mjs:
+// com os bytes dentro do JSON a gravacao caia, 12/11/2026)
+let jaTem = (leIndice(DOCS) || {}).editais || {};
 
 // So o que NAO e PDF: o resto o botao ja entrega direto do PNCP.
 let alvos = dados.editais.filter(e => String(e[C.arquivoExtensao] || '').toLowerCase() !== 'pdf');
@@ -455,7 +456,7 @@ for (const e of dados.editais) {
         const le = await LE.abre(junto.bytes);
         saida[e[C.path]] = { nome: junto.nome.split('/').pop(), origem: junto.origem, paginas: le.total, arq: e[C.arquivoSeq] || 1,
                              de: String(e[C.arquivoExtensao] || '').toLowerCase(), v: VERSAO, arqs: chaveDosArquivos(lista),
-                             separados: junto.separados, ...(junto.portal ? { portal: junto.portal } : {}), partes: junto.partes, b64: Buffer.from(junto.bytes).toString('base64') };
+                             separados: junto.separados, ...(junto.portal ? { portal: junto.portal } : {}), partes: junto.partes, bytes: gravaPdf(DOCS, e[C.path], Buffer.from(junto.bytes)) };
         total += junto.bytes.length; feitos++; juntados++;
         console.log(`  ${nome} · ${junto.origem} (${lista.length}) · ${le.total} pag · ${(junto.bytes.length / 1024).toFixed(0)} KB\n      `
           + junto.partes.map(p => `${p.parte}: ${p.nome} (${p.paginas})`).join(' | '));
@@ -496,7 +497,7 @@ for (const e of dados.editais) {
     saida[e[C.path]] = { nome: achado.nome.split('/').pop(), origem: achado.origem, paginas: le.total, arq: e[C.arquivoSeq] || 1,
                          de: String(e[C.arquivoExtensao] || '').toLowerCase(), v: VERSAO,
                          ...(achado.partes ? { partes: achado.partes } : {}),
-                         b64: Buffer.from(achado.bytes).toString('base64') };
+                         bytes: gravaPdf(DOCS, e[C.path], Buffer.from(achado.bytes)) };
     total += achado.bytes.length; feitos++;
     console.log(`  ${nome} · ${achado.origem} · ${achado.nome.split('/').pop()} · ${le.total} pag · ${(achado.bytes.length / 1024).toFixed(0)} KB`
       + (achado.partes ? '\n      ' + achado.partes.map(p => `${p.parte}: ${p.nome} (${p.paginas})`).join(' | ') : ''));
@@ -505,8 +506,6 @@ for (const e of dados.editais) {
 
 // So os editais da lista de hoje ficam no arquivo.
 const vivos = new Set(dados.editais.map(e => e[C.path]));
-for (const k of Object.keys(saida)) if (!vivos.has(k)) delete saida[k];
-
-fs.writeFileSync(arquivoSaida, JSON.stringify({ varredura: dados.meta && dados.meta.varredura, editais: saida }), 'utf8');
+const gravado = gravaIndice(DOCS, { varredura: dados.meta && dados.meta.varredura, editais: saida }, vivos);
 console.log(`\n${feitos} edital(is) convertido(s) agora (${juntados} com os arquivos separados do PNCP juntos) · ${semJeito} sem jeito · ${grandes} acima do teto · ${erros} erro(s)`);
-console.log(`docs/editais-pdf.json: ${Object.keys(saida).length} editais · ${(fs.statSync(arquivoSaida).size / 1024 / 1024).toFixed(1)} MB`);
+console.log(`docs/editais-pdf.json + docs/editais-pdf/: ${gravado.editais} editais · ${gravado.mb.toFixed(1)} MB`);

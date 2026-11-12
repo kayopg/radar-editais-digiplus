@@ -26,6 +26,8 @@ resumos.*/
 docs/aberturas.json
 # O edital convertido para PDF (edital-pdf.mjs): so viaja dentro do artefato.
 docs/editais-pdf.json
+# e os PDFs dele, um por edital (convertidos.mjs, 12/11/2026)
+docs/editais-pdf/
 
 # Capas que nao cabem na pagina do artefato, publicadas ao lado dela.
 radar-capas/

@@ -31,6 +31,7 @@ on:
       - 'arquivos-do-portal.json'
       - 'originais.mjs'
       - 'pdf-do-documento.mjs'
+      - 'convertidos.mjs'
       - '.github/workflows/site.yml'
   workflow_dispatch:
 
@@ -88,6 +89,18 @@ jobs:
           key: site-${{ github.run_id }}
           restore-keys: site-
 
+      # Os PDFs dos convertidos, um arquivo por edital (convertidos.mjs). Ate
+      # 12/11/2026 iam dentro do editais-pdf.json, e com o teto de 25 MB a lista
+      # de 191 editais passou do maior texto que o Node monta: a gravacao caia
+      # ("Invalid string length") e os editais novos ficavam sem o PDF unico. Em
+      # cache proprio, para nao mudar a chave das folhas acima.
+      - name: PDFs dos convertidos de ontem
+        uses: actions/cache/restore@v4
+        with:
+          path: docs/editais-pdf
+          key: pdfs-${{ github.run_id }}
+          restore-keys: pdfs-
+
       # Falha de rede num edital nao derruba o site: ele sai sem a folha ou sem
       # o convertido daquele edital, e a proxima execucao tenta de novo.
       - name: Folhas de abertura
@@ -124,6 +137,14 @@ jobs:
             docs/aberturas.json
             docs/editais-pdf.json
           key: site-${{ github.run_id }}
+
+      - name: Guardar os PDFs dos convertidos para amanha
+        if: always()
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: docs/editais-pdf
+          key: pdfs-${{ github.run_id }}
 
       - name: Guardar os editais em PDF para amanha
         if: always()
