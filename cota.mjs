@@ -31,6 +31,9 @@ const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // a marca entre parenteses: "(COTA EXCLUSIVA PARA ME / EPP)", "(Item para Ampla
 // Concorrencia)", "(Cota Reservada ME/EPP)" — fora da chave que acha o par
 const PARENTESE_DA_COTA = /\([^()]{0,25}(?:ampla|cota|exclusiv|reservad)[^()]{0,60}\)/g;
+// e a marca no fim apontando o item gemeo: "COTA PRINCIPAL DO ITEM 06" e "COTA RESERVADA DO
+// ITEM 01" (Santa Rita do Passa Quatro/SP, edital 43, itens 1 e 6, 12/11/2026) — tambem fora da chave
+const COTA_DO_ITEM = /\bcota (?:principal|reservada|exclusiva) (?:do|ao|para o|referente ao|relativa ao) item(?: \d{1,4}\b|\s*$)/g;
 const DIZ_RESERVADA = /cota (?:reservada|exclusiva)|reservad[oa]s? (?:para|a|as) (?:me|micro)/;
 const DIZ_PRINCIPAL = /cota principal|ampla (?:participacao|concorrencia|disputa)/;
 const FALA_DE_COTA = /cota (?:reservada|principal|exclusiva)|cota de ate 25|art(?:igo)?\.? 48,? (?:inciso )?iii/;
@@ -39,7 +42,7 @@ const restritivo = b => b === 'E' || b === 'C';
 
 export function marcaCotas(itens, corpo = '') {
   const marcas = new Map(), limpos = new Map();
-  const chave = x => norm(x[6] || x[1]).replace(PARENTESE_DA_COTA, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
+  const chave = x => norm(x[6] || x[1]).replace(PARENTESE_DA_COTA, ' ').replace(COTA_DO_ITEM, ' ').replace(/[^a-z0-9]+/g, ' ').trim();
 
   // 1. O par: dois itens com o mesmo texto e o mesmo preco, o menor com ate 30%
   // da soma. Quantidades iguais nao sao cota (Mariopolis/PR tem varios pares

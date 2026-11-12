@@ -1352,6 +1352,27 @@ function tiraTimbre(txt, timbres) {
       }
       if (corte) break;
     }
+    // O timbre inteiro com os NUMEROS ja tirados por outra limpeza: o CNPJ e os
+    // telefones saem antes (VALORES_DA_LINHA), sobra "CNPJ – Insc. Estadual ...
+    // Fone – Fax e-mail: ..." e a comparacao palavra a palavra nao casa mais. Sem
+    // os numeros dos dois lados, casa — e o numero da folha no meio sai junto
+    // ("...terras do jequitibá” 30 Rua Victor Meirelles...", Santa Rita do Passa
+    // Quatro/SP, edital 43, item 4, 12/11/2026). So o timbre inteiro e comprido.
+    if (!corte) {
+      const sem = toks.filter(x => x.n !== '#');
+      for (const seq of timbres) {
+        const s = seq.filter(w => w !== '#');
+        const L = s.length;
+        if (L < 12 || L === seq.length) continue;
+        for (let k = 0; k + L <= sem.length && !corte; k++) {
+          if (sem[k].n !== s[0]) continue;
+          let ok = true;
+          for (let j = 1; j < L && ok; j++) if (sem[k + j].n !== s[j]) ok = false;
+          if (ok) corte = [sem[k].i, sem[k + L - 1].f];
+        }
+        if (corte) break;
+      }
+    }
     if (!corte) break;
     t = (t.slice(0, corte[0]) + ' ' + t.slice(corte[1])).replace(/\s{2,}/g, ' ');
   }
@@ -6423,7 +6444,10 @@ function recortaEdital(e, v, secoes) {
           .replace(/\s+(?:Ampla\s+concorr[êe]ncia|Exclusivo|Cota\s+reservada|Cota\s+principal)\s+(?:Fechado|Aberto)\b[\s\S]*$/, '')
           .replace(/\s+(?:unid|Unid|UNID|UNIDADE|Um\.)\s+\d{1,4}\s+\d{5,7}\s+(?:N[ÃA]O|\d{1,2}%\s+Normal)(?:\s+[\d.]+,\d{1,2}(?:\s+[\d.]+,\d{1,2})?)?(?=\s|$)/, '')
           .replace(/\s+LOTE\/GRUPO\s+\d{1,3}:\s+GRUPO\s*$/, '')
-          // (o timbre cai no meio da frase, e o texto continua depois dele: so ele sai)
+          // (lista de 12/11/2026) o titulo e o cabecalho da tabela seguinte, a da cota reservada:
+          // "...CONFORME NBR/ABNT VIGENTES. COTA RESERVADA (ME e EPP) ITENS QUANT. UNID. DESCRIÇÃO VLR.
+          // UNIT. VLR. TT." (Santa Rita do Passa Quatro/SP, edital 43, item 5, que nao e de cota)
+          .replace(/\s+(?:COTA\s+(?:RESERVADA|PRINCIPAL|EXCLUSIVA)\s*(?:\([^()]{1,30}\))?\s+)?ITE(?:NS|M)\s+QUANT\.?\s+UNID\.?\s+DESCRI[ÇC][ÃA]O\s+VLR\.?\s+UNIT\.?\s+VLR\.?\s+(?:TT|TOTAL)\.?\s*$/, '')          // (o timbre cai no meio da frase, e o texto continua depois dele: so ele sai)
           .replace(/\s*(?:[–-]\s*RS\s+)?CENTRO\s+ADM\.\s+MUN\.\s+PREF\.[^”]{0,80}”\s*:?\s*(?:\(\d{2}\)\s*[\d.\s-]{8,12}(?=\s|$))?(?:DATA\s*$)?/g, ' ')
           .trim()
           // e na frente, as colunas "Unidade 397100 03" (Charqueadas/RS) e o codigo "2053- "
@@ -6930,12 +6954,19 @@ function recortaEdital(e, v, secoes) {
       // PROF9", "...LR-01 1 Educação Infantil ADHEMAR MÓDENA CENTRO DE EDUCAÇÃO
       // INFANTIL MUNICIPAL" (Penápolis/SP, edital 114)
       s = s.replace(/\s+(?:-\s*)?\d{1,3}\s+Educa[çc][ãa]o\s+(?:Infantil|Fundamental|Especial)\s[\s\S]*$/, '');
+      // o titulo do grupo seguinte depois da frase fechada: "...(ver especificação
+      // completa no Apêndice deste Termo de Referência) GRUPO 2" (USP, Lorena/SP, edital 19, itens 4
+      // e 13), "...tonalidade equivalente. GRUPO 4" (Pelotas/RS), "...legislação vigente. 1 Lote 3"
+      // (Jaboti/PR), lista de 12/11/2026
+      s = s.replace(/(?<=[.;:)])\s+(?:\d{1,4}\s+)?(?:GRUPO|LOTE|Grupo|Lote)\s+\d{1,3}\s*$/, '');
       // a quantidade solta no fim, da coluna ao lado: "Freezer 420 litros
       // horizontal 2", "Umidificador de ar ultrassônico 2,2, litros 4", "...e 12
       // meses de garantia 3" (Lucélia/SP, edital 48, itens 102, 196 e 186). So
       // a quantidade do proprio item, e nao depois de dois-pontos, "x", "de" e
-      // afins ("Bocas: 4")
-      if (q) s = s.replace(new RegExp('(?<![:=x×]|\\b(?:de|com|até|ate|a|e|por|n[º°o]|cerca|aprox\\.?))\\s0*' + q + '\\s*$'), '');
+      // afins ("Bocas: 4"); nem depois de "ITEM": "COTA PRINCIPAL DO ITEM 06" e o
+      // numero do item da cota, que por acaso e a quantidade (Santa Rita do Passa
+      // Quatro/SP, edital 43, item 1, 6 unidades, 12/11/2026)
+      if (q) s = s.replace(new RegExp('(?<![:=x×]|\\b(?:de|com|até|ate|a|e|por|n[º°o]|cerca|aprox\\.?|[Ii]tem|ITEM|[Ii]tens|ITENS|[Ll]ote|LOTE|[Gg]rupo|GRUPO))\\s0*' + q + '\\s*$'), '');
       // as colunas unidade, codigo do catalogo, quantidade e total no fim:
       // "FRIGOBAR 76 LTS UNIDADE 346623 33 R$ 33.438,90" (Bento Gonçalves/RS,
       // edital 442, itens 57 e 78); e o codigo com asterisco, "...manual do
