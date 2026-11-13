@@ -26,7 +26,7 @@ const DIR = path.dirname(fileURLToPath(import.meta.url));
 // — ventilador, aquecedor de agua e purificador de ar — ja tinham categoria mas
 // nao eram BUSCADOS: so apareciam de carona quando o edital tambem citava um
 // termo antigo, entao edital so de ventilador nunca era encontrado.
-const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira","freezer","frigobar","fogao industrial","fogao","forno industrial","forno eletrico","microondas","cooktop","liquidificador industrial","liquidificador","batedeira planetaria","cafeteira","chaleira eletrica","sanduicheira","grill eletrico","fritadeira","lavadora de roupas","maquina de lavar roupas","secadora de roupas","bebedouro","purificador de agua","camara fria","expositor refrigerado","ar condicionado","climatizador","cortina de ar","equipamentos de cozinha","aspirador de po",
+const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira","freezer","frigobar","fogao industrial","fogao","forno industrial","forno eletrico","microondas","cooktop","liquidificador industrial","liquidificador","batedeira planetaria","cafeteira","chaleira eletrica","sanduicheira","grill eletrico","fritadeira","lavadora de roupas","maquina de lavar roupas","secadora de roupas","bebedouro","purificador de agua","camara fria","expositor refrigerado","ar condicionado","climatizador","cortina de ar","equipamentos de cozinha",
 // acrescentados em 01/09/2026
 // "balcao termico" saiu da busca em 24/09/2026 junto com a categoria; o
 // "buffet termico", que o usuario manteve, continua trazendo o mesmo movel.
@@ -88,9 +88,9 @@ const CAT = [
   // produto que cotamos". A masseira nao ("masseira nao cotamos, apenas
   // amassadeira industrial lenta/semi rapida", no mesmo dia): fica no VETO_ITEM,
   // e a amassadeira rapida sai pelo amassadeiraRapida do veto-item.mjs.
-  // O aspirador da Digiplus e o de po E AGUA, e o PNCP escreve de varios jeitos:
-  // "aspirador de po e agua", "aspirador po/liquido", "aspirador de po/agua".
-  // So "aspirador de po" nao pega as duas ultimas, que nao tem o "de".
+  // O aspirador de po (e o de po e agua) saiu em 13/11/2026 (usuario: "retire
+  // aspirador de po dos itens que cotamos"): os nomes sairam daqui e da busca, e
+  // ele e veto (VETO_ITEM).
   // "processador industrial" (28/09/2026): "PROCESSADOR INDUSTRIAL DE ALIMENTOS
   // BM 116-NR + DISCO DE CORTE 8MM" (Minacu/GO, R$ 5.715) nao casava com
   // "processador de alimentos" por causa do "industrial" no meio; o produto so
@@ -119,7 +119,7 @@ const CAT = [
     // merenda sai pela VETO_ITEM.
     "picador de batata","picador de batatas","picador batata","cortador de batata","cortador de batatas","cortador batata",
     "picador de legumes","picador de legume","picador legumes","cortador e picador","cabrita",
-    "cafeteira","chaleira","sanduicheira","torradeira","air fryer","airfryer","aspirador de po","aspirador po","aspirador de agua","aspirador agua","grill eletrico","grill",
+    "cafeteira","chaleira","sanduicheira","torradeira","air fryer","airfryer","grill eletrico","grill",
     // Maquina de waffle: a Digiplus cota (usuario, 28/09/2026). Pelo nome do
     // APARELHO, e nao "waffle" solto, que pegaria o biscoito da merenda.
     "maquina de waffle","maquina de fazer waffle","maquina para waffle","maquina waffle","maquina de waffles","waffleira","wafleira",
@@ -788,6 +788,9 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // 11/11/2026: "lavadora extratora industrial e produto que nao cotamos";
 // Tunapolis/SC, edital 46, item 1, 20 kg, R$ 62 mil)
 "lavadora extratora","lavadoura extratora","lavadora-extratora","lavadora/extratora","lavadora e extratora","maquina extratora","extratora de roupa","extratora industrial",
+// e o aspirador de po, o de po e agua, o vertical e o industrial (usuario, 13/11/2026:
+// "retire aspirador de po dos itens que cotamos"; saiu tambem da categoria PR e da busca)
+"aspirador",
 // suqueira de vidro com torneira plastica e utensilio, nao refresqueira
 // eletrica (Porto Vitoria/PR, 22/09/2026)
 "suqueira de vidro",

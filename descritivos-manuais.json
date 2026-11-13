@@ -3666,5 +3666,23 @@
         "texto": "AR CONDICIONADO; DO TIPO SPLIT, SISTEMA INVERTER; COM CAPACIDADE DE 9.000 BTU/H; OPERAÇÃO FRIO; COM CONTROLE A GÁS REFRIGERANTE; VOLTAGEM 220V; FORNECIDO COM CONTROLE REMOTO SEM FIO. SELO DE EFICIÊNCIA ENERGÉTICA COM CLASSIFICAÇÃO “A”. GARANTIA MÍNIMA DO FABRICANTE DE 01 (UM) ANO. COTA RESERVADA DO ITEM 02"
       }
     }
+  },
+  "46634507000106/2026/762": {
+    "edital": "Salto/SP, Pregão Eletrônico 42/2026 (Rep. 2/2026)",
+    "conferido": "2026-11-13",
+    "itens": {
+      "32": {
+        "qtd": 14,
+        "valor": 850,
+        "fonte": "Termo de referência, tabela de especificação, item 32 (código 165.6.237); 13/11/2026",
+        "texto": "CORTINA DE AR COM COMPRIMENTO NOMINAL DE 0,90 m, operação em 220W de potência e tensão elétrica de 220V, classificação mínima “A” na Etiqueta Nacional de Conservação de Energia do INMETRO. Acompanhada de controle remoto, manual em português e garantia mínima de 12 meses. Equipamento destinado à instalação sobre portas e acessos, adequado para uso comercial ou institucional."
+      },
+      "33": {
+        "qtd": 44,
+        "valor": 793.17,
+        "fonte": "Termo de referência, tabela de especificação, item 33 (código 165.6.238); 13/11/2026",
+        "texto": "CORTINA DE AR COM COMPRIMENTO NOMINAL DE 1 m, operação em 220W de potência e tensão elétrica de 220V, classificação mínima “A” na Etiqueta Nacional de Conservação de Energia do INMETRO. Acompanhada de controle remoto, manual em português e garantia mínima de 12 meses. Equipamento destinado à instalação sobre portas e acessos, adequado para uso comercial ou institucional."
+      }
+    }
   }
 }
