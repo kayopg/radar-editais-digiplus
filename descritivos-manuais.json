@@ -3684,5 +3684,29 @@
         "texto": "CORTINA DE AR COM COMPRIMENTO NOMINAL DE 1 m, operação em 220W de potência e tensão elétrica de 220V, classificação mínima “A” na Etiqueta Nacional de Conservação de Energia do INMETRO. Acompanhada de controle remoto, manual em português e garantia mínima de 12 meses. Equipamento destinado à instalação sobre portas e acessos, adequado para uso comercial ou institucional."
       }
     }
+  },
+  "87612982000150/2026/137": {
+    "edital": "Roque Gonzales/RS, Pregão Eletrônico 34/2026",
+    "conferido": "2026-11-13",
+    "itens": {
+      "6": {
+        "qtd": 4,
+        "valor": 2001.66,
+        "fonte": "Termo de referência, tabela de especificação, item 06; 13/11/2026",
+        "texto": "APARELHO DE AR CONDICIONADO, MODELO SPLIT, 12.000 BTUS, QUENTE E FRIO, 220V. Ciclo Inverter Quente e Frio BTUs 12.000 Velocidades: 3 velocidades Display com efeito invisível Controle remoto: Sim Timer: Sim Auto restart: Sim Ionizador: Sim Nível de ruído: Unidade interna: máx. 43 db; Unidade externa: máx. 52 db Wi-Fi: Sim Serpentina: Cobre Classificação energética: A Voltagem: 220V Frequência: 60 Hz Peso da unidade interna: 8,25 kg Garantia: 3 anos para o produto e 10 anos para o compressor Sistema de autolimpeza: Sim Alimentação por condensadora"
+      },
+      "7": {
+        "qtd": 3,
+        "valor": 2005,
+        "fonte": "Termo de referência, tabela de especificação, item 07; 13/11/2026",
+        "texto": "APARELHO DE AR CONDICIONADO, MODELO SPLIT, 9.000 BTUS, QUENTE E FRIO, 220V. Ar condicionado Split Inverter 9.000 Btus/h, quente/frio 220 Volts Saída de ar vertical Sistema de Tripla Filtragem Filtro Removível Desumidificador Display Digital em Led Selo Procel classificação energética Inmetro A Display Digital na Evaporadora (economia A) Controle remoto"
+      },
+      "8": {
+        "qtd": 1,
+        "valor": 3554.33,
+        "fonte": "Termo de referência, tabela de especificação, item 08; 13/11/2026",
+        "texto": "APARELHO DE AR CONDICIONADO, MODELO SPLIT, 18.000 BTUS, QUENTE E FRIO, 220V. Tipo: Inverter Ciclo: Ar Quente e Ar Frio BTUs:18000 Controle de temperatura: 16°C a 30°C Velocidades: Turbo/3/2/1 Controle remoto: Sim Timer digital: 24 horas e regressivo Função Oscilar: Sim Reinício Automático: Sim Vazão de ar: 920 / 840 / 760 / 560 m/h Serpentina: Cobre Classificação Energética: A Voltagem: 220V Frequência: 60 Hz Peso da unidade interna: 13,00 kg Garantia: 3 anos do produto e 10 anos do compressor Certificação Inmetro: Sim Direcionadores de ar: Sim Saída de ar: Regulável"
+      }
+    }
   }
 }
