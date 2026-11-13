@@ -5464,7 +5464,9 @@ function recortaEdital(e, v, secoes) {
     const ord = [...v.itens].sort((a, b) => a[0] - b[0]);
     const radar = new Set((e[C.itens] || []).filter(r => r[0] !== 'LT' && r[0] !== 'ED').map(r => r[5]));
     const UNIDADE = '(?:UN|UND|Und|und|Un|un|UNID\\.?|Unid\\.?|unid\\.?|Unidade|UNIDADE|unidade|PC|PÇ|CX|KIT|Kit|CJ|JG|PAR)';
-    const COLUNAS = new RegExp('(?:\\s+\\d{4,7}(?:-\\d)?)*(?:\\s+' + UNIDADE + ')?(?:\\s+\\d{1,6}(?:,\\d{1,4})?)?(?:\\s+' + UNIDADE + ')?\\s*(?:R\\$\\s*)?$');
+    // (e a natureza da despesa antes da unidade: "...60Hz. Etiqueta 4.4.9.0.52.12 Unidade 10.330,0000",
+    // UFSM, Santa Maria/RS, edital 45, 13/11/2026 — sem ela, o codigo ia para dentro do descritivo)
+    const COLUNAS = new RegExp('(?:\\s+\\d(?:\\.\\d{1,2}){3,6})?(?:\\s+\\d{4,7}(?:-\\d)?)*(?:\\s+' + UNIDADE + ')?(?:\\s+\\d{1,6}(?:,\\d{1,4})?)?(?:\\s+' + UNIDADE + ')?\\s*(?:R\\$\\s*)?$');
     // (o "N/M" solto nao e a voltagem: "Bivolt (127/220V)" no meio da continuacao
     // de Ressaquinha/MG, edital 24, item 54, passava por marca de folha, 21/10/2026)
     const MARCA_DE_FOLHA = /(?:P[áa]gina|p[áa]g\.|\bpg\.|\bfl\.|\bfolha)\s*\d{1,4}(?:\s*(?:de|\/|\|)\s*\d{1,4})?|‖‖|(?<![\d,./(])\d{1,3}\s*\/\s*\d{1,3}(?![\d,./]|\s*[Vv](?![a-z]))/i;
@@ -5531,13 +5533,29 @@ function recortaEdital(e, v, secoes) {
         if (tot) j += tot[0].length;
         // 2. a virada de folha: o timbre do edital ou a marca da pagina
         const depois = trecho.slice(j, j + 900);
-        const semTimbre = tiraTimbre(depois, timbresAqui).replace(/\s+/g, ' ').trim();
+        let semTimbre = tiraTimbre(depois, timbresAqui).replace(/\s+/g, ' ').trim();
         const tirouTimbre = semTimbre.length < depois.replace(/\s+/g, ' ').trim().length - 30;
+        // (os campos em branco da proposta, "_______ _______", antes da virada)
+        semTimbre = semTimbre.replace(/^(?:_{3,}\s*)+/, '');
         // a continuacao comeca depois da ULTIMA marca de folha (ou logo depois
         // do timbre tirado)...
-        let p = -1;
+        let p = -1, cabecalhoDaTabela = false;
         for (const m of semTimbre.slice(0, 700).matchAll(new RegExp(MARCA_DE_FOLHA.source, 'gi'))) p = m.index + m[0].length;
-        if (p < 0) { if (!tirouTimbre) continue; p = 0; }
+        if (p < 0) {
+          // ...ou, sem marca nem timbre com endereco, depois do cabecalho que o anexo repete no alto
+          // de cada folha — o orgao e a linha de titulos da tabela: "UNIVERSIDADE FEDERAL DE SANTA
+          // MARIA - UFSM 95591764000105 Anexo ao Termo de Referência Item Especificação Nat. Despesa
+          // Catálogo Unidade Preço Máximo Quantidade Preço Unitário Preço Total" (UFSM, Santa Maria/RS,
+          // edital 45, itens 5, 10 e 17, que paravam em "normalmente", "Etiqueta" e "Garantia";
+          // usuario, 13/11/2026: "ficou cortado")
+          if (!tirouTimbre) {
+            const w6 = normIgual(semTimbre).split(' ').slice(0, 6).join(' ');
+            const fimCab = /\b(?:Pre[çc]o|PRE[ÇC]O|Valor|VALOR)\s+(?:Total|TOTAL)\b(?:\s*\(R\$\))?/.exec(semTimbre.slice(0, 400));
+            if (!fimCab || !repetida().has(w6) || !MARCA_DE_TIMBRE.test(semTimbre.slice(0, fimCab.index))) continue;
+            p = fimCab.index + fimCab[0].length;
+            cabecalhoDaTabela = true;
+          } else p = 0;
+        }
         // e o rodape com endereco, fone e CNPJ logo depois da marca: "Página 27
         // de 60 Secretaria Municipal de Administração – Departamento de
         // Licitações Rua São Paulo, 80. CEP 84350-000. Ortigueira/PR. FONE:
@@ -5567,7 +5585,9 @@ function recortaEdital(e, v, secoes) {
         const wn = ws.map(x => normIgual(x));
         const coberto = q => { for (let s0 = Math.max(0, q - 5); s0 <= q; s0++) if (s0 + 6 <= wn.length && repetida().has(wn.slice(s0, s0 + 6).join(' '))) return true; return false; };
         let q = 0;
-        while (q < ws.length && q < 150 && coberto(q)) q++;
+        // (depois do cabecalho da tabela, a continuacao pode repetir a frase de outros itens — "Nacional
+        // de Conservação de Energia - ENCE..." esta em todos os ares da UFSM — e nao e cabecalho)
+        if (!cabecalhoDaTabela) while (q < ws.length && q < 150 && coberto(q)) q++;
         dbg('cabecalho repetido', q, JSON.stringify(ws.slice(0, q + 3).join(' ')));
         if (q && !MARCA_DE_TIMBRE.test(ws.slice(0, q).join(' '))) continue;
         // (e a lista em "- " que segue na folha nova com o proximo "- ": "...- 01 (um)
@@ -5594,7 +5614,11 @@ function recortaEdital(e, v, secoes) {
         else if (maiusculaNova) q = w1;
         else {
           while (q < ws.length && q < 200 && (!/[a-zà-ÿ]/.test(ws[q]) || /^(?:de|e)$/.test(ws[q]))) q++;
-          if (q >= ws.length || !(/^[a-zà-ÿ]{2,}/.test(ws[q]) || (listaAberta && /^\p{Lu}[a-zà-ÿ]{2,}/u.test(ws[q])))) continue;
+          // (depois do cabecalho da tabela, tambem em maiuscula, se nao for o nome de um item: "...60Hz.
+          // Etiqueta [folha] Nacional de Conservação de Energia - ENCE...", UFSM, item 10)
+          const nomeDeItem = () => { const ini = letras(ws.slice(q, q + 8).join(' ')); return v.itens.some(x => { const r = letras(limpaTextoPncp(x[1])).slice(0, 10); return r.length >= 6 && ini.startsWith(r); }); };
+          if (q >= ws.length || !(/^[a-zà-ÿ]{2,}/.test(ws[q]) || (listaAberta && /^\p{Lu}[a-zà-ÿ]{2,}/u.test(ws[q]))
+            || (cabecalhoDaTabela && /^\p{Lu}[a-zà-ÿ]{2,}/u.test(ws[q]) && !nomeDeItem()))) continue;
         }
         // sem marca da folha nem cabecalho repetido, o que fica entre as
         // colunas e a continuacao nao pode ter palavra minuscula (o timbre ja
@@ -5639,6 +5663,15 @@ function recortaEdital(e, v, secoes) {
             if (letras(cont.slice(m.index + m[0].length, m.index + m[0].length + 30)).startsWith(nome)) { fim = m.index + 1; break; }
           }
         }
+        // (ou o numero do seguinte com o comeco do DESCRITIVO dele, quando o nome do PNCP e outro:
+        // "...do produto ofertado. 6 Condicionador de ar, capacidade de refrigeração de 27.000..." —
+        // UFSM, Santa Maria/RS, edital 45, itens 5 e 10, 13/11/2026)
+        if (fim < 0 && prox && prox[6]) {
+          const ini = letras(String(prox[6])).slice(0, 12);
+          if (ini.length >= 10) for (const m of cont.matchAll(new RegExp('\\s0*' + prox[0] + '\\.?\\s+', 'g'))) {
+            if (letras(cont.slice(m.index + m[0].length, m.index + m[0].length + 40)).startsWith(ini)) { fim = m.index; break; }
+          }
+        }
         const pelaProx = fim >= 0;
         const cl = /\s\d{1,2}(?:\.\d{1,2}){1,3}\.?\s+\p{Lu}/u.exec(cont);
         if (cl && (fim < 0 || cl.index < fim)) fim = cl.index;
@@ -5647,6 +5680,10 @@ function recortaEdital(e, v, secoes) {
         const tit = /\s\d{1,2}\s*[–-]\s*D[AO]S?\s+\p{Lu}{3,}/u.exec(cont);
         const fimTitulo = !!tit && (fim < 0 || tit.index < fim);
         if (fimTitulo) fim = tit.index;
+        // (e os campos em branco da proposta depois do ultimo item: "...do produto ofertado.
+        // ______/______/_______ Informar: Razão Social", UFSM, item 17, 13/11/2026)
+        const branco = /\s_{3,}/.exec(cont);
+        if (branco && (fim < 0 || branco.index < fim)) fim = branco.index;
         if (fim < 10 || fim > 1500) continue;
         if (fechou && (!pelaProx || fim > 400 || termoDaCategoria(normIgual(cont.slice(0, fim))) !== -1)) continue;
         dbg('fim', fim, JSON.stringify(cont.slice(0, 300)));
