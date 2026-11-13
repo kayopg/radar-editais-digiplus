@@ -423,7 +423,10 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    Em 13/11/2026 sai o aspirador de pó, o de pó e água, o vertical e o industrial (usuário: "retire
    aspirador de pó dos itens que cotamos"): os nomes saíram da categoria "Para cozinhar" (PR) e da busca,
    e "aspirador" é veto no nome do item. Na lista de 12/11 saíram 31 aspiradores de 27 editais, e Mafra/SC
-   (edital 054) saiu inteira, abaixo do piso só com a hidrolavadora.
+   (edital 054) saiu inteira, abaixo do piso só com a hidrolavadora. No mesmo dia sai o queimador de fogão
+   vendido sozinho, peça de reposição ("Queimador Cachimbo Duplo Tron 1000 Fogao Industrial Fundido", Dom
+   Pedrito/RS, edital 156, que saiu inteiro; usuário: "nao cotamos isso"), só quando vem antes do produto:
+   o fogão "4 queimadores" fica.
    E quando a tabela do edital numera a linha diferente do PNCP, o resumo e o card mostram
    os dois: "8 (no edital: 9)" — Paranaguá/PR numera o bebedouro de 9 no termo de
    referência e de 8 na relação de itens, que é a da disputa.
