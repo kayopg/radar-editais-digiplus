@@ -7002,6 +7002,16 @@ function recortaEdital(e, v, secoes) {
       // DESCRIÇÃO QUANTIDADE ÓRGÃO GERENCIADOR" (Salto/SP, edital 42, item 58, 13/11/2026). Nao
       // depois de "conforme", "do", "no"...: "CONFORME ANEXO I DO TERMO" e remissao e fica
       s = s.replace(/(?<!\b(?:conforme|CONFORME|Conforme|vide|VIDE|Vide|ver|VER|Ver|no|NO|No|do|DO|Do|ao|AO|Ao|em|EM|Em|com|COM|Com|o|O|seu|SEU|pelo|PELO|Pelo))\s+(?:(?!(?:O|A|OS|AS|DO|DA|NO|NA|AO|EM|DE|E|COM)\s)[A-Z]{1,3}\s+)?ANEXO\s+[IVXL]{1,5}(?:\s*[-–]\s*[A-Z0-9]{1,2})?\s+[^a-zà-ÿ]{12,}$/, '');
+      // e, depois da frase fechada, a quantidade da linha, o timbre da folha seguinte e o cabecalho
+      // da tabela ("N.° do Item Equipamento Descrição e especificação mínima") com a linha de OUTRO
+      // item depois dele: "...garantia mínima de 12 meses. 20 princesa do Jacuí – Capital Nacional do
+      // Arroz SECRETARIA MUNICIPAL DA SAÚDE – SMS N.° do Item Equipamento ... 03 Jarra elétrica: ..."
+      // (Cachoeira do Sul/RS, edital 155, item 2, a cafeteira; o termo da Saude numera diferente do
+      // PNCP; usuario, 16/11/2026: "descritivo errado")
+      s = s.replace(/(?<=[.;])\s+(?:\d{1,4}\s+)?[^.;]{0,200}?\bN\.?\s*[°º]\s*do\s+[Ii]tem\b[\s\S]*$/, '');
+      // e o numero da folha com o telefone do rodape: "...garantia mínima de 12 meses. 12 (51)
+      // 99465-8165" (Cachoeira do Sul/RS, edital 155, itens 3 e 8)
+      s = s.replace(/(?<=[.;])\s+\d{1,3}\s+\(\d{2}\)\s*\d{4,5}-?\d{4}\s*$/, '');
       // a quantidade solta no fim, da coluna ao lado: "Freezer 420 litros
       // horizontal 2", "Umidificador de ar ultrassônico 2,2, litros 4", "...e 12
       // meses de garantia 3" (Lucélia/SP, edital 48, itens 102, 196 e 186). So
