@@ -47,6 +47,9 @@ const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira",
 // 15/10/2026: a mesa inox entrou (usuario, "Mesa Inox agora e um item que cotamos
 // tambem")
 "mesa inox","mesa aco inox",
+// 16/11/2026: a mesa inox voltou e a estante inox entrou (usuario, "pode adicionar Mesa Inox e
+// Estante Inox nos itens que cotamos")
+"estante inox","estante aco inox","estante de aco inox","estante em aco inox",
 // 28/10/2026: mobilidade (usuario, "tambem estamos cotando agora: Muletas. Andador.
 // Cadeira de rodas. Cadeira de Banho")
 "muleta","andador","cadeira de rodas","cadeira de banho",
@@ -184,8 +187,11 @@ const CAT = [
   // ficam para o objeto da compra (vetoDoObjeto). Linha de RS, SC e PR
   // (LINHAS_DA_UF, veto-item.mjs). A mesa de hospital, de clinica e de
   // laboratorio sai pelo VETO_MI.
-  // SUSPENSA em 04/11/2026 (CATEGORIAS_SUSPENSAS, abaixo).
-  ["MI",["mesa inox","mesa de inox","mesa em inox","mesa aco inox","mesa de aco inox","mesa em aco inox"]],
+  // SUSPENSA em 04/11/2026 e de volta em 16/11/2026, junto com a ESTANTE inox (usuario: "pode
+  // adicionar Mesa Inox e Estante Inox nos itens que cotamos"), que entra pela mesma regra: a
+  // descricao que comeca por "estante" e fala em inox logo adiante (MESA_NA_FRENTE, veto-item.mjs).
+  ["MI",["mesa inox","mesa de inox","mesa em inox","mesa aco inox","mesa de aco inox","mesa em aco inox",
+    "estante inox","estante de inox","estante em inox","estante aco inox","estante de aco inox","estante em aco inox"]],
   // MO (mobilidade) entrou em 28/10/2026: "tambem estamos cotando agora: Muletas.
   // Andador. Cadeira de rodas. Cadeira de Banho". Com a grafia do catalogo do PNCP,
   // que tira a preposicao ("Cadeira Rodas material: aço", "Cadeira Banho"). O item
@@ -269,8 +275,9 @@ const PISO_EDITAL = 4000;
 // "itens que cotamos tambem foram retirados, como maquina de lavar roupas"). Para voltar
 // a cotar, tirar a categoria daqui. As mesas inox desde 04/11/2026 (usuario, ao ver
 // Gravatai/RS, edital 251, com so a mesa auxiliar inox: "a gente nao esta cotando mesa
-// inox lembra"; perguntado se era so a hospitalar: "nenhuma mesa inox").
-const CATEGORIAS_SUSPENSAS = ['BL', 'MI'];
+// inox lembra"; perguntado se era so a hospitalar: "nenhuma mesa inox"), e de volta em
+// 16/11/2026 ("pode adicionar Mesa Inox e Estante Inox nos itens que cotamos").
+const CATEGORIAS_SUSPENSAS = ['BL'];
 
 // 5.0 — modalidade. Ids conferidos na API em 31/08/2026:
 //   1 Leilao-Eletronico | 4 Concorrencia-Eletronica | 6 Pregao-Eletronico
@@ -1122,7 +1129,14 @@ const VETO_MI = ['mayo','ginecolog','hospitalar','hospital','cirurgic','instrume
   // e a mesa desoperculadora de mel, de apicultura (usuario, 03/11/2026: "nao cotamos essa
   // mesa"; Mondai/SC, PE 65, item 20, "MESA DESOPERCULADORA 32 QUADROS COM ABA E PENEIRA INOX
   // 304", e Guaraciaba/SC, PCE 65, item 38)
-  'desopercul','apicola','apicultura'];
+  'desopercul','apicola','apicultura',
+  // e a auxiliar hospitalar de 40 x 60 x 80, e as medidas em metros (16/11/2026, na volta da
+  // categoria): "MESA AUXILIAR 60X40X80CM INOX COM RODÍZIOS" (Oliveira/MG, equipamentos
+  // médico-hospitalares), "MESA AUXILIAR 40X60x80CM EM INOX" (Cruz Machado/PR), "DIMENSÕES 0,40M X
+  // 0,60M X 0,80M" (São Marcos/RS, material ambulatorial) e "0,40m x 0,40m x 0,80m" (Gravataí/RS,
+  // edital 251, que passou em 04/11)
+  '40x60x80','40 x 60 x 80','60x40x80','60 x 40 x 80','0,40m x 0,40m x 0,80m','0,40 x 0,40 x 0,80',
+  '0,40m x 0,60m x 0,80m','0,40 x 0,60 x 0,80','0,60m x 0,40m x 0,80m','0,60 x 0,40 x 0,80'];
 // E a mesa de tampo de outro material, que so tem o pe ou a borda de inox. So no
 // texto do EDITAL (veta-pelo-descritivo.mjs), nao no nome do PNCP: o catalogo que o
 // orgao escolheu pode estar errado — o item 19 da UNILA (Foz do Iguacu/PR) e "Mesa

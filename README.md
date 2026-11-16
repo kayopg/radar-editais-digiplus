@@ -1,7 +1,7 @@
 # Radar de Editais — Digiplus
 
 Monitoramento diário de licitações públicas abertas no [PNCP](https://pncp.gov.br) com itens
-de linha branca, climatização, cocção, lavanderia, eletroportáteis, mesa inox (suspensa desde 04/11/2026) e mobilidade (muleta,
+de linha branca, climatização, cocção, lavanderia, eletroportáteis, mesa e estante inox e mobilidade (muleta,
 andador, cadeira de rodas e cadeira de banho) — filtradas para
 **fornecimento**: fora do RS e de SC, sem exigência de instalação ou montagem; em todo lugar,
 sem manutenção.
@@ -380,6 +380,13 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    editais que só tinham mesa (Gravataí/RS 251, Imbaú/PR 94, Erechim/RS 192). Para voltar,
    tirar MI da lista — e, nesse dia, o veto da auxiliar hospitalar precisa pegar também a
    medida em metros ("0,40m x 0,40m x 0,80m", a de Gravataí, que passou).
+   **Desde 16/11/2026 a mesa inox voltou, junto com a ESTANTE inox** (usuário: "pode adicionar Mesa
+   Inox e Estante Inox nos itens que cotamos"): MI saiu de `CATEGORIAS_SUSPENSAS`, a categoria virou
+   "Mesas e estantes inox" e a estante entra pela mesma regra da mesa — a descrição que começa por
+   "estante" e fala em inox logo adiante ("Estante, Material: Aço Inoxidável Tipo Aisi 304",
+   Florianópolis/SC; "ESTANTE EM INOX (ESTOQUE SECO)", Tuparendi/RS); a estante de aço pintada sai pelo
+   texto do edital, como a mesa. E a auxiliar hospitalar sai também em 40 × 60 × 80 e com a medida em
+   metros (Oliveira/MG, Cruz Machado/PR, São Marcos/RS, Gravataí/RS).
    Na mesma data entraram a máquina **lava e seca** ("MAQUINA LAVA E SECA 11KG", Humaitá/RS;
    "LAVADORA LAVA E SECA AUTOMATICA ... 17KG", Assis Chateaubriand/PR) e o "Processador/
    **preparador de alimentos** modelo industrial" (Wenceslau Braz/PR), e o "elíptico" (o

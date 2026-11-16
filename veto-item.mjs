@@ -227,14 +227,17 @@ const PARA = /(?:para|p\/)(?: (?:o|a|os|as|uso))?\s+$/;
 // inteiramente em inox, com duas chapas, pes tubulares" (Lucelia/SP), "Bancada
 // material: aço inoxidável, comprimento: 135, largura: 75" (Campo Grande/MS) e a
 // "Mesa Bancada Em Aço Inox com duas prateleiras" do TRF3.
-const MESA_NA_FRENTE = /^[^a-z]*(?:(?:lote|item)\s*\d+\s*[-–:.]?\s*)?(mesa|bancada)(?![a-z])/;
+// E a ESTANTE de inox (16/11/2026, usuario: "pode adicionar Mesa Inox e Estante Inox nos itens
+// que cotamos"), pela mesma regra: "Estante em aço inox com 4 prateleiras lisas". A estante de aço
+// pintada sai pelo VETO_MI_TAMPO ("pintura epoxi", "aco carbono") no texto do edital.
+const MESA_NA_FRENTE = /^[^a-z]*(?:(?:lote|item)\s*\d+\s*[-–:.]?\s*)?(mesa|bancada|estantes?)(?![a-z])/;
 export function criaPosicaoDoTermo(CAT) {
   const comMesa = CAT.some(([c]) => c === 'MI');
   return d => {
     let melhor = null;
     if (comMesa) {
       const m = MESA_NA_FRENTE.exec(d);
-      if (m && /inox/.test(d.slice(0, 350))) return { c: 'MI', i: m[0].length - m[1].length, t: 'mesa' };
+      if (m && /inox/.test(d.slice(0, 350))) return { c: 'MI', i: m[0].length - m[1].length, t: m[1].startsWith('estante') ? 'estante' : 'mesa' };
     }
     for (const [c, ts] of CAT) for (const t of ts) {
       if (c === 'MI') break;
