@@ -3720,5 +3720,23 @@
         "texto": "Jarra elétrica: Capacidade mínima de 1,8 litro; potência mínima de 1.200 W; desligamento automático após a fervura; proteção contra funcionamento sem água; indicador do nível de água; tampa com trava; alça com isolamento térmico; base destacável com rotação de 360°; corpo resistente, atóxico e de fácil limpeza; tensão 220 V; certificação do Inmetro, quando exigível; plugue no padrão brasileiro; garantia mínima de 12 meses."
       }
     }
+  },
+  "16888315000157/2026/50": {
+    "edital": "Diamantina/MG, Pregão Eletrônico 197/2026",
+    "conferido": "2026-11-16",
+    "itens": {
+      "7": {
+        "qtd": 1,
+        "valor": 4352.95,
+        "fonte": "Termo de referência, tabela dos itens, item 7 (sem o item 8 que vinha colado); 16/11/2026",
+        "texto": "LAVADORA DE ALTA PRESSÃO – ALIMENTAÇÃO: ELÉTRICA, MONOFÁSICA. TENSÃO: 220 V. POTÊNCIA: MÍNIMA DE 3.300 W. PRESSÃO MÁXIMA DE TRABALHO DE, NO MÍNIMO, 150 BAR (APROXIMADAMENTE 2.175 PSI) E VAZÃO MÍNIMA DE 600 L/H. MOTOR DE INDUÇÃO, COM SISTEMA DE REFRIGERAÇÃO ADEQUADO PARA USO CONTÍNUO. DIMENSÕES APROXIMADAS: 400 MILÍMETROS DE COMPRIMENTO, 460 MILÍMETROS DE LARGURA E 960 MILÍMETROS DE ALTURA, COM UM PESO LÍQUIDO DE APROXIMADAMENTE 30 KG. CARACTERÍSTICAS ADICIONAIS: DEVERÁ POSSUIR ESTRUTURA DE PROTEÇÃO RESISTENTE, BOMBA COM CABEÇOTE EM MATERIAL ANTICORROSIVO E PISTÕES EM AÇO INOXIDÁVEL, EQUIPADA COM MANGUEIRA DE ALTA PRESSÃO DE, NO MÍNIMO, 10 METROS, LANÇA E BICOS ADEQUADOS PARA DIFERENTES APLICAÇÕES DE LIMPEZA, INCLUINDO JATO LEQUE E JATO ROTATIVO. INDICADA PARA USO PROFISSIONAL NA LIMPEZA DE PÁTIOS, EQUIPAMENTOS, FÔRMAS DE CONCRETO, BETONEIRAS E ÁREAS DE GRANDE EXTENSÃO. GARANTIA MÍNIMA DE 12 MESES."
+      },
+      "14": {
+        "qtd": 4,
+        "valor": 2323.87,
+        "fonte": "Termo de referência, segunda tabela dos itens, item 14; 16/11/2026",
+        "texto": "APARELHO AR CONDICIONADO - TIPO: HI-WALL. MODELO: SPLIT INVERTER. CAPACIDADE REFRIGERAÇÃO: 12.000 BTU. TENSÃO: 220 V. FREQÜÊNCIA: 60 HZ. CARACTERÍSTICAS ADICIONAIS: COM CONTROLE REMOTO SEM FIO. CICLO REVERSO (QUENTE/FRIO). DEVE APRESENTAR O SELO DE EFICIÊNCIA ENERGÉTICA PROCEL. GARANTIA MINIMA DE 12 MESES."
+      }
+    }
   }
 }
