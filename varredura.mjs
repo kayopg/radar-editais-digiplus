@@ -26,7 +26,7 @@ const DIR = path.dirname(fileURLToPath(import.meta.url));
 // — ventilador, aquecedor de agua e purificador de ar — ja tinham categoria mas
 // nao eram BUSCADOS: so apareciam de carona quando o edital tambem citava um
 // termo antigo, entao edital so de ventilador nunca era encontrado.
-const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira","freezer","frigobar","fogao industrial","fogao","forno industrial","forno eletrico","microondas","cooktop","liquidificador industrial","liquidificador","batedeira planetaria","cafeteira","chaleira eletrica","sanduicheira","grill eletrico","fritadeira","lavadora de roupas","maquina de lavar roupas","secadora de roupas","bebedouro","purificador de agua","camara fria","expositor refrigerado","ar condicionado","climatizador","cortina de ar","equipamentos de cozinha",
+const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira","freezer","frigobar","fogao industrial","fogao","forno industrial","forno eletrico","microondas","cooktop","liquidificador industrial","liquidificador","batedeira planetaria","cafeteira","chaleira eletrica","jarra eletrica","sanduicheira","grill eletrico","fritadeira","lavadora de roupas","maquina de lavar roupas","secadora de roupas","bebedouro","purificador de agua","camara fria","expositor refrigerado","ar condicionado","climatizador","cortina de ar","equipamentos de cozinha",
 // acrescentados em 01/09/2026
 // "balcao termico" saiu da busca em 24/09/2026 junto com a categoria; o
 // "buffet termico", que o usuario manteve, continua trazendo o mesmo movel.
@@ -122,7 +122,7 @@ const CAT = [
     // merenda sai pela VETO_ITEM.
     "picador de batata","picador de batatas","picador batata","cortador de batata","cortador de batatas","cortador batata",
     "picador de legumes","picador de legume","picador legumes","cortador e picador","cabrita",
-    "cafeteira","chaleira","sanduicheira","torradeira","air fryer","airfryer","grill eletrico","grill",
+    "cafeteira","chaleira","jarra eletrica","sanduicheira","torradeira","air fryer","airfryer","grill eletrico","grill",
     // Maquina de waffle: a Digiplus cota (usuario, 28/09/2026). Pelo nome do
     // APARELHO, e nao "waffle" solto, que pegaria o biscoito da merenda.
     "maquina de waffle","maquina de fazer waffle","maquina para waffle","maquina waffle","maquina de waffles","waffleira","wafleira",
@@ -234,7 +234,9 @@ const PISO_ITEM = 150;
 // A muleta tambem (28/10/2026, na entrada da categoria MO): o par sai por menos de
 // R$ 150 e e produto da linha nova. E o andador, que sai por R$ 120 a R$ 145 no
 // catalogo (Herveiras/RS, Florianopolis/SC, Palmeira das Missoes/RS, 28/10/2026).
-const SEM_PISO = ['chaleira eletrica','chaleira industrial','cafeteira','sanduicheira','grill','waffle','wafleira','muleta','andador'];
+// E a jarra eletrica, que e a mesma chaleira: "CHALEIRA OU JARRA ELETRICA" de 20 un a R$ 57,53
+// (Cachoeira do Sul/RS, edital 155, item 11; usuario, 16/11/2026: "jarra eletrica ficou de fora").
+const SEM_PISO = ['chaleira eletrica','jarra eletrica','chaleira industrial','cafeteira','sanduicheira','grill','waffle','wafleira','muleta','andador'];
 
 // 5.4c - volume salva o item de preco quase no piso (decisao do usuario em
 // 18/09/2026): acima de R$ 140 e com mais de 10 unidades, o item fica. A

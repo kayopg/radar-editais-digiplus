@@ -438,7 +438,8 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    os dois: "8 (no edital: 9)" — Paranaguá/PR numera o bebedouro de 9 no termo de
    referência e de 8 na relação de itens, que é a da disputa.
 4. **Piso de preço unitário** de R$ 150 — equipamento de verdade custa. Chaleira elétrica,
-   cafeteira, sanduicheira, grill, máquina de waffle, muleta e andador não têm piso. O volume também salva o
+   jarra elétrica (16/11/2026: "CHALEIRA OU JARRA ELETRICA" de R$ 57,53, Cachoeira do Sul/RS; usuário:
+   "jarra eletrica ficou de fora"), cafeteira, sanduicheira, grill, máquina de waffle, muleta e andador não têm piso. O volume também salva o
    item: acima de R$ 140 com mais de 10 unidades, ou acima de R$ 100 com mais de 25 unidades
    (08/10/2026), ele fica. **Fora de RS e SC**, o item de R$ 150 a R$ 300 só entra com pelo
    menos 10 unidades (`FAIXA_SO_COM_VOLUME`; usuário, 30/10/2026: "a quantidade mínima de 10,
