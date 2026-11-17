@@ -436,7 +436,13 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    o fogão "4 queimadores" fica.
    E quando a tabela do edital numera a linha diferente do PNCP, o resumo e o card mostram
    os dois: "8 (no edital: 9)" — Paranaguá/PR numera o bebedouro de 9 no termo de
-   referência e de 8 na relação de itens, que é a da disputa.
+   referência e de 8 na relação de itens, que é a da disputa. E o número do **pedido de compra**
+   anexo, quando o edital traz um ("014/000 UN 2,0000000000 0,00 3.882,87 00035612 - BATEDEIRA..."):
+   "20 (pedido de compra: 014)" — Tuparendi/RS, edital 45, cujo pedido é o da Secretaria de Educação,
+   com 98 dos 161 itens e outra numeração (usuário, 17/11/2026: "os itens estão fora da ordem
+   correta"; perguntado, quis ver as duas). Casa pelo preço, pelo código do catálogo e pelo nome,
+   não pela quantidade, que no pedido é a da secretaria. E a unidade "Cartucho" que o órgão
+   cadastra no PNCP para eletrodoméstico (160 dos 161 itens de Tuparendi) vira "Unidade".
 4. **Piso de preço unitário** de R$ 150 — equipamento de verdade custa. Chaleira elétrica,
    jarra elétrica (16/11/2026: "CHALEIRA OU JARRA ELETRICA" de R$ 57,53, Cachoeira do Sul/RS; usuário:
    "jarra eletrica ficou de fora"), cafeteira, sanduicheira, grill, máquina de waffle, muleta e andador não têm piso. O volume também salva o

@@ -683,6 +683,10 @@ if (!mostra && (tirados || semDescritivo || foraDeCategoria || editaisFora || re
   const porUf = {};
   for (const e of ficam) porUf[e[C.uf]] = (porUf[e[C.uf]] || 0) + 1;
   dados.meta.porUf = porUf;
+  // A unidade "Cartucho" que o orgao cadastra no PNCP para eletrodomestico: Tuparendi/RS (edital 45)
+  // pos "Cartucho" em 160 dos 161 itens — batedeira, freezer, climatizador —, e a tabela do edital
+  // diz "UN" (usuario, 17/11/2026, no resumo com "1 Cartucho"). Nada da casa se vende em cartucho.
+  for (const e of ficam) for (const it of e[C.itens] || []) if (/^cartuchos?$/i.test(String(it[4] || '').trim())) it[4] = 'Unidade';
   fs.writeFileSync(arqDados, JSON.stringify(dados), 'utf8');
   console.log(`docs/dados.json: ${ficam.length} editais`);
 }
