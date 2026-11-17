@@ -7423,28 +7423,6 @@ function etapasFinais(e, v, secoes) {
         .exec(plano.slice(Math.max(0, k - 70), k));
       if (m && +m[1] !== +it[0]) it[10] = +m[1];
     }
-    // E o numero no PEDIDO DE COMPRA anexo (indice 11), quando ele numera diferente: Tuparendi/RS
-    // (edital 45) junta o "PEDIDO DE COMPRA / SERVIÇO" do sistema da prefeitura, em que a batedeira
-    // semi-industrial, item 20 da disputa, e "014/000 UN 2,0000000000 0,00 3.882,87 00035612 -
-    // BATEDEIRA..." (usuario, 17/11/2026: "os itens estao fora da ordem correta"; escolheu ver as
-    // duas). O pedido e o da Secretaria de Educacao, com 98 dos 161 itens e a QUANTIDADE dela (o
-    // bebedouro industrial e 10 no edital e 2 no pedido): vale o preco do proprio item com o nome
-    // do produto logo depois do codigo, e so quando a linha e de um numero so.
-    if (/PEDIDO\s+DE\s+COMPRA/i.test(plano)) {
-      const palavra1 = s => (normIgual(String(s)).match(/[a-z]{4,}/) || [''])[0];
-      for (const it of v.itens) {
-        const val = +it[4] || 0, nome = palavra1(limpaTextoPncp(it[1]));
-        if (!(val > 0) || !nome) continue;
-        const [pInt, pCent] = val.toFixed(2).split('.');
-        const preco = pInt.replace(/\B(?=(\d{3})+(?!\d))/g, '\\.?') + ',' + pCent + '\\d{0,2}';
-        const re = new RegExp('(?:^|\\s)(\\d{1,4})\\/0{3}\\s+' + UN + '\\s+[\\d.]+(?:,\\d+)?\\s+(?:[\\d.]+,\\d{2,4}\\s+)?' + preco + '\\s+0*(\\d{4,9})\\s+-\\s+(\\S+(?:\\s+\\S+)?)', 'gi');
-        // (e o codigo do catalogo, quando a tabela do edital o da — "43 UN 35xxx R$ 126,49": as duas
-        // chaleiras de R$ 126,49, itens 43 e 44, sao produtos diferentes, e o pedido so tem uma)
-        const cod = new RegExp('(?:^|\\s)0*' + it[0] + '\\s+' + UN + '\\s+0*(\\d{4,9})\\s+R\\$\\s*' + preco + '(?=\\s)', 'i').exec(plano);
-        const nums = new Set([...plano.matchAll(re)].filter(m => palavra1(m[3]) === nome && (!cod || m[2] === cod[1])).map(m => +m[1]));
-        if (nums.size === 1) { const n = [...nums][0]; if (n !== +it[0]) it[11] = n; }
-      }
-    }
   }
 }
 
