@@ -145,10 +145,12 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    **secretarias de estado**. Agências, saneamento, Ministério Público, militares e polícia
    ficam de fora.
 0c. **Devedores** (`devedores.mjs`) — sai o edital de órgão que deve para a Digiplus ou
-   para as coligadas (VMLX, MV, MT, Medic). Quando a dívida é da prefeitura, sai todo
+   para as coligadas (VMLX, LM, MT, Medic). Quando a dívida é da prefeitura, sai todo
    edital municipal da cidade; quando é de um fundo ou secretaria, só o desse órgão. A
    lista vem do usuário: a de 14/10/2026 (recebida em 15/10) acrescentou Inajá/PR e Novo
-   Oriente de Minas/MG.
+   Oriente de Minas/MG. A de 17/11/2026 (recebida no mesmo dia) acrescentou Bom Jesus/RS (Digiplus),
+   Machado/MG e Triunfo/RS (VMLX) e Lapa/PR (Medic), e a MV passou a se chamar LM; saiu da lista de
+   17/11 o edital 59/2026 de Machado/MG.
 1. **Só material** — descarta itens de serviço (`materialOuServico !== 'M'`) e o material que é
    serviço: descrição que **abre** com instalação, higienização, reposição, substituição,
    serviço, calibração ("Instalação Split", "Reposição de gás para Split"), ou que contrata

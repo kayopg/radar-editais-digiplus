@@ -1,8 +1,9 @@
 // Orgaos que devem para a casa ou para as coligadas. Nao se cota licitacao
-// deles. Fonte: "DEVEDORES atualizado outubro 2026.pdf", listagem de
-// 14/10/2026, informada pelo usuario em 15/10/2026 (a anterior era a de julho,
-// de 13/07/2026, informada em 03/09/2026). Cobre as cinco empresas da lista —
-// Digiplus, VMLX, MV, MT e Medic — e nao so a Digiplus.
+// deles. Fonte: "DEVEDORES atualizado novembro 2026.pdf", listagem de
+// 17/11/2026, informada pelo usuario no mesmo dia (antes: a de 14/10/2026, recebida
+// em 15/10; a de julho, de 13/07/2026, recebida em 03/09/2026). Cobre as cinco
+// empresas da lista — Digiplus, VMLX, LM (a antiga MV), MT e Medic — e nao so a
+// Digiplus. Em 17/11 entraram Bom Jesus/RS, Machado/MG, Triunfo/RS e Lapa/PR.
 //
 // Duas formas de casar, e a diferenca importa:
 //
@@ -18,6 +19,7 @@ export const DEVEDORES = [
   { tipo: 'municipio', nome: 'butia', uf: 'RS' },
   { tipo: 'municipio', nome: 'sao vicente ferrer', uf: 'PE' },
   { tipo: 'municipio', nome: 'jaguarao', uf: 'RS' },
+  { tipo: 'municipio', nome: 'bom jesus', uf: 'RS' },
   // --- VMLX
   { tipo: 'orgao', nome: 'assist social, traba. e renda', uf: 'PA' },
   { tipo: 'orgao', nome: 'saude de cruz das almas', uf: 'BA' },
@@ -27,7 +29,9 @@ export const DEVEDORES = [
   { tipo: 'orgao', nome: 'educacao', uf: 'PE', municipio: 'gameleira' },
   { tipo: 'municipio', nome: 'guanambi', uf: 'BA' },
   { tipo: 'municipio', nome: 'barretos', uf: 'SP' },
-  // --- MV
+  { tipo: 'municipio', nome: 'machado', uf: 'MG' },
+  { tipo: 'municipio', nome: 'triunfo', uf: 'RS' },
+  // --- LM (a MV da lista de outubro)
   { tipo: 'municipio', nome: 'barra do sul', uf: 'SC' },
   { tipo: 'municipio', nome: 'quissama', uf: 'RJ' },
   { tipo: 'orgao', nome: 'educacao de tuntum', uf: 'MA' },
@@ -58,6 +62,7 @@ export const DEVEDORES = [
   { tipo: 'orgao', nome: 'saude de sobral', uf: 'CE' },
   { tipo: 'municipio', nome: 'rio pardo', uf: 'RS' },
   { tipo: 'municipio', nome: 'novo oriente de minas', uf: 'MG' },
+  { tipo: 'municipio', nome: 'lapa', uf: 'PR' },
 ];
 
 const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '')
