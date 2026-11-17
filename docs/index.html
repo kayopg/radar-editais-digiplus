@@ -779,14 +779,15 @@ function abreCard(card){
     // O indice 9 marca o item cujo edital nao traz especificacao nenhuma e que
     // ficou com o rotulo do catalogo do PNCP (ver descritivo-por-item.mjs). O
     // texto serve para cotar, mas nao saiu do edital — e o card diz isso.
-    if(d && d.itens) d.itens.forEach(function(x){ if(x[6]) porNum[x[0]] = { t:x[6], catalogo:!!x[9], noEdital:x[10] || null, noPedido:x[11] || null }; });
+    var temPedido = false;
+    if(d && d.itens) d.itens.forEach(function(x){ if(x[11]) temPedido = true; if(x[6]) porNum[x[0]] = { t:x[6], catalogo:!!x[9], noEdital:x[10] || null, noPedido:x[11] || null }; });
     card.querySelectorAll(".idesc").forEach(function(el){
       var o = porNum[el.dataset.n], t = o && o.t;
       // o número da linha no edital, quando não é o do PNCP (ver rotuloNaTabela), e no pedido de compra
-      var inum = o && (o.noEdital || o.noPedido) && el.parentNode.querySelector(".inum");
+      var inum = o && (o.noEdital || o.noPedido || temPedido) && el.parentNode.querySelector(".inum");
       if(inum) inum.textContent = inum.textContent.replace(/^Item (\d+)/, "Item $1"
         + (o.noEdital ? " (no edital: " + o.noEdital + ")" : "")
-        + (o.noPedido ? " (pedido de compra: " + String(o.noPedido).padStart(3, "0") + ")" : ""));
+        + (o.noPedido ? " (pedido de compra: " + String(o.noPedido).padStart(3, "0") + ")" : (temPedido ? " (fora do pedido de compra)" : "")));
       if(!t){ el.innerHTML = '<span class="isem">Sem descritivo no texto do edital — confira o arquivo oficial.</span>'; return; }
       // (o texto do PNCP vem com o aviso destacado: 27/10/2026, "sempre pegue o
       // descritivo do arquivo de termo de referencia, nunca pegue no site")
@@ -1236,8 +1237,11 @@ function rotuloNaTabela(it){
   // e o numero no pedido de compra anexo, quando ele numera diferente (indice 11; Tuparendi/RS,
   // 17/11/2026: a batedeira e o item 20 da disputa e o 014 do pedido — vão os dois)
   var noPedido = DESC_ATUAL && DESC_ATUAL.numPedido ? DESC_ATUAL.numPedido[it[5]] : null;
+  // (e o item que nao esta no pedido, quando o edital tem um: o "19" da batedeira domestica era lido
+  // como o "019/000" do pedido, que e o botijao — item 25 da disputa; usuario, 17/11/2026)
+  var temPedido = DESC_ATUAL && DESC_ATUAL.numPedido && Object.keys(DESC_ATUAL.numPedido).length > 0;
   if(!L) return String(it[5] || "") + (noEdital ? " (no edital: " + noEdital + ")" : "")
-    + (noPedido ? " (pedido de compra: " + String(noPedido).padStart(3, "0") + ")" : "");
+    + (noPedido ? " (pedido de compra: " + String(noPedido).padStart(3, "0") + ")" : (temPedido ? " (fora do pedido de compra)" : ""));
   // O numero que acompanha o lote e o da API, nao o lido no texto.
   //
   // O do texto erra: em Londrina/PR saiu "item 40" para o que a API chama de
