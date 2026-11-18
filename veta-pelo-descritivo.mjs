@@ -153,6 +153,8 @@ const CAT = eval(blocoCat.replace('const CAT = ', ''));
 // As categorias suspensas (varredura.mjs, CATEGORIAS_SUSPENSAS): o item sai e o valor
 // dele conta para o piso do edital (as balancas, 30/10/2026)
 const SUSPENSAS = lista('CATEGORIAS_SUSPENSAS');
+// o objeto de edital veterinario, em que a balanca e de animal (varredura.mjs, OBJ_VETERINARIO)
+const OBJ_VETERINARIO = eval(fonte.match(/const OBJ_VETERINARIO = (\/.*\/[a-z]*);/)[1]);
 // e a faixa de preco que fora de RS e SC so entra com volume (varredura.mjs, FAIXA_SO_COM_VOLUME)
 const FAIXA = lista('FAIXA_SO_COM_VOLUME'), UFS_SEM_FAIXA = lista('UFS_SEM_FAIXA');
 const TERMO_LONGE = Number((fonte.match(/const TERMO_LONGE = (\d+)/) || [])[1]) || 400;
@@ -462,7 +464,10 @@ for (const e of dados.editais) {
   let valSuspenso = 0;
   const itens = e[C.itens].filter(it => {
     if (SUSPENSAS.includes(it[0])) {
-      foraDeCategoria++; valSuspenso += it[1] * it[2];
+      foraDeCategoria++;
+      // (a balanca que nao e da casa — de laboratorio, de animal, de edital veterinario — nem conta
+      // para o piso: Iturama/MG, edital 035, produtos veterinarios, 18/11/2026; ver OBJ_VETERINARIO)
+      if (!(it[0] === 'BL' && (OBJ_VETERINARIO.test(objN) || VETO.BL.some(v => norm(it[3]).includes(v))))) valSuspenso += it[1] * it[2];
       console.log(`categoria ${it[0]} suspensa · ${nome} · item ${it[5]}: ${String(it[3]).replace(/\s+/g, ' ').slice(0, 80)}`);
       return false;
     }

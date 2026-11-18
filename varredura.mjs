@@ -1083,6 +1083,12 @@ const VETO_OT_ANIMAIS = ['campanula','avicultura','suinocultura','pintinho','lei
 // vidro, a de 180 kg e a de pesar paciente. Continuam fora a de laboratorio
 // (analitica, de precisao), a veterinaria, a de gado e a rodoviaria, e os
 // outros produtos que citam balanca (incubadora, placa, cama hospitalar).
+// A balanca de edital VETERINARIO e de animal, mesmo quando a descricao nao diz: Iturama/MG (edital
+// 035, "AQUISIÇÃO DE MEDICAMENTOS, EQUIPAMENTOS, INSTRUMENTOS E PRODUTOS VETERINÁRIOS PARA CÃES E
+// GATOS") tem a "BALANCA DIGITAL COM COLUNA 80X60 CM ... PESA ATE 200 KG" e a de filhotes, que, com a
+// categoria suspensa, contavam para o piso e seguravam o edital com R$ 1.757 de aquecedor (usuario,
+// 18/11/2026: "o veto nao é 4mil?"). So a balanca: o aquecedor do mesmo edital fica.
+const OBJ_VETERINARIO = /veterinari|caes e gatos|clinica de animais|bem-estar animal|bem estar animal|zoonoses|castracao/;
 const VETO_BL_MEDICA = ['laboratoriais','eletronica de precisao',
   'balanca analitica','analitica de precisao','balanca precisao','balanca de precisao','cama hospitalar',
   'mesa auxiliadora','tipo balanca','paleteira','pilha tipo bateria',
@@ -1098,6 +1104,10 @@ const VETO_BL_MEDICA = ['laboratoriais','eletronica de precisao',
   // BOVINOS", Sao Joao do Polesine/RS), o mesmo mercado da veterinaria que o
   // usuario ja tinha tirado em 10/09/2026 ("pesagem de animais", VETO_ITEM)
   'bovino','gado','pecuari','curral','suino','ovino','animais',
+  // e a de pet: "BALANCA PARA FILHOTES ... CAPACIDADE: 15 KG DIVISAO: 5 G" (Iturama/MG, edital 035,
+  // produtos veterinarios para caes e gatos, 18/11/2026). A do mesmo edital que nao se diz de
+  // animal ("BALANCA DIGITAL COM COLUNA 80X60 CM ... PESA ATE 200 KG") sai pelo objeto (OBJ_VETERINARIO)
+  'filhote','caes e gatos','pet shop',
   // e a de laboratorio que nao se diz analitica: "Balanca eletronica digital de
   // precisao, destinada a pesagem de materiais e amostras em atividades
   // laboratoriais" (UFSM, Santa Maria/RS, edital 140, item 72). Pela expressao,
@@ -1468,7 +1478,7 @@ for (const o of cands) {
   for (const [cat, it, d] of interesse) {
     if (temVeto(d, cat)) continue;
     if (cat === 'RF' && VETO_RF_CIENT.some(v => d.includes(v))) { vCient++; continue; }
-    if (cat === 'BL' && VETO_BL_MEDICA.some(v => d.includes(v))) continue;
+    if (cat === 'BL' && (VETO_BL_MEDICA.some(v => d.includes(v)) || OBJ_VETERINARIO.test(objLimpo))) continue;
     if (cat === 'MI' && VETO_MI.some(v => d.includes(v))) continue;
     if (cat === 'MO' && !MO_NA_FRENTE.test(d)) continue;
     if (cat === 'LV' && lavaLoucas(d)) continue;

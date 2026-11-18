@@ -325,7 +325,10 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    não entra na lista e o valor dele CONTA para o piso do edital, para que só a balança saia
    e não o edital com os outros itens (no mesmo dia, quando a dispensa 120 de Curitiba/PR
    saiu inteira com a lavadora e o liquidificador: "itens que cotamos também foram
-   retirados"). Para voltar, tirar BL da lista. Desde 21/10/2026 a balança de PESAR PESSOAS também entra, em todos os editais
+   retirados"). Para voltar, tirar BL da lista. Só conta para o piso a balança da casa: a de laboratório, a de animal e a de
+   edital VETERINÁRIO não contam (18/11/2026: Iturama/MG, edital 035, de produtos veterinários para cães e
+   gatos, ficava na lista com R$ 1.757 de aquecedor por causa da balança de coluna de 200 kg e da
+   de filhotes; usuário: "o veto não é 4mil?" e "balança para filhotes não cotamos"). Desde 21/10/2026 a balança de PESAR PESSOAS também entra, em todos os editais
    (o usuário, sobre a infantil, a adulta com régua antropométrica e a de obesos de Fênix/PR:
    "algumas balanças ficaram de fora deste edital"; e, perguntado, "em todos os editais"):
    saíram dos vetos a antropométrica, a pediátrica e de bebê, a de obesos, a de
