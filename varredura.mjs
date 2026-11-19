@@ -804,6 +804,10 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // Fogao Industrial Fundido" (Dom Pedrito/RS, edital 156, item 10, 100 un, sigiloso; usuario,
 // 13/11/2026: "nao cotamos isso"). So na frente (VETO_SO_NA_FRENTE): "fogao 4 queimadores" fica
 "queimador",
+// o pote de plastico hermetico "para uso seguro em freezer e forno micro-ondas", que entrava em "Para
+// gelar" pelo freezer (Novo Itacolomi/PR, edital 27, itens 163 e 164; usuario, 19/11/2026: "nao cotamos
+// potes"). Palavra inteira (FRONTEIRA, veto-item.mjs) e so na frente: a geladeira com "porta-potes" fica
+"pote","potes",
 // suqueira de vidro com torneira plastica e utensilio, nao refresqueira
 // eletrica (Porto Vitoria/PR, 22/09/2026)
 "suqueira de vidro",
@@ -976,7 +980,7 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // do buffet: ver o fim da VETO_ITEM)
 // (e "esteira para": a "esteira para forno turbo" e acessorio, o "BUFFET ELETRICO
 // ... COM ESTEIRA PARA APOIAR O PRATO" de Bombinhas/SC e o buffet, 14/10/2026)
-const VETO_SO_NA_FRENTE = ["queimador","gas liquefeito","botijoes","carga de gas","gas de cozinha","gas glp","glp p13","glp p-13","glp (p13)","esteira para","aparador","refeicao","refeicoes","almoco","jantar","lanche","toalha","concha","display","evaporador de agua","mangueira","chapa fogao","chapa para fogao","chapa bifeteira","chapa bifeira","balcao multiuso","balcao para forno","balcao para micro","bucha","difusor","motor ventilador","motor do ventilador","motor de ventilacao","masseira","manometro","manifold","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
+const VETO_SO_NA_FRENTE = ["pote","potes","queimador","gas liquefeito","botijoes","carga de gas","gas de cozinha","gas glp","glp p13","glp p-13","glp (p13)","esteira para","aparador","refeicao","refeicoes","almoco","jantar","lanche","toalha","concha","display","evaporador de agua","mangueira","chapa fogao","chapa para fogao","chapa bifeteira","chapa bifeira","balcao multiuso","balcao para forno","balcao para micro","bucha","difusor","motor ventilador","motor do ventilador","motor de ventilacao","masseira","manometro","manifold","suporte para tv","suporte de tv","pedestal para","suporte pedestal","armario","prateleira",
 "embalagem","embalag","saco","sabao","detergente","limpa forno","limpador","desengordurante","amaciante","lava roupas em po",
 "refil","filtro refil","unidade filtrante","elemento filtrante","filtro purificacao","disco abrasivo","manta abrasiva",
 "cooler","gabinete","nobreak","no-break","conector","gas refrigerante","gas refrigeracao","pecas e acessorios","pecas /","pecas/",

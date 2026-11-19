@@ -202,7 +202,8 @@ export const instalavel = (d, cat) => cat === 'CX' || cat === 'AQ'
   || (cat === 'CL' && (/split|ar[- ]?condicionad|arcondicionad|condicionador|cortinas? (?:de )?ar(?![a-z])/.test(d)
     || /climatizador[^.;]{0,90}(?:de parede|abertura (?:minima )?(?:de|na) parede)/.test(d)));
 
-const FRONTEIRA = new Map([['trator', 'inicio'], ['mop', 'palavra'], ['rack', 'palavra'], ['aquario', 'palavra']]);
+// (e o pote, que como palavra solta seria a 'potencia' e o 'potente' do liquidificador: 19/11/2026)
+const FRONTEIRA = new Map([['trator', 'inicio'], ['mop', 'palavra'], ['rack', 'palavra'], ['aquario', 'palavra'], ['pote', 'palavra'], ['potes', 'palavra']]);
 
 // A categoria e a do primeiro termo da tabela que aparece como PRODUTO — nao
 // como uso de outra coisa (18/09/2026). Com as regras de servico e de objeto

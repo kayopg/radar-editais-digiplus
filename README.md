@@ -190,7 +190,10 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    serviço, 21/10/2026).
    E no edital por lote o card mostra **o lote inteiro** — também os itens que a Digiplus
    não cota (instalação, tubulação, bomba de dreno), em cinza, e só dos lotes que têm
-   produto nosso (usuário, 07/10/2026). O PNCP não diz o lote de cada item; o `lotes.mjs`
+   produto nosso (usuário, 07/10/2026). Exceção: o edital que o texto diz "por lote" e que a plataforma disputa por item, como o PNCP
+   cadastra (cada item com o seu "Menor preço", sem grupo), vai na lista  do 
+   e fica só com os itens do radar — Nova Laranjeiras/PR, PE 46/2026 (BLL), cuja tabela vem agrupada em
+   "Lote 001 - ELETRODOMESTICOS" (usuário, 19/11/2026: "o edital não é em Lote"). O PNCP não diz o lote de cada item; o `lotes.mjs`
    só aceita o lote quando os itens, em blocos seguidos, somam **centavo por centavo** os
    totais por lote impressos no edital, e a divisão é única (Joinville/SC, 17 lotes). Sem
    os totais, vale a tabela do termo com a coluna do grupo na frente ("GRUPO ITEM CÓD.
@@ -439,6 +442,9 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    vendido sozinho, peça de reposição ("Queimador Cachimbo Duplo Tron 1000 Fogao Industrial Fundido", Dom
    Pedrito/RS, edital 156, que saiu inteiro; usuário: "nao cotamos isso"), só quando vem antes do produto:
    o fogão "4 queimadores" fica.
+   Em 19/11/2026 sai o pote de plástico hermético ("para uso seguro em freezer e forno micro-ondas", que
+   entrava em "Para gelar"; Novo Itacolomi/PR, edital 27, que saiu inteiro; usuário: "não cotamos potes"),
+   como palavra inteira e só na frente do produto: "potência", "potente" e a geladeira com porta-potes ficam.
    E quando a tabela do edital numera a linha diferente do PNCP, o resumo e o card mostram
    os dois: "8 (no edital: 9)" — Paranaguá/PR numera o bebedouro de 9 no termo de
    referência e de 8 na relação de itens, que é a da disputa.

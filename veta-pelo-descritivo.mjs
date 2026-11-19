@@ -153,6 +153,12 @@ const CAT = eval(blocoCat.replace('const CAT = ', ''));
 // As categorias suspensas (varredura.mjs, CATEGORIAS_SUSPENSAS): o item sai e o valor
 // dele conta para o piso do edital (as balancas, 30/10/2026)
 const SUSPENSAS = lista('CATEGORIAS_SUSPENSAS');
+// O edital que o TEXTO diz "por lote" e que se disputa por ITEM, como o PNCP cadastra (cada item com o
+// seu "Menor preco", sem grupo): o sistema da prefeitura agrupa a tabela em "Lote 001 - ELETRODOMESTICOS",
+// "Lote 002 - BEBEDOUROS"... e escreve "MENOR PREÇO por LOTE", mas a BLL disputa item a item (Nova
+// Laranjeiras/PR, PE 46/2026; usuario, 19/11/2026: "o edital nao e em Lote", e o card e o resumo mostravam
+// 118 itens que nao cotamos). Aqui o card fica so com os itens do radar.
+const POR_ITEM = new Set(['95587648000112/2026/86']);
 // o objeto de edital veterinario, em que a balanca e de animal (varredura.mjs, OBJ_VETERINARIO)
 const OBJ_VETERINARIO = eval(fonte.match(/const OBJ_VETERINARIO = (\/.*\/[a-z]*);/)[1]);
 // e a faixa de preco que fora de RS e SC so entra com volume (varredura.mjs, FAIXA_SO_COM_VOLUME)
@@ -451,7 +457,7 @@ for (const e of dados.editais) {
   // edital 70). O item do aparelho nao fala em instalacao, e o de servico a
   // varredura descarta; fora do RS e de SC o aparelho que se instala sai.
   const textoEdital = norm((v.secoes || []).map(s => s.texto).join(' '));
-  const instalaNoLote = !UF_INSTALA.has(e[C.uf]) && vendaPorLote(textoEdital)
+  const instalaNoLote = !UF_INSTALA.has(e[C.uf]) && !POR_ITEM.has(e[C.path]) && vendaPorLote(textoEdital)
     && (v.itens || []).some(x => ITEM_DE_INSTALACAO.test(norm(x[1])));
   const instalaNoObjeto = !UF_INSTALA.has(e[C.uf]) && /instalacao|montagem/.test(objN)
     && (OBJ_CONDICIONAL.test(objN) || (/mobiliario|moveis/.test(objN) && /eletrodomestic|eletroportat/.test(objN)));
@@ -605,6 +611,8 @@ for (const e of ficam) {
   const v = desc.editais[e[C.path]];
   if (!v || !(v.itens || []).length) continue;
   const texto = (v.secoes || []).map(s => s.texto).join(' ').replace(/\s+/g, ' ');
+  // (e sem o lote que a rodada anterior gravou nos itens: o resumo mostrava "Lote 2 · item 26")
+  if (POR_ITEM.has(e[C.path])) { for (const x of v.itens) if (x[7] || x[8]) { x[7] = null; x[8] = null; lotesMarcados++; } continue; }
   if (!vendaPorLote(norm(texto))) continue;
   const nossos = new Set(e[C.itens].map(it => +it[5]));
   const todos = v.itens.map(x => ({ x, n: +x[0], rot: x[1] || '', benef: x[5] || '', qtd: +x[2] || 0, total: Math.round((+x[2] || 0) * (+x[4] || 0) * 100) / 100 }))
