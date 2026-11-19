@@ -1,21 +1,6 @@
 {
- "varredura": "2026-11-18",
+ "varredura": "2026-11-19",
  "editais": [
-  {
-   "path": "16854531000181/2026/138",
-   "municipio": "Oliveira",
-   "uf": "MG",
-   "edital": "Edital nº 35/2026",
-   "objeto": "[Portal de Compras Públicas] - Aquisição de Mobiliário para UBS (Unidade Básica de Saúde) Santo Antônio e itens fracassados do Pregão 09/2026. O Pagamento será ",
-   "exige": [
-    "Amostra"
-   ],
-   "trechos": {
-    "Amostra": [
-     "citacoes praca xv de novembro, 127 – centro – oliveira-mg – 35.540-000 licitacaopmo@oliveira.mg.gov.br – (37) 3332-9179/9188 mo/sl 10 exigira que o licitante classificado em primeiro lugar apresente amostra, sob pena de nao aceitacao da proposta, no local a ser indicado e dentro de 10 (dez) dias uteis contados da solicitacao. 8.8.3.1 por meio de mensagem no sistema, sera divulgado o local e horari"
-    ]
-   }
-  },
   {
    "path": "18240119000105/2026/372",
    "municipio": "Varginha",
@@ -127,22 +112,6 @@
    }
   },
   {
-   "path": "76205673000140/2026/140",
-   "municipio": "Realeza",
-   "uf": "PR",
-   "edital": "Edital nº 25/2026",
-   "objeto": "O objeto da presente licitação é REGISTRO DE PREÇOS PARA CONTRATAÇÃO de pessoa jurídica para o fornecimento de “aparelhos de ar condicionado” para atender as ne",
-   "exige": [
-    "Amostra"
-   ],
-   "trechos": {
-    "Amostra": [
-     "devera ser realizada gradativamente principalmente durante o periodo de inverno, onde a falta das maquinas tem influencia menor na produtividade dos trabalhos, ou mesmo no atendimento ao publico. 1.5 amostras juntamente com a proposta ajustada devera ser apresentado informativo, catalogo, cartilha ou qualquer outro documento, em lingua portuguesa, que demonstre compatibilidade das especificacoes t",
-     "devera ser realizada gradativamente principalmente durante o periodo de inverno, onde a falta das maquinas tem influencia menor na produtividade dos trabalhos, ou mesmo no atendimento ao publico. 1.5 amostras juntamente com a proposta ajustada devera ser apresentado informativo, catalogo, cartilha ou qualquer outro documento, em lingua portuguesa, que demonstre compatibilidade das especificacoes t"
-    ]
-   }
-  },
-  {
    "path": "76208867000107/2026/646",
    "municipio": "Cascavel",
    "uf": "PR",
@@ -186,6 +155,21 @@
     "Amostra": [
      "e devera constar na proposta final das arrematantes, conforme modelo descritivo da proposta de precos (anexo iii). 4 proposta parcial 4.1 nao sera permitido ao licitante oferecer proposta parcial. 5 amostra 5.1 sera exigida do arrematante amostra do(s) objeto(s) licitado(s), na forma do item 1.5 do termo de referencia, anexo i. (quando for o caso) 6 consorcio 6.1 a participacao de empresas em regi",
      "aso seja requisitada a apresentacao de amostras do arrematante do item, a entrega devera ocorrer no prazo maximo de 05 (cinco) dias uteis, a contar da notificacao, o descritivo tecnico e a respectiva amostra do objeto licitado, a fim de verificar se atende as especificacoes do edital e anexos, no seguinte local: endereco: universidade estadual de londrina-uel / almoxarifado central-campus rodovia "
+    ]
+   }
+  },
+  {
+   "path": "21040001000130/2026/248",
+   "municipio": "Itajubá",
+   "uf": "MG",
+   "edital": "Aviso de Contratação Direta nº 467/2026",
+   "objeto": "Aquisição de equipamentos industriais destinados aos Restaurantes Universitários da Universidade Federal de Itajubá – UNIFEI, incluindo, quando aplicável, entre",
+   "exige": [
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Garantia contratual": [
+     " 2021, e neste termo de referencia. 4.3.6. dessa forma, considerando a natureza dos bens, o valor da contratacao, a baixa complexidade contratual e os riscos envolvidos, entende-se que a exigencia de garantia da contratacao nao se mostra necessaria ou proporcional, sendo suficientes os mecanismos de fiscalizacao, recebimento, responsabilizacao e aplicacao de sancoes previstos na legislacao e neste"
     ]
    }
   },
@@ -413,6 +397,36 @@
    }
   },
   {
+   "path": "18715383000140/2026/909",
+   "municipio": "Belo Horizonte",
+   "uf": "MG",
+   "edital": "Edital nº 107/2026",
+   "objeto": "ELETRODOMESTICOS",
+   "exige": [
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Garantia contratual": [
+     "te prejuizo ao erario decorrente de inexecucao contratual e impossibilidade de ressarcimento. baixo medio aceitavel listas de verificacao (checklist) para formalizacao dos contratos e apresentacao de garantia contratual, de modo que o servidor responsavel tenha um referencial claro para atuar na fase da referida formalizacao. o setor de contabilidade ou a assessoria juridica identificam que o cont"
+    ]
+   }
+  },
+  {
+   "path": "07383800000188/2026/214",
+   "municipio": "Lages",
+   "uf": "SC",
+   "edital": "Edital nº PE 09/2026",
+   "objeto": "Registro de preços para aquisição de até 200 (duzentas) cadeiras de rodas motorizadas elétricas completas, com bateria recarregável, carregador e acessórios, pa",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     " parcelado, do atendimento conjunto aos municipios e da recorrencia das aquisicoes. 3.2. a documentacao da pesquisa e da mediana de r$ 5.600,00 devera permitir identificar a homologacao consultada, a amostra utilizada, a compatibilidade dos equipamentos e das condicoes de fornecimento e a atualidade dos valores, observando o art. 23 da lei nº 14.133/2021. 3.3. a definicao do quantitativo maximo ob"
+    ]
+   }
+  },
+  {
    "path": "46634200000105/2026/90",
    "municipio": "Itaí",
    "uf": "SP",
@@ -425,6 +439,42 @@
     "Amostra": [
      "as, registros ou outros documentos necessarios a comprovacao da conformidade do produto ofertado com as especificacoes estabelecidas no anexo i – folheto descritivo. 4.2.7. a eventual solicitacao de amostras, documentos tecnicos ou comprovacoes complementares devera estar diretamente relacionada a necessidade de verificar a conformidade do produto ofertado com as especificacoes estabelecidas pela ",
      " documentacao exigida devera ser apresentada na forma, prazo e condicoes estabelecidos no instrumento de contratacao, observadas as disposicoes da lei federal nº 14.133/2021. 4.3.- da apresentacao de amostras e dos criterios de avaliacao a apresentacao de amostras sera exigida exclusivamente para os materiais odontologicos cujas descricoes estejam destacadas por sublinhado no anexo i – folheto des"
+    ]
+   }
+  },
+  {
+   "path": "56089790000188/2026/361",
+   "municipio": "São Paulo",
+   "uf": "SP",
+   "edital": "Edital nº 116/2026",
+   "objeto": "Aquisição de material permanente – Áudio Visual, para o Instituto de Pesquisas Ambientais.",
+   "exige": [
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Garantia contratual": [
+     " ipa em consonancia com os dispositivos legais aplicaveis. justificativa para a nao exigencia de garantia da contratacao nos termos do art. 96 da lei nº 14.133, de 1º de abril de 2021, a exigencia de garantia de execucao contratual e uma faculdade da administracao, devendo ser avaliada conforme a natureza, a complexidade e o risco associado ao objeto, conforme segue: considerando que se trata de a"
+    ]
+   }
+  },
+  {
+   "path": "46374500000194/2026/9654",
+   "municipio": "Guarulhos",
+   "uf": "SP",
+   "edital": "Edital nº 283/2026",
+   "objeto": "Fornecimento e implantação de Sistema de Geração, Armazenamento e Distribuição de Água Purificada (PW) para laboratório, com capacidade mínima de 300 L/h, inclu",
+   "exige": [
+    "Amostra",
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Amostra": [
+     " de eliminar e/ou reduzir a concentracao de ions presentes na agua, de modo a atender as especificacoes da membrana filtrante utilizada no projeto. 1.2.12. o fornecedor devera instalar uma valvula de amostragem apos cada operacao unitaria realizada no sistema de pre- tratamento de forma a garantir as etapas de validacao do sistema. 1.2.13. o fornecedor devera contemplar um tanque pulmao (se necess",
+     " de 70%, salvo solucao tecnicamente justificada que demonstre melhor relacao entre desempenho, seguranca operacional, qualidade da agua e consumo de recursos. 1.2.25. deverao ser previstos pontos de amostragem em posicoes tecnicamente adequadas as etapas criticas do processo de geracao, de modo a permitir o monitoramento, a investigacao de desvios e a execucao das atividades de qualificacao e cont"
+    ],
+    "Garantia contratual": [
+     "elo rigoroso cumprimento das obrigacoes contratuais correspondentes ao objeto da subcontratacao. 4.3. o contrato oferece maior detalhamento das regras que serao aplicadas em relacao a subcontratacao. garantia da contratacao 4.4. sera exigida a garantia da contratacao de que tratam os arts. 96 e seguintes da lei nº 14.133, de 2021, no percentual de 5%, conforme condicoes descritas nas clausulas do ",
+     "atuais correspondentes ao objeto da subcontratacao. 4.3. o contrato oferece maior detalhamento das regras que serao aplicadas em relacao a subcontratacao. garantia da contratacao 4.4. sera exigida a garantia da contratacao de que tratam os arts. 96 e seguintes da lei nº 14.133, de 2021, no percentual de 5%, conforme condicoes descritas nas clausulas do contrato. 4.4.1. o percentual aplicado visa m"
     ]
    }
   }
