@@ -191,8 +191,8 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    E no edital por lote o card mostra **o lote inteiro** — também os itens que a Digiplus
    não cota (instalação, tubulação, bomba de dreno), em cinza, e só dos lotes que têm
    produto nosso (usuário, 07/10/2026). Exceção: o edital que o texto diz "por lote" e que a plataforma disputa por item, como o PNCP
-   cadastra (cada item com o seu "Menor preço", sem grupo), vai na lista  do 
-   e fica só com os itens do radar — Nova Laranjeiras/PR, PE 46/2026 (BLL), cuja tabela vem agrupada em
+   cadastra (cada item com o seu "Menor preço", sem grupo), vai na lista `POR_ITEM` do
+   `veta-pelo-descritivo.mjs` e fica só com os itens do radar — Nova Laranjeiras/PR, PE 46/2026 (BLL), cuja tabela vem agrupada em
    "Lote 001 - ELETRODOMESTICOS" (usuário, 19/11/2026: "o edital não é em Lote"). O PNCP não diz o lote de cada item; o `lotes.mjs`
    só aceita o lote quando os itens, em blocos seguidos, somam **centavo por centavo** os
    totais por lote impressos no edital, e a divisão é única (Joinville/SC, 17 lotes). Sem
