@@ -62,7 +62,8 @@ const TERMOS = ["eletrodomesticos","eletroportateis","refrigerador","geladeira",
 // publicada o edital de UF que sair dela.
 // MS, GO e DF sairam em 30/10/2026 (usuario: "Mato grosso do sul pode remover dos
 // estados que cotamos", "pode retirar goias tambem" e "distrito federal sai tambem").
-const UFS = ["PR","RS","SP","MG","SC"];
+// MG saiu em 19/11/2026 (usuario: "pode retirar MG").
+const UFS = ["PR","RS","SP","SC"];
 
 const CAT = [
   // O balcao saiu em 24/09/2026, a pedido do usuario: nem o refrigerado nem o

@@ -18,7 +18,9 @@ const { st, editais } = JSON.parse(fs.readFileSync(entrada, 'utf8'));
 // Ordem fixa dos estados atendidos, para o cabeçalho e os chips de filtro
 // saírem sempre iguais. Mexeu aqui, mexeu no filtro da página junto — é de
 // propósito: era esse o antigo pé na jaca de a lista viver só no HTML.
-const UFS = ['PR', 'RS', 'SP', 'MG', 'GO', 'DF', 'MS', 'SC'];
+// (Desde 19/11/2026 vem do varredura.mjs, a mesma que o veta-pelo-descritivo.mjs lê: a cópia
+// daqui ficou com MS, GO e DF depois de 30/10, e o cabeçalho continuava mostrando os três.)
+const UFS = JSON.parse(fs.readFileSync(path.join(DIR, 'varredura.mjs'), 'utf8').match(/const UFS = (\[[^\]]*\])/)[1]);
 
 // Colunas 0-8 sao as antigas; 9 em diante vieram com o resumo em PDF (31/08/2026).
 // Acrescente sempre no fim: a pagina le por indice.
