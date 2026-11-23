@@ -703,6 +703,9 @@ const VETO_ITEM = ["evaporador de agua","mangueira","chapa fogao","chapa para fo
 // "oxigenio" solto nao: o aquecedor de ambiente anuncia que "NAO QUEIMA OXIGENIO".
 "p/ oxigenio","para oxigenio","umidificador de oxigenio","umidificador oxigenio","cilindro de oxigenio",
 "oxigenio medicinal","fluxometro","gasoterapia","ar comprimido","para o2",
+// 23/11/2026: o umidificador AQUECIDO de hospital, de terapia respiratoria ("UMIDIFICADOR AQUECIDO
+// COM ACESSORIOS", Rosário do Sul/RS, edital 54, para o Hospital de Caridade; usuario: "tira")
+"umidificador aquecido","terapia respiratoria",
 // A lousa interativa ja estava vetada por decisao do usuario (10/09/2026, "a
 // tela, de 52 a 86 polegadas"), mas so pelos nomes "lousa interativa" e "lousa
 // digital": "TELA INTERATIVA 86 COM CAMERA" (Xangri-la/RS, R$ 2,1 milhoes),

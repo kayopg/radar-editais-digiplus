@@ -273,7 +273,8 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    contínuos de manutenção" pelo objeto, o termostato de ar-condicionado, peça (Embrapa,
    Brasília/DF, edital 10, 21/10/2026: entrava pelo "Split" do fim do nome; só na frente do produto),
    o "UMIDIFICADOR" sem mais nada no edital de oxigênio medicinal, que é o frasco do fluxômetro
-   (Campina da Lagoa/PR, edital 108, 21/10/2026), desumidificador de ar (15/10/2026; o
+   (Campina da Lagoa/PR, edital 108, 21/10/2026), o umidificador aquecido de hospital, de terapia
+   respiratória (Rosário do Sul/RS, edital 54, 23/11/2026: "tira"), desumidificador de ar (15/10/2026; o
    ar-condicionado com "função desumidificar" fica, e o umidificador também), chapa de grelhar
    carnes e char broiler (15/10/2026: "nem chapa para grelhar carnes"; a sanduicheira com "chapa grill",
    o grill elétrico portátil — confirmado: "grill eletrico fica" — e o fogão com chapa bifeteira
