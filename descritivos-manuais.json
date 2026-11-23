@@ -4119,19 +4119,29 @@
         "qtd": 3,
         "valor": 11327.3,
         "fonte": "Termo de referência, ITEM 07 (60.000 BTU/h); 23/11/2026",
-        "texto": "APARELHO DE AR-CONDICIONADO 60.000 BTU/H – Aparelho de ar-condicionado do tipo Split, com capacidade mínima de 60.000 BTU/h, destinado à climatização de ambientes das unidades de saúde. Deverá possuir, no mínimo: Capacidade de refrigeração de 60.000 BTU/h; Tecnologia Split; Alimentação elétrica compatível com a rede disponível no local; Ciclo frio; Compressor adequado à capacidade do equipamento; Controle remoto sem fio; Controle de temperatura; Função de refrigeração; Função de ventilação; Ajuste de velocidade do ventilador; Filtros de ar removíveis e laváveis; Sistema de distribuição uniforme do ar; Direcionamento do fluxo de ar; Baixo nível de ruído compatível com a utilização em ambiente institucional; Proteção contra oscilações e condições anormais de funcionamento, quando disponível; Classificação de eficiência energética conforme regulamentação vigente; Fluido refrigerante ambientalmente adequado e permitido pela legislação vigente; Condensadora e evaporadora compatíveis entre si; Acessórios necessários à instalação. Quando a instalação estiver incluída no objeto, deverão ser fornecidos também os materiais necessários à instalação, tais como tubulações, isolamento térmico, cabos, dreno, suportes e demais componentes necessários ao perfeito funcionamento, conforme as condições do local."
+        "texto": "APARELHO DE AR-CONDICIONADO 60.000 BTU/H – Aparelho de ar-condicionado do tipo Split, com capacidade mínima de 60.000 BTU/h, destinado à climatização de ambientes das unidades de saúde. Deverá possuir, no mínimo: Capacidade de refrigeração de 60.000 BTU/h; Tecnologia Split; Alimentação elétrica compatível com a rede disponível no local; Ciclo frio; Compressor adequado à capacidade do equipamento; Controle remoto sem fio; Controle de temperatura; Função de refrigeração; Função de ventilação; Ajuste de velocidade do ventilador; Filtros de ar removíveis e laváveis; Sistema de distribuição uniforme do ar; Direcionamento do fluxo de ar; Baixo nível de ruído compatível com a utilização em ambiente institucional; Proteção contra oscilações e condições anormais de funcionamento, quando disponível; Classificação de eficiência energética conforme regulamentação vigente; Fluido refrigerante ambientalmente adequado e permitido pela legislação vigente; Condensadora e evaporadora compatíveis entre si; Acessórios necessários à instalação. Quando a instalação estiver incluída no objeto, deverão ser fornecidos também os materiais necessários à instalação, tais como tubulações, isolamento térmico, cabos, dreno, suportes e demais componentes necessários ao perfeito funcionamento, conforme as condições do local.",
+        "noEdital": 7
       },
       "7": {
         "qtd": 2,
         "valor": 4021.33,
         "fonte": "Termo de referência, ITEM 08 (24.000 BTU/h); 23/11/2026",
-        "texto": "APARELHO DE AR-CONDICIONADO 24.000 BTU/H – Aparelho de ar-condicionado tipo Split, com capacidade mínima de 24.000 BTU/h, destinado à climatização dos ambientes das unidades de saúde. Deverá possuir, no mínimo: Capacidade de refrigeração de 24.000 BTU/h; Tecnologia Split; Ciclo frio; Alimentação elétrica compatível com a rede disponível; Compressor compatível com a capacidade do equipamento; Controle remoto sem fio; Controle eletrônico de temperatura; Ajuste de velocidade do ventilador; Função de refrigeração; Função de ventilação; Direcionamento do fluxo de ar; Filtros de ar removíveis e laváveis; Sistema de distribuição adequada do ar; Baixo nível de ruído compatível com ambiente de atendimento; Eficiência energética de acordo com a regulamentação vigente; Fluido refrigerante permitido pela legislação ambiental vigente; Unidade evaporadora e condensadora compatíveis; Todos os componentes necessários ao funcionamento. Quando prevista a instalação pela contratada, deverão ser fornecidos todos os materiais e acessórios necessários à instalação e funcionamento do equipamento, incluindo tubulação, isolamento, cabeamento, dreno, suportes e demais componentes pertinentes."
+        "texto": "APARELHO DE AR-CONDICIONADO 24.000 BTU/H – Aparelho de ar-condicionado tipo Split, com capacidade mínima de 24.000 BTU/h, destinado à climatização dos ambientes das unidades de saúde. Deverá possuir, no mínimo: Capacidade de refrigeração de 24.000 BTU/h; Tecnologia Split; Ciclo frio; Alimentação elétrica compatível com a rede disponível; Compressor compatível com a capacidade do equipamento; Controle remoto sem fio; Controle eletrônico de temperatura; Ajuste de velocidade do ventilador; Função de refrigeração; Função de ventilação; Direcionamento do fluxo de ar; Filtros de ar removíveis e laváveis; Sistema de distribuição adequada do ar; Baixo nível de ruído compatível com ambiente de atendimento; Eficiência energética de acordo com a regulamentação vigente; Fluido refrigerante permitido pela legislação ambiental vigente; Unidade evaporadora e condensadora compatíveis; Todos os componentes necessários ao funcionamento. Quando prevista a instalação pela contratada, deverão ser fornecidos todos os materiais e acessórios necessários à instalação e funcionamento do equipamento, incluindo tubulação, isolamento, cabeamento, dreno, suportes e demais componentes pertinentes.",
+        "noEdital": 8
+      },
+      "8": {
+        "qtd": 2,
+        "valor": 1125.33,
+        "fonte": "Termo de referência, ITEM 09 (cortina de 2,00 m); 23/11/2026",
+        "texto": "Cortina de ar destinada à instalação sobre portas de acesso das unidades de saúde, com comprimento mínimo aproximado de 2,00 metros, destinada à formação de barreira de ar e redução da entrada de ar externo, poeira e insetos. Deverá possuir, no mínimo: Comprimento aproximado de 2,00 metros; Estrutura resistente e adequada à instalação em ambiente institucional; Ventilador de alta eficiência; Vazão de ar adequada à dimensão da porta; Múltiplas velocidades ou controle equivalente; Acionamento por controle ou painel; Baixo nível de ruído compatível com ambiente de atendimento; Funcionamento contínuo ou intermitente; Direcionamento uniforme do fluxo de ar; Proteção adequada do motor; Alimentação elétrica compatível com a rede local; Sistema de fixação adequado; Componentes resistentes e de fácil limpeza; Manual de instalação e operação. A cortina deverá ser fornecida com todos os suportes, acessórios e elementos necessários à instalação, quando esta estiver incluída no objeto.",
+        "noEdital": 9
       },
       "9": {
         "qtd": 1,
         "valor": 617.36,
         "fonte": "Termo de referência, ITEM 10 (cortina de 1,50 m); 23/11/2026",
-        "texto": "CORTINA DE AR – 1,50 METROS – Cortina de ar destinada à instalação sobre porta de acesso das unidades de saúde, com comprimento mínimo aproximado de 1,50 metros, destinada à formação de barreira de ar e redução da entrada de ar externo, poeira e insetos. Deverá possuir, no mínimo: Comprimento aproximado de 1,50 metros; Estrutura resistente e adequada ao uso institucional; Ventilador de alta eficiência; Vazão de ar compatível com a dimensão da porta; Múltiplas velocidades ou controle equivalente; Acionamento por controle ou painel; Direcionamento uniforme do fluxo de ar; Baixo nível de ruído; Proteção adequada do motor; Alimentação elétrica compatível com a rede local; Sistema de fixação adequado; Componentes de fácil limpeza e manutenção; Manual de instalação e operação. Deverá ser fornecida com todos os suportes, acessórios e componentes necessários à instalação e ao pleno funcionamento, quando a instalação estiver incluída no objeto."
+        "texto": "CORTINA DE AR – 1,50 METROS – Cortina de ar destinada à instalação sobre porta de acesso das unidades de saúde, com comprimento mínimo aproximado de 1,50 metros, destinada à formação de barreira de ar e redução da entrada de ar externo, poeira e insetos. Deverá possuir, no mínimo: Comprimento aproximado de 1,50 metros; Estrutura resistente e adequada ao uso institucional; Ventilador de alta eficiência; Vazão de ar compatível com a dimensão da porta; Múltiplas velocidades ou controle equivalente; Acionamento por controle ou painel; Direcionamento uniforme do fluxo de ar; Baixo nível de ruído; Proteção adequada do motor; Alimentação elétrica compatível com a rede local; Sistema de fixação adequado; Componentes de fácil limpeza e manutenção; Manual de instalação e operação. Deverá ser fornecida com todos os suportes, acessórios e componentes necessários à instalação e ao pleno funcionamento, quando a instalação estiver incluída no objeto.",
+        "noEdital": 10
       }
     }
   },
@@ -4143,13 +4153,15 @@
         "qtd": 1,
         "valor": 868.26,
         "fonte": "Edital, item 1.1, tabela (item 03 do edital); 23/11/2026",
-        "texto": "BEBEDOURO DE COLUNA - Refrigeração por compressor para alta demanda/fluxo contínuo; Capacidade do reservatório de água gelada mínima de 2 litros; Oferece água em temperatura natural e gelada; Gabinete com tratamento anticorrosivo/plástico injetado ou chapa eletrostática; Baixo consumo energético; Tensão compatível com a rede local; Cor predominante: branca"
+        "texto": "BEBEDOURO DE COLUNA - Refrigeração por compressor para alta demanda/fluxo contínuo; Capacidade do reservatório de água gelada mínima de 2 litros; Oferece água em temperatura natural e gelada; Gabinete com tratamento anticorrosivo/plástico injetado ou chapa eletrostática; Baixo consumo energético; Tensão compatível com a rede local; Cor predominante: branca",
+        "noEdital": 3
       },
       "4": {
         "qtd": 6,
         "valor": 1223.07,
         "fonte": "Edital, item 1.1, tabela (item 01 do edital); 23/11/2026",
-        "texto": "FRIGOBAR - Capacidade: 120 l; Dimensões Mínimas sem Embalagem (AxLxP) (cm): 87 x 48 x 52; Peso Máximo sem Embalagem (kg): 25; Cor: Branco; Tipo de Degelo: Frost Free; Gavetas: 1 gaveta; Eficiência Energética: A; Cor: Branco; Plugue e Tomada: 10 A; Tecnologia: Manual; Potência Bivolt (W): 120.0 L; Consumo Aproximado de Energia (kWh)/Mês: 13.8; Garantia do Compressor: 10 anos; Range de temperatura do Refrigerador (°C): -2° até 10°; Quantidade de Prateleiras e Gavetas: Gabinete: 3 Prateleiras e 1 Gaveta; Porta: 5 Prateleiras: Acabamento Frontal e Lateral: PCM Branco; Controle de Temperatura: Manual; Capacidade Bruta Total (L): 120; Frequência (Hz): 60.0; Material /Composição: PCM, Material das Prateleiras: Gabinete: Vidro Temperado Porta: Plástico Transparente; Capacidade Líquida Total (L): 120. Deve possuir: Compartimento extra frio; Porta reversível; Porta latas; Iluminação no refrigerador; Cesta Porta-Ovos; Prateleiras Removíveis; Selo Procel; Pés Niveladores"
+        "texto": "FRIGOBAR - Capacidade: 120 l; Dimensões Mínimas sem Embalagem (AxLxP) (cm): 87 x 48 x 52; Peso Máximo sem Embalagem (kg): 25; Cor: Branco; Tipo de Degelo: Frost Free; Gavetas: 1 gaveta; Eficiência Energética: A; Cor: Branco; Plugue e Tomada: 10 A; Tecnologia: Manual; Potência Bivolt (W): 120.0 L; Consumo Aproximado de Energia (kWh)/Mês: 13.8; Garantia do Compressor: 10 anos; Range de temperatura do Refrigerador (°C): -2° até 10°; Quantidade de Prateleiras e Gavetas: Gabinete: 3 Prateleiras e 1 Gaveta; Porta: 5 Prateleiras: Acabamento Frontal e Lateral: PCM Branco; Controle de Temperatura: Manual; Capacidade Bruta Total (L): 120; Frequência (Hz): 60.0; Material /Composição: PCM, Material das Prateleiras: Gabinete: Vidro Temperado Porta: Plástico Transparente; Capacidade Líquida Total (L): 120. Deve possuir: Compartimento extra frio; Porta reversível; Porta latas; Iluminação no refrigerador; Cesta Porta-Ovos; Prateleiras Removíveis; Selo Procel; Pés Niveladores",
+        "noEdital": 1
       }
     }
   },
@@ -4283,23 +4295,40 @@
     "edital": "Pérola d'Oeste/PR, Pregão Eletrônico 13/2026",
     "conferido": "2026-11-23",
     "itens": {
+      "17": {
+        "qtd": 3,
+        "valor": 122.77,
+        "fonte": "Termo de referência, lote 04, item 20 do termo; 23/11/2026",
+        "texto": "ANDADOR ARTICULADO: Andador para adulto, dobrável, articulado ou fixo, confeccionado em alumínio; regulagem de altura; manoplas anatômicas emborrachadas; ponteiras de borracha antiderrapantes; capacidade mínima de 100 kg. Produto com registro, notificação ou cadastro vigente na ANVISA, quando exigível para a sua classe de risco (RDC ANVISA nº 751/2022); se dispensado desse controle, apresentar comprovação da isenção. Garantia mínima de 12 (doze) meses.",
+        "noEdital": 20
+      },
       "18": {
         "qtd": 3,
         "valor": 1215.03,
         "fonte": "Termo de referência, lote 04, item 21 do termo; 23/11/2026",
-        "texto": "CADEIRA DE RODAS ADULTO: Cadeira de rodas manual para uso adulto, dobrável em “X” (ou duplo “X”); estrutura em aço carbono com pintura epóxi ou em alumínio; assento e encosto em nylon ou material equivalente, impermeável e de fácil higienização; largura do assento de, aproximadamente, 44 cm; apoios para braços fixos ou escamoteáveis; apoios para pés removíveis ou reguláveis; freios bilaterais; rodas traseiras aro 24” com aro impulsor, pneus maciços ou infláveis; rodas dianteiras de 6” a 8” maciças; capacidade mínima de 120 kg. Produto com registro, notificação ou cadastro vigente na ANVISA, quando exigível para a sua classe de risco (RDC ANVISA nº 751/2022); se dispensado desse controle, apresentar comprovação da isenção. Garantia mínima de 12 (doze) meses."
+        "texto": "CADEIRA DE RODAS ADULTO: Cadeira de rodas manual para uso adulto, dobrável em “X” (ou duplo “X”); estrutura em aço carbono com pintura epóxi ou em alumínio; assento e encosto em nylon ou material equivalente, impermeável e de fácil higienização; largura do assento de, aproximadamente, 44 cm; apoios para braços fixos ou escamoteáveis; apoios para pés removíveis ou reguláveis; freios bilaterais; rodas traseiras aro 24” com aro impulsor, pneus maciços ou infláveis; rodas dianteiras de 6” a 8” maciças; capacidade mínima de 120 kg. Produto com registro, notificação ou cadastro vigente na ANVISA, quando exigível para a sua classe de risco (RDC ANVISA nº 751/2022); se dispensado desse controle, apresentar comprovação da isenção. Garantia mínima de 12 (doze) meses.",
+        "noEdital": 21
+      },
+      "19": {
+        "qtd": 2,
+        "valor": 1251.58,
+        "fonte": "Termo de referência, lote 04, item 22 do termo; 23/11/2026",
+        "texto": "CADEIRA DE RODAS PARA OBESO: Cadeira de rodas manual para obeso, dobrável, com estrutura reforçada em aço carbono com pintura epóxi; assento e encosto em nylon ou material equivalente, impermeável e de fácil higienização; largura mínima do assento de 50 cm; apoios para braços escamoteáveis ou removíveis; apoios para pés removíveis ou articulados; freios bilaterais; rodas traseiras aro 24” com aro impulsor; rodas dianteiras de 6” a 8” maciças; capacidade mínima de 150 kg. Produto com registro, notificação ou cadastro vigente na ANVISA, quando exigível para a sua classe de risco (RDC ANVISA nº 751/2022); se dispensado desse controle, apresentar comprovação da isenção. Garantia mínima de 12 (doze) meses.",
+        "noEdital": 22
       },
       "20": {
         "qtd": 5,
         "valor": 94.86,
         "fonte": "Termo de referência, lote 04, item 23 do termo; 23/11/2026",
-        "texto": "MULETA CANADENSE (PAR): Par de muletas canadenses para adulto, em alumínio; altura regulável; braçadeira (apoio de antebraço) articulada ou fixa; manopla anatômica em polipropileno ou material equivalente; ponteiras de borracha antiderrapantes; capacidade mínima de 100 kg. Unidade de fornecimento: 1 (um) par. Produto com registro, notificação ou cadastro vigente na ANVISA, quando exigível para a sua classe de risco (RDC ANVISA nº 751/2022); se dispensado desse controle, apresentar comprovação da isenção. Garantia mínima de 12 (doze) meses."
+        "texto": "MULETA CANADENSE (PAR): Par de muletas canadenses para adulto, em alumínio; altura regulável; braçadeira (apoio de antebraço) articulada ou fixa; manopla anatômica em polipropileno ou material equivalente; ponteiras de borracha antiderrapantes; capacidade mínima de 100 kg. Unidade de fornecimento: 1 (um) par. Produto com registro, notificação ou cadastro vigente na ANVISA, quando exigível para a sua classe de risco (RDC ANVISA nº 751/2022); se dispensado desse controle, apresentar comprovação da isenção. Garantia mínima de 12 (doze) meses.",
+        "noEdital": 23
       },
       "21": {
         "qtd": 4,
         "valor": 399.12,
         "fonte": "Termo de referência, lote 04, item 24 do termo; 23/11/2026",
-        "texto": "CADEIRA DE BANHO (HIGIÊNICA) COM RODAS: Cadeira higiênica para banho, com rodas, para adulto; estrutura em aço carbono com pintura epóxi ou em alumínio, resistente à água; assento sanitário removível (com abertura); encosto em nylon ou material equivalente; apoios para braços e para pés; 4 (quatro) rodas maciças, sendo ao menos 2 (duas) giratórias; freios; capacidade mínima de 120 kg; compatível com encaixe sobre vaso sanitário convencional. Produto com registro, notificação ou cadastro vigente na ANVISA, quando exigível para a sua classe de risco (RDC ANVISA nº 751/2022); se dispensado desse controle, apresentar comprovação da isenção. Garantia mínima de 12 (doze) meses."
+        "texto": "CADEIRA DE BANHO (HIGIÊNICA) COM RODAS: Cadeira higiênica para banho, com rodas, para adulto; estrutura em aço carbono com pintura epóxi ou em alumínio, resistente à água; assento sanitário removível (com abertura); encosto em nylon ou material equivalente; apoios para braços e para pés; 4 (quatro) rodas maciças, sendo ao menos 2 (duas) giratórias; freios; capacidade mínima de 120 kg; compatível com encaixe sobre vaso sanitário convencional. Produto com registro, notificação ou cadastro vigente na ANVISA, quando exigível para a sua classe de risco (RDC ANVISA nº 751/2022); se dispensado desse controle, apresentar comprovação da isenção. Garantia mínima de 12 (doze) meses.",
+        "noEdital": 24
       }
     }
   }

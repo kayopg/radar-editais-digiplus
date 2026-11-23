@@ -7486,6 +7486,14 @@ function etapasFinais(e, v, secoes) {
       if (m && +m[1] !== +it[0]) it[10] = +m[1];
     }
   }
+  // e o numero no edital anotado a mao ("noEdital" no descritivos-manuais.json), quando o termo
+  // numera diferente do PNCP sem o codigo do catalogo na linha: Urânia/SP (edital 34) poe o
+  // computador em 05 e o PNCP por ultimo, entao o 6 do PNCP e o ITEM 07 do termo (usuario,
+  // 23/11/2026: "este edital ficou sem descritivo e na ordem errada")
+  for (const [n, m] of Object.entries((manuais[e[C.path]] || {}).itens || {})) {
+    const it = v.itens.find(x => x[0] == n);
+    if (it && m.noEdital && +m.noEdital !== +it[0] && +it[2] === m.qtd && Math.abs(+it[4] - m.valor) <= 0.005) it[10] = +m.noEdital;
+  }
 }
 
 // O TERMO DE REFERENCIA PRIMEIRO (usuario, 27/10/2026: "sempre que for do gov ou
