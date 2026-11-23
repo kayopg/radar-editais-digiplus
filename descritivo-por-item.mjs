@@ -6968,7 +6968,8 @@ function recortaEdital(e, v, secoes) {
       // e o campo da quantidade que fecha o bloco do item, com ou sem o numero e
       // o item seguinte: "...garantia mínima de 12 meses. Quantidade:", "...
       // Quantidade: 6 ITEM 19" (Embrapa, Brasilia/DF, edital 45, 15/10/2026)
-      s = s.replace(/(?<=[.;])\s+Quantidade\s*:\s*(?:\d+(?:\s+(?:unidades?|un)\.?)?\.?)?(?:\s+ITEM\s+\d+)?\s*$/i, '');
+      // (e o "Item" sem numero depois: "...Selo Procel. Quantidade: 01 unidade Item", TRE-SC, item 5)
+      s = s.replace(/(?<=[.;])\s+Quantidade\s*:\s*(?:\d+(?:\s+(?:unidades?|un)\.?)?\.?)?(?:\s+ITEM(?:\s+\d+)?)?\s*$/i, '');
       // e a quantidade do item com os dois codigos do catalogo, e o que vem depois
       // (o item seguinte): "...DIMENSÕES APROXIMADAS 100X70X76CM 1 UNIDADE 611654
       // 5242000000681 CHAPA, ASSADEIRA..." (UFG, Goiania/GO, edital 353, item 32)
@@ -7012,6 +7013,67 @@ function recortaEdital(e, v, secoes) {
       // e o numero da folha com o telefone do rodape: "...garantia mínima de 12 meses. 12 (51)
       // 99465-8165" (Cachoeira do Sul/RS, edital 155, itens 3 e 8)
       s = s.replace(/(?<=[.;])\s+\d{1,3}\s+\(\d{2}\)\s*\d{4,5}-?\d{4}\s*$/, '');
+      // o rodape da folha no meio da frase, com o numero do pregao, do processo, o e-mail e a pagina:
+      // "...potência conforme a Pregão nº 51/2026 Processo nº 134/2026 licitação@pmcm.pr.gov.br 36
+      // necessidade térmica" (Cruz Machado/PR, pregao 51, itens 2 e 22; usuario, 19/11/2026:
+      // "descritivos errados")
+      s = s.replace(/\s*Preg[ãa]o\s+(?:Eletr[ôo]nico\s+)?n[º°o]\.?\s*\d{1,5}\/\d{4}\s+Processo\s+(?:Administrativo\s+)?n[º°o]\.?\s*\d{1,6}\/\d{4}(?:\s+\S+@\S+)?(?:\s+\d{1,3}(?=\s))?\s*/g, ' ').trim();
+      // e o codigo do catalogo na frente, colado no nome: "94040283760 Fogão industrial de piso...",
+      // "12031123 LAVADORA DE ALTA PRESSÃO..." (Cruz Machado/PR, pregao 51, itens 19, 21 e 22). So o
+      // numero comprido, de 7 digitos ou mais: "1500 WATTS" e "220V" sao da especificacao
+      s = s.replace(/^\d{7,12}\s+(?=\p{Lu}\p{L})/u, '');
+      // Da auditoria da lista de 19/11/2026 (usuario: "esta vindo muitos editais com descritivos
+      // errados, confira os demais"):
+      // o rodape "Edital Pregão nº 82/2026 - M.C.A- Forma Eletrônico Página 5 / 78" no meio da frase
+      // (Céu Azul/PR, pregao 82, itens 42 e 43)
+      s = s.replace(/\s*Edital\s+Preg[ãa]o\s+n[º°o]\.?\s*\d{1,5}\/\d{4}\s*-\s*[A-Z.]{2,12}-?\s*Forma\s+Eletr[ôo]nic[ao]\s*(?:P[áa]gina\s+\d{1,3}\s*)?\/\s*\d{1,3}\s*/g, ' ').trim();
+      // o cabecalho da folha com o da tabela, e o item seguinte depois dele: "...5. Dimensões e
+      // Peso: 1 1 Pregão Eletrônico SRP 37/2026- Item CATMAT Unidade Descrição Imagens de referência
+      // ... 18 629350 un Módulo de apoio para buffet..." (Blumenau/SC, edital 37, itens 17 e 19)
+      s = s.replace(/(?:\s+\d{1,4}){0,6}\s+Preg[ãa]o\s+Eletr[ôo]nico\s+(?:SRP\s+)?(?:n[º°o]\.?\s*)?\d{1,5}\/\d{4}\s*-?\s*(?:UASG\s+\d+\s+)?Item\s+CATMAT\b[\s\S]*$/, '');
+      // o cabecalho da tabela no meio da frase, quando a celula vira a folha: "...Rodas traseiras
+      // aro 24" Item Descrição Resumida / Especificação Técnica Quant. Valor Unit. (R$) Valor Total
+      // (R$) maciças/antifuro." (Gramado/RS, PCE 63, item 16)
+      s = s.replace(/\s+Item\s+Descri[çc][ãa]o(?:\s+Resumida)?\s*\/?\s*(?:Especifica[çc][ãa]o\s+T[ée]cnica\s+)?Quant\.?\s+Valor\s+Unit\.?\s*\(R\$\)\s+Valor\s+Total\s*\(R\$\)\s*/g, ' ').trim();
+      // as colunas da tabela em barras e o que vem depois: "...garantia mínima de 12 meses. | Un. |
+      // 6 | | R$ 7.188,00 cod TOTAL GLOBAL ESTIMADO..." (Chuí/RS, edital 12, item 3)
+      s = s.replace(/\s*\|\s*(?:Un|UN|Und|UND|Unid|UNID|Unidade|UNIDADE|P[çc]|P[ÇC]|Cx|CX)\.?\s*\|[\s\S]*$/, '');
+      // a secao seguinte do termo depois da especificacao: "...Marca de Referência: Consul CVU30MB;
+      // Electrolux FEI27T 5. DA EMBALAGEM: Os produtos..." (Piracicaba/SP, edital
+      // 337, item 4), "...Cor: Branca 4. ENTREGA Os materiais..." (Carapicuíba/SP, 85), "...art. 23
+      // da Lei nº 14.133/2021. V - MODALIDADE DE LICITAÇÃO" (Chuí/RS). So o titulo em maiusculas
+      // com o numero na frente, depois do comeco do texto, e com cara de titulo: com o "DA/DO" ("5. DA
+      // EMBALAGEM") ou seguido de frase normal ("4. ENTREGA Os materiais"). No texto todo em
+      // maiusculas a especificacao continua: "...ESTÉRIL Nº 16. EMBALAGEM UNITÁRIA, QUE PROPORCIONE...",
+      // "...GAMMA COBALTO 60. EMBALAGEM INDIVIDUAL..." (Quitandinha/PR, edital 44, itens 201 a 215)
+      {
+        const T = '(?:EMBALAGEM|ENTREGA|PRAZO\\s+DE\\s+ENTREGA|PRAZO|PAGAMENTO|RECEBIMENTO|OBRIGA[ÇC][ÕO]ES|VIG[ÊE]NCIA|FISCALIZA[ÇC][ÃA]O|SAN[ÇC][ÕO]ES|DOTA[ÇC][ÃA]O|LOCAL\\s+DE\\s+ENTREGA|JUSTIFICATIVA|MODALIDADE|CRIT[ÉE]RIOS?\\s+DE\\s+JULGAMENTO)';
+        const m = new RegExp('(?<!\\bn[º°o]\\.?|\\bN[º°O]\\.?)\\s(?:\\d{1,2}(?:\\.\\d{1,2})?\\.?|[IVX]{1,4}\\s*[-–.])\\s*(?:D[AOE]S?\\s+' + T + '(?![\\p{L}])|' + T + '(?=\\s+\\p{Lu}\\p{Ll}))', 'u').exec(s);
+        if (m && m.index >= 80) s = s.slice(0, m.index).trim();
+      }
+      // o cabecalho do item seguinte com a lista dos itens: "...etiqueta Inmetro). ITEM 02 e 10:
+      // Cadeira Giratória Tipo Diretor Descrição detalhada" (Piracicaba/SP, edital 335, itens 1 e 9)
+      {
+        const m = /(?<=[.;)])\s+ITEM\s+\d{1,3}(?:\s*(?:,|e|E|a|A)\s*\d{1,3})*\s*:\s+\S/.exec(s);
+        if (m && m.index >= 80) s = s.slice(0, m.index).trim();
+      }
+      // o "ITEM 17" do item seguinte no fim, sem ponto antes: "...com 6 lâminas, 127V ITEM 17" (São
+      // Paulo/SP, aviso 85, item 15). Nao "COTA RESERVADA DO ITEM 06" nem "conforme ITEM 3"
+      s = s.replace(/(?<!\b(?:DO|AO|NO|DE|PARA|AT[ÉE]|E|O|COTA|CONFORME|VIDE|do|ao|no|de|para|até|ate|e|o|conforme|vide))\s+ITEM\s+\d{1,3}\s*$/, '');
+      // o modelo da proposta depois da especificacao: "...contados da data de entrega. Marca e Modelo:
+      // Informamos que cumpriremos todos os termos deste edital..." (Vista Gaúcha/RS, edital 60, item 10)
+      s = s.replace(/\s+(?:Marca\s+e\s+Modelo\s*:?\s+)?Informamos\s+que\s+cumpriremos\b[\s\S]*$/i, '');
+      // o titulo do lote seguinte com o cabecalho da tabela e o item dele: "...garantia mínima de 12
+      // meses. LOTE 3 – BEBEDOURO ITEM ESPECIFICAÇÕES TÉCNICAS MÍNIMAS UNID. QUANTIDADE 1 RECEIVER AV
+      // 7.2 CANAIS..." (São Paulo/SP, aviso 1125, item 5; o edital repete o "LOTE 3" no lote 4)
+      s = s.replace(/(?<=[.;])\s+(?:LOTE|GRUPO)\s+\d{1,3}\s*[–-]\s*[^.;]{1,80}?\s+ITEM\s+(?:ESPECIFICA[ÇC][ÕO]ES|DESCRI[ÇC][ÃA]O)\b[\s\S]*$/, '');
+      // o rodape do processo administrativo no meio da lista: "...✔ Tipo: split; PAE nº 20.053/2026,
+      // Pág. nº 18 Tribunal Regional Eleitoral de Santa Catarina ✔ Modelo: split inverter..." (TRE-SC,
+      // Florianópolis/SC, pregao 125, itens 2 e 5)
+      s = s.replace(/\s*PAE\s+n[º°]\s*[\d.]+\/\d{4},\s*P[áa]g\.\s*n[º°]\s*\d+(?:\s+Tribunal\s+Regional\s+Eleitoral\s+de\s+[A-ZÀ-Ú][a-zà-ú]+(?:\s+[A-ZÀ-Ú][a-zà-ú]+)?)?\s*/g, ' ').trim();
+      // e o codigo do sistema com a cota na frente: "Cód.: 80735 - Exclusivo ME/EPP CLIMATIZADOR
+      // EVAPORATIVO..." (Tupãssi/PR, edital 15, itens 3 e 4)
+      s = s.replace(/^C[óo]d\.?\s*:?\s*\d{3,8}\s*-\s*(?:Exclusivo\s+(?:para\s+)?ME\s*\/\s*EPP|Ampla\s+Concorr[êe]ncia|Cota\s+(?:Reservada|Principal)(?:\s+(?:para\s+)?ME\s*\/\s*EPP)?)\s+/i, '');
       // a quantidade solta no fim, da coluna ao lado: "Freezer 420 litros
       // horizontal 2", "Umidificador de ar ultrassônico 2,2, litros 4", "...e 12
       // meses de garantia 3" (Lucélia/SP, edital 48, itens 102, 196 e 186). So
