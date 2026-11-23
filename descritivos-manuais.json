@@ -4331,5 +4331,18 @@
         "noEdital": 24
       }
     }
+  },
+  "88811930000176/2026/106": {
+    "edital": "Barra do Ribeiro/RS, Pregão Eletrônico 101/2026",
+    "conferido": "2026-11-23",
+    "itens": {
+      "2": {
+        "qtd": 10,
+        "valor": 171.04,
+        "valorEdital": 717.05,
+        "fonte": "Termo de referência, tabela do item 02 (10 Unidade, R$ 717,05, total R$ 7.170,46; o PNCP traz R$ 171,04); 23/11/2026",
+        "texto": "Bebedouro de Mesa para Garrafão • Deve possuir bandeja removível. Comporta garrafões de 10L ou 20L, possui cor branca, e garantia de 12 meses. Suas medidas são 27,5 x 40 x 28,8 cm (L x A x P), pesa 2,4 kg e conta com painel com luz de LED que indica o funcionamento, duas torneiras e sistema de refrigeração eletrônica. Silencioso e possuir sistema perfurador de garrafão, oferece água gelada e natural, com temperatura da água gelada de aproximadamente 10 °C no verão, instalação em bancada, voltagem bivolt e tanque com capacidade de 600 ml."
+      }
+    }
   }
 }

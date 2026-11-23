@@ -700,6 +700,24 @@ if (!mostra && (tirados || semDescritivo || foraDeCategoria || editaisFora || re
   // pos "Cartucho" em 160 dos 161 itens — batedeira, freezer, climatizador —, e a tabela do edital
   // diz "UN" (usuario, 17/11/2026, no resumo com "1 Cartucho"). Nada da casa se vende em cartucho.
   for (const e of ficam) for (const it of e[C.itens] || []) if (/^cartuchos?$/i.test(String(it[4] || '').trim())) it[4] = 'Unidade';
+  // O preco do EDITAL quando o PNCP traz outro ("valorEdital" no descritivos-manuais.json): Barra do
+  // Ribeiro/RS (edital 101, item 2, bebedouro de mesa) esta a R$ 171,04 no PNCP e a R$ 717,05 no termo,
+  // com o total de R$ 7.170,46 (usuario, 23/11/2026: "o valor esta errado"). So troca enquanto o PNCP
+  // tem a quantidade e o preco anotados; o valor do edital na lista acompanha
+  {
+    let manuais = {};
+    try { manuais = JSON.parse(fs.readFileSync(path.join(DIR, 'descritivos-manuais.json'), 'utf8')); } catch { /* sem lista */ }
+    for (const e of ficam) {
+      const m = (manuais[e[C.path]] || {}).itens || {};
+      for (const it of e[C.itens] || []) {
+        const x = m[String(it[5])];
+        if (!x || !x.valorEdital || +it[1] !== x.qtd || Math.abs(+it[2] - x.valor) > 0.005) continue;
+        e[C.valorEstimado] = Math.round(+e[C.valorEstimado] + it[1] * (x.valorEdital - it[2]));
+        console.log(`valor do edital · ${e[C.municipio]}/${e[C.uf]} ${e[C.edital]} · item ${it[5]}: R$ ${it[2]} no PNCP, R$ ${x.valorEdital} no edital`);
+        it[2] = x.valorEdital;
+      }
+    }
+  }
   fs.writeFileSync(arqDados, JSON.stringify(dados), 'utf8');
   console.log(`docs/dados.json: ${ficam.length} editais`);
 }
