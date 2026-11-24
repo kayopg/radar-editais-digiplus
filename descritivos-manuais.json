@@ -4578,5 +4578,23 @@
         "texto": "Aquisição de eletrodomésticos (o PNCP registra um item só, pelo valor total; o termo pede três): Geladeira, 2 portas, Frost Free, modelo Inverse e Inverter, na cor branca, 110 volts, capacidade mínima de 550 litros, sendo a capacidade do refrigerador mínima de 400 litros, com certificado homologado pelo Inmetro. Quantidade: 01. Fogões a gás para piso e botijão, sendo de 4 Bocas com medidas aproximadas largura 51cm, Profundidade 65cm, altura 95, na cor Inox, tendo 2 queimadores do tipo Rápido potência de 2550 e 2queimadores Semi rápido potência 1700, com botões removíveis, sendo o forno com duas prateleiras ajustáveis, com acendimento automático total e tampa de vidro temperado, com certificado homologado pelo Inmetro. Quantidade: 03. Forno Micro-ondas com capacidade igual ou superior a 42 litros, na cor branca, 110 volts, potência superior a 1560 Watts, com painel digital, diâmetro do prato superior a 34 cm, com certificado homologado pelo Inmetro. Quantidade: 04."
       }
     }
+  },
+  "44544898000134/2026/13": {
+    "edital": "Oscar Bressane/SP, Pregão Eletrônico 35/2026",
+    "conferido": "2026-11-24",
+    "itens": {
+      "10": {
+        "qtd": 1,
+        "valor": 1135.75,
+        "fonte": "Termo de referência, tabela dos itens: a linha 10 só traz o nome (sem descrição); 24/11/2026",
+        "texto": "TANQUINHO 10 KILOS"
+      },
+      "12": {
+        "qtd": 1,
+        "valor": 1104.17,
+        "fonte": "Termo de referência, tabela dos itens: a linha 12 só traz o nome (o recorte emendava o nome da fritadeira, item 13); 24/11/2026",
+        "texto": "FOGÃO 4 BOCAS"
+      }
+    }
   }
 }

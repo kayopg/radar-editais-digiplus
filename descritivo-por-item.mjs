@@ -6942,8 +6942,17 @@ function recortaEdital(e, v, secoes) {
         if (w.length >= 4 && w.toLowerCase() !== meu) {
           const m = new RegExp('(?<=[.;])\\s+0*' + (+it[0] + 1) + '\\s+' + w, 'i').exec(sa(s));
           if (m && m.index >= 80) s = s.slice(0, m.index).trim();
+          // e so o nome dele, em maiusculas, fechando o texto sem ponto antes: "...manual de
+          // instruções em português 22 MESA DE ESCRITÓRIO EM FORMATO L" (Oscar Bressane/SP, edital
+          // 35, item 21, a cafeteira; usuario, 24/11/2026: "descritivos confusos")
+          const f = new RegExp('\\s+0*' + (+it[0] + 1) + '\\s+' + w + '[A-Z0-9 ,./"-]{0,80}$', 'i').exec(sa(s));
+          if (f && f.index >= 80 && !/[a-z]/.test(sa(s).slice(f.index))) s = s.slice(0, f.index).trim();
         }
       }
+      // a coluna da unidade entre o nome curto, em maiusculas, e a descricao: "MICRO-ONDAS UN
+      // MICRO-ONDAS BRANCO, 34 LITROS...", "CAFETEIRA ESPRESSO UN Cafeteira elétrica para..."
+      // (Oscar Bressane/SP, edital 35, itens 11 e 21)
+      s = s.replace(/^([A-ZÀ-Ú0-9][A-ZÀ-Ú0-9 ,./"”'-]{2,60}?)\s+(?:UN|UND|UNID)\s+(?=\p{L})/u, '$1 – ');
       // (e o brasao lido como texto antes do nome do estado, no meio da frase:
       // "...3. ALIMENTAÇÃO: ERA a e) Lu LE Estado de Minas Gerais Alimentação por
       // pilhas..." — Ressaquinha/MG, edital 24, item 70, 21/10/2026)
