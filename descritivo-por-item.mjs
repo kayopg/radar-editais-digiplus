@@ -7067,6 +7067,16 @@ function recortaEdital(e, v, secoes) {
       // meses. LOTE 3 – BEBEDOURO ITEM ESPECIFICAÇÕES TÉCNICAS MÍNIMAS UNID. QUANTIDADE 1 RECEIVER AV
       // 7.2 CANAIS..." (São Paulo/SP, aviso 1125, item 5; o edital repete o "LOTE 3" no lote 4)
       s = s.replace(/(?<=[.;])\s+(?:LOTE|GRUPO)\s+\d{1,3}\s*[–-]\s*[^.;]{1,80}?\s+ITEM\s+(?:ESPECIFICA[ÇC][ÕO]ES|DESCRI[ÇC][ÃA]O)\b[\s\S]*$/, '');
+      // as colunas do modelo da proposta com o preco em branco no fim: "...GARANTIA DE NO MÍNIMO 12
+      // MESES. unidade 10 10 0 20 R$ XXX R$ XXX" (Medianeira/PR, edital 5, lista de 23/11/2026)
+      s = s.replace(/\s+(?:unidades?|Unidades?|UNIDADES?|un|UN|und|UND|Und)\.?\s+(?:\d{1,5}\s+){1,8}R\$\s*X{2,}[\s\S]*$/, '');
+      // a quantidade e a unidade da linha com o numero da folha no meio da frase, antes da
+      // continuacao em minuscula: "...tipo do condensador: 02 Un 13 horizontal" (Cachoeira do Sul/RS,
+      // edital 161, item 3; o timbre da folha ja saiu)
+      if (q) s = s.replace(new RegExp('\\s0*' + q + '\\s+(?:Un|UN|Und|UND|Unid|UNID)\\.?\\s+\\d{1,3}(?=\\s+\\p{Ll})', 'gu'), '');
+      // o nome repetido na frente: "LIQUIDIFICADOR. - LIQUIDIFICADOR. Com copo...", "BEBEDOURO
+      // INDUSTRIAL. - BEBEDOURO INDUSTRIAL. Em inox..." (Pinhalão/PR, edital 24)
+      s = s.replace(/^(\p{Lu}[^.]{2,80})\.\s*[-–]\s*\1\.\s*/u, '$1. ');
       // o rodape do processo administrativo no meio da lista: "...✔ Tipo: split; PAE nº 20.053/2026,
       // Pág. nº 18 Tribunal Regional Eleitoral de Santa Catarina ✔ Modelo: split inverter..." (TRE-SC,
       // Florianópolis/SC, pregao 125, itens 2 e 5)

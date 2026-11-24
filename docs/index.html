@@ -1746,16 +1746,51 @@ var chaveDia=function(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pa
 // navegador. IMPRESSOS: caminho do edital no PNCP -> { em: data da marca }.
 var CHAVE_IMPRESSOS="radar-impressos", impressosDb=null, IMPRESSOS={};
 try{ IMPRESSOS=JSON.parse(localStorage.getItem(CHAVE_IMPRESSOS)||"{}")||{}; }catch(e){ IMPRESSOS={}; }
-function impresso(r){ return !!IMPRESSOS[r[7]]; }
+// A MARCA SEGUE O EDITAL REPUBLICADO (pedido de 23/11/2026: "quando for marcado um
+// edital como impresso, e ele alterar a data depois, mantenha o impresso na nova
+// data tambem, para nao confundir"). Quando so a data muda, a compra e a mesma e a
+// marca ja segue (a chave e o caminho do PNCP). Mas o orgao muitas vezes republica o
+// edital como compra NOVA no PNCP, com outro caminho: Salto/SP, "42/2026 -
+// Republicação" (marcado em 13/10) e depois "42/2026 - Rep. 2/2026". A marca guarda
+// tambem a chave do edital — CNPJ, unidade, modalidade, numero e ano — e vale para o
+// caminho novo do mesmo edital.
+function semAcento(s){ return String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g," ").trim(); }
+function chaveDoEdital(p, uni, mod, ed){
+  var t=String(ed||""), m=/n[º°o]\.?\D{0,20}?0*(\d{1,6})/i.exec(t) || /0*(\d{1,6})/.exec(t), parte=String(p||"").split("/");
+  return m && parte[1] ? [parte[0], semAcento(uni), semAcento(mod), (+m[1])+"/"+parte[1]].join("|") : "";
+}
+function chaveEdital(r){ return chaveDoEdital(r[7], r[10], r[11], r[3]); }
+// chave do edital -> { p: caminho marcado, m: marca }, a mais recente
+var MARCA_POR_EDITAL={};
+function indexaMarcas(){
+  MARCA_POR_EDITAL={};
+  Object.keys(IMPRESSOS).forEach(function(p){
+    var m=IMPRESSOS[p], o=m && m.ed && MARCA_POR_EDITAL[m.ed];
+    if(m && m.ed && (!o || String(m.em)>String(o.m.em))) MARCA_POR_EDITAL[m.ed]={ p:p, m:m };
+  });
+}
+indexaMarcas();
+// a marca do proprio caminho ou, sem ela, a da publicacao anterior do mesmo edital
+function marcaDe(r){
+  var m=IMPRESSOS[r[7]]; if(m) return m;
+  var k=chaveEdital(r), o=k && MARCA_POR_EDITAL[k];
+  return o && o.p!==r[7] ? o.m : null;
+}
+function marcaHerdada(r){ return !IMPRESSOS[r[7]] && !!marcaDe(r); }
+function impresso(r){ return !!marcaDe(r); }
 // O quadrado vermelho, ao lado do verde (pedido de 21/10/2026: "um quadradinho
 // vermelho, para marcar os editais que foram impressos porem descartados"): a
 // mesma marca, com descartado: true. Um quadrado ou o outro, nunca os dois.
-function descartado(r){ var m=IMPRESSOS[r[7]]; return !!(m && m.descartado); }
+function descartado(r){ var m=marcaDe(r); return !!(m && m.descartado); }
 // o caminho "cnpj/ano/seq" nao serve de id de documento (a barra separa colecao)
 function idImpresso(p){ return String(p).replace(/[^0-9A-Za-z]+/g,"-"); }
-// Marca de edital que ja saiu da lista e tem mais de 90 dias nao serve a ninguem.
-function velhaDemais(p, m){ return !D.some(function(r){ return r[7]===p; }) && (NOW - new Date(m && m.em || 0)) > 90*864e5; }
+// Marca de edital que ja saiu da lista e tem mais de 90 dias nao serve a ninguem
+// (a nao ser que o edital tenha voltado republicado, com outro caminho).
+function velhaDemais(p, m){
+  return !D.some(function(r){ return r[7]===p || (m && m.ed && chaveEdital(r)===m.ed); }) && (NOW - new Date(m && m.em || 0)) > 90*864e5;
+}
 function atualizaImpressos(){
+  indexaMarcas();
   if(vista==="agenda") return render();
   document.querySelectorAll(".card[data-i]").forEach(function(c){
     var r=D[+c.dataset.i]; if(r){ c.classList.toggle("impresso", impresso(r)); c.classList.toggle("descartado", descartado(r)); }
@@ -1789,6 +1824,7 @@ function gravaNuvem(p, m){
     var campos={ path:{ stringValue:p }, em:{ stringValue:m.em } };
     if(m.quem) campos.quem={ stringValue:String(m.quem).slice(0,39) };
     if(m.descartado) campos.descartado={ booleanValue:true };
+    if(m.ed) campos.ed={ stringValue:String(m.ed).slice(0,300) };
     marcas[id]={ mapValue:{ fields:campos } };
   }
   // a chave na mascara e na marca: com a marca, grava; sem ela, apaga
@@ -1814,6 +1850,7 @@ function leNuvem(){
         var x=f[id].mapValue && f[id].mapValue.fields || {}, p=x.path && x.path.stringValue;
         if(p) m[p]={ em:x.em && x.em.stringValue || "", quem:x.quem && x.quem.stringValue || "" };
         if(p && x.descartado && x.descartado.booleanValue) m[p].descartado=true;
+        if(p && x.ed && x.ed.stringValue) m[p].ed=x.ed.stringValue;
       });
       // a primeira leitura deste aparelho manda para a nuvem as marcas que ele
       // tinha so no navegador (antes de 13/10/2026 cada um marcava para si)
@@ -1848,10 +1885,11 @@ function quemMarcou(){ return ACESSO && ACESSO.nome || ""; }
 // "Impresso · marcado por Volney em 13/10"
 // (desc: o texto do quadrado vermelho)
 function textoDaMarca(r, desc){
-  var m=IMPRESSOS[r[7]];
+  var m=marcaDe(r);
   if(!m || !!m.descartado!==!!desc) return desc ? "Marcar como impresso, mas descartado" : "Marcar como impresso";
   var d=m.em ? new Date(m.em) : null;
-  return (desc?"Impresso, mas descartado":"Impresso")+(m.quem?" · marcado por "+m.quem:"")+(d&&!isNaN(d)?" em "+pad2(d.getDate())+"/"+pad2(d.getMonth()+1):"")+" · clique para desmarcar";
+  return (desc?"Impresso, mas descartado":"Impresso")+(m.quem?" · marcado por "+m.quem:"")+(d&&!isNaN(d)?" em "+pad2(d.getDate())+"/"+pad2(d.getMonth()+1):"")
+    +(marcaHerdada(r)?" (na publicação anterior do edital)":"")+" · clique para desmarcar";
 }
 if(nuvem){
   leNuvem();
@@ -1861,9 +1899,17 @@ if(nuvem){
   document.addEventListener("visibilitychange", function(){ if(document.visibilityState==="visible") leNuvem(); });
 }
 // (desc: a marca vermelha, de impresso mas descartado)
+// A marca leva a chave do edital (ed) para seguir a republicacao; desmarcar tira tambem
+// a marca da publicacao anterior do mesmo edital, que era a que valia aqui.
 function marcaImpresso(r, sim, desc){
-  var p=r[7], antes=IMPRESSOS[p];
-  if(sim){ IMPRESSOS[p]={ em:new Date().toISOString(), quem:quemMarcou() }; if(desc) IMPRESSOS[p].descartado=true; }
+  var p=r[7], k=chaveEdital(r);
+  var anteriores=!sim && k ? Object.keys(IMPRESSOS).filter(function(q){ return q!==p && IMPRESSOS[q] && IMPRESSOS[q].ed===k; }) : [];
+  gravaMarca(p, sim ? { em:new Date().toISOString(), quem:quemMarcou(), ed:k, descartado:!!desc } : null);
+  anteriores.forEach(function(q){ gravaMarca(q, null); });
+}
+function gravaMarca(p, nova){
+  var antes=IMPRESSOS[p], sim=!!nova;
+  if(sim){ IMPRESSOS[p]={ em:nova.em, quem:nova.quem }; if(nova.descartado) IMPRESSOS[p].descartado=true; if(nova.ed) IMPRESSOS[p].ed=nova.ed; }
   else delete IMPRESSOS[p];
   atualizaImpressos();
   if(nuvem){
@@ -1882,7 +1928,10 @@ function marcaImpresso(r, sim, desc){
   }
   if(impressosDb){
     var ref=impressosDb.doc(idImpresso(p));
-    (sim ? ref.set(desc ? { path:p, em:IMPRESSOS[p].em, descartado:true } : { path:p, em:IMPRESSOS[p].em }) : ref.delete()).catch(function(e){
+    var doc=sim ? { path:p, em:IMPRESSOS[p].em } : null;
+    if(doc && IMPRESSOS[p].descartado) doc.descartado=true;
+    if(doc && IMPRESSOS[p].ed) doc.ed=IMPRESSOS[p].ed;
+    (sim ? ref.set(doc) : ref.delete()).catch(function(e){
       // nao gravou: volta ao que era (o banco manda o estado certo de novo)
       if(antes) IMPRESSOS[p]=antes; else delete IMPRESSOS[p];
       atualizaImpressos();
@@ -1905,6 +1954,7 @@ if(window.claude && typeof window.claude.use==="function"){
         if(!limpou && pronto && velhaDemais(x.path, x)){ col.doc(d.id).delete().catch(function(){}); return; }
         m[x.path]={ em:x.em };
         if(x.descartado) m[x.path].descartado=true;
+        if(x.ed) m[x.path].ed=x.ed;
       });
       if(pronto) limpou=true;
       IMPRESSOS=m; atualizaImpressos();
