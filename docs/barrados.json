@@ -1,22 +1,6 @@
 {
- "varredura": "2026-11-24",
+ "varredura": "2026-11-25",
  "editais": [
-  {
-   "path": "78640489000153/2026/1016",
-   "municipio": "Londrina",
-   "uf": "PR",
-   "edital": "Edital nº 193/2026",
-   "objeto": "Aquisição de equipamentos para laboratórios balanças, cubas, estufas e outros",
-   "exige": [
-    "Amostra"
-   ],
-   "trechos": {
-    "Amostra": [
-     "e devera constar na proposta final das arrematantes, conforme modelo descritivo da proposta de precos (anexo iii). 4 proposta parcial 4.1 nao sera permitido ao licitante oferecer proposta parcial. 5 amostra 5.1 sera exigida do arrematante amostra do(s) objeto(s) licitado(s), na forma do item 1.5 do termo de referencia, anexo i. (quando for o caso) 6 consorcio 6.1 a participacao de empresas em regi",
-     "aso seja requisitada a apresentacao de amostras do arrematante do item, a entrega devera ocorrer no prazo maximo de 05 (cinco) dias uteis, a contar da notificacao, o descritivo tecnico e a respectiva amostra do objeto licitado, a fim de verificar se atende as especificacoes do edital e anexos, no seguinte local: endereco: universidade estadual de londrina-uel / almoxarifado central-campus rodovia "
-    ]
-   }
-  },
   {
    "path": "44959021000104/2026/374",
    "municipio": "Guarujá",
@@ -271,6 +255,21 @@
    }
   },
   {
+   "path": "83169623000110/2026/620",
+   "municipio": "Joinville",
+   "uf": "SC",
+   "edital": "Edital nº 37/2026",
+   "objeto": "Aquisição de Órteses, Próteses e Meios Auxiliares de Locomoção (OPMs).",
+   "exige": [
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Garantia contratual": [
+     ".v.a\", a contratada devera se deslocar ate o hmsj para realizar as afericoes. e obrigatorio agendamento previo realizado pelo e-mail hmsj.uao.apa@joinville.sc.gov.br ou telefone (47) 3441-6633. 5.4 - garantia da contratacao: os produtos deverao ter garantia legal, nos moldes do codigo de defesa do consumidor, entretanto, caso o fabricante dos produtos conceda garantia contratual, esta deve ser som"
+    ]
+   }
+  },
+  {
    "path": "78640489000153/2026/1191",
    "municipio": "Londrina",
    "uf": "PR",
@@ -318,6 +317,37 @@
     "Garantia contratual": [
      "elo rigoroso cumprimento das obrigacoes contratuais correspondentes ao objeto da subcontratacao. 4.3. o contrato oferece maior detalhamento das regras que serao aplicadas em relacao a subcontratacao. garantia da contratacao 4.4. sera exigida a garantia da contratacao de que tratam os arts. 96 e seguintes da lei nº 14.133, de 2021, no percentual de 5%, conforme condicoes descritas nas clausulas do ",
      "atuais correspondentes ao objeto da subcontratacao. 4.3. o contrato oferece maior detalhamento das regras que serao aplicadas em relacao a subcontratacao. garantia da contratacao 4.4. sera exigida a garantia da contratacao de que tratam os arts. 96 e seguintes da lei nº 14.133, de 2021, no percentual de 5%, conforme condicoes descritas nas clausulas do contrato. 4.4.1. o percentual aplicado visa m"
+    ]
+   }
+  },
+  {
+   "path": "01613765000160/2026/181",
+   "municipio": "Carambeí",
+   "uf": "PR",
+   "edital": "Edital nº PCE 71/2026",
+   "objeto": "Aquisição de equipamentos, mobiliários, utensílios, materiais e insumos destinados à estruturação e ao funcionamento de planta-piloto para o beneficiamento de l",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "possuir faixa de medicao de ph que contemple, no minimo, 0,00 a 14,00 ph, com resolucao de 0,01 ph ou melhor e erro maximo admissivel de ±0,02 ph. devera possuir medicao e indicacao da temperatura da amostra, por meio de sensor ou sonda de temperatura, com faixa de medicao que contemple, no minimo, 0 °c a 100 °c, e compensacao automatica de temperatura (atc). devera possuir calibracao automatica e",
+     "possuir faixa de medicao de ph que contemple, no minimo, 0,00 a 14,00 ph, com resolucao de 0,01 ph ou melhor e erro maximo admissivel de ±0,02 ph. devera possuir medicao e indicacao da temperatura da amostra, por meio de sensor ou sonda de temperatura, com faixa de medicao que contemple, no minimo, 0 °c a 100 °c, e compensacao automatica de temperatura (atc). devera possuir calibracao automatica e"
+    ]
+   }
+  },
+  {
+   "path": "45132495000140/2026/892",
+   "municipio": "Limeira",
+   "uf": "SP",
+   "edital": "Edital nº 00213/2026",
+   "objeto": "AQUISICAO DE APARELHO DE AR CONDICIONADO",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     "u execucao do objeto: criterio de julgamento: fornecimento imediato menor preco unitario universo de disputa da licitacao: modo de disputa: para ampla concorrencia aberto exigencia de demonstracao ou amostra do produto ou servico: ☐ sim sistema eletronico de disputa: ☒ nao bnc – bolsa nacional de compras (www.bnc.org.br) as condicoes de entrega ou fornecimento se darao na forma disposta neste edit"
     ]
    }
   }
