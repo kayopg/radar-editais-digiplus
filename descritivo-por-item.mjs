@@ -4035,7 +4035,13 @@ function linhaPeloNumero(plano, it, timbres, n, vizinho) {
       if (new RegExp(rePreco.source).test(resto)) break;
       const ehForte = forte.test(resto);
       if (vizinho && !(/^\d{5,12}\s/.test(resto) && qtdNoFim.test(resto))) continue;
-      if (!ehForte && (fraco || !/^\p{Lu}/u.test(resto))) continue;
+      // (a descricao em minuscula tambem abre a linha quando o numero vem logo depois do preco da
+      // linha de cima e a linha fecha com a unidade e a quantidade: "...un 22 R$ 19,00 15 fogão
+      // Industrial, 4 bocas 30x30, sem forno, ... para baixa pressão un 3 R$ 838,00" — Araricá/RS,
+      // edital 136, itens 15 a 20, 35, 51, 53, 62, 64, 68; usuario, 25/11/2026: "descritivos
+      // errados". Sem o preco antes, o "2 portas" de dentro da descricao nao abre linha.)
+      const abreMinuscula = /^\p{Ll}/u.test(resto) && /\d,\d{2}\s*$/.test(janela.slice(Math.max(0, c.index - 20), c.index + 1)) && qtdNoFim.test(resto);
+      if (!ehForte && (fraco || !(/^\p{Lu}/u.test(resto) || abreMinuscula))) continue;
       // (a limpaCelula tira o cabecalho da AGU inteiro e so depois o timbre; o
       // timbre antes levava pedacos do cabecalho e deixava o resto no meio)
       const cru = resto.replace(naFrente, '').replace(noFim, '').trim();
@@ -4121,7 +4127,10 @@ function linhaPeloNumero(plano, it, timbres, n, vizinho) {
       // a mesma frase duas vezes seguidas, como a celula do edital traz: "Garantia
       // mínima de 06 meses. Garantia mínima de 06 meses." (Balneario Camboriu/SC)
       t = t.replace(/(?<=^|[.;]\s)([^.;]{10,120}[.;])(?:\s+\1)+/g, '$1');
-      if (t.length < 30 || comecaNoMeio(t) || AINDA_SUJO.test(t) || LIXO_DE_LINHA.test(t)) continue;
+      // (a linha que abre em minuscula logo depois do preco de cima comeca no comeco, e nao no
+      // meio: "fogão Industrial, 4 bocas..." vira "Fogão Industrial, 4 bocas...")
+      if (abreMinuscula) t = t.charAt(0).toUpperCase() + t.slice(1);
+      if (t.length < 30 || (comecaNoMeio(t) && !abreMinuscula) || AINDA_SUJO.test(t) || LIXO_DE_LINHA.test(t)) continue;
       const topo = normIgual(t).slice(0, 120);
       if (termoDaCategoria(topo) === -1 && !falaDoMesmoProduto(it[1], t)) continue;
       // o comeco forte encerra a busca; o fraco fica guardado, caso nao haja forte
@@ -6949,6 +6958,9 @@ function recortaEdital(e, v, secoes) {
           if (f && f.index >= 80 && !/[a-z]/.test(sa(s).slice(f.index))) s = s.slice(0, f.index).trim();
         }
       }
+      // o codigo do catalogo (BR + 7 digitos) da coluna ao lado, no fim: "Cadeira de banho simples
+      // BR0400778" (São Pedro do Iguaçu/PR, edital 61, itens 151 e 152)
+      s = s.replace(/\s+(?:C[ÓO]D(?:IGO)?\.?\s*)?BR\d{7}\s*$/i, '');
       // a coluna da unidade entre o nome curto, em maiusculas, e a descricao: "MICRO-ONDAS UN
       // MICRO-ONDAS BRANCO, 34 LITROS...", "CAFETEIRA ESPRESSO UN Cafeteira elétrica para..."
       // (Oscar Bressane/SP, edital 35, itens 11 e 21)
