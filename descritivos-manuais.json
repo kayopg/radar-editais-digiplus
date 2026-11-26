@@ -4712,5 +4712,41 @@
         "ortografia": true
       }
     }
+  },
+  "76245034000108/2026/442": {
+    "edital": "Sertanópolis/PR, Pregão Eletrônico 26/2026 (APAE)",
+    "conferido": "2026-11-26",
+    "itens": {
+      "9": {
+        "qtd": 1,
+        "valor": 4336.75,
+        "fonte": "Termo de referência (folhas escaneadas, páginas 2 a 4 do termo, 22 a 24 do edital), tabela do item 1.1; 26/11/2026",
+        "texto": "Geladeira Frost Free, com capacidade total de no mínimo 431L, tecnologia AutoSense, Duplex, acabamento em Inox Look, com 2 portas, material em aço, puxadores embutidos, contendo prateleiras de vidro temperado e plástico, gavetas e porta ovos, com guia rápido e manual de instruções. Tensão de 127V. Garantia do fabricante."
+      },
+      "10": {
+        "qtd": 1,
+        "valor": 1141.56,
+        "fonte": "Termo de referência (folhas escaneadas, páginas 2 a 4 do termo, 22 a 24 do edital), tabela do item 1.1; 26/11/2026",
+        "texto": "Liquidificador comercial em Inox com capacidade mínima de 6Litros, baixa rotação, material do copo em aço inox escovado, velocidade mínima de 3500RPM, Voltagem bivolt. Garantia do fabricante."
+      },
+      "11": {
+        "qtd": 1,
+        "valor": 1913.22,
+        "fonte": "Termo de referência (folhas escaneadas, páginas 2 a 4 do termo, 22 a 24 do edital), tabela do item 1.1; 26/11/2026",
+        "texto": "Batedeira Planetária, na cor Preta, Tigela em Inox, potência mínima de 800W, 6 velocidades, com 3 batedores, pés antiderrapantes, capacidade da tigela de 5L, Voltagem 110V, com manual de instruções, tampa antirespingos e garantia do fabricante."
+      },
+      "12": {
+        "qtd": 1,
+        "valor": 1845.47,
+        "fonte": "Termo de referência (folhas escaneadas, páginas 2 a 4 do termo, 22 a 24 do edital), tabela do item 1.1; 26/11/2026",
+        "texto": "Forno industrial a gás GLP baixa pressão, em Inox, medindo no mínimo 27cm Altura X 79cm Largura x 62cm Profundidade, capacidade de no mínimo 129L, com termômetro na lateral do forno; laterais, frente e teto externo em aço inoxidável; sistema de abertura do vidro tipo guilhotina, pedra refratária que armazena calor; bandeja coletora de resíduos e, chapa galvanizada; acompanha uma grelha reforçada; cavalete reforçado em aço carbono com acabamento em pintura a pó eletrostática; revestimento interno em aço galvanizado. Garantia do fabricante."
+      },
+      "15": {
+        "qtd": 2,
+        "valor": 2993.33,
+        "fonte": "Termo de referência (folhas escaneadas, páginas 2 a 4 do termo, 22 a 24 do edital), tabela do item 1.1; 26/11/2026",
+        "texto": "Cadeira de Rodas com encosto reclinável em alumínio e pés rebatível, capacidade 130kg."
+      }
+    }
   }
 }
