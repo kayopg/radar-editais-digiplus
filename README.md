@@ -265,8 +265,13 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    tico-tico, martelo demolidor, corte plasma, furadeira, parafusadeira, martelete, serra copo,
    esmerilhadeira, roçadeira, motosserra (15/10/2026) —, correia de transmissão (20/10/2026:
    "definitivamente nao cotamos"; a da Embrapa em Brasília/DF entrava pelo "Aplicação: ... Ar
-   Condicionado"; a amassadeira "com transmissão por correia" fica), o ar-condicionado que exige Wi-Fi (usuário, 22/10/2026, que escolheu tirar: "SMART COM CONEXÃO WI-FI", UTFPR
-   de Cornélio Procópio/PR; o "Wi-Fi opcional" e o "com ou sem Wi-Fi" ficam; em edital por lote fica em cinza),
+   Condicionado"; a amassadeira "com transmissão por correia" fica), o ar-condicionado que exige a condensadora de caixa, com descarga horizontal (frontal) ou quadrada
+   (usuário, 26/11/2026: "não cotamos mais ar condicionado com a caixa condensadora quadrada/horizontal":
+   "unidade condensadora: descarga horizontal (frontal). vedada condensadora tipo 'barril'", Tupã/SP;
+   "unidade condensadora com descarga horizontal", TRE-SC; "unidade externa com descarga horizontal",
+   Santiago/RS; o que aceita "descarga horizontal ou vertical" fica, JFSC; em edital por lote fica em
+   cinza) — e o ar-condicionado com Wi-Fi, tirado de 22/10 a 26/11/2026, voltou ("agora cotamos ar
+   condicionado com conectividade wi-fi"),
    a torneira na frente do nome ("TORNEIRA PARA TANQUE E MÁQUINA DE LAVAR", Campos Novos/SC, 22/10/2026; o
    "BEBEDOURO INDUSTRIAL 4 TORNEIRAS" fica), a passadeira a vapor (22/10/2026), o estabilizador de tensão (27/10/2026, Panambi/RS: entrava pelos "refrigeradores" que ele protege), o utensílio que só cita o aparelho como uso, "podendo ser usado em lava louças e microondas" (canecas, potes, pratos e xícaras de Carazinho/RS, 27/10/2026), a bancada ou mesa com pia (23/10/2026: "bancada com pia não cotamos", Goioerê/PR; a mesa de trabalho "com cuba", sem pia, fica), o item comprado em horas
    (serviço: as "BALANÇAS mecânicas", 100 horas de manutenção, Lunardelli/PR) e o contrato de "serviços

@@ -131,10 +131,24 @@ const ABRE_FORA_DO_RADAR = /^[^a-z]*(?:ventilador\s*\/\s*|ventilador\s+(?=exaust
 // "conexão wifi, função SmartThings" (Davinopolis/GO). O "Wi-Fi opcional", "com ou
 // sem Wi-Fi" e o "não é obrigatório" ficam. Em edital por lote, o aparelho fica em
 // cinza no lote.
+// (Desde 26/11/2026 o Wi-Fi VOLTOU: "agora cotamos ar condicionado com conectividade wi-fi".)
 const AR_CONDICIONADO = /ar[- ]?condicionad|arcondicionad|condicionador(?:es)? de ar|\bsplit\b|piso[ /-]?teto|cassete|hi[- ]?wall/;
-const WIFI = /wi[\s-]?fi\b|\bwifi\b/;
-const WIFI_OPCIONAL = /(?:opcional|opcionalmente|desejavel|preferencialmente|nao (?:e |sera |sendo )?(?:obrigatori|necessari|exigid)|dispensad|com ou sem)[^.;]{0,40}(?:wi[\s-]?fi\b|\bwifi\b)|(?:wi[\s-]?fi\b|\bwifi\b)[^.;]{0,30}(?:opcional|desejavel|nao (?:e |sera )?obrigatori|se houver|quando disponivel)/;
-const pedeWifi = t => WIFI.test(t) && !WIFI_OPCIONAL.test(t);
+// O ar-condicionado que exige a condensadora de caixa, com descarga HORIZONTAL (frontal) ou
+// quadrada (usuario, 26/11/2026: "nao cotamos mais ar condicionado com a caixa condensadora
+// quadrada/horizontal"): "unidade condensadora: descarga horizontal (frontal). vedada condensadora
+// tipo 'barril'" (Tupã/SP, edital 132), "unidade condensadora com descarga horizontal" (TRE-SC,
+// Florianópolis/SC, 125), "unidade externa com descarga horizontal" (Santiago/RS), "tipo do
+// condensador: horizontal" (Cachoeira do Sul/RS, 161). Fica o que aceita as duas ("condensadora
+// remota com descarga horizontal ou vertical", JFSC, Florianópolis/SC, 41) — por isso a frase da
+// condensadora e lida sozinha: o "direcionadores de ar: horizontal/vertical" da evaporadora e outra
+// coisa — e o "horizontal" da oscilacao do ventilador nao entra (so ar-condicionado).
+const FRASE_DA_CONDENSADORA = /(?:condensador[a]?s?|unidades? externas?|equipamento externo)[^.;•✔]{0,90}/g;
+const pedeCondensadoraHorizontal = t => {
+  if (/(?:vedad[ao]s?|nao (?:sera |serao )?aceit[ao]s?|proibid[ao]s?)[^.;]{0,40}barril/.test(t)) return true;
+  for (const m of t.matchAll(FRASE_DA_CONDENSADORA))
+    if (/\bhorizonta(?:l|is)\b|quadrad[ao]s?\b/.test(m[0]) && !/vertical|barril/.test(m[0])) return true;
+  return false;
+};
 // (a "CHAPA BIFETEIRA A GÁS LISA" que o catalogo chama de "Fogão Industrial ...
 // chapa bifeteira": Cornelio Procopio/PR, edital 198, item 73, 21/10/2026)
 
@@ -537,7 +551,7 @@ for (const e of dados.editais) {
       // "CANECA ... PODENDO SER USADO EM LAVA LOUÇAS E MICROONDAS" (Carazinho/RS,
       // PCE 44, 27/10/2026). A varredura ja nao o pega; aqui sai o que entrou antes.
       || (!termoMaisCedo(norm(it[3])) && !termoMaisCedo(d) && 'nenhum produto do radar, so o uso')
-      || (it[0] === 'CL' && AR_CONDICIONADO.test(norm(it[3]) + ' ' + d.slice(0, 300)) && pedeWifi(d + ' ' + norm(it[3])) && 'ar-condicionado com Wi-Fi')
+      || (it[0] === 'CL' && AR_CONDICIONADO.test(norm(it[3]) + ' ' + d.slice(0, 300)) && pedeCondensadoraHorizontal(d + ' ' + norm(it[3])) && 'ar-condicionado com condensadora horizontal/quadrada')
       // o "UMIDIFICADOR" sem mais nada no edital de oxigenio medicinal e o frasco
       // do fluxometro, nao o umidificador de ambiente (Campina da Lagoa/PR,
       // edital 108, item 6, 21/10/2026: "RECARGA DE OXIGENIO MEDICINAL COM
