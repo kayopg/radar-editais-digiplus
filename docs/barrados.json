@@ -1,22 +1,6 @@
 {
- "varredura": "2026-11-25",
+ "varredura": "2026-11-26",
  "editais": [
-  {
-   "path": "44959021000104/2026/374",
-   "municipio": "Guarujá",
-   "uf": "SP",
-   "edital": "Edital nº 40/2026",
-   "objeto": "Registro de Preços para futura e eventual aquisição de equipamentos médico-assistenciais e materiais de apoio – Grupamento C, destinados ao atendimento das dema",
-   "exige": [
-    "Amostra"
-   ],
-   "trechos": {
-    "Amostra": [
-     " disso, atende as edicao: 02 data: 08/10/2026 revisao: 01 pagina: 21 de 55 disposicoes da lei nº 14.133/2021, protegendo o interesse publico e otimizando o uso dos recursos publicos. da exigencia das amostras 4.13. o licitante classificado em 1.º lugar devera apresentar as amostras somente dos itens 19 , 20, 21 e 22 ofertados juntamente com os documentos tecnicos no prazo de 5 (cinco) dias uteis, ",
-     "a municipal de saude, direcionadas ao paco raphael vitiello, situado a avenida santos dumont, 640 jardim santo antonio guaruja/sp, 1º andar sala 21, aos cuidados da assistencia farmaceutica. 4.15. as amostras deverao ser identificadas obrigatoriamente pelo ganhador, contendo no produto, a razao social do licitante vencedor, o numero da licitacao e o numero do item ao qual o mesmo se refere. 4.16. "
-    ]
-   }
-  },
   {
    "path": "10637926000146/2026/320",
    "municipio": "Bento Gonçalves",
@@ -333,6 +317,42 @@
     "Amostra": [
      "possuir faixa de medicao de ph que contemple, no minimo, 0,00 a 14,00 ph, com resolucao de 0,01 ph ou melhor e erro maximo admissivel de ±0,02 ph. devera possuir medicao e indicacao da temperatura da amostra, por meio de sensor ou sonda de temperatura, com faixa de medicao que contemple, no minimo, 0 °c a 100 °c, e compensacao automatica de temperatura (atc). devera possuir calibracao automatica e",
      "possuir faixa de medicao de ph que contemple, no minimo, 0,00 a 14,00 ph, com resolucao de 0,01 ph ou melhor e erro maximo admissivel de ±0,02 ph. devera possuir medicao e indicacao da temperatura da amostra, por meio de sensor ou sonda de temperatura, com faixa de medicao que contemple, no minimo, 0 °c a 100 °c, e compensacao automatica de temperatura (atc). devera possuir calibracao automatica e"
+    ]
+   }
+  },
+  {
+   "path": "55021455000185/2026/210",
+   "municipio": "Poá",
+   "uf": "SP",
+   "edital": "Edital nº 46/2026",
+   "objeto": "REGISTRO DE PREÇOS PARA AQUISIÇÃO DE DISPOSITIVOS ORTOPÓEDICOS, DESTINADOS À UTILIZAÇÃO PELO FUNDO DE SOLIDARIEDADE E DESENVOLVIMENTO CULTURAL DA PREFEITURA DA ",
+   "exige": [
+    "Amostra",
+    "Garantia contratual"
+   ],
+   "trechos": {
+    "Amostra": [
+     "s mesmos valores para efeito de qualificacao economico-financeira apresentados pela empresa substituida para fins de habilitacao do consorcio no processo licitatorio que originou o contrato. 5.2. das amostras e catalogos 5.2.1. as empresas declaradas vencedoras provisorias deverao apresentar 01 (uma) amostra de cada item que seja declarada vencedora, e seus respectivos catalogos (se pagina 35 de 1",
+     "a para fins de habilitacao do consorcio no processo licitatorio que originou o contrato. 5.2. das amostras e catalogos 5.2.1. as empresas declaradas vencedoras provisorias deverao apresentar 01 (uma) amostra de cada item que seja declarada vencedora, e seus respectivos catalogos (se pagina 35 de 111 fls n°__________ proc. nº 10.784/2026 ass._____________ o caso) no prazo de ate 10 (dez) dias corri"
+    ],
+    "Garantia contratual": [
+     "ondente ao item (a), acima. pagina 37 de 111 fls n°__________ proc. nº 10.784/2026 ass._____________ b) sendo exigida a garantia de proposta, o licitante devera juntar a sua proposta o comprovante de prestacao de garantia em uma das modalidades previstas no § 1° do art. 96 da lei nº 14.133/2021, sob pena de desclassificacao. b.1.) sao as modalidades previstas no paragrafo 1º do artigo 96 da lei 14"
+    ]
+   }
+  },
+  {
+   "path": "04755519000130/2027/1",
+   "municipio": "Ribeirão Preto",
+   "uf": "SP",
+   "edital": "Aviso de Contratação Direta nº 3/2027",
+   "objeto": "Aquisição de 01 (uma) Refrigerador (geladeira) frost free, duplex, com capacidade mínima de 400 litros, na cor branca, e 01 (um) Congelador vertical (freezer), ",
+   "exige": [
+    "Amostra"
+   ],
+   "trechos": {
+    "Amostra": [
+     " licitantes. 3.3. a solucao a ser contratada devera atender as necessidades operacionais do laboratorio de genomica, garantindo condicoes adequadas para o armazenamento seguro de reagentes, insumos e amostras biologicas. os equipamentos deverao atender as especificacoes objetivas deste etp e do termo de referencia, contemplando capacidade, desempenho, seguranca, eficiencia energetica, durabilidade",
+     " licitantes. 3.3. a solucao a ser contratada devera atender as necessidades operacionais do laboratorio de genomica, garantindo condicoes adequadas para o armazenamento seguro de reagentes, insumos e amostras biologicas. os equipamentos deverao atender as especificacoes objetivas deste etp e do termo de referencia, contemplando capacidade, desempenho, seguranca, eficiencia energetica, durabilidade"
     ]
    }
   },
