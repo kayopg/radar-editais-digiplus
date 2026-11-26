@@ -63,5 +63,20 @@
       { "titulo": "TR 05.pdf", "url": "https://bnccompras.blob.core.windows.net/processfiles/b4a8b2d64ec44924bbc77cfb6fdda63e.pdf" },
       { "titulo": "TR 06.pdf", "url": "https://bnccompras.blob.core.windows.net/processfiles/cd740e8a16d140cabb7541136d6fe107.pdf" }
     ]
+  },
+  "44229813000123/2026/214": {
+    "edital": "Serrana/SP, Pregão Eletrônico 71/2026 (Edital 087/2026)",
+    "portal": "BLL Compras",
+    "conferido": "2026-11-26",
+    "motivo": "o PNCP so traz o corpo do edital (20 paginas); o Termo de Referencia (Anexo I, escaneado), o Estudo Tecnico Preliminar (Anexo II) e os outros anexos estao so na BLL (usuario, 26/11/2026: \"este edital esta sem o termo de referencia ou estudo tecnico preliminar\")",
+    "arquivos": [
+      { "titulo": "EDITAL.pdf", "url": "https://lanceeletronico.blob.core.windows.net/processfiles/89fc3c90cbdb43e0a376df1bc2ad9161.pdf" },
+      { "titulo": "ANEXO I - Termo de Referência.pdf", "url": "https://lanceeletronico.blob.core.windows.net/processfiles/55f95a5d7bcd43d694d0ff354cfbeb9e.pdf" },
+      { "titulo": "ANEXO II - Estudo Técnico Preliminar.pdf", "url": "https://lanceeletronico.blob.core.windows.net/processfiles/5228365455dd4b06975c5894fbeba57f.pdf" },
+      { "titulo": "ANEXO III - Minuta de Termo de Contrato.pdf", "url": "https://lanceeletronico.blob.core.windows.net/processfiles/ac0e2ed741ce4bb58792b202c18ebef7.pdf" },
+      { "titulo": "ANEXO IV - Modelo da Carta Proposta.pdf", "url": "https://lanceeletronico.blob.core.windows.net/processfiles/a34a9041165e4f4ab0c54749e007ab5b.pdf" },
+      { "titulo": "ANEXO V - Declaração ME e EPP.pdf", "url": "https://lanceeletronico.blob.core.windows.net/processfiles/81c281863bdf4557a9ddb21969275734.pdf" },
+      { "titulo": "ANEXO VI - Modelo de Declarações legais.pdf", "url": "https://lanceeletronico.blob.core.windows.net/processfiles/8e6d1b56e86c4410b23bf9b912b41975.pdf" }
+    ]
   }
 }
