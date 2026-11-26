@@ -5785,7 +5785,9 @@ function recortaEdital(e, v, secoes) {
       continue;
     }
     if (!it[6]) itensRicos++;
-    it[6] = m.texto;
+    // ("ortografia": true acentua como o texto recortado: o edital todo sem acento, "OPERACAO",
+    // "VAZAO", ao lado dos outros itens do mesmo edital, acentuados — HU-USP, edital 367, 26/11/2026)
+    it[6] = m.ortografia ? revisaOrtografia(m.texto) : m.texto;
   }
 
   // O rodape e o timbre da folha, que entram no meio do descritivo quando o
