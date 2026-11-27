@@ -3693,13 +3693,23 @@ function tabelaEbserh(plano) {
 // A numeracao que recomeca (lotes) vira outra sequencia, e vale so a maior. O
 // numero da folha ("7 de 34") sai do meio do texto.
 const CABECA_DE_BLOCO = /(?:^|\s)(?:Item\s+)?(\d{1,3})\s*[–—-]\s+(?=[A-ZÀ-Ú])/gi;
-const ESPECIFICACOES = /^[^]{0,250}?Especifica[çc][õo]es(?:\s+(?:T[ée]cnicas|Gerais|M[íi]nimas))?\s*:/i;
+// (ou "Deverá possuir, no mínimo:" depois de um paragrafo de apresentacao: "ITEM
+// 01 – AR-CONDICIONADO SPLIT INVERTER – 9.000 BTU/h – 220V Equipamento de
+// ar-condicionado tipo Split, destinado à ... Deverá possuir, no mínimo: a) ...",
+// e "O equipamento deverá possuir as mesmas especificações técnicas mínimas
+// estabelecidas para o Item 02, especialmente:" — Tambaú/SP, edital 92,
+// 27/11/2026, "descritivos faltando")
+const ESPECIFICACOES = /^[^]{0,250}?Especifica[çc][õo]es(?:\s+(?:T[ée]cnicas|Gerais|M[íi]nimas))?\s*:|^[^]{0,400}?\bdever[áa]\s+possuir\b[^:.]{0,160}:/i;
+// O fim do ULTIMO bloco, quando ele nao traz a frase da quantidade: o titulo em
+// maiusculas da parte seguinte do termo ("...Lei Complementar nº 123/2006.
+// REQUISITOS GERAIS APLICÁVEIS A TODOS OS ITENS Independentemente...", Tambaú/SP)
+const TITULO_DEPOIS_DO_BLOCO = /(?<=[.;])\s+[A-ZÀ-Ú]{4,}(?:\s+(?:[A-ZÀ-Ú]{1,}|\d{1,2}\.?)){2,}\s+(?=[A-ZÀ-Ú][a-zà-ú])/;
 const QUANTIDADE_DO_BLOCO = /\s*Quantidade(?::|\s+de)\s+\d[\d.]*\s+unidades?\b/i;
 function blocosComEspecificacao(plano) {
   const cabecas = [];
   for (const m of plano.matchAll(CABECA_DE_BLOCO)) {
     const de = m.index + m[0].length;
-    if (ESPECIFICACOES.test(plano.slice(de, de + 300))) cabecas.push({ n: +m[1], ini: m.index, de });
+    if (ESPECIFICACOES.test(plano.slice(de, de + 600))) cabecas.push({ n: +m[1], ini: m.index, de });
   }
   const seqs = [];
   for (const c of cabecas) {
@@ -3720,7 +3730,9 @@ function blocosComEspecificacao(plano) {
     const prox = seq[i + 1];
     let t = plano.slice(c.de, prox ? prox.ini : c.de + 4000);
     const q = t.search(QUANTIDADE_DO_BLOCO);
+    const titulo = !prox ? TITULO_DEPOIS_DO_BLOCO.exec(t) : null;
     if (q >= 0) t = t.slice(0, q);
+    else if (titulo && titulo.index >= 200) t = t.slice(0, titulo.index);
     else if (!prox || prox.n !== c.n + 1) return;
     if (folha) t = t.replace(folha, '');
     // O "(CATMAT 481682 - SIMILAR)" do titulo sai: nao e especificacao, e o
