@@ -3192,6 +3192,67 @@ function celulasPorLote(secoes, itens, timbres) {
   return saida;
 }
 
+// A TABELA POR LOTE COM CODIGO de Marechal Cândido Rondon/PR (edital 64,
+// 27/11/2026; usuario: "muito descritivo faltando"): "Lote: 16 - FREEZER
+// HORIZONTAL It Cód Descrição do produto/serviço Qtd Un Vlr Unit Vlr Total 1
+// 33417 FREEZER HORIZONTAL 2 PORTAS MINIMO DE 534 L??... DESTE ITEM. 13,00 UN
+// 3.565,50 46.351,50 TOTAL 46.351,50". A linha abre com o numero DENTRO do lote
+// (1) e o codigo, e os precos vem sem "R$": nenhuma via por numero e preco a
+// achava, e o item ficava com o rotulo curto do PNCP. Cada linha so vale para o
+// item de mesma quantidade e mesmo preco unitario, no lote de mesmo numero (ou,
+// fora dele, quando e a unica linha com esses dois valores).
+const CABECA_LOTE_COM_CODIGO = /It\s+C[óo]d\s+Descri[çc][ãa]o\s+do\s+produto\/servi[çc]o\s+Qtd\s+Un\s+Vlr\s+Unit\s+Vlr\s+Total\s+/g;
+const VALOR_BR = '\\d{1,3}(?:\\.\\d{3})*,\\d{2,4}';
+function linhasDoLoteComCodigo(secoes, itens, timbres) {
+  const saida = new Map();
+  const plano = secoes.replace(/\s+/g, ' ');
+  const cabecas = [...plano.matchAll(CABECA_LOTE_COM_CODIGO)];
+  if (cabecas.length < 2) return saida;
+  const linhas = [];
+  const LINHA = new RegExp('\\s*(\\d{1,3})\\s+(\\d{3,7})\\s+(\\S[\\s\\S]*?)\\s+(' + VALOR_BR + ')\\s+([A-Za-z]{1,6}\\.?)\\s+(' + VALOR_BR + ')\\s+(' + VALOR_BR + ')(?=\\s+TOTAL\\b|\\s+\\d{1,3}\\s+\\d{3,7}\\s)', 'y');
+  const num = s => +String(s).replace(/\./g, '').replace(',', '.');
+  for (const c of cabecas) {
+    const antes = [...plano.slice(0, c.index).matchAll(/Lote:\s*(\d{1,3})\s*-/g)].pop();
+    const lote = antes ? +antes[1] : null;
+    LINHA.lastIndex = c.index + c[0].length;
+    for (let m; (m = LINHA.exec(plano));) {
+      // (a linha nao atravessa o cabecalho de outro lote: se atravessou, o
+      // fim achado e de outra linha)
+      if (/\sLote:\s*\d{1,3}\s*-\s/.test(m[3])) break;
+      linhas.push({ lote, qtd: num(m[4]), unit: num(m[6]), texto: m[3] });
+    }
+  }
+  if (linhas.length < 2) return saida;
+  itens.forEach((it, i) => {
+    const q = +it[2], v = +it[4];
+    if (!q || !v) return;
+    const iguais = linhas.filter(l => Math.abs(l.qtd - q) < 0.005 && Math.abs(l.unit - v) < 0.005);
+    const doLote = iguais.filter(l => l.lote === +it[0]);
+    const l = doLote.length === 1 ? doLote[0] : (iguais.length === 1 ? iguais[0] : null);
+    if (!l) return;
+    // (o cabecalho da tabela que a folha nova repete no meio da celula)
+    let t = l.texto.replace(CABECA_LOTE_COM_CODIGO, ' ');
+    t = limpaCelula(tiraTimbre(t.replace(/\s+/g, ' ').trim(), timbres), timbres);
+    // (o nome do produto no catalogo do orgao, quando a descricao logo depois o
+    // repete inteiro: "FOGÃO INDUSTRIAL FOGÃO INDUSTRIAL 06 BOCAS...", "FORNO
+    // Micro-Ondas branco,31L,... 52 x 32,5 x FORNO Micro-Ondas branco,31L,...
+    // 52 x 32,5 x 41,5 cm"; o nome que diz algo a mais fica, "Lavadora de Alta
+    // Pressão de no mínimo 1,6CV ... Lavadora de Alta Pressão 1,6CV")
+    if (t) {
+      const nz = x => normIgual(x).replace(/[^a-z0-9]/g, '');
+      for (let k = 8; k <= Math.min(220, t.length / 2); k++) {
+        if (t[k - 1] !== ' ') continue;
+        const nome = nz(t.slice(0, k));
+        if (nome.length >= 8 && nz(t.slice(k)).startsWith(nome)) { t = t.slice(k).trim(); break; }
+      }
+    }
+    // (a linha abre logo depois do codigo, e pode abrir em minuscula: "35849
+    // ventilador de parede Potência..." — nao e o meio de uma frase, lote 27)
+    if (t) saida.set(i, t[0].toUpperCase() + t.slice(1));
+  });
+  return saida;
+}
+
 // O numero da linha SEGUINTE colado no fim da celula, depois de uma palavra:
 // "...tensao alimentacao 110/127 v, tipo vertical 6" no item 5 de Apiai/SP.
 // Aqui ja se sabe o numero do proximo item, e so ele sai — e nunca depois de
@@ -4289,6 +4350,7 @@ function recortaEdital(e, v, secoes) {
 
   const { textos: recortes, lotes } = descritivosPorItem(secoes, v.itens);
   for (const [i, texto] of celulasPorLote(secoes, v.itens, timbresDoEdital(secoes))) recortes.set(i, { texto, confirmado: true });
+  for (const [i, texto] of linhasDoLoteComCodigo(secoes, v.itens, timbresDoEdital(secoes))) recortes.set(i, { texto, confirmado: true });
   const textoPlano = secoes.replace(/\s+/g, ' ');
   v.itens.forEach((it, i) => {
     itensTotal++;
@@ -6799,6 +6861,13 @@ function recortaEdital(e, v, secoes) {
         if (novo.length >= 30) s = novo;
       }
     }
+    // A QUEBRA DE LINHA que o sistema de compras grava como "??" (e o PDF do
+    // edital imprime assim): "FREEZER HORIZONTAL 2 PORTAS MINIMO DE 534
+    // L??CLASSIFICAÇÃO ENERGÉTICA A??127 V??GARANTIA" (Marechal Cândido
+    // Rondon/PR, edital 64), "encosto anatômico??que ocupa" (Reserva do
+    // Iguaçu/PR). Entre maiusculas ou numeros vira ponto ("534 L. CLASSIFICAÇÃO");
+    // no resto, espaco (27/11/2026).
+    if (/\S\?\?/.test(s)) s = s.replace(/\s*\?\?+\s*/g, (x, k, str) => /[A-ZÀ-Ú0-9)]/.test(str[k - 1] || '') && /[A-ZÀ-Ú0-9]/.test(str[k + x.length] || '') ? '. ' : ' ').trim();
     do {
       antes = s;
       // O que sobra NA FRENTE da especificacao (14/10/2026, "confira este
