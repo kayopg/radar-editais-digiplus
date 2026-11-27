@@ -152,6 +152,10 @@ Sem eles cerca de 60% da lista é lixo. Aplicados nesta ordem, dentro do `varred
    Oriente de Minas/MG. A de 17/11/2026 (recebida no mesmo dia) acrescentou Bom Jesus/RS (Digiplus),
    Machado/MG e Triunfo/RS (VMLX) e Lapa/PR (Medic), e a MV passou a se chamar LM; saiu da lista de
    17/11 o edital 59/2026 de Machado/MG.
+   Na mesma regra, numa lista à parte (`FORA_POR_DECISAO`, que não some quando chega a lista
+   nova de devedores), as cidades que a casa não cota por decisão do usuário, sem dívida:
+   Garruchos/RS desde 27/11/2026 ("A prefeitura de Garrucho RS, fica de fora da nossa lista,
+   nao cotamos nenhum edital que seja de la").
 1. **Só material** — descarta itens de serviço (`materialOuServico !== 'M'`) e o material que é
    serviço: descrição que **abre** com instalação, higienização, reposição, substituição,
    serviço, calibração ("Instalação Split", "Reposição de gás para Split"), ou que contrata

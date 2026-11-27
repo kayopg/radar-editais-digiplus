@@ -65,6 +65,16 @@ export const DEVEDORES = [
   { tipo: 'municipio', nome: 'lapa', uf: 'PR' },
 ];
 
+// Fora por DECISAO do usuario, sem ser divida: a casa nao cota nenhum edital
+// do lugar. Fica separado da lista de devedores para nao sumir quando chegar
+// a listagem nova (que substitui a de cima inteira). Mesmo casamento: municipio
+// e o edital de esfera municipal daquela cidade (prefeitura, fundo, camara).
+export const FORA_POR_DECISAO = [
+  // 27/11/2026: "A prefeitura de Garrucho RS, fica de fora da nossa lista, nao
+  // cotamos nenhum edital que seja de la"
+  { tipo: 'municipio', nome: 'garruchos', uf: 'RS', motivo: 'decisao do usuario, 27/11/2026' },
+];
+
 const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '')
   .toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
 
@@ -79,7 +89,7 @@ const norm = s => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '')
 export function devedorDe(municipio, uf, orgao, unidade, esfera) {
   const m = norm(municipio), o = norm(orgao) + ' ' + norm(unidade);
   const municipal = norm(esfera) === 'municipal';
-  for (const d of DEVEDORES) {
+  for (const d of [...DEVEDORES, ...FORA_POR_DECISAO]) {
     if (d.uf !== uf) continue;
     if (d.municipio && norm(d.municipio) !== m) continue;
     if (d.tipo === 'municipio') { if (municipal && m === norm(d.nome)) return d; }
