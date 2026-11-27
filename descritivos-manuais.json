@@ -4831,5 +4831,25 @@
         "ortografia": true
       }
     }
+  },
+  "87897740000150/2026/213": {
+    "edital": "Santiago/RS, Pregão Eletrônico 157/2026",
+    "conferido": "2026-11-27",
+    "itens": {
+      "23": {
+        "qtd": 2,
+        "valor": 1089.5,
+        "noEdital": 22,
+        "fonte": "Edital, tabela de itens: a poltrona em korino (item 19 do PNCP) vem sem número, e daí em diante o edital numera um a menos; 27/11/2026",
+        "texto": "BEBEDOURO DE GARRAFÃO COM GABINETE DE PLÁSTICO INJETADO E CHAPA ELETROZINCADA PINTADA COM TERMOSTATO COM TORNEIRAS PARA ÁGUA NATURAL E GELADA COM PINGADEIRA DESTACÁVEL PARA MANUSEIO E LIMPEZA 50-60 HZ 220 V COM BAMBONA"
+      },
+      "24": {
+        "qtd": 4,
+        "valor": 535,
+        "noEdital": 23,
+        "fonte": "Edital, tabela de itens: a poltrona em korino (item 19 do PNCP) vem sem número, e daí em diante o edital numera um a menos; 27/11/2026",
+        "texto": "MESA AUXILIAR PARA BALANÇA INFANTIL (MESA AUXILIAR EM AÇO INOX PARA BALANÇA INFANTIL COM ESTRUTURA EM TUBOS REDONDOS, DOIS TAMPOS E COM PONTEIRAS DE BORRACHA (SEM RODÍZIOS). MEDIDAS APROXIMADAS: 80 X 55 X 55CM (A X L X P))"
+      }
+    }
   }
 }

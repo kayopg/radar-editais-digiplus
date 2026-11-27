@@ -6963,6 +6963,10 @@ function recortaEdital(e, v, secoes) {
       // o codigo do catalogo (BR + 7 digitos) da coluna ao lado, no fim: "Cadeira de banho simples
       // BR0400778" (São Pedro do Iguaçu/PR, edital 61, itens 151 e 152)
       s = s.replace(/\s+(?:C[ÓO]D(?:IGO)?\.?\s*)?BR\d{7}\s*$/i, '');
+      // e o codigo do produto do orgao que o rotulo do PNCP traz entre tracos,
+      // com a aspa que sobrou da celula: "...ALIMENTACAO 220V. - 46426"" com o
+      // rotulo "... 220V. - 46426 - LAVADORA..." (Santiago/RS, edital 157, item 11)
+      s = s.replace(/\s+[–—-]\s*(\d{4,6})["”]?\s*$/, (x, c) => new RegExp('[–—-]\\s*' + c + '\\s*[–—-]').test(String(it[1])) ? '' : x);
       // a coluna da unidade entre o nome curto, em maiusculas, e a descricao: "MICRO-ONDAS UN
       // MICRO-ONDAS BRANCO, 34 LITROS...", "CAFETEIRA ESPRESSO UN Cafeteira elétrica para..."
       // (Oscar Bressane/SP, edital 35, itens 11 e 21)
@@ -7309,7 +7313,18 @@ function recortaEdital(e, v, secoes) {
     {
       const nz = t => String(t || '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
       const a = nz(s), b = nz(limpaTextoPncp(it[1]));
-      if (a.length >= 10 && b.length > a.length + 15 && b.startsWith(a) && !/[.;)]$/.test(s.trim())) s = '';
+      // (menos quando o rotulo e a especificacao REPETIDA, "GELADEIRA ... GARANTIA
+      // DE 01 ANO - 45483 - GELADEIRA ... GARANTIA DE 01 ANO": o edital traz uma
+      // vez so e esta inteiro — Santiago/RS, edital 157, itens 10, 11 e 23,
+      // 27/11/2026, "tem o descritivo ali, nao precisa buscar do PNCP")
+      // (e so quando a repeticao comeca logo depois, com o codigo ou sem: a
+      // "TABUA ... VERDE" cortada na virada de folha, com o rotulo "TABUA ...
+      // VERDE E AMARELA) - TABUA ...", fica o rotulo — Santiago/RS, edital 153, item 7)
+      // (e a repeticao do MESMO tamanho: em Cruz Machado/PR, edital 51, o rotulo
+      // e o comeco da especificacao seguido dela inteira, mais longa, e fica o rotulo)
+      const resto = b.slice(a.length).replace(/^\s*\d{3,7}\s*/, '').trim();
+      const repetido = resto.startsWith(a.slice(0, Math.min(40, a.length))) && resto.length <= a.length + 10;
+      if (a.length >= 10 && b.length > a.length + 15 && b.startsWith(a) && !repetido && !/[.;)]$/.test(s.trim())) s = '';
       // e o caco de outro item, curto e sem as palavras do rotulo: "PRODUÇÃO
       // 300KG /H", o fim do descascador de legumes, no processador de alimentos
       // (Goiânia/GO, edital 353, item 38)
